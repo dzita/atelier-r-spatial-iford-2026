@@ -32,17 +32,16 @@ Statisticiens et démographes des Instituts Nationaux de Statistique (INS), bure
 
 ## Structure du dépôt *(en cours de construction)*
 
+Convention : noms de dossiers et fichiers en **snake_case minuscule**, sans préfixe numérique. Les fichiers spéciaux universels (`README.md`, `LICENSE`, etc.) gardent leur convention.
+
+Dossiers ajoutés au fur et à mesure de la rédaction :
+
 ```
 .
-├── 00_PROJET/             # Cadrage, calendrier, équipe
-├── 01_PEDAGOGIE/          # Slides, démos, runtime WebR
-├── 02_DATASETS_CAMEROUN/  # Provenance + licences (datasets non versionnés)
-├── 03_ENVIRONNEMENT_TECHNIQUE/  # Installation, packages, Docker
-├── 04_LIVRABLES_FORMATEURS/
-├── 05_LIVRABLES_PARTICIPANTS/
-├── 06_COMMUNICATION/
-├── 07_RESSOURCES_EXTERNES/
-└── 08_POST_ATELIER/
+├── environnement_technique/   # Installation, packages, Docker
+│   ├── guide_installation.md
+│   └── install_packages.R
+└── (autres dossiers à venir : pedagogie/, datasets_cameroun/, etc.)
 ```
 
 ## Données
