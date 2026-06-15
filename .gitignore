@@ -1,0 +1,79 @@
+# =====================================================================
+# .gitignore — Atelier IFORD × GDSG 2026
+# =====================================================================
+
+# ---- R / RStudio -----------------------------------------------------
+.Rhistory
+.Rapp.history
+.RData
+.Ruserdata
+.Rproj.user/
+*.Rproj
+.Rprofile
+
+# ---- Quarto ----------------------------------------------------------
+/_site/
+/.quarto/
+/_freeze/
+*_files/
+*_cache/
+
+# ---- renv ------------------------------------------------------------
+renv/library/
+renv/local/
+renv/staging/
+renv/python/
+renv/sandbox/
+
+# ---- Gros datasets (à re-télécharger via _helpers/fetch_data.R) ------
+*.tif
+*.tiff
+*.img
+*.nc
+*.hdf
+*.zip
+*.gz
+*.tar
+*.7z
+
+# Shapefiles (laisser les .gpkg passer mais bloquer les .shp lourds)
+*.shp
+*.shx
+*.dbf
+*.prj
+*.cpg
+*.sbx
+*.sbn
+*.qix
+
+# ---- Données sensibles (DHS Program — licence interdit redistribution)
+**/DHS_MICS/CM*FL*
+**/DHS_MICS/*.DTA
+**/DHS_MICS/*.SAV
+
+# ---- Sorties générées ------------------------------------------------
+_outputs/
+outputs/*.pdf
+outputs/*.html
+*.log
+
+# ---- OS / éditeurs ---------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# ---- Secrets ---------------------------------------------------------
+.env
+.env.local
+*.pem
+*.key
+credentials*.json
+
+# ---- Exceptions positives (à pousser malgré les règles ci-dessus) ----
+!02_DATASETS_CAMEROUN/**/README*.md
+!02_DATASETS_CAMEROUN/**/DATA_PROVENANCE.md
+!02_DATASETS_CAMEROUN/**/.gitkeep
