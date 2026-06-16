@@ -39,16 +39,16 @@ Le wifi de l'IFORD peut être lent ou intermittent. Télécharge **avant** le J1
 
 | Dataset | Taille | Lien | Destination locale |
 |---|---|---|---|
-| GADM Cameroun ADM0-3 | ~10 Mo | <https://gadm.org/download_country.html> (choisir CMR, GeoPackage) | `datasets_cameroun/admin_boundaries/gadm41_CMR.gpkg` |
-| BUCREP RGPH4 ADM officiel | ? | Contact direct BUCREP via Pr Kuépié | `datasets_cameroun/admin_boundaries/CMR_adm3_BUCREP_2025.gpkg` |
-| WorldPop 2020 100m CMR | ~150 Mo | <https://hub.worldpop.org/geodata/summary?id=49866> | `datasets_cameroun/population_grids/CMR_pop_WorldPop_top-down_100m_2020.tif` |
-| WorldPop 2020 constrained | ~30 Mo | <https://hub.worldpop.org/geodata/summary?id=24784> | `datasets_cameroun/population_grids/CMR_pop_WorldPop_top-down_constrained_100m_2020.tif` |
+| GADM Cameroun ADM0-3 | ~10 Mo | <https://gadm.org/download_country.html> (choisir CMR, GeoPackage) | `datasets/cameroun/admin_boundaries/gadm41_CMR.gpkg` |
+| BUCREP RGPH4 ADM officiel | ? | Contact direct BUCREP via Pr Kuépié | `datasets/cameroun/admin_boundaries/CMR_adm3_BUCREP_2025.gpkg` |
+| WorldPop 2020 100m CMR | ~150 Mo | <https://hub.worldpop.org/geodata/summary?id=49866> | `datasets/cameroun/population_grids/CMR_pop_WorldPop_top-down_100m_2020.tif` |
+| WorldPop 2020 constrained | ~30 Mo | <https://hub.worldpop.org/geodata/summary?id=24784> | `datasets/cameroun/population_grids/CMR_pop_WorldPop_top-down_constrained_100m_2020.tif` |
 | GHS-POP 2020 R2023A 3" | ~3 Go (global) | <https://human-settlement.emergency.copernicus.eu/download.php?ds=pop> | Découper sur CMR → `CMR_pop_GHSL_R2023A_100m_2020.tif` |
-| Meta HRSL CMR 2018 | ~50 Mo | <https://data.humdata.org/dataset/cameroon-high-resolution-population-density-maps-demographic-estimates> | `datasets_cameroun/population_grids/CMR_HRSL_Meta_30m_2018.tif` (convertir depuis CSV ou GeoTIFF selon le format publié) |
-| EDS-MICS CMR 2018 clusters GPS | ~5 Mo | <https://dhsprogram.com/data/dataset/Cameroon_Standard-DHS_2018.cfm> (inscription requise, projet à soumettre 24-48h avant) | `datasets_cameroun/DHS_MICS/CMGE71FL.shp` |
-| EDS-MICS CMR 2018 KR/HR/IR | ~30 Mo | idem ci-dessus, fichiers individuels/ménages | `datasets_cameroun/DHS_MICS/` |
-| Google Open Buildings v3 (Cameroun) | ~variable, ~1 Go | <https://sites.research.google/open-buildings/> (choisir tuiles `s2_token` couvrant CMR) | `datasets_cameroun/batiments/` |
-| Sentinel-2 L2A (zones pilotes) | ~variable, ~500 Mo par tuile | <https://browser.dataspace.copernicus.eu/> (extraire tuiles couvrant Buea, Mora, Bamenda 1, Fongo Tongo en juillet 2025) | `datasets_cameroun/teledetection/` |
+| Meta HRSL CMR 2018 | ~50 Mo | <https://data.humdata.org/dataset/cameroon-high-resolution-population-density-maps-demographic-estimates> | `datasets/cameroun/population_grids/CMR_HRSL_Meta_30m_2018.tif` (convertir depuis CSV ou GeoTIFF selon le format publié) |
+| EDS-MICS CMR 2018 clusters GPS | ~5 Mo | <https://dhsprogram.com/data/dataset/Cameroon_Standard-DHS_2018.cfm> (inscription requise, projet à soumettre 24-48h avant) | `datasets/cameroun/dhs_mics/CMGE71FL.shp` |
+| EDS-MICS CMR 2018 KR/HR/IR | ~30 Mo | idem ci-dessus, fichiers individuels/ménages | `datasets/cameroun/dhs_mics/` |
+| Google Open Buildings v3 (Cameroun) | ~variable, ~1 Go | <https://sites.research.google/open-buildings/> (choisir tuiles `s2_token` couvrant CMR) | `datasets/cameroun/batiments/` |
+| Sentinel-2 L2A (zones pilotes) | ~variable, ~500 Mo par tuile | <https://browser.dataspace.copernicus.eu/> (extraire tuiles couvrant Buea, Mora, Bamenda 1, Fongo Tongo en juillet 2025) | `datasets/cameroun/teledetection/` |
 | SRTM 30m | auto via `elevatr` | <https://lpdaac.usgs.gov/products/srtmgl1v003/> | géré par `elevatr` |
 
 **Astuce** : créer une clé USB avec tous les datasets pour les distribuer en salle aux participants — évite que 25 personnes téléchargent simultanément 150 Mo sur le wifi IFORD.
@@ -75,7 +75,7 @@ IFORD_Atelier_Geospatial_R_2026/
 │   │   └── manuel_animateur.md  ← le présent document
 │   ├── slides/                  ← decks revealjs (à produire séparément)
 │   ├── exercices/, corriges/, cheatsheets/, evaluations/
-├── datasets_cameroun/
+├── datasets/cameroun/
 └── environnement_technique/
 ```
 
@@ -147,7 +147,7 @@ IFORD_Atelier_Geospatial_R_2026/
 
 ## 5. Mention de paternité et licences
 
-Tout le code dans `demos/` est diffusé sous **CC-BY 4.0** au nom du Geospatial Data Science Group de l'IFORD. Les datasets gardent leur licence propre (voir `datasets_cameroun/README_donnees.md`). Les citations méthodologiques sont dans `_commons/helpers/citations.bib`.
+Tout le code dans `demos/` est diffusé sous **CC-BY 4.0** au nom du Geospatial Data Science Group de l'IFORD. Les datasets gardent leur licence propre (voir `datasets/README_donnees.md`). Les citations méthodologiques sont dans `_commons/helpers/citations.bib`.
 
 ---
 

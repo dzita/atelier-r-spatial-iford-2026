@@ -98,14 +98,17 @@ pkgs_spatial_stats <- c(
 )
 
 pkgs_demography_data <- c(
-  "wpp2024",      # World Population Prospects ONU (si dispo)
+  # wpp2024 retire le 15 juin 2026 : indisponible sur CRAN et PPM pour R 4.6.0
+  # (Warning: 'package wpp2024 is not available for this version of R')
+  # Probablement en attente d'un release compatible. Reactiver si besoin :
+  #   install.packages("wpp2024")  # quand dispo
   "rdhs",         # acces DHS Program API
   "srvyr",        # design d'enquete tidy (wrapper survey)
   "survey"        # plan de sondage pondere (base)
 )
 
 pkgs_remote_sensing <- c(
-  "MODIStsp",     # MODIS time series (best-effort, lourd)
+  # MODIStsp retire (echec frequent sur Windows + non utilise dans les demos finales)
   "httr2"         # requetes HTTP modernes (utilise par fetch_data.R)
 )
 
@@ -142,7 +145,39 @@ pkgs_all <- unique(c(
 cat(sprintf("\n[install_packages] %d packages CRAN a installer.\n\n", length(pkgs_all)))
 
 # ---------------------------------------------------------------------
-# 3. Installation tolerante a l'echec
+# 3a. PRE-INSTALL : raster en isole + Bioconductor deps + timeout
+# ---------------------------------------------------------------------
+# Raison : observation 15 juin 2026 sur Windows + R 4.6.0 :
+#   - 'raster' echoue parfois lors d'une cascade automatique, ce qui
+#     fait tomber tmap / exactextractr / elevatr / mapview / rnaturalearth.
+#     L'installer en premier, isolement, casse cette cascade.
+#   - 'performance' et 'INLA' dependent de 'Rgraphviz' et 'graph', qui
+#     sont sur Bioconductor (PAS CRAN). On les installe via BiocManager.
+#   - INLA telecharge un .tar.gz de 61 Mo : timeout par defaut (60s)
+#     insuffisant. On l'etend a 600s.
+
+cat("[install_packages] PRE : raster en isole...\n")
+if (!requireNamespace("raster", quietly = TRUE)) {
+  tryCatch(install.packages("raster", quiet = TRUE),
+           error = function(e) cat("  [raster] ECHEC pre-install :", conditionMessage(e), "\n"))
+}
+
+cat("[install_packages] PRE : Bioconductor (Rgraphviz, graph)...\n")
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+  install.packages("BiocManager", quiet = TRUE)
+}
+tryCatch({
+  if (!requireNamespace("Rgraphviz", quietly = TRUE) ||
+      !requireNamespace("graph", quietly = TRUE)) {
+    BiocManager::install(c("Rgraphviz", "graph"), update = FALSE, ask = FALSE, quiet = TRUE)
+  }
+}, error = function(e) cat("  [Bioconductor] ECHEC :", conditionMessage(e), "\n"))
+
+# Timeout etendu pour les gros downloads (INLA, etc.)
+options(timeout = max(600, getOption("timeout")))
+
+# ---------------------------------------------------------------------
+# 3b. Installation tolerante a l'echec (boucle principale)
 # ---------------------------------------------------------------------
 install_safe <- function(pkg) {
   if (requireNamespace(pkg, quietly = TRUE)) {
@@ -208,5 +243,6 @@ tryCatch({
 # ---------------------------------------------------------------------
 cat("\n=====================================================================\n")
 cat(" Installation terminee.\n")
-cat(" Lancer maintenant : source('03_ENVIRONNEMENT_TECHNIQUE/verification_setup.R')\n")
+cat(" Lancer maintenant : source('environnement_technique/verification_setup.R')\n")
 cat("=====================================================================\n")
+   

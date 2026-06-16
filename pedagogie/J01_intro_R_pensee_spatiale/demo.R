@@ -73,7 +73,9 @@ ind_region <- hh_sim |>
   arrange(desc(pct_electricite))
 ind_region
 
-# ---- 4. Charger ADM Cameroun ----------------------------------------
+# ---- 4. Charger ADM Cameroun (GADM v4.1) ----------------------------
+# Les 4 fichiers JSON sont attendus dans datasets/cameroun/admin_boundaries/.
+# A telecharger depuis https://gadm.org/download_country.html (choisir Cameroon).
 adm0 <- read_sf(fetch_gadm_cameroon(0))
 adm1 <- read_sf(fetch_gadm_cameroon(1))
 adm3 <- read_sf(fetch_gadm_cameroon(3))

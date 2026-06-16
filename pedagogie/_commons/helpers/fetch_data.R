@@ -1,152 +1,217 @@
 # =====================================================================
 # fetch_data.R
-# Atelier IFORD x GDSG 2026 - Helpers de telechargement avec fallback
-# Auteur : Ramesesse Dzita
+# Atelier IFORD x GDSG 2026 - Auteur : Ramesesse Dzita
 # -----
-# Strategie : chaque fonction `fetch_*` tente d'abord de telecharger
-# depuis la source officielle ; si le wifi de l'IFORD est instable ou
-# que le serveur ne repond pas, elle bascule automatiquement sur le
-# fichier local pre-telecharge dans 02_DATASETS_CAMEROUN/.
+# Strategie "telechargement manuel" :
+#   1. Chaque fonction fetch_*() verifie qu'un fichier local existe.
+#   2. Si oui  -> retourne le chemin local.
+#   3. Si non  -> stop() avec un message clair contenant :
+#                 - le lien officiel pour telecharger,
+#                 - le dossier exact ou placer le fichier.
+#
+# Avantages par rapport au telechargement automatique :
+#   - Aucune dependance reseau pendant l'animation.
+#   - Le participant voit explicitement quels fichiers manquent.
+#   - Pas de fichier corrompu en cas d'echec SSL.
+#   - Plus simple a documenter et a reproduire.
+#
+# Convention d'organisation des datasets :
+#   datasets/<pays>/<theme>/<fichier>
+#   exemples : datasets/cameroun/admin_boundaries/gadm41_CMR_0.json
+#              datasets/cameroun/population_grids/CMR_pop_WorldPop_100m_2020.tif
+#              datasets/cameroun/dhs_mics/CMHR71FL.DTA
 #
 # Utilisation type dans les demos :
-#   source(here::here("01_PEDAGOGIE/demos/_helpers/fetch_data.R"))
-#   adm3 <- fetch_gadm_cameroon(level = 3)
+#   source(here::here("pedagogie", "_commons", "helpers", "fetch_data.R"))
+#   adm3 <- sf::read_sf(fetch_gadm_cameroon(level = 3))
 # =====================================================================
 
 suppressPackageStartupMessages({
   library(here)
   library(fs)
-  library(httr2)
 })
 
 # Racine du dossier datasets (relatif au projet)
-.DATASETS_ROOT <- here::here("02_DATASETS_CAMEROUN")
+.DATASETS_ROOT <- here::here("datasets")
+
+# Taille minimale acceptable pour un fichier reel (en octets).
+# En dessous : considere corrompu / placeholder vide.
+.MIN_VALID_BYTES <- 1024L  # 1 ko
 
 # ---------------------------------------------------------------------
-# Utilitaire generique : telecharge si necessaire, sinon retourne le
-# chemin local.
+# Helper generique : exige un fichier local, sinon stop avec
+# instructions de telechargement.
 # ---------------------------------------------------------------------
-download_if_missing <- function(url, dest_path, timeout = 60, force = FALSE) {
-  dest_path <- normalizePath(dest_path, mustWork = FALSE)
-  fs::dir_create(fs::path_dir(dest_path))
+require_local_file <- function(local_path, url, description, note = NULL) {
+  local_path <- normalizePath(local_path, mustWork = FALSE)
+  fs::dir_create(fs::path_dir(local_path))
 
-  if (file.exists(dest_path) && !force) {
-    message(sprintf("[fetch_data] Fichier deja present : %s", dest_path))
-    return(dest_path)
+  if (file.exists(local_path) && file.size(local_path) >= .MIN_VALID_BYTES) {
+    return(local_path)
   }
 
-  message(sprintf("[fetch_data] Telechargement : %s", url))
-  ok <- tryCatch({
-    req <- httr2::request(url) |>
-      httr2::req_timeout(timeout) |>
-      httr2::req_user_agent("IFORD-GDSG-Workshop-2026 (ramondzita@gmail.com)")
-    resp <- httr2::req_perform(req, path = dest_path)
-    !httr2::resp_is_error(resp)
-  }, error = function(e) {
-    message(sprintf("[fetch_data] ECHEC : %s", conditionMessage(e)))
-    FALSE
-  })
-
-  if (!ok) {
-    if (file.exists(dest_path)) {
-      message("[fetch_data] Telechargement KO mais fichier local trouve - on l'utilise.")
-      return(dest_path)
-    }
-    stop(sprintf(
-      "Impossible de telecharger ni de trouver localement : %s\n  -> Telecharger manuellement et placer dans %s",
-      url, dest_path
-    ))
+  # Nettoyer un eventuel fichier vide / placeholder
+  if (file.exists(local_path) && file.size(local_path) < .MIN_VALID_BYTES) {
+    try(file.remove(local_path), silent = TRUE)
   }
-  dest_path
+
+  msg <- sprintf(
+    paste0(
+      "\n=================================================================\n",
+      " FICHIER MANQUANT : %s\n",
+      "=================================================================\n",
+      " Lien officiel    : %s\n",
+      " Placer le fichier dans :\n",
+      "   %s\n",
+      "=================================================================\n"
+    ),
+    description, url, local_path
+  )
+  if (!is.null(note)) {
+    msg <- paste0(msg, " Note : ", note, "\n",
+                  "=================================================================\n")
+  }
+  stop(msg, call. = FALSE)
 }
 
 # ---------------------------------------------------------------------
-# GADM Cameroun (limites administratives)
+# GADM Cameroun (limites administratives ADM0-ADM3)
 # Source officielle : https://gadm.org/download_country.html
-# Licence : libre pour usage academique, pas de redistribution commerciale
+# Page directe pays  : https://gadm.org/download_country.html (choisir CMR)
+# Format             : 4 fichiers JSON (un par niveau)
+# Licence            : libre pour usage academique, pas de redistribution
+# Dossier reception  : datasets/cameroun/admin_boundaries/
 # ---------------------------------------------------------------------
-fetch_gadm_cameroon <- function(level = 3, force = FALSE) {
+fetch_gadm_cameroon <- function(level = 3) {
   stopifnot(level %in% 0:3)
+  local <- file.path(.DATASETS_ROOT, "cameroun", "admin_boundaries",
+                     sprintf("gadm41_CMR_%d.json", level))
   url <- sprintf(
     "https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_CMR_%d.json",
     level
   )
-  dest <- file.path(.DATASETS_ROOT, "admin_boundaries",
-                    sprintf("gadm41_CMR_%d.json", level))
-  download_if_missing(url, dest, force = force)
+  require_local_file(
+    local_path  = local,
+    url         = url,
+    description = sprintf("GADM v4.1 Cameroun, niveau ADM%d (JSON)", level),
+    note        = "Page de reference : https://gadm.org/download_country.html (choisir Cameroon)"
+  )
 }
 
 # ---------------------------------------------------------------------
-# WorldPop top-down population 2020 100m unconstrained (Cameroun)
-# Source : https://hub.worldpop.org/geodata/summary?id=49866
-# Licence : CC-BY 4.0 (Tatem 2017, Stevens et al. 2015)
-# ATTENTION : ~150 Mo
+# WorldPop top-down 2020 100m unconstrained - Cameroun
+# Source officielle : https://hub.worldpop.org/geodata/summary?id=49866
+# Format            : GeoTIFF ~150 Mo
+# Licence           : CC-BY 4.0 (Tatem 2017, Stevens et al. 2015)
+# Dossier reception : datasets/cameroun/population_grids/
 # ---------------------------------------------------------------------
-fetch_worldpop_cmr_2020 <- function(force = FALSE) {
+fetch_worldpop_cmr_2020 <- function() {
+  local <- file.path(.DATASETS_ROOT, "cameroun", "population_grids",
+                     "CMR_pop_WorldPop_top-down_100m_2020.tif")
   url <- "https://data.worldpop.org/GIS/Population/Global_2000_2020/2020/CMR/cmr_ppp_2020.tif"
-  dest <- file.path(.DATASETS_ROOT, "population_grids",
-                    "CMR_pop_WorldPop_top-down_100m_2020.tif")
-  download_if_missing(url, dest, timeout = 600, force = force)
-}
-
-# WorldPop constrained 2020 (bati uniquement) - utile en J8 pour comparer
-fetch_worldpop_cmr_2020_constrained <- function(force = FALSE) {
-  url <- "https://data.worldpop.org/GIS/Population/Global_2000_2020_Constrained/2020/maxar_v1/CMR/cmr_ppp_2020_constrained.tif"
-  dest <- file.path(.DATASETS_ROOT, "population_grids",
-                    "CMR_pop_WorldPop_top-down_constrained_100m_2020.tif")
-  download_if_missing(url, dest, timeout = 600, force = force)
+  require_local_file(
+    local_path  = local,
+    url         = url,
+    description = "WorldPop top-down 2020 100m unconstrained (CMR)",
+    note        = "~150 Mo. Page de reference : https://hub.worldpop.org/geodata/summary?id=49866"
+  )
 }
 
 # ---------------------------------------------------------------------
-# GHS-POP 2020 100m (JRC) - top-down concurrent de WorldPop
-# Source : https://human-settlement.emergency.copernicus.eu/download.php?ds=pop
-# Licence : CC-BY 4.0
-# Note : on telecharge la tuile globale 100m (~zip large) ou un extrait CMR
-# Pour l'atelier on s'attend a un extrait CMR pre-decoupe dans 02_DATASETS/
+# WorldPop top-down 2020 100m constrained (bati uniquement) - Cameroun
+# Source officielle : https://hub.worldpop.org/geodata/summary?id=24784
+# Format            : GeoTIFF ~30 Mo
+# Licence           : CC-BY 4.0
+# Dossier reception : datasets/cameroun/population_grids/
+# ---------------------------------------------------------------------
+fetch_worldpop_cmr_2020_constrained <- function() {
+  local <- file.path(.DATASETS_ROOT, "cameroun", "population_grids",
+                     "CMR_pop_WorldPop_top-down_constrained_100m_2020.tif")
+  url <- "https://data.worldpop.org/GIS/Population/Global_2000_2020_Constrained/2020/maxar_v1/CMR/cmr_ppp_2020_constrained.tif"
+  require_local_file(
+    local_path  = local,
+    url         = url,
+    description = "WorldPop top-down 2020 100m constrained (CMR)",
+    note        = "~30 Mo. Page de reference : https://hub.worldpop.org/geodata/summary?id=24784"
+  )
+}
+
+# ---------------------------------------------------------------------
+# GHS-POP 2020 100m (JRC) - Cameroun
+# Source officielle : https://human-settlement.emergency.copernicus.eu/download.php?ds=pop
+# Format            : GeoTIFF, tuile globale a decouper sur emprise CMR
+# Licence           : CC-BY 4.0
+# Dossier reception : datasets/cameroun/population_grids/
 # ---------------------------------------------------------------------
 fetch_ghspop_cmr_2020 <- function() {
-  local <- file.path(.DATASETS_ROOT, "population_grids",
+  local <- file.path(.DATASETS_ROOT, "cameroun", "population_grids",
                      "CMR_pop_GHSL_R2023A_100m_2020.tif")
-  if (!file.exists(local)) {
-    stop(
-      "GHS-POP doit etre pre-telecharge (tuile globale trop volumineuse).\n",
-      "  1) https://human-settlement.emergency.copernicus.eu/download.php?ds=pop\n",
-      "  2) Choisir GHS_POP_E2020_GLOBE_R2023A_4326_3ss (ou la tuile R6 Afrique)\n",
-      "  3) Decouper sur l'emprise du Cameroun et placer en : ", local
+  url <- "https://human-settlement.emergency.copernicus.eu/download.php?ds=pop"
+  require_local_file(
+    local_path  = local,
+    url         = url,
+    description = "GHS-POP 2020 100m R2023A - extrait Cameroun",
+    note        = paste0(
+      "Telecharger GHS_POP_E2020_GLOBE_R2023A_4326_3ss (tuile globale ~3 Go OU ",
+      "extrait Afrique R6), decouper sur l'emprise du Cameroun ",
+      "avec gdal_translate -projwin xmin ymax xmax ymin ..."
     )
-  }
-  local
-}
-
-# ---------------------------------------------------------------------
-# Meta HRSL Cameroun
-# Source : https://data.humdata.org/dataset/cameroon-high-resolution-population-density-maps-demographic-estimates
-# Licence : CC-BY 4.0
-# ---------------------------------------------------------------------
-fetch_meta_hrsl_cmr <- function(force = FALSE) {
-  url <- "https://data.humdata.org/dataset/c9d22555-a78f-4ec3-8a6c-7c5a8de46b9e/resource/4d3c20f7-fb16-4f4f-9c0c-c33da7a4b8f0/download/population_cmr_2018-10-01.csv.zip"
-  dest <- file.path(.DATASETS_ROOT, "population_grids",
-                    "CMR_HRSL_Meta_30m_2018.csv.zip")
-  out <- tryCatch(
-    download_if_missing(url, dest, timeout = 600, force = force),
-    error = function(e) {
-      message("[fetch_data] HRSL : URL HDX possiblement obsolete. Verifier :")
-      message("  https://data.humdata.org/dataset/cameroon-high-resolution-population-density-maps-demographic-estimates")
-      NA_character_
-    }
   )
-  out
 }
 
 # ---------------------------------------------------------------------
-# Sites pilotes RGPH4 (Bamenda 1, Fongo Tongo, Buea, Mora) - emprises
-# Reconstruites par filtrage de GADM ADM3
+# Meta HRSL Cameroun 2018
+# Source officielle : https://data.humdata.org/dataset/cameroon-high-resolution-population-density-maps-demographic-estimates
+# Format            : CSV ou GeoTIFF ~50 Mo
+# Licence           : CC-BY 4.0
+# Dossier reception : datasets/cameroun/population_grids/
+# ---------------------------------------------------------------------
+fetch_meta_hrsl_cmr <- function() {
+  local <- file.path(.DATASETS_ROOT, "cameroun", "population_grids",
+                     "CMR_HRSL_Meta_30m_2018.tif")
+  url <- "https://data.humdata.org/dataset/cameroon-high-resolution-population-density-maps-demographic-estimates"
+  require_local_file(
+    local_path  = local,
+    url         = url,
+    description = "Meta HRSL Cameroun 2018 - 30m",
+    note        = paste0(
+      "Si le format publie est .csv.zip : convertir en GeoTIFF avec ",
+      "terra::rasterize() ou QGIS avant utilisation. ~50 Mo."
+    )
+  )
+}
+
+# ---------------------------------------------------------------------
+# DHS Cameroun 2018 - clusters GPS anonymises (shapefile)
+# Source officielle : https://dhsprogram.com/data/dataset/Cameroon_Standard-DHS_2018.cfm
+# Format            : Shapefile (4 fichiers .shp/.shx/.dbf/.prj)
+# Licence           : DHS Program (inscription + projet a soumettre 24-48h avant)
+# Dossier reception : datasets/cameroun/dhs_mics/
+# ---------------------------------------------------------------------
+fetch_dhs_clusters_cmr_2018 <- function() {
+  local <- file.path(.DATASETS_ROOT, "cameroun", "dhs_mics",
+                     "CMGE71FL.shp")
+  url <- "https://dhsprogram.com/data/dataset/Cameroon_Standard-DHS_2018.cfm"
+  require_local_file(
+    local_path  = local,
+    url         = url,
+    description = "DHS Cameroun 2018 - clusters GPS (CMGE71FL.shp)",
+    note        = paste0(
+      "Inscription requise sur dhsprogram.com avec soumission d'un projet ",
+      "(validation 24-48h). Dezipper le fichier 'Cameroun 2018 DHS - Geographic Data' ",
+      "(CMGE71FL.zip) dans le dossier reception."
+    )
+  )
+}
+
+# ---------------------------------------------------------------------
+# Sites pilotes RGPH4 (Bamenda 1, Fongo Tongo, Buea, Mora)
+# Reconstitues par filtrage de GADM ADM3.
 # ---------------------------------------------------------------------
 fetch_pilot_sites_rgph4 <- function() {
   require(sf)
   adm3_path <- fetch_gadm_cameroon(level = 3)
   adm3 <- sf::read_sf(adm3_path)
-  # Les noms exacts dans GADM peuvent varier (accents, casse).
   sites <- adm3[grepl("Bamenda I|Bamenda 1|Fongo[- ]?Tongo|Buea|Mora",
                       adm3$NAME_3, ignore.case = TRUE), ]
   if (nrow(sites) == 0) {
@@ -156,53 +221,43 @@ fetch_pilot_sites_rgph4 <- function() {
 }
 
 # ---------------------------------------------------------------------
-# SRTM 1 arc-second sur emprise (via package elevatr)
-# ---------------------------------------------------------------------
-fetch_srtm <- function(aoi_sf, zoom = 9) {
-  if (!requireNamespace("elevatr", quietly = TRUE)) {
-    stop("Package elevatr requis : install.packages('elevatr')")
-  }
-  elevatr::get_elev_raster(locations = aoi_sf, z = zoom, clip = "locations")
-}
-
-# ---------------------------------------------------------------------
-# DHS Cameroun 2018 - clusters GPS anonymises
-# ATTENTION : DHS requiert une inscription prealable + autorisation
-# de projet. On NE PEUT PAS telecharger en clair.
-# ---------------------------------------------------------------------
-fetch_dhs_clusters_cmr_2018 <- function() {
-  local <- file.path(.DATASETS_ROOT, "DHS_MICS",
-                     "CMGE71FL.shp")  # convention DHS GPS shapefile
-  if (!file.exists(local)) {
-    stop(
-      "Clusters DHS Cameroun 2018 absents.\n",
-      "  1) Creer un compte sur https://dhsprogram.com/data/dataset_admin/login_main.cfm\n",
-      "  2) Soumettre un projet (gratuit, validation sous 24-48h)\n",
-      "  3) Telecharger 'Cameroun 2018 DHS - Geographic Data' (CMGE71FL.zip)\n",
-      "  4) Dezipper dans : ", dirname(local)
-    )
-  }
-  local
-}
-
-# ---------------------------------------------------------------------
-# Tableau recapitulatif des sources utilisees dans l'atelier
+# Tableau recapitulatif des sources utilisees dans l'atelier.
+# Utile pour la doc participant et le manuel animateur.
 # ---------------------------------------------------------------------
 list_datasets <- function() {
   data.frame(
-    nom = c("GADM CMR ADM0-3", "WorldPop 2020 100m", "WorldPop 2020 constrained",
-            "GHS-POP 2020 R2023A", "Meta HRSL CMR 2018", "DHS CMR 2018",
-            "SRTM 30m"),
-    url = c("https://gadm.org/download_country.html",
-            "https://hub.worldpop.org/geodata/summary?id=49866",
-            "https://hub.worldpop.org/geodata/summary?id=24784",
-            "https://human-settlement.emergency.copernicus.eu/download.php?ds=pop",
-            "https://data.humdata.org/dataset/cameroon-high-resolution-population-density-maps-demographic-estimates",
-            "https://dhsprogram.com/data/dataset/Cameroon_Standard-DHS_2018.cfm",
-            "via package elevatr (AWS Terrain Tiles)"),
-    licence = c("Free academic", "CC-BY 4.0", "CC-BY 4.0",
-                "CC-BY 4.0", "CC-BY 4.0", "DHS Program (inscription)",
-                "Public domain"),
+    nom = c(
+      "GADM CMR ADM0-3",
+      "WorldPop 2020 100m unconstrained",
+      "WorldPop 2020 100m constrained",
+      "GHS-POP 2020 R2023A",
+      "Meta HRSL CMR 2018",
+      "DHS CMR 2018 (clusters GPS)"
+    ),
+    url = c(
+      "https://gadm.org/download_country.html",
+      "https://hub.worldpop.org/geodata/summary?id=49866",
+      "https://hub.worldpop.org/geodata/summary?id=24784",
+      "https://human-settlement.emergency.copernicus.eu/download.php?ds=pop",
+      "https://data.humdata.org/dataset/cameroon-high-resolution-population-density-maps-demographic-estimates",
+      "https://dhsprogram.com/data/dataset/Cameroon_Standard-DHS_2018.cfm"
+    ),
+    licence = c(
+      "Free academic",
+      "CC-BY 4.0",
+      "CC-BY 4.0",
+      "CC-BY 4.0",
+      "CC-BY 4.0",
+      "DHS Program (inscription)"
+    ),
+    dossier_reception = c(
+      "datasets/cameroun/admin_boundaries/",
+      "datasets/cameroun/population_grids/",
+      "datasets/cameroun/population_grids/",
+      "datasets/cameroun/population_grids/",
+      "datasets/cameroun/population_grids/",
+      "datasets/cameroun/dhs_mics/"
+    ),
     stringsAsFactors = FALSE
   )
 }

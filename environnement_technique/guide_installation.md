@@ -45,7 +45,7 @@ Versions installées sur la machine de référence (à compléter au fur et à m
 | Quarto | **1.9.38** (Pandoc 3.8.3, Dart Sass 1.87.0, Deno 2.4.5, Typst 0.14.2) | 2026-06-15 | ☑ |
 | Git | **2.52.0.windows.1** + Git Credential Manager | 2026-06-15 | ☑ |
 | RTools | **4.5** (en attendant RTools 4.6 ; coexistence OK avec R 4.6.0 grâce à UCRT) | 2026-06-15 | ☑ |
-| QGIS | _à renseigner_ | _à renseigner_ | ☐ |
+| QGIS | **3.44.11 « Solothurn » LTR** | 2026-06-15 | ☑ |
 | Docker | _à renseigner_ | _à renseigner_ | ☐ |
 
 ---
@@ -614,4 +614,64 @@ Au premier `git push`, fournir le PAT comme mot de passe (cf. §8.A.2).
 
 ---
 
-*(Suite du guide : §10 Posit Cloud, §11 install_packages.R complet, §12 QGIS, §13 Docker.)*
+---
+
+## 10. QGIS LTR (complémentaire à R)
+
+### 10.1 Pourquoi installer QGIS quand on fait de la R-spatial ?
+
+QGIS est complémentaire à R, pas un substitut. Trois cas d'usage en atelier :
+
+1. **Inspection visuelle rapide** d'un fichier (GeoPackage, Shapefile, GeoTIFF) avant de l'attaquer en R.
+2. **Vérification croisée** : la même donnée doit produire la même carte dans R et dans QGIS.
+3. **Symbologie complexe** (cartes thématiques avancées, labelling fin) : plus rapide à faire en QGIS qu'en `tmap` quand la reproductibilité n'est pas exigée.
+
+### 10.2 Choisir la LTR
+
+QGIS suit un cycle de versionnement particulier : les versions **paires** (3.28, 3.34, 3.40, 3.44) sont **Long Term Releases** (LTR), supportées 2 ans. Les versions **impaires** (3.30, 3.42) sont des releases courantes, supportées 4 mois.
+
+Pour un atelier de formation, **toujours préférer la LTR la plus récente** disponible.
+
+Au 15 juin 2026 : **QGIS 3.44 « Solothurn » LTR**.
+
+### 10.3 Téléchargement
+
+Aller à <https://qgis.org/download/>.
+
+- Onglet **Windows** (par défaut).
+- Section **« Long Term Version (most stable) »**.
+- Choisir le **Standalone Installer** (un `.msi` complet, ~700 Mo) plutôt que le Network Installer (qui télécharge à l'installation et peut planter à mi-chemin si le wifi flanche).
+
+Fichier attendu : `QGIS-OSGeo4W-3.44.x-1.msi`.
+
+### 10.4 Installation
+
+1. Double-clic sur le `.msi`.
+2. Si Windows Security bloque → **Méthode 1** (clic droit → Propriétés → Débloquer → OK), comme pour R en §2.2.
+3. Assistant standard :
+   - Welcome → **Next**
+   - License → **I Agree**
+   - Custom Setup → laisser tout coché (QGIS Desktop + plugins par défaut).
+   - Install Location → laisser `C:\Program Files\QGIS 3.44.x\`.
+   - **Install** → ~10 minutes (QGIS occupe ~3-4 Go décompressé).
+   - **Finish**.
+
+### 10.5 Vérification
+
+1. Touche Windows → taper « qgis » → choisir **QGIS Desktop 3.44.x**.
+2. Premier lancement : 30-45 secondes (chargement des plugins).
+3. **Help → About QGIS** → la première ligne doit afficher la version exacte (par exemple « 3.44.11 Solothurn »).
+
+### 10.6 Test fonctionnel rapide (optionnel)
+
+Une fois QGIS ouvert :
+
+- Menu **Layer → Add Layer → Add Vector Layer**.
+- Charger n'importe quel `.gpkg` ou `.shp` (par exemple GADM Cameroun téléchargé depuis <https://gadm.org/download_country.html>).
+- La carte doit s'afficher.
+
+Si la carte apparaît → chaîne GDAL/GEOS/PROJ embarquée dans QGIS opérationnelle.
+
+---
+
+*(Suite du guide : §11 Posit Cloud, §12 Docker, §13 install_packages.R en détail.)*

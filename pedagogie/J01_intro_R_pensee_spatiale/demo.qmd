@@ -293,7 +293,7 @@ Démonstration sur un extrait ménages format Stata (typique DHS / MICS / ECAM).
 #| eval: false
 library(haven)
 # Lecture du fichier ménages EDS-MICS Cameroun 2018
-hh <- read_dta(here("datasets_cameroun", "dhs_mics", "CMHR71FL.DTA"))
+hh <- read_dta(here("datasets", "cameroun", "dhs_mics", "CMHR71FL.DTA"))
 dim(hh)
 names(hh)[1:20]
 ```
@@ -376,13 +376,11 @@ Ces trois bibliothèques C/C++ — **GDAL** lit/écrit les formats, **GEOS** fai
 #| label: load-adm
 source(here("pedagogie", "_commons", "helpers", "fetch_data.R"))
 
-adm0_path <- fetch_gadm_cameroon(level = 0)
-adm1_path <- fetch_gadm_cameroon(level = 1)
-adm3_path <- fetch_gadm_cameroon(level = 3)
-
-adm0 <- read_sf(adm0_path)
-adm1 <- read_sf(adm1_path)
-adm3 <- read_sf(adm3_path)
+# Charger les 3 niveaux administratifs GADM v4.1 telecharges manuellement
+# dans datasets/cameroun/admin_boundaries/
+adm0 <- read_sf(fetch_gadm_cameroon(0))
+adm1 <- read_sf(fetch_gadm_cameroon(1))
+adm3 <- read_sf(fetch_gadm_cameroon(3))
 ```
 
 Premier réflexe : que contient l'objet ?

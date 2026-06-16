@@ -8,7 +8,8 @@
 .RData
 .Ruserdata
 .Rproj.user/
-*.Rproj
+# Note : le .Rproj racine est volontairement versionne pour que tout
+# participant qui clone le repo ouvre le projet d'un double-clic.
 .Rprofile
 
 # ---- Quarto ----------------------------------------------------------
@@ -77,3 +78,15 @@ credentials*.json
 !02_DATASETS_CAMEROUN/**/README*.md
 !02_DATASETS_CAMEROUN/**/DATA_PROVENANCE.md
 !02_DATASETS_CAMEROUN/**/.gitkeep
+.Rproj.user
+.Rproj.user
+.Rproj.user
+.Rproj.user
+.Rproj.user
+.Rproj.user
+.Rproj.user
+.Rproj.user
+.Rproj.user
+.Rproj.user
+.Rproj.user
+.Rproj.user

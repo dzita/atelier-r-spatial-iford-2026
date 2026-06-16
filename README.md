@@ -41,7 +41,7 @@ Dossiers ajoutés au fur et à mesure de la rédaction :
 ├── environnement_technique/   # Installation, packages, Docker
 │   ├── guide_installation.md
 │   └── install_packages.R
-└── (autres dossiers à venir : pedagogie/, datasets_cameroun/, etc.)
+└── (autres dossiers à venir : pedagogie/, datasets/, etc.)
 ```
 
 ## Données
@@ -56,7 +56,7 @@ Aucune donnée sensible n'est versionnée dans ce dépôt. En particulier :
 
 Code et matériel pédagogique : **Creative Commons Attribution 4.0 International (CC BY 4.0)**. Voir `LICENSE`.
 
-Les datasets gardent leur licence d'origine — voir `02_DATASETS_CAMEROUN/README_donnees.md` (à venir).
+Les datasets gardent leur licence d'origine — voir `datasets/README_donnees.md` (à venir).
 
 ## Contact
 
