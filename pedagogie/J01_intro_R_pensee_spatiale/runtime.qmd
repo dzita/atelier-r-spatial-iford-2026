@@ -1,0 +1,163 @@
+---
+title: "J1 — Intro R + pensée spatiale"
+subtitle: "Code R exécutable dans le navigateur"
+---
+
+::: {.iford-callout}
+**Mode d'emploi.** Cliquez **Run code** dans chaque cellule pour exécuter. Modifiez le code librement, recliquez pour relancer. Rien n'est envoyé sur un serveur — tout tourne dans votre navigateur.
+:::
+
+## 1. R comme calculatrice
+
+```{webr}
+#| autorun: true
+# Les 10 régions du Cameroun et leur population estimée
+regions <- c("Adamaoua", "Centre", "Est", "Extrême-Nord", "Littoral",
+             "Nord", "Nord-Ouest", "Ouest", "Sud", "Sud-Ouest")
+pop_est <- c(1340000, 4400000, 870000, 4200000, 3400000,
+             2700000, 2000000, 2000000, 800000, 1700000)
+
+length(regions)
+sum(pop_est)
+mean(pop_est)
+```
+
+**À essayer :** changez les valeurs de `pop_est`, ou ajoutez une 11ᵉ région imaginaire — puis relancez.
+
+## 2. Vecteurs et opérations vectorielles
+
+```{webr}
+# Conversion en millions
+pop_millions <- pop_est / 1e6
+round(pop_millions, 2)
+
+# Régions de plus de 3 millions
+regions[pop_est > 3e6]
+```
+
+## 3. Tibble : la table de données moderne
+
+```{webr}
+library(tibble)
+library(dplyr)
+
+tbl_cmr <- tibble(
+  region   = regions,
+  pop_2019 = pop_est,
+  capitale = c("Ngaoundéré", "Yaoundé", "Bertoua", "Maroua", "Douala",
+               "Garoua", "Bamenda", "Bafoussam", "Ebolowa", "Buea")
+)
+
+tbl_cmr
+```
+
+## 4. Les verbes dplyr en pratique démographique
+
+```{webr}
+tbl_cmr |>
+  mutate(
+    pop_millions = pop_2019 / 1e6,
+    classe = case_when(
+      pop_2019 < 1e6 ~ "Moins de 1M",
+      pop_2019 < 3e6 ~ "1 à 3M",
+      TRUE           ~ "Plus de 3M"
+    )
+  ) |>
+  arrange(desc(pop_2019))
+```
+
+```{webr}
+tbl_cmr |>
+  filter(pop_2019 > 3e6) |>
+  select(region, capitale, pop_2019)
+```
+
+## 5. Un mini-microfichier d'enquête simulé
+
+```{webr}
+set.seed(2026)
+n <- 5000
+hh <- tibble(
+  region      = sample(regions, n, replace = TRUE, prob = pop_est / sum(pop_est)),
+  milieu      = sample(c("Urbain","Rural"), n, replace = TRUE, prob = c(0.57, 0.43)),
+  taille_mng  = pmax(1, round(rpois(n, lambda = 5.1))),
+  electricite = sample(c("Oui","Non"), n, replace = TRUE, prob = c(0.61, 0.39))
+)
+head(hh)
+```
+
+```{webr}
+hh |>
+  group_by(region) |>
+  summarise(
+    n               = n(),
+    taille_moyenne  = round(mean(taille_mng), 2),
+    pct_urbain      = round(mean(milieu == "Urbain") * 100, 1),
+    pct_electricite = round(mean(electricite == "Oui") * 100, 1)
+  ) |>
+  arrange(desc(pct_electricite))
+```
+
+::: {.takeaway}
+**À retenir.** `filter` filtre les lignes, `select` choisit les colonnes, `mutate` crée une variable, `group_by + summarise` agrège. Quatre verbes pour 80 % de l'analyse de données.
+:::
+
+## 6. Première carte avec sf
+
+```{webr}
+#| edit: false
+library(sf)
+library(ggplot2)
+
+# Polygones simplifiés des 10 régions (forme symbolique pour l'exemple)
+# Dans la version complète, on charge GADM via fetch_gadm_cameroon()
+cmr_demo <- st_sf(
+  region = regions,
+  geometry = st_sfc(
+    lapply(seq_along(regions), function(i) {
+      x0 <- (i %% 4) * 2
+      y0 <- (i %/% 4) * 2
+      st_polygon(list(matrix(c(x0,y0, x0+1.8,y0, x0+1.8,y0+1.8, x0,y0+1.8, x0,y0),
+                             ncol = 2, byrow = TRUE)))
+    }),
+    crs = 4326
+  ),
+  pop_2019 = pop_est
+)
+
+ggplot(cmr_demo) +
+  geom_sf(aes(fill = pop_2019 / 1e6), color = "white") +
+  geom_sf_text(aes(label = region), size = 2.6) +
+  scale_fill_viridis_c(option = "B", name = "Pop (M)") +
+  labs(title = "Exemple symbolique — pas la vraie carte du Cameroun",
+       subtitle = "(GADM réel chargé dans le projet RStudio complet)") +
+  theme_minimal()
+```
+
+## 7. Distance entre Yaoundé et Douala — démo CRS
+
+```{webr}
+library(sf)
+
+yaounde <- st_sfc(st_point(c(11.5021, 3.8480)), crs = 4326)
+douala  <- st_sfc(st_point(c(9.7679,  4.0511)), crs = 4326)
+
+# Distance correcte (en mètres) — st_distance gère la sphère
+dist_m <- st_distance(yaounde, douala)
+dist_m
+
+# Comparaison avec une distance "naïve" sur les degrés (FAUSSE)
+cat("Distance naïve (degrés - sans dimension):",
+    round(sqrt((11.5021-9.7679)^2 + (3.8480-4.0511)^2), 4), "\n")
+cat("Distance correcte (km):", round(as.numeric(dist_m) / 1000, 1), "km\n")
+```
+
+::: {.iford-callout}
+La distance Yaoundé–Douala sur la route est d'environ **240 km**. Le calcul « naïf » sur les degrés donne un nombre sans dimension — vérifiez par vous-même qu'il ne ressemble en rien aux 240 km attendus.
+:::
+
+## 8. Pour aller plus loin
+
+Le `.qmd` complet du jour (avec téléchargement réel des données GADM, jointures, choroplèthes publiables, exports PNG/PDF) est dans **`pedagogie/J01_intro_R_pensee_spatiale/demo.qmd`** — à ouvrir dans RStudio ou Posit Cloud.
+
+[← Accueil](../INDEX.md) · [J2 — sf + CRS →](../J02_sf_CRS_vecteurs/runtime.qmd)

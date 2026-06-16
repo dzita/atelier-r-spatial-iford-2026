@@ -1,0 +1,153 @@
+---
+title: "J1 — Exercice individuel : cartographier votre région d'origine"
+subtitle: "Atelier IFORD × GDSG · TP du soir, ~30 minutes"
+lang: fr
+format:
+  html:
+    toc: true
+    theme: cosmo
+  pdf:
+    toc: true
+---
+
+# Objectifs de l'exercice
+
+Mettre en pratique tout ce qu'on a vu en J1 sur **votre** terrain :
+
+1. Créer un projet RStudio personnel reproductible.
+2. Télécharger les limites administratives du Cameroun depuis GADM.
+3. Filtrer une région (celle où vous êtes né(e), travaillez, ou que vous voulez explorer).
+4. Reprojeter dans une CRS adaptée.
+5. Produire une carte des départements (ADM2) de cette région avec `tmap`.
+6. Exporter la carte en `.png` 300 dpi.
+
+## Pré-requis
+
+- L'environnement R complet installé (voir `environnement_technique/guide_installation.md`).
+- Le projet RStudio `atelier-r-spatial-iford-2026.Rproj` ouvert (ou un projet personnel séparé si vous préférez).
+
+# Énoncé pas à pas
+
+## Étape 1 — Choisir votre région
+
+Choisissez **une** des 10 régions du Cameroun. Quelques suggestions :
+
+- **Centre** (Yaoundé) — densité urbaine, beaucoup d'arrondissements.
+- **Extrême-Nord** (Maroua, Mora) — gradient nord-sud, site pilote RGPH 4.
+- **Sud-Ouest** (Buea) — relief volcanique (Mont Cameroun), site pilote RGPH 4.
+- **Adamaoua** (Ngaoundéré) — grand département, faible densité.
+
+Notez votre choix.
+
+## Étape 2 — Charger les ADM3 du Cameroun
+
+Dans une console R (du projet de l'atelier) :
+
+```r
+library(here)
+library(sf)
+library(dplyr)
+library(tmap)
+
+source(here("pedagogie", "_commons", "helpers", "fetch_data.R"))
+
+# Charge GADM CMR niveau 3 (arrondissements)
+adm3 <- read_sf(fetch_gadm_cameroon(3))
+nrow(adm3)
+```
+
+> 💡 Si le téléchargement échoue (wifi instable), le helper essaie un fichier local. Si c'est aussi absent, vous verrez un message clair pour télécharger manuellement.
+
+## Étape 3 — Filtrer votre région
+
+Remplacez `"Votre Région"` par le nom exact (attention aux accents et tirets) :
+
+```r
+ma_region <- adm3 |>
+  filter(NAME_1 == "Votre Région")
+
+nrow(ma_region)
+```
+
+> ⚠ Si `nrow(ma_region) == 0`, c'est une erreur de libellé. Listez les valeurs disponibles avec `unique(adm3$NAME_1)` pour vérifier l'orthographe exacte.
+
+## Étape 4 — Reprojeter
+
+Reprojetez en UTM 32N (EPSG:32632), adapté à l'ouest et au sud du Cameroun, ou Lambert Cameroun (EPSG:3119) pour un calcul national plus uniforme :
+
+```r
+ma_region_utm <- st_transform(ma_region, 32632)
+
+# Calculer la superficie de chaque arrondissement (en km²)
+ma_region_utm$superficie_km2 <- as.numeric(st_area(ma_region_utm)) / 1e6
+
+ma_region_utm |>
+  st_drop_geometry() |>
+  select(NAME_2, NAME_3, superficie_km2) |>
+  arrange(desc(superficie_km2)) |>
+  head(10)
+```
+
+## Étape 5 — Produire la carte `tmap`
+
+```r
+source(here("pedagogie", "_commons", "helpers", "theme_iford.R"))
+setup_tmap_iford()
+
+ma_carte <- tm_shape(ma_region_utm) +
+  tm_polygons(
+    fill = "superficie_km2",
+    fill.scale  = tm_scale_intervals(style = "jenks", n = 5,
+                                     values = "brewer.yl_or_rd"),
+    fill.legend = tm_legend("Superficie (km²)")
+  ) +
+  tm_text("NAME_3", size = 0.5, col = "grey20") +
+  tm_compass(position = c("right", "top")) +
+  tm_scalebar(position = c("left", "bottom")) +
+  tm_title("Arrondissements de la région (votre choix)") +
+  tm_credits("Source : GADM v4.1 · Atelier IFORD × GDSG 2026",
+             position = c("right","bottom"))
+
+ma_carte
+```
+
+## Étape 6 — Exporter en PNG 300 dpi
+
+```r
+# Créer le dossier de sortie s'il n'existe pas
+dir.create(here("pedagogie", "J01_intro_R_pensee_spatiale", "outputs"),
+           showWarnings = FALSE, recursive = TRUE)
+
+tmap_save(
+  ma_carte,
+  filename = here("pedagogie", "J01_intro_R_pensee_spatiale", "outputs",
+                  "carte_ma_region.png"),
+  dpi = 300, width = 8, height = 7
+)
+```
+
+Vérifiez que le `.png` apparaît bien dans le dossier `outputs/`.
+
+# Critères de réussite
+
+Vous avez réussi si :
+
+- ☐ Vous avez chargé GADM ADM3 sans erreur.
+- ☐ Le filtre `filter(NAME_1 == "...")` a retourné le bon nombre d'arrondissements.
+- ☐ La superficie totale de la région correspond à ce que vous attendiez (ordre de grandeur).
+- ☐ La carte affiche les arrondissements avec leur nom et une légende lisible.
+- ☐ Le `.png` exporté est lisible et la flèche du nord + l'échelle sont présentes.
+
+# Pour aller plus loin (optionnel)
+
+- Ajoutez le chef-lieu de votre région sous forme de point (`st_point`, `st_sfc`, `crs=4326`, `st_transform(32632)`).
+- Calculez la distance entre votre chef-lieu de région et **Yaoundé**.
+- Comparez à la distance routière réelle (Google Maps) — il y aura un écart, pourquoi ?
+
+# Si vous bloquez
+
+- Relisez la section correspondante dans `demo.qmd`.
+- Demandez à un voisin (l'apprentissage par les pairs est précieux).
+- Demain matin avant la première session, le corrigé sera distribué (`corrige.qmd`).
+
+Bon TP !

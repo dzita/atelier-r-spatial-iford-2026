@@ -1,0 +1,51 @@
+/*-- scss:defaults --*/
+
+$primary:        #0F4C81;
+$secondary:      #C9A227;
+$accent:         #A8201A;
+$body-bg:        #FAFAFA;
+$body-color:     #1A1A1A;
+$link-color:     $primary;
+$navbar-bg:      $primary;
+
+$font-family-sans-serif: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+$font-family-monospace:  "JetBrains Mono", "Fira Code", Consolas, monospace;
+
+/*-- scss:rules --*/
+
+.iford-callout {
+  border-left: 4px solid #{$secondary};
+  padding: 0.6rem 1rem;
+  background: rgba(201, 162, 39, 0.08);
+  margin: 1rem 0;
+}
+
+.code-output {
+  font-family: $font-family-monospace;
+  font-size: 0.9rem;
+  background: #1e1e1e;
+  color: #f8f8f2;
+  padding: 0.8rem;
+  border-radius: 4px;
+}
+
+.takeaway {
+  background: linear-gradient(90deg, rgba(15, 76, 129, 0.06) 0%, rgba(15, 76, 129, 0) 100%);
+  border-left: 4px solid #{$primary};
+  padding: 0.8rem 1rem;
+  margin: 1.5rem 0;
+  font-size: 1.02rem;
+}
+
+h1, h2, h3 {
+  color: #{$primary};
+}
+
+h2 {
+  border-bottom: 2px solid #{$secondary};
+  padding-bottom: 0.3rem;
+}
+
+.navbar-brand img {
+  height: 28px;
+}

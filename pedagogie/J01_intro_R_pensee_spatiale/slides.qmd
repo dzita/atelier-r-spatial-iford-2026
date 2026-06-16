@@ -1,0 +1,480 @@
+---
+title: "J1 — Introduction à R et à la pensée spatiale"
+subtitle: "Atelier régional IFORD × GDSG · Yaoundé · 27 juillet 2026"
+author: "Ramesesse Dzita · Geospatial Data Science Group"
+date: "2026-07-27"
+---
+
+## Bienvenue à l'IFORD
+
+::: {.columns}
+::: {.column width="60%"}
+**Atelier régional R-Spatial**
+
+10 jours · 27 juillet – 7 août 2026
+
+Première collaboration officielle entre :
+
+- **IFORD** — Institut de Formation et de Recherche Démographiques
+- **GDSG** — Geospatial Data Science Group de l'IFORD
+:::
+::: {.column width="40%"}
+**Niveau**
+
+Débutant en R · Débutant en SIG
+
+**Public**
+
+Statisticiens INS, démographes, techniciens de ministères, ONG, organisations internationales — Afrique francophone et anglophone.
+:::
+:::
+
+## Tour de table
+
+Chacun(e), en 2 minutes :
+
+1. Nom, institution, pays.
+2. Domaine de travail principal.
+3. Expérience préalable avec R, avec un SIG (QGIS, ArcGIS, SAS Mapping…).
+4. **Une attente concrète** pour les 10 jours.
+
+::: {.takeaway}
+J'ai besoin de savoir où chacun part pour calibrer le rythme.
+:::
+
+## Le programme à 10 000 m
+
+| Phase | Jours | Thème |
+|---|---|---|
+| **Fondations** | J1-J3 | R, sf, CRS, cartographie |
+| **Analyse appliquée** | J4-J7 | Raster, jointures, statistiques, télédétection |
+| **Population & restitution** | J8-J10 | Top-down, bottom-up, mini-projet |
+
+## J1 — Objectifs (8h)
+
+À la fin de la journée, chaque participant doit pouvoir :
+
+1. Naviguer dans RStudio et créer un projet reproductible.
+2. Manipuler un `data.frame` d'enquête démographique camerounaise.
+3. Comprendre ce qui distingue un `data.frame` d'un objet **spatial**.
+4. Charger les limites administratives du Cameroun.
+5. Produire une **première carte propre**.
+6. Énoncer ce qu'est un **CRS** et pourquoi le confondre coûte des kilomètres.
+
+# 1. Pourquoi R ? {data-state="section-break"}
+
+## R vs Excel vs Stata vs SPSS
+
+::: {.columns}
+::: {.column width="50%"}
+**Excel** — saisie + visualisation rapide.
+
+→ Pas reproductible. Pas d'audit possible.
+
+**Stata / SPSS** — analyse statistique solide.
+
+→ Licences chères. Écosystème géospatial pauvre.
+:::
+::: {.column width="50%"}
+**R**
+
+- Gratuit, open source, déployable partout.
+- Scriptable → reproductible → auditable.
+- Riche en **démographie** et **géospatial** : `sf`, `terra`, `tmap`, `spdep`, `rdhs`, `wopr`.
+- Adopté par **WorldPop, DHS Program, INED, INSEE, INSPQ**.
+:::
+:::
+
+::: {.takeaway}
+L'idée n'est pas de remplacer Stata. C'est d'**augmenter** votre boîte à outils d'une dimension spatiale.
+:::
+
+## R + RStudio en 30 secondes
+
+- **R** = le moteur (langage + interpréteur).
+- **RStudio** = l'éditeur (IDE) qui rend R utilisable.
+- **Quarto** = le système de publication scientifique (successeur R Markdown).
+- **Git** = la gestion de versions.
+
+Ces quatre logiciels seront vos compagnons des 10 jours.
+
+# 2. R comme calculatrice {data-state="section-break"}
+
+## Premier code
+
+```{r}
+#| echo: true
+# Les 10 régions du Cameroun
+regions <- c("Adamaoua", "Centre", "Est", "Extrême-Nord", "Littoral",
+             "Nord", "Nord-Ouest", "Ouest", "Sud", "Sud-Ouest")
+pop_est <- c(1340000, 4400000, 870000, 4200000, 3400000,
+             2700000, 2000000, 2000000, 800000, 1700000)
+
+length(regions); sum(pop_est); mean(pop_est)
+```
+
+## Opérations vectorielles
+
+```{r}
+#| echo: true
+pop_millions <- pop_est / 1e6
+round(pop_millions, 2)
+
+# Filtrer
+regions[pop_est > 3e6]
+```
+
+R fait par défaut des **opérations vectorielles** — pas besoin de boucle pour appliquer une opération à 10 ou 10 millions d'éléments.
+
+## Types : numeric, character, logical
+
+```{r}
+#| echo: true
+class(regions)
+class(pop_est)
+class(pop_est > 3e6)
+
+# Coercion silencieuse à éviter
+mix <- c(1, 2, "trois")
+class(mix)
+```
+
+::: {.warning-box}
+**Piège :** un seul `character` dans un vecteur numérique → R convertit **tout** en chaîne. Bug fréquent à la lecture de CSV mal formatés.
+:::
+
+# 3. data.frame et tibble {data-state="section-break"}
+
+## La table de données
+
+```{r}
+#| echo: true
+library(tibble)
+library(dplyr)
+
+tbl_cmr <- tibble(
+  region   = regions,
+  pop_2019 = pop_est,
+  capitale = c("Ngaoundéré", "Yaoundé", "Bertoua", "Maroua", "Douala",
+               "Garoua", "Bamenda", "Bafoussam", "Ebolowa", "Buea")
+)
+tbl_cmr
+```
+
+## Les 5 verbes dplyr qui couvrent 80 % des cas
+
+```{r}
+#| echo: true
+tbl_cmr |>
+  filter(pop_2019 > 3e6) |>
+  arrange(desc(pop_2019)) |>
+  select(region, capitale, pop_2019)
+```
+
+Lecture orale : « prendre `tbl_cmr`, **puis** filtrer les régions > 3M, **puis** trier par population décroissante, **puis** sélectionner ces colonnes ».
+
+## `mutate` — créer une variable
+
+```{r}
+#| echo: true
+tbl_cmr <- tbl_cmr |>
+  mutate(
+    pop_millions = pop_2019 / 1e6,
+    classe = case_when(
+      pop_2019 < 1e6 ~ "Moins de 1M",
+      pop_2019 < 3e6 ~ "1 à 3M",
+      TRUE           ~ "Plus de 3M"
+    )
+  )
+tbl_cmr
+```
+
+## `group_by + summarise` — agréger
+
+```{r}
+#| echo: true
+tbl_cmr |>
+  group_by(classe) |>
+  summarise(
+    n_regions = n(),
+    pop_totale = sum(pop_2019),
+    pop_moyenne = mean(pop_2019)
+  )
+```
+
+## Le pipe `|>` se lit « puis »
+
+```r
+data |>
+  filter(...) |>
+  mutate(...) |>
+  group_by(...) |>
+  summarise(...)
+```
+
+::: {.takeaway}
+Une fois cette grammaire intériorisée, vous lisez n'importe quel script de démographe — DHS, WorldPop, INED — en quelques secondes.
+:::
+
+# 4. Projet RStudio et reproductibilité {data-state="section-break"}
+
+## Pourquoi un « projet » ?
+
+Sans projet, le répertoire de travail R dépend de comment vous avez ouvert RStudio. Un script qui marche chez vous **échoue chez votre collègue** dès la ligne :
+
+```r
+read.csv("C:/Users/Ramesesse/Bureau/fichier.csv")
+```
+
+Le projet RStudio + `here::here()` règle ça.
+
+## `here` rend les chemins universels
+
+```{r}
+#| echo: true
+library(here)
+here()                               # racine du projet
+here("data", "monfichier.csv")       # chemin OS-indépendant
+```
+
+::: {.warning-box}
+**Règle absolue** des 10 jours : aucun chemin absolu dans vos scripts. Si je vois `"C:/..."`, je hurle.
+:::
+
+## Lire une enquête : EDS-MICS Cameroun 2018
+
+```r
+library(haven)
+hh <- read_dta(here("data", "DHS_MICS", "CMHR71FL.DTA"))
+dim(hh); names(hh)[1:20]
+```
+
+`haven` lit Stata `.dta`, SPSS `.sav`, SAS `.sas7bdat` — les trois formats que vous croisez dans les Instituts Nationaux de Statistique.
+
+## Premier réflexe : `skim`
+
+```r
+library(skimr)
+skim(hh)
+```
+
+`skimr::skim()` en une commande : types des variables, valeurs manquantes, distributions.
+
+À chaque nouveau fichier, ça doit être votre premier geste.
+
+## Indicateurs régionaux EDS — démo
+
+```{r}
+#| echo: true
+#| eval: false
+hh |>
+  group_by(region) |>
+  summarise(
+    n_menages       = n(),
+    taille_moyenne  = mean(taille_mng),
+    pct_urbain      = mean(milieu == "Urbain") * 100,
+    pct_electricite = mean(electricite == "Oui") * 100
+  ) |>
+  arrange(desc(pct_electricite))
+```
+
+::: {.warning-box}
+**ATTENTION** — sur une vraie EDS-MICS, ces calculs **doivent être pondérés** par le poids ménage et tenir compte du plan de sondage. On y revient J5.
+:::
+
+# 5. Qu'est-ce qu'un objet spatial ? {data-state="section-break"}
+
+## L'intuition
+
+Un `data.frame` classique = lignes (observations) × colonnes (variables).
+
+Un objet **spatial** = `data.frame` + **une colonne de géométries**.
+
+Cette colonne sait comment se positionner sur la surface de la Terre.
+
+## Le package `sf` en 2026
+
+Standard absolu pour vectoriel dans R depuis 2018.
+
+```{r}
+#| echo: true
+library(sf)
+sf_version()
+sf_extSoftVersion()
+```
+
+`sf` repose sur trois bibliothèques C/C++ :
+
+- **GDAL** — lit/écrit les formats SIG.
+- **GEOS** — opérations géométriques.
+- **PROJ** — projections.
+
+Ces trois bibliothèques sont les fondations de **tout SIG sérieux** (QGIS, ArcGIS, PostGIS).
+
+## Charger les limites administratives
+
+```r
+library(sf)
+adm0 <- read_sf("gadm41_CMR_0.json")  # frontière nationale
+adm1 <- read_sf("gadm41_CMR_1.json")  # 10 régions
+adm3 <- read_sf("gadm41_CMR_3.json")  # ~360 arrondissements
+```
+
+Source : <https://gadm.org/download_country.html> · Licence : libre pour usage académique.
+
+## Anatomie d'un objet `sf`
+
+```r
+print(adm1)        # affichage standardisé : géom + CRS + attributs
+class(adm1)        # "sf" + "data.frame"
+st_bbox(adm1)      # emprise géographique
+st_crs(adm1)$epsg  # code EPSG du CRS
+```
+
+`adm1` est **à la fois** un data.frame (dplyr y fonctionne) **et** un objet spatial.
+
+## Trois moteurs de carte en R
+
+| Moteur | Quand l'utiliser |
+|---|---|
+| `plot()` base R | Vérification rapide |
+| `ggplot2` + `geom_sf` | Cartes scientifiques personnalisables |
+| `tmap` | Cartographie thématique publiable, mode statique + interactif |
+
+# 6. Le CRS — la séance qui sauve des kilomètres {data-state="section-break"}
+
+## Trois familles de CRS
+
+| Famille | EPSG | Usage |
+|---|---|---|
+| **WGS 84 géographique** | 4326 | Échange (GPS, GeoJSON). **Pas pour mesurer.** |
+| **UTM** | 32632 / 32633 (CMR) | Calcul de distances et surfaces en mètres |
+| **Web Mercator** | 3857 | Fonds OSM, Google Maps. **Jamais pour statistiques.** |
+
+## L'erreur n°1 du débutant
+
+```{r}
+#| echo: true
+yaounde <- st_sfc(st_point(c(11.5021, 3.8480)), crs = 4326)
+douala  <- st_sfc(st_point(c(9.7679,  4.0511)), crs = 4326)
+
+# Distance "naïve" sur degrés (FAUX)
+dist_naive <- sqrt((11.5021 - 9.7679)^2 + (3.8480 - 4.0511)^2)
+dist_naive   # nombre sans dimension
+
+# Distance correcte (en mètres, géodésique)
+st_distance(yaounde, douala)
+```
+
+## Reprojeter
+
+```r
+adm1_lambert <- st_transform(adm1, 3119)  # Lambert Cameroun
+adm1_lambert$superficie_km2 <- as.numeric(st_area(adm1_lambert)) / 1e6
+sum(adm1_lambert$superficie_km2)  # ~ 475 442 km² officiels
+```
+
+Le Cameroun officiel = **475 442 km²**. Si vous obtenez plus de 1 % d'écart, vous avez choisi la mauvaise projection.
+
+::: {.takeaway}
+- **`st_set_crs()`** → étiquette (utile si .prj manquant).
+- **`st_transform()`** → conversion réelle.
+
+**Confondre les deux** est l'erreur n°1 en SIG. Et elle est silencieuse.
+:::
+
+# 7. Première vraie carte {data-state="section-break"}
+
+## Densité par région
+
+```r
+pop_tbl <- tibble(NAME_1 = regions, pop_2019 = pop_est)
+
+adm1_pop <- adm1_lambert |>
+  left_join(pop_tbl, by = "NAME_1") |>
+  mutate(densite = pop_2019 / superficie_km2)
+```
+
+## Carte tmap publiable
+
+```r
+tm_shape(adm1_pop) +
+  tm_polygons(
+    fill = "densite",
+    fill.scale = tm_scale_intervals(style = "jenks", n = 5,
+                                    values = "brewer.yl_or_rd"),
+    fill.legend = tm_legend("Densité (hab/km²)")
+  ) +
+  tm_text("NAME_1", size = 0.6) +
+  tm_title("Densité de population — Cameroun 2019") +
+  tm_credits("Source : BUCREP estim., GADM v4.1")
+```
+
+## Lecture critique de la carte
+
+Le **Littoral** et l'**Ouest** dominent en densité.
+
+Questions à poser **en salle** :
+
+- Quelles estimations officielles utilise-t-on ?
+- WorldPop top-down dit-il la même chose ?
+- Le RGPH 4 va-t-il les confirmer ?
+
+C'est exactement ce qu'on explorera J7 à J10.
+
+# 8. Wrap-up {data-state="section-break"}
+
+## Ce qu'on a vu
+
+::: {.columns}
+::: {.column width="50%"}
+**R essentials**
+
+- Vecteurs, tibble
+- Indexation, dplyr
+- Pipes `|>`
+- Lecture d'enquête
+:::
+::: {.column width="50%"}
+**Spatial**
+
+- Anatomie `sf`
+- CRS : 4326 / 32632 / 3119
+- Reprojection
+- Première carte
+:::
+:::
+
+## Devoir individuel (30 min)
+
+1. Créer un projet RStudio `tp_personnel`.
+2. Télécharger les ADM3 du Cameroun via GADM.
+3. Filtrer la **région d'origine**.
+4. Produire une carte des départements avec `tmap`.
+5. Sauver en `.png` 300 dpi avec `tmap_save()`.
+
+## Demain (J2)
+
+On entre dans `sf` en profondeur :
+
+- Lecture/écriture (shp, gpkg, geojson, kml).
+- CRS et reprojection appliquées.
+- Opérations sf : `st_buffer`, `st_union`, `st_intersection`, `st_centroid`.
+- Dissolution polygones ADM3 → ADM1.
+- Validation et réparation géométries.
+
+## Sources
+
+| Donnée | Source | Licence |
+|---|---|---|
+| GADM v4.1 | gadm.org | Académique |
+| ECAM 4 | INS Cameroun | INS |
+| EDS-MICS 2018 | dhsprogram.com | DHS Program |
+
+**Références :** Pebesma 2018 (sf) · Tatem 2017 (WorldPop) · BUCREP RGPH 4.
+
+## Questions ?
+
+À ce stade, **arrêtons-nous** et vérifions qu'on est tous sur la même longueur d'onde avant J2.
+
+`ramondzita@gmail.com`

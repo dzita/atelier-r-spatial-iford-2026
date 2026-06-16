@@ -1,0 +1,71 @@
+project:
+  type: website
+  output-dir: _site
+  render:
+    - "INDEX.md"
+    - "README.md"
+    - "J*/runtime.qmd"
+
+website:
+  title: "Runtime IFORD × GDSG 2026"
+  description: "Atelier R-spatial — code exécutable dans le navigateur (WebR)"
+  navbar:
+    background: "#0F4C81"
+    left:
+      - href: INDEX.md
+        text: "Accueil"
+      - text: "Modules"
+        menu:
+          - href: J01_intro_R_pensee_spatiale/runtime.qmd
+            text: "J1 · Intro R + pensée spatiale"
+          - href: J02_sf_CRS_vecteurs/runtime.qmd
+            text: "J2 · sf + CRS"
+          - href: J03_cartographie_tmap_ggplot/runtime.qmd
+            text: "J3 · Cartographie"
+          - href: J04_terra_raster/runtime.qmd
+            text: "J4 · Raster terra"
+          - href: J05_jointures_spatiales_demo/runtime.qmd
+            text: "J5 · Jointures + EDS-MICS"
+          - href: J06_autocorrelation_moran_lisa/runtime.qmd
+            text: "J6 · Moran / LISA"
+          - href: J07_KDE_dasymetrie_teledetection/runtime.qmd
+            text: "J7 · KDE / dasymétrie"
+          - href: J08_population_top_down/runtime.qmd
+            text: "J8 · Top-down"
+          - href: J09_population_bottom_up/runtime.qmd
+            text: "J9 · Bottom-up"
+          - href: J10_mini_projet_synthese/runtime.qmd
+            text: "J10 · Mini-projet"
+
+format:
+  live-html:
+    toc: true
+    toc-depth: 2
+    theme:
+      - cosmo
+      - _commons/styles/runtime_quartolive.scss
+    code-tools: true
+    code-link: true
+
+webr:
+  packages:
+    - dplyr
+    - ggplot2
+    - sf
+    - tibble
+    - tidyr
+    - readr
+    - stringr
+    - purrr
+    - janitor
+    - tmap
+    - classInt
+    - spdep
+  render-df: gt-interactive
+  cell-options:
+    autorun: false
+    fig-width: 7
+    fig-height: 5
+
+filters:
+  - live

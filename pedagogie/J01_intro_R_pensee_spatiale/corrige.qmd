@@ -1,0 +1,161 @@
+---
+title: "J1 — Corrigé du TP : cartographier votre région d'origine"
+subtitle: "Atelier IFORD × GDSG · Distribué J2 matin"
+lang: fr
+format:
+  html:
+    toc: true
+    theme: cosmo
+execute:
+  echo: true
+  warning: false
+  message: false
+bibliography: ../_commons/helpers/citations.bib
+---
+
+# Avant de regarder le corrigé
+
+Si vous n'avez pas encore tenté l'exercice : **fermez ce fichier et lancez-vous d'abord**. Le corrigé n'a de valeur que comparé à votre propre tentative.
+
+# Solution complète — exemple sur l'Extrême-Nord
+
+L'Extrême-Nord est intéressant pédagogiquement : c'est la région la plus peuplée du Cameroun (~4.2 millions d'habitants), elle abrite **Mora** (site pilote RGPH 4), et son relief presque plat permet des cartes nettes.
+
+```{r}
+#| label: setup
+library(here)
+library(sf)
+library(dplyr)
+library(tmap)
+
+source(here("pedagogie", "_commons", "helpers", "fetch_data.R"))
+source(here("pedagogie", "_commons", "helpers", "theme_iford.R"))
+setup_tmap_iford()
+```
+
+## 1. Charger les ADM3 du Cameroun
+
+```{r}
+#| label: load-adm3
+adm3 <- read_sf(fetch_gadm_cameroon(3))
+nrow(adm3)
+```
+
+`adm3` contient typiquement ~360 arrondissements pour le Cameroun.
+
+## 2. Filtrer l'Extrême-Nord
+
+```{r}
+#| label: filter-en
+extreme_nord <- adm3 |>
+  filter(NAME_1 == "Extrême-Nord")
+
+nrow(extreme_nord)
+```
+
+L'Extrême-Nord doit contenir environ 47 arrondissements répartis dans 6 départements (Diamaré, Logone-et-Chari, Mayo-Danay, Mayo-Kani, Mayo-Sava, Mayo-Tsanaga).
+
+## 3. Reprojeter et calculer les superficies
+
+```{r}
+#| label: reproject
+extreme_nord_utm <- st_transform(extreme_nord, 32632)
+extreme_nord_utm$superficie_km2 <- as.numeric(st_area(extreme_nord_utm)) / 1e6
+
+# Vérifier : la somme doit être proche de la superficie officielle (~34 263 km²)
+sum(extreme_nord_utm$superficie_km2) |> round()
+```
+
+Si vous obtenez ~34 000 km², c'est cohérent avec le chiffre officiel BUCREP.
+
+## 4. Inspection rapide
+
+```{r}
+#| label: top10
+extreme_nord_utm |>
+  st_drop_geometry() |>
+  select(NAME_2, NAME_3, superficie_km2) |>
+  arrange(desc(superficie_km2)) |>
+  head(10)
+```
+
+Les plus grands arrondissements (Kousseri, Makary…) sont en bordure du Lac Tchad et confinent au désert sahélien.
+
+## 5. Carte choroplèthe `tmap`
+
+```{r}
+#| label: carte
+#| fig-width: 9
+#| fig-height: 8
+carte_en <- tm_shape(extreme_nord_utm) +
+  tm_polygons(
+    fill        = "superficie_km2",
+    fill.scale  = tm_scale_intervals(style = "jenks", n = 5,
+                                     values = "brewer.yl_or_rd"),
+    fill.legend = tm_legend("Superficie\n(km²)"),
+    col         = "white",
+    lwd         = 0.3
+  ) +
+  tm_text("NAME_3", size = 0.4, col = "grey20") +
+  tm_compass(type = "arrow", position = c("right", "top"), size = 1.2) +
+  tm_scalebar(position = c("left", "bottom")) +
+  tm_title("Arrondissements de l'Extrême-Nord — Cameroun", size = 1.0) +
+  tm_credits("Source : GADM v4.1 · Atelier IFORD × GDSG 2026",
+             position = c("right","bottom"), size = 0.5)
+
+carte_en
+```
+
+## 6. Export PNG 300 dpi
+
+```{r}
+#| label: export
+#| eval: false
+dir.create(here("pedagogie", "J01_intro_R_pensee_spatiale", "outputs"),
+           showWarnings = FALSE, recursive = TRUE)
+
+tmap_save(
+  carte_en,
+  filename = here("pedagogie", "J01_intro_R_pensee_spatiale", "outputs",
+                  "carte_extreme_nord.png"),
+  dpi = 300, width = 9, height = 8
+)
+```
+
+# Pour aller plus loin — le bonus
+
+## Ajouter Maroua (chef-lieu) et calculer la distance à Yaoundé
+
+```{r}
+#| label: bonus
+# Coordonnées approximatives
+maroua  <- st_sfc(st_point(c(14.3158, 10.5910)), crs = 4326) |> st_transform(32632)
+yaounde <- st_sfc(st_point(c(11.5021,  3.8480)), crs = 4326) |> st_transform(32632)
+
+distance_m  <- st_distance(maroua, yaounde)
+distance_km <- as.numeric(distance_m) / 1000
+round(distance_km, 1)
+```
+
+La distance **à vol d'oiseau** est de ~764 km. La route Yaoundé → Maroua mesure plus de **920 km** (via Garoua), soit 20 % de plus à cause des détours du relief et du réseau routier.
+
+C'est une leçon clé pour la suite de l'atelier : **les distances "spatiales" ne sont pas toujours pertinentes pour les politiques publiques**, qui doivent prendre en compte l'accessibilité réelle (temps de transport, infrastructure). On y reviendra **J7** quand on parlera de KDE et d'aires d'attraction.
+
+# Erreurs fréquentes
+
+| Erreur | Cause | Remède |
+|---|---|---|
+| `nrow(ma_region) == 0` | Mauvais libellé : « Extreme-Nord » sans accent ou « Extrême Nord » sans tiret | `unique(adm3$NAME_1)` pour voir l'orthographe officielle |
+| Distance Yaoundé–Douala = 1.985... (sans unité) | Distance calculée sur des degrés au lieu de mètres | Toujours `st_transform()` vers une CRS projetée avant `st_distance()` |
+| `tmap_save()` plante avec « cannot find file » | Le dossier `outputs/` n'existe pas | `dir.create(..., recursive = TRUE)` avant le `tmap_save` |
+| Texte dans la carte non lisible / chevauchements | Trop d'arrondissements pour la taille | Réduire `size` dans `tm_text()` ou utiliser `tm_text("NAME_3", size = 0.3, ymod = -0.5)` |
+
+# Préparation pour J2
+
+Demain on entre dans **`sf` en profondeur** : lecture/écriture multi-format, opérations vectorielles (buffer, intersection, union), dissolution ADM3 → ADM1, validation des géométries, Voronoï des chefs-lieux.
+
+Lisez le `README.md` de J2 dans `pedagogie/J02_sf_CRS_vecteurs/` ce soir si vous voulez prendre une longueur d'avance.
+
+# Références
+
+Voir `../_commons/helpers/citations.bib` : Pebesma 2018, BUCREP RGPH 4.
