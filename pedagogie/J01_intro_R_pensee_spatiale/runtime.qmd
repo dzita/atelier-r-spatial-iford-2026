@@ -1,6 +1,7 @@
 ---
 title: "J1 — Intro R + pensée spatiale"
 subtitle: "Code R exécutable dans le navigateur"
+engine: knitr
 ---
 
 ::: {.iford-callout}

@@ -47,5 +47,26 @@ h2 {
 }
 
 .navbar-brand img {
-  height: 28px;
+  height: 36px;
+  width: auto;
+  margin-right: 0.6rem;
+}
+
+// Filigrane IFORD : sceau bleu en bas a droite, opacite faible.
+// position fixed + pointer-events none + z-index -1 = jamais d'interference
+// avec les clics, le scroll, ou la lisibilite du code.
+body::before {
+  content: "";
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 140px;
+  height: 140px;
+  background-image: url("/_commons/img/logo-iford.jpg");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.12;
+  pointer-events: none;
+  z-index: -1;
 }

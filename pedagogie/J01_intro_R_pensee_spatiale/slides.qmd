@@ -3,7 +3,27 @@ title: "J1 — Introduction à R et à la pensée spatiale"
 subtitle: "Atelier régional IFORD × GDSG · Yaoundé · 27 juillet 2026"
 author: "Ramesesse Dzita · Geospatial Data Science Group"
 date: "2026-07-27"
+format:
+  revealjs:
+    theme:
+      - default
+      - ../_commons/styles/slides_revealjs.scss
+    slide-number: c/t
+    transition: fade
+    progress: true
+    chalkboard: true
+    footer: "IFORD × GDSG 2026 — J1 · Intro R + pensée spatiale"
+    incremental: false
+    code-fold: false
+    code-line-numbers: false
+execute:
+  echo: false
+  warning: false
+  message: false
+bibliography: ../_commons/helpers/citations.bib
 ---
+
+# Partie 0 — Cadre de la journée {data-state="section-break"}
 
 ## Bienvenue à l'IFORD
 
@@ -19,502 +39,688 @@ Première collaboration officielle entre :
 - **GDSG** — Geospatial Data Science Group de l'IFORD
 :::
 ::: {.column width="40%"}
-**Niveau**
+**Public attendu**
 
-Débutant en R · Débutant en SIG
+Statisticiens d'Instituts Nationaux de Statistique, démographes IFORD, techniciens de ministères sectoriels, chargé·es d'études d'ONG et d'organisations internationales — Afrique francophone et anglophone.
 
-**Public**
-
-Statisticiens INS, démographes, techniciens de ministères, ONG, organisations internationales — Afrique francophone et anglophone.
+**Niveau visé** : opérationnel sur un microfichier d'enquête + premières cartes thématiques propres en R.
 :::
 :::
 
-## Tour de table
+## Tour de table — 2 minutes par personne
 
-Chacun(e), en 2 minutes :
-
-1. Nom, institution, pays.
-2. Domaine de travail principal.
-3. Expérience préalable avec R, avec un SIG (QGIS, ArcGIS, SAS Mapping…).
+1. Nom, institution, pays, fonction.
+2. Domaine d'analyse principal (santé, éducation, environnement, recensement, suivi de programmes…).
+3. Expérience préalable : R, SIG (QGIS, ArcGIS, SAS Mapping…), Python.
 4. **Une attente concrète** pour les 10 jours.
 
 ::: {.takeaway}
-J'ai besoin de savoir où chacun part pour calibrer le rythme.
+Le rythme de la journée est calibré en temps réel sur ce tour de table. Sois précis sur ce que tu sais déjà faire et sur ce qui te bloque aujourd'hui.
 :::
 
-## Le programme à 10 000 m
+## Le programme à 10 000 mètres
 
-| Phase | Jours | Thème |
+| Phase | Jours | Thème dominant |
 |---|---|---|
-| **Fondations** | J1-J3 | R, sf, CRS, cartographie |
-| **Analyse appliquée** | J4-J7 | Raster, jointures, statistiques, télédétection |
-| **Population & restitution** | J8-J10 | Top-down, bottom-up, mini-projet |
+| **Fondations** | J1 – J3 | R, sf, CRS, cartographie thématique |
+| **Analyse appliquée** | J4 – J7 | Raster (`terra`), jointures spatiales, statistiques spatiales, télédétection |
+| **Population & restitution** | J8 – J10 | Estimation top-down, bottom-up, mini-projet de synthèse |
 
-## J1 — Objectifs (8h)
+L'arc narratif : on part d'un `data.frame` plat et on aboutit, en 10 jours, à des cartes de population pour micro-zones du Cameroun, méthodologiquement défendables face aux exigences du RGPH 4.
+
+# Partie 1 — Plan détaillé de J1 {data-state="section-break"}
+
+## Articulation de la journée (8 heures)
+
+| Bloc | Durée | Format |
+|---|---|---|
+| **Cadre + théorie 1** : R dans l'écosystème statistique | 0h45 | Slides |
+| **Théorie 2** : grammaire `tidy` et verbes `dplyr` | 0h45 | Slides |
+| **Démo 1 + exercices Q1–Q3** : R comme calculatrice, dplyr appliqué | 1h30 | `demo.qmd` + console + `exercice.qmd` |
+| **Théorie 3** : Simple Features, anatomie d'un objet `sf` | 0h45 | Slides |
+| **Démo 2** : charger les ADM Cameroun, première carte | 1h00 | `demo.qmd` |
+| **Théorie 4** : la pensée projective (CRS, cartographie critique) | 1h30 | Slides |
+| **Démo 3 + exercices Q4–Q5** : reprojection, Web Mercator, choroplèthe densité | 1h00 | `demo.qmd` + `exercice.qmd` |
+| **Cadrage RGPH 4 + synthèse + Q&A** | 0h45 | Slides |
+
+## Trois fichiers, trois rôles
+
+::: {.columns}
+::: {.column width="33%"}
+**`slides.qmd`** (ici)
+
+Plan, théorie, références, schémas conceptuels, cadrage méthodologique.
+
+**Zéro code à taper.**
+:::
+::: {.column width="33%"}
+**`demo.qmd`** + `demo.R`
+
+Code R commenté, exécuté en salle. Pour chaque commande : une explication courte avant.
+
+**Code écrit ensemble.**
+:::
+::: {.column width="33%"}
+**`exercice.qmd`** + `corrige.qmd`
+
+Q1–Q5 micro-exercices en séance (5–10 min chacun) + Q6 devoir individuel du soir.
+
+**Code que tu écris seul·e.**
+:::
+:::
+
+## Objectifs pédagogiques de J1
 
 À la fin de la journée, chaque participant doit pouvoir :
 
-1. Naviguer dans RStudio et créer un projet reproductible.
-2. Manipuler un `data.frame` d'enquête démographique camerounaise.
-3. Comprendre ce qui distingue un `data.frame` d'un objet **spatial**.
-4. Charger les limites administratives du Cameroun.
-5. Produire une **première carte propre**.
-6. Énoncer ce qu'est un **CRS** et pourquoi le confondre coûte des kilomètres.
+1. **Naviguer** dans RStudio et créer un projet reproductible avec `here`.
+2. **Manipuler** un microfichier d'enquête démographique camerounaise — vecteurs, indexation, filtres, agrégats — en utilisant les cinq verbes `dplyr`.
+3. **Distinguer** conceptuellement un `data.frame` d'un objet spatial `sf`.
+4. **Charger** les limites administratives du Cameroun (GADM v4.1) et produire une première carte propre.
+5. **Énoncer** ce qu'est un système de coordonnées de référence (CRS) et **expliquer** pourquoi le confondre cause des erreurs de plusieurs kilomètres voire dizaines de pourcents sur les superficies.
 
-## Trois fichiers de travail
+# Partie 2 — R dans l'écosystème {data-state="section-break"}
 
-Toute la journée tourne autour de trois fichiers dans `pedagogie/J01_intro_R_pensee_spatiale/` :
+## Quatre options pour analyser des données démographiques
 
-- **`demo.qmd`** — la démonstration linéaire que je vais dérouler.
-- **`exercice.qmd`** — les questions Q1 à Q6 à pratiquer (en séance + le soir).
-- **`corrige.qmd`** — les solutions commentées, à n'ouvrir **qu'après** votre tentative.
+| Outil | Force | Faiblesse | Coût |
+|---|---|---|---|
+| **Excel** | Saisie + visualisation rapide | Non reproductible, traçabilité nulle | Licence MS Office |
+| **Stata** | Excellence statistique, syntaxe stable | Écosystème géospatial pauvre | ~$1700/an |
+| **SPSS** | Interface graphique conviviale | Coûteux, peu de communauté ouverte | ~$1200/an |
+| **R** | Open source, écosystème géospatial mature | Courbe d'apprentissage initiale | Gratuit |
 
-# 1. Pourquoi R ? {data-state="section-break"}
+L'objectif de la formation n'est **pas** de remplacer Stata, c'est d'**augmenter** la boîte à outils d'une dimension spatiale qui n'existe sérieusement que dans R et Python.
 
-## R vs Excel vs Stata vs SPSS
+## Pourquoi R domine la statistique spatiale aujourd'hui
+
+Quatre facteurs convergent depuis 2018 [@pebesma2018simple] :
+
+1. **Standard ouvert** : le format OGC Simple Features est une norme ISO (19125), implémentée à l'identique dans QGIS, PostGIS, GDAL et `sf` — interopérabilité native.
+2. **Adoption institutionnelle** : WorldPop, le DHS Program, l'INED, l'INSEE, l'INSPQ publient leur code de référence en R.
+3. **Reproductibilité scientifique** : Quarto / R Markdown sont devenus le standard de fait dans les revues à comité de lecture (par ex. *Nature* depuis 2022).
+4. **Souveraineté numérique** : pas de dépendance à un éditeur privé, déployable dans toute institution africaine sans contrainte budgétaire.
+
+## La pile R-spatiale en 2026
 
 ::: {.columns}
 ::: {.column width="50%"}
-**Excel** — saisie + visualisation rapide.
+**Vectoriel**
 
-→ Pas reproductible. Pas d'audit possible.
+- `sf` — Simple Features [@pebesma2018simple]
+- `lwgeom` — opérations avancées
+- `s2` — géométrie sphérique
+- `spdep` — voisinages, statistiques spatiales
 
-**Stata / SPSS** — analyse statistique solide.
+**Raster**
 
-→ Licences chères. Écosystème géospatial pauvre.
+- `terra` — successeur de `raster`
+- `stars` — données spatio-temporelles
+- `exactextractr` — zonal statistics rapides
 :::
 ::: {.column width="50%"}
-**R**
+**Cartographie**
 
-- Gratuit, open source, déployable partout.
-- Scriptable → reproductible → auditable.
-- Riche en **démographie** et **géospatial** : `sf`, `terra`, `tmap`, `spdep`, `rdhs`, `wopr`.
-- Adopté par **WorldPop, DHS Program, INED, INSEE, INSPQ**.
+- `ggplot2` + `geom_sf` — graphique scientifique
+- `tmap` v4 — cartographie thématique
+- `leaflet` — interactif web
+
+**Population**
+
+- `wopr` — WorldPop Open Population API
+- `rdhs` — accès programmatique DHS
+- `INLA` / `brms` — modèles bayésiens hiérarchiques
 :::
 :::
+
+## Une trajectoire de 25 ans qui se condense
+
+1999 — l'OGC publie la norme Simple Features.
+
+2005 — package `sp` (Bivand, Pebesma) : premier R sérieux pour le spatial.
+
+2015 — Stevens, Tatem et al. publient la méthodologie WorldPop top-down [@stevens2015disaggregating].
+
+2018 — package `sf` (Pebesma) : adoption massive, `sp` devient hérité.
+
+2020 — package `terra` (Hijmans) [@hijmans2024terra] : succession de `raster`.
+
+2023 — Darin & Leasure proposent la méthodologie WorldPop bottom-up [@darin2023bottomup].
+
+2024 — `quarto-live` : R s'exécute directement dans le navigateur (WebR).
+
+C'est cette trajectoire qu'on traverse en 10 jours.
+
+# Partie 3 — Grammaire des données rectangulaires {data-state="section-break"}
+
+## Une convention vieille de 50 ans : le `data.frame`
+
+Le tableau « lignes × colonnes » est la structure dominante de toute analyse démographique depuis les premiers recensements informatisés (années 1960). En R :
+
+- **Lignes** = observations (un ménage, un individu, une zone)
+- **Colonnes** = variables (âge, sexe, région, indicateur)
+- **Cellules** = valeurs typées (numeric, character, logical, factor)
+
+Le `data.frame` impose deux contraintes :
+
+1. Toutes les colonnes ont la **même longueur**.
+2. Chaque colonne est d'un **type unique** (pas de mélange `"abc"` et `42` dans la même colonne).
+
+C'est exactement la structure d'une feuille de calcul Excel **disciplinée** — sans cellules fusionnées, sans en-tête multi-niveau, sans formules.
+
+## Le data.frame, le tibble et la philosophie tidy
+
+Le `tibble` (tidyverse, 2017) est un `data.frame` qui durcit quelques règles :
+
+- pas de conversion silencieuse des chaînes en facteurs ;
+- affichage console borné (10 lignes par défaut) ;
+- refus de l'indexation par nom partiel ambigu.
+
+C'est la même structure logique avec une **discipline défensive** plus stricte. En production, le `tibble` évite plusieurs classes de bugs subtils que le `data.frame` classique laisse passer.
+
+## Tidy data : trois règles d'or [@wickham2014tidy]
+
+Hadley Wickham, en 2014, a formalisé ce qu'on appelle aujourd'hui le « tidy data » :
+
+1. **Chaque variable forme une colonne.**
+2. **Chaque observation forme une ligne.**
+3. **Chaque type d'unité statistique a sa propre table.**
+
+Ces trois règles paraissent triviales mais leur violation est massive dans les microfichiers réels (DHS, MICS, ECAM). Exemple typique : un tableau avec une colonne par année — c'est **wide**, ce n'est pas tidy. On transforme avec `tidyr::pivot_longer()`.
 
 ::: {.takeaway}
-L'idée n'est pas de remplacer Stata. C'est d'**augmenter** votre boîte à outils d'une dimension spatiale.
+80 % du temps d'un démographe sur un microfichier neuf est consacré à le rendre tidy. Une fois tidy, les analyses prennent quelques minutes.
 :::
 
-## R + RStudio en 30 secondes
+## Les cinq verbes de `dplyr`
 
-- **R** = le moteur (langage + interpréteur).
-- **RStudio** = l'éditeur (IDE) qui rend R utilisable.
-- **Quarto** = le système de publication scientifique (successeur R Markdown).
-- **Git** = la gestion de versions.
+| Verbe | Action | Question typique |
+|---|---|---|
+| `filter()` | Garder certaines **lignes** | Quels ménages urbains du Centre ? |
+| `select()` | Garder certaines **colonnes** | Que la région et l'effectif |
+| `mutate()` | Créer ou modifier une **colonne** | Calculer la densité = pop / surface |
+| `group_by()` + `summarise()` | **Agréger** par modalité | Taux d'électrification par région |
+| `arrange()` | **Trier** les lignes | Par densité décroissante |
 
-Ces quatre logiciels seront vos compagnons des 10 jours.
+Ces cinq verbes couvrent ∼80 % de ce que fait un démographe sur un microfichier propre. Les 20 % restants : jointures (`*_join`), pivots (`pivot_*`), opérations fenêtre (`mutate(... = lag(.x))`).
 
-# 2. R comme calculatrice {data-state="section-break"}
+## Le pipe natif `|>` se lit « puis »
 
-## Premier code
+::: {.columns}
+::: {.column width="60%"}
+**Code en chaîne** (lecture intérieur → extérieur) :
 
-Deux vecteurs parallèles (`c()` concatène), puis trois fonctions d'inspection sur le vecteur numérique : `length()` compte les éléments, `sum()` totalise, `mean()` calcule la moyenne. Les `;` séparent plusieurs commandes sur une même ligne — pratique pour les slides, à éviter dans les scripts longs.
-
-```{r}
-#| echo: true
-# Les 10 régions du Cameroun
-regions <- c("Adamaoua", "Centre", "Est", "Extrême-Nord", "Littoral",
-             "Nord", "Nord-Ouest", "Ouest", "Sud", "Sud-Ouest")
-pop_est <- c(1340000, 4400000, 870000, 4200000, 3400000,
-             2700000, 2000000, 2000000, 800000, 1700000)
-
-length(regions); sum(pop_est); mean(pop_est)
+```r
+arrange(select(filter(tbl_cmr, pop_2019 > 3e6),
+               region, capitale, pop_2019),
+        desc(pop_2019))
 ```
 
-## Opérations vectorielles
+**Pipe natif** (lecture haut → bas, comme une phrase) :
 
-Une division par un scalaire s'applique élément par élément (vectorisation). Le filtre `regions[pop_est > 3e6]` exploite un autre vecteur booléen comme index : on garde les régions dont la population dépasse 3 M.
-
-```{r}
-#| echo: true
-pop_millions <- pop_est / 1e6
-round(pop_millions, 2)
-
-# Filtrer
-regions[pop_est > 3e6]
-```
-
-R fait par défaut des **opérations vectorielles** — pas besoin de boucle pour appliquer une opération à 10 ou 10 millions d'éléments.
-
-## Types : numeric, character, logical
-
-`class()` retourne la classe haute (interprétation). Le bloc montre aussi la **coercion implicite** : `c(1, 2, "trois")` force tout en `character` car c'est le type qui peut tout contenir.
-
-```{r}
-#| echo: true
-class(regions)
-class(pop_est)
-class(pop_est > 3e6)
-
-# Coercion silencieuse à éviter
-mix <- c(1, 2, "trois")
-class(mix)
-```
-
-::: {.warning-box}
-**Piège :** un seul `character` dans un vecteur numérique → R convertit **tout** en chaîne. Bug fréquent à la lecture de CSV mal formatés.
-:::
-
-# 3. data.frame et tibble {data-state="section-break"}
-
-## La table de données
-
-Un `tibble()` assemble des colonnes nommées en un tableau. Toutes les colonnes doivent avoir la même longueur. L'affichage du tibble est tronqué automatiquement — pas de risque d'inonder la console avec 10 000 lignes.
-
-```{r}
-#| echo: true
-library(tibble)
-library(dplyr)
-
-tbl_cmr <- tibble(
-  region   = regions,
-  pop_2019 = pop_est,
-  capitale = c("Ngaoundéré", "Yaoundé", "Bertoua", "Maroua", "Douala",
-               "Garoua", "Bamenda", "Bafoussam", "Ebolowa", "Buea")
-)
-tbl_cmr
-```
-
-## Les 5 verbes dplyr qui couvrent 80 % des cas
-
-Chaîne de trois verbes : `filter` (garder des lignes), `arrange` (trier), `select` (garder des colonnes). Chaque verbe prend un tibble et en retourne un autre — le pipe `|>` les enchaîne lisiblement.
-
-```{r}
-#| echo: true
+```r
 tbl_cmr |>
   filter(pop_2019 > 3e6) |>
   arrange(desc(pop_2019)) |>
   select(region, capitale, pop_2019)
 ```
+:::
+::: {.column width="40%"}
+**Traduction orale** :
 
-Lecture orale : « prendre `tbl_cmr`, **puis** filtrer les régions > 3M, **puis** trier par population décroissante, **puis** sélectionner ces colonnes ».
+« Prendre `tbl_cmr`,
+**puis** filtrer les régions de plus de 3 M,
+**puis** trier par population décroissante,
+**puis** ne garder que ces trois colonnes. »
 
-## `mutate` — créer une variable
+Le pipe rend le code **lisible à voix haute** — c'est ce qui permet à un démographe sans formation en programmation de comprendre, modifier et auditer un script.
+:::
+:::
 
-`mutate()` ajoute ou modifie des colonnes ; `case_when()` est un `IF/ELSE` lisible où chaque condition donne une valeur, dans l'ordre d'évaluation.
+## `dplyr` vs `data.table` : quand sortir de la grammaire tidy ?
 
-```{r}
-#| echo: true
-tbl_cmr <- tbl_cmr |>
-  mutate(
-    pop_millions = pop_2019 / 1e6,
-    classe = case_when(
-      pop_2019 < 1e6 ~ "Moins de 1M",
-      pop_2019 < 3e6 ~ "1 à 3M",
-      TRUE           ~ "Plus de 3M"
-    )
-  )
-tbl_cmr
+`dplyr` est conçu pour la **lisibilité**, pas la performance maximale. Sur un microfichier d'enquête (< 1 M lignes), la différence est imperceptible.
+
+Au-delà : un fichier individu DHS panafricain (∼50 M lignes), un microfichier de recensement RGPH (∼25 M individus pour le Cameroun) — `data.table` peut être 10–100× plus rapide.
+
+**Règle pragmatique** : démarrer en `dplyr` (lisibilité, audit, transmission), basculer en `data.table` seulement si le temps de calcul devient un blocage.
+
+# Partie 4 — Du tableau à la géométrie {data-state="section-break"}
+
+## L'intuition fondatrice
+
+Un `data.frame` classique :
+
+| region | population | densité |
+|---|---|---|
+| Centre | 4 400 000 | 105 |
+| Littoral | 3 400 000 | 168 |
+| … | … | … |
+
+Un objet **spatial** = ce même `data.frame` + **une colonne supplémentaire** appelée `geometry`, qui contient un point, une ligne ou un polygone pour chaque ligne.
+
+| region | population | densité | geometry |
+|---|---|---|---|
+| Centre | 4 400 000 | 105 | `MULTIPOLYGON(...)` |
+| Littoral | 3 400 000 | 168 | `MULTIPOLYGON(...)` |
+| … | … | … | … |
+
+**C'est tout.** Pas de magie. La géométrie est juste une colonne d'un type un peu spécial qui sait dire « voici où je suis sur la Terre ».
+
+## Simple Features : un standard mondial
+
+Le format **Simple Features** est défini par l'Open Geospatial Consortium (OGC) depuis 1999, normalisé ISO 19125 en 2004.
+
+Sept types géométriques de base :
+
+::: {.columns}
+::: {.column width="50%"}
+- `POINT` — un lieu
+- `LINESTRING` — une route, un cours d'eau
+- `POLYGON` — une parcelle, une région
+:::
+::: {.column width="50%"}
+- `MULTIPOINT` — un nuage de points
+- `MULTILINESTRING` — un réseau
+- `MULTIPOLYGON` — un archipel, une région à plusieurs morceaux
+- `GEOMETRYCOLLECTION` — mélange
+:::
+:::
+
+Ces sept types sont implémentés **à l'identique** dans `sf` (R), `geopandas` (Python), `QGIS`, `PostGIS`, `ArcGIS`. Un Shapefile lu par QGIS et lu par R produit exactement la même structure logique.
+
+## Les trois bibliothèques C/C++ derrière `sf`
+
+`sf` n'est qu'un *wrapper* R autour de trois bibliothèques système qui font le vrai travail :
+
+| Bibliothèque | Rôle | Version utile |
+|---|---|---|
+| **GDAL** | Lecture / écriture de tous les formats SIG (Shapefile, GeoJSON, GeoPackage, GeoTIFF, NetCDF…) | ≥ 3.8 |
+| **GEOS** | Opérations géométriques (intersection, union, distance, contains, touches…) | ≥ 3.12 |
+| **PROJ** | Transformations de projection (`st_transform`) | ≥ 9.3 |
+
+Ces trois bibliothèques sont **les mêmes** que celles utilisées par QGIS et PostGIS. Quand on calcule une intersection dans R, c'est GEOS qui répond — exactement la même routine qu'un opérateur SIG dans QGIS appellerait via l'interface graphique.
+
+## L'héritage multiple de `sf` : data.frame ET objet spatial
+
+```text
+class(adm1)
+> "sf"  "data.frame"
 ```
 
-## `group_by + summarise` — agréger
+L'objet `adm1` est **simultanément** :
 
-`group_by` partitionne le tibble par modalité de la variable de groupement ; `summarise` réduit ensuite chaque groupe à une seule ligne avec les fonctions d'agrégation choisies.
+- un `data.frame` — donc `dplyr` (`filter`, `mutate`, `summarise`) fonctionne directement ;
+- un `sf` — donc les opérations spatiales (`st_area`, `st_distance`, `st_transform`, `st_intersection`) fonctionnent aussi.
 
-```{r}
-#| echo: true
-tbl_cmr |>
-  group_by(classe) |>
-  summarise(
-    n_regions = n(),
-    pop_totale = sum(pop_2019),
-    pop_moyenne = mean(pop_2019)
-  )
-```
+C'est ce double héritage qui rend `sf` aussi puissant pour la statistique spatiale : **le même objet** porte les attributs et la géométrie, et les deux familles d'opérations cohabitent sans heurts.
 
-## Le pipe `|>` se lit « puis »
+## Pourquoi `sf` a remplacé `sp` (et pourquoi c'est définitif)
 
-```r
-data |>
-  filter(...) |>
-  mutate(...) |>
-  group_by(...) |>
-  summarise(...)
-```
+`sp` (Bivand & Pebesma, 2005) — premier R sérieux pour le vectoriel. Encore vivant mais en mode maintenance.
+
+`sf` (Pebesma, 2018) [@pebesma2018simple] — adopté par toute la communauté en 5 ans :
+
+| Critère | `sp` | `sf` |
+|---|---|---|
+| Conformité OGC Simple Features | partielle | totale |
+| Intégration tidyverse | non | native |
+| Performance sur gros fichiers | OK | 5–10× plus rapide |
+| Maintenance active en 2026 | maintenance | développement actif |
+| Documentation | datée | excellente |
+
+**En 2026 : utiliser `sf`, pas `sp`.** Tout tutoriel basé sur `sp` est à éviter sauf pour comprendre du code hérité.
+
+# Partie 5 — La pensée projective {data-state="section-break"}
+
+> Pause de 5 à 10 min juste avant cette partie. C'est la séance la plus dense de J1.
+
+## La Terre : modèle, ellipsoïde, géoïde
+
+::: {.columns}
+::: {.column width="60%"}
+La Terre n'est pas une sphère. C'est :
+
+- d'abord un **géoïde** — surface équipotentielle de la pesanteur, irrégulière ;
+- approximé par un **ellipsoïde** — surface mathématiquement définissable (deux paramètres : demi-grand axe `a`, aplatissement `f`) ;
+- l'ellipsoïde de référence le plus utilisé est **WGS 84** (1984), choisi par le système GPS.
+
+Une **datum géodésique** = un ellipsoïde + son ancrage géographique (positionnement et orientation par rapport au centre de masse terrestre).
+:::
+::: {.column width="40%"}
+**Ellipsoïdes courants**
+
+| Nom | Année | Usage |
+|---|---|---|
+| Clarke 1866 | 1866 | NAD27, USA |
+| Clarke 1880 | 1880 | Afrique francophone, ancienne base |
+| WGS 84 | 1984 | GPS, standard mondial |
+| GRS 80 | 1980 | NAD83, Amérique du Nord |
+:::
+:::
+
+## De la sphère au plan : la projection
+
+Une **projection** est une fonction mathématique qui transforme des coordonnées sphériques (longitude, latitude — en degrés) en coordonnées planes (x, y — en mètres).
+
+**Théorème de Gauss (1828)** : il n'existe **aucune** projection qui préserve simultanément les angles, les aires et les distances. Chaque projection sacrifie au moins une de ces trois propriétés.
+
+Trois familles selon ce qu'on choisit de préserver :
+
+| Famille | Préserve | Sacrifice | Usage typique |
+|---|---|---|---|
+| **Conforme** | Angles localement | Aires | Navigation, cartographie web |
+| **Équivalente** (equal-area) | Aires | Angles | Statistique, choroplèthes |
+| **Équidistante** | Distances depuis un point | Aires + angles | Cartes de distance |
+
+## EPSG : un catalogue mondial depuis 1985
+
+L'**European Petroleum Survey Group** (EPSG) maintient depuis 1985 un catalogue de tous les systèmes de coordonnées utilisés dans le monde. Aujourd'hui géré par l'IOGP (International Association of Oil & Gas Producers).
+
+Chaque CRS a un identifiant numérique. Quelques codes à retenir :
+
+| EPSG | Nom | Type | Usage |
+|---|---|---|---|
+| **4326** | WGS 84 | Géographique (degrés) | Standard d'échange — GPS, GeoJSON, KML |
+| **32632** | UTM zone 32 N | Projeté (mètres) | Ouest du Cameroun |
+| **32633** | UTM zone 33 N | Projeté (mètres) | Est du Cameroun |
+| **3119** | Lambert Cameroun | Projeté (mètres) | Cartographie nationale uniforme |
+| **3857** | Web Mercator | Projeté (déformé) | Fonds OSM, Google Maps |
+| **3035** | ETRS89 / LAEA | Projeté équivalent | Statistique européenne, Eurostat |
+
+## Web Mercator : la projection qui ment
+
+Web Mercator (EPSG:3857) est le standard de fait des fonds de carte web (OpenStreetMap, Google Maps, Mapbox). C'est une projection **conforme** — elle préserve localement les angles.
+
+Conséquence : à mesure qu'on s'éloigne de l'équateur, **les aires sont sur-estimées d'un facteur exponentiel** :
+
+| Latitude | Facteur de distorsion d'aire |
+|---|---|
+| 0° (équateur) | × 1.00 |
+| 11° N (Maroua) | × 1.04 |
+| 30° N (Le Caire) | × 1.33 |
+| 60° N (Stockholm) | × 4.00 |
+| 80° N (Spitzberg) | × 33 |
+
+::: {.callout-important title="Règle absolue"}
+**Web Mercator est interdit pour toute statistique spatiale.** Réservé strictement aux fonds de carte web. Pour mesurer, agréger, comparer : **UTM, Lambert ou Albers**, jamais Mercator.
+:::
+
+## La carte comme acte politique
+
+La projection de Mercator (1569) a longtemps été la projection scolaire dominante. Conséquence visuelle : le Groenland paraît aussi grand que l'Afrique. Or :
+
+- Afrique = 30 370 000 km²
+- Groenland = 2 166 000 km²
+
+**Le Groenland est 14 fois plus petit que l'Afrique** — mais Mercator les présente comme équivalents.
+
+La projection de Gall-Peters (1974) a été promue précisément en réaction à ce biais, popularisée par les écoles de Boston en 2017. C'est une projection équivalente — les aires sont fidèles, au prix d'angles déformés.
 
 ::: {.takeaway}
-Une fois cette grammaire intériorisée, vous lisez n'importe quel script de démographe — DHS, WorldPop, INED — en quelques secondes.
+Choisir une projection, c'est choisir ce qu'on **veut faire voir**. Une carte n'est jamais neutre.
 :::
 
-# 4. Projet RStudio et reproductibilité {data-state="section-break"}
+## Pour le Cameroun : quel CRS pour quelle question ?
 
-## Pourquoi un « projet » ?
+| Question | CRS recommandé | Pourquoi |
+|---|---|---|
+| Stocker des données GPS terrain | 4326 (WGS 84) | Standard de tous les GPS et formats d'échange |
+| Calculer une distance entre deux villes | UTM 32 N ou 33 N (selon longitude) | Coordonnées en mètres |
+| Calculer la superficie d'une région | UTM ou Lambert Cameroun (3119) | Projection équivalente, faible déformation |
+| Carte choroplèthe nationale | Lambert Cameroun (3119) | Faible déformation sur l'ensemble du pays |
+| Fond de carte web interactif | Données en UTM → laisser `leaflet` reprojeter en 3857 à l'affichage | Calculs corrects, affichage compatible OSM |
 
-Sans projet, le répertoire de travail R dépend de comment vous avez ouvert RStudio. Un script qui marche chez vous **échoue chez votre collègue** dès la ligne :
+## L'erreur silencieuse : `st_set_crs()` ≠ `st_transform()`
 
-```r
-read.csv("C:/Users/Ramesesse/Bureau/fichier.csv")
-```
+::: {.columns}
+::: {.column width="50%"}
+**`st_set_crs(x, 4326)`**
 
-Le projet RStudio + `here::here()` règle ça.
+= « ÉTIQUETTE cet objet comme étant en WGS 84 »
 
-## `here` rend les chemins universels
+— ne touche **pas** aux coordonnées.
 
-`here()` détecte la racine du projet (présence d'un `.Rproj` ou d'un `.here`) et reconstruit des chemins relatifs à cette racine, dans la syntaxe de l'OS courant. Aucun changement à faire entre Windows, Mac et Linux.
+Utile uniquement si le CRS est manquant (par exemple un Shapefile sans `.prj`).
+:::
+::: {.column width="50%"}
+**`st_transform(x, 4326)`**
 
-```{r}
-#| echo: true
-library(here)
-here()                               # racine du projet
-here("data", "monfichier.csv")       # chemin OS-indépendant
-```
+= « REPROJETTE cet objet vers WGS 84 »
 
-::: {.warning-box}
-**Règle absolue** des 10 jours : aucun chemin absolu dans vos scripts. Si je vois `"C:/..."`, je hurle.
+— **recalcule** chaque coordonnée.
+
+C'est l'opération qu'on veut 99 % du temps.
+:::
 :::
 
-## Lire une enquête : EDS-MICS Cameroun 2018
+**Confondre les deux est l'erreur silencieuse n°1 en SIG.** Le résultat compile, ne lève aucun warning, et place tous les points à des kilomètres de leur vraie position. Tests systématiques de cohérence : `st_bbox()` après l'opération, et comparer à l'emprise attendue du Cameroun (longitude 8.5°–16.2°, latitude 1.7°–13°).
 
-`haven::read_dta()` charge un fichier Stata en préservant les labels. `dim()` retourne (nlignes, ncolonnes) ; `names()[1:20]` liste les 20 premières variables (un microfichier DHS en a souvent ~1 500).
+# Partie 6 — Cartographier, c'est choisir {data-state="section-break"}
 
-```r
-library(haven)
-hh <- read_dta(here("data", "DHS_MICS", "CMHR71FL.DTA"))
-dim(hh); names(hh)[1:20]
-```
+## Sémiologie graphique : un cadre théorique (Bertin 1967)
 
-`haven` lit Stata `.dta`, SPSS `.sav`, SAS `.sas7bdat` — les trois formats que vous croisez dans les Instituts Nationaux de Statistique.
+Jacques Bertin, géographe, a posé en 1967 les fondations de la sémiologie graphique. Six **variables visuelles** sont à disposition pour encoder de l'information :
 
-## Premier réflexe : `skim`
+| Variable | Type de donnée encodable |
+|---|---|
+| **Taille** | Quantitative |
+| **Valeur** (clair → foncé) | Ordinale ou quantitative |
+| **Grain / texture** | Ordinale |
+| **Couleur** (teinte) | Catégorielle |
+| **Orientation** | Catégorielle |
+| **Forme** | Catégorielle |
 
-`skimr::skim()` produit en une commande un résumé par variable (type, valeurs manquantes, distribution). C'est le **premier geste** sur tout nouveau microfichier.
+Pour une **choroplèthe** (carte par polygones colorés) → variable « valeur » sur palette séquentielle.
+Pour des **proportions** comparées → variable « taille » sur symboles circulaires.
 
-```r
-library(skimr)
-skim(hh)
-```
+## Choroplèthes : choisir un découpage
 
-À chaque nouveau fichier, ça doit être votre premier geste.
+Pour transformer une variable continue (densité, taux d'électrification) en classes colorées, plusieurs algorithmes :
 
-## Indicateurs régionaux EDS — démo
+| Méthode | Logique | Quand l'utiliser |
+|---|---|---|
+| **Intervalles égaux** | Découpe l'amplitude en n parts égales | Données uniformément distribuées |
+| **Quantiles** | Chaque classe a le même nombre d'unités | Garantit la lisibilité de la légende |
+| **Jenks (Fisher-Jenks)** | Maximise la variance inter-classe | Distributions très inégales |
+| **Manuel** | Seuils choisis par expert | Comparaisons à des seuils réglementaires (taux de pauvreté, etc.) |
 
-`group_by(region) |> summarise(...)` produit une ligne par région avec plusieurs indicateurs en une expression. `mean(milieu == "Urbain")` exploite la conversion TRUE→1, FALSE→0, donc la moyenne d'un booléen est une proportion.
+**Le choix de la méthode change la carte.** Une même donnée avec deux découpages peut raconter deux histoires opposées.
 
-```{r}
-#| echo: true
-#| eval: false
-hh |>
-  group_by(region) |>
-  summarise(
-    n_menages       = n(),
-    taille_moyenne  = mean(taille_mng),
-    pct_urbain      = mean(milieu == "Urbain") * 100,
-    pct_electricite = mean(electricite == "Oui") * 100
-  ) |>
-  arrange(desc(pct_electricite))
-```
+## Palettes de couleurs : ColorBrewer et viridis
 
-::: {.warning-box}
-**ATTENTION** — sur une vraie EDS-MICS, ces calculs **doivent être pondérés** par le poids ménage et tenir compte du plan de sondage. On y revient J5.
-:::
+Trois familles de palettes selon le type de donnée :
 
-# 5. Qu'est-ce qu'un objet spatial ? {data-state="section-break"}
+| Type | Exemple | Palettes |
+|---|---|---|
+| **Séquentielle** | Densité de population | `Blues`, `YlOrRd`, `viridis` |
+| **Divergente** | Écart à une moyenne, positif / négatif | `RdBu`, `BrBG`, `PiYG` |
+| **Catégorielle** | Régions, types de sol | `Set3`, `Paired`, `Dark2` |
 
-## L'intuition
+**Critères de choix** : daltonien-friendly (vérifier avec `colorblindr::cvd_grid`), imprimable en niveaux de gris, contraste minimal de 3:1 entre classes adjacentes.
 
-Un `data.frame` classique = lignes (observations) × colonnes (variables).
-
-Un objet **spatial** = `data.frame` + **une colonne de géométries**.
-
-Cette colonne sait comment se positionner sur la surface de la Terre.
-
-## Le package `sf` en 2026
-
-Standard absolu pour vectoriel dans R depuis 2018. `packageVersion("sf")` donne la version du package R ; `sf_extSoftVersion()` celle des trois bibliothèques C/C++ sous-jacentes — utile à reporter en cas de bug.
-
-```{r}
-#| echo: true
-library(sf)
-packageVersion("sf")
-sf_extSoftVersion()
-```
-
-`sf` repose sur trois bibliothèques C/C++ :
-
-- **GDAL** — lit/écrit les formats SIG.
-- **GEOS** — opérations géométriques.
-- **PROJ** — projections.
-
-Ces trois bibliothèques sont les fondations de **tout SIG sérieux** (QGIS, ArcGIS, PostGIS).
-
-## Charger les limites administratives
-
-`read_sf()` lit n'importe quel format vectoriel supporté par GDAL (Shapefile, GeoJSON, GeoPackage, KML…). On charge ici les trois niveaux nationaux du Cameroun.
-
-```r
-library(sf)
-adm0 <- read_sf("gadm41_CMR_0.json")  # frontière nationale
-adm1 <- read_sf("gadm41_CMR_1.json")  # 10 régions
-adm3 <- read_sf("gadm41_CMR_3.json")  # ~360 arrondissements
-```
-
-Source : <https://gadm.org/download_country.html> · Licence : libre pour usage académique.
-
-## Anatomie d'un objet `sf`
-
-Quatre fonctions à mémoriser : `print()` donne un en-tête standardisé, `class()` montre l'héritage multiple, `st_bbox()` retourne l'emprise rectangulaire, `st_crs()$epsg` le code EPSG du CRS courant.
-
-```r
-print(adm1)        # affichage standardisé : géom + CRS + attributs
-class(adm1)        # "sf" + "data.frame"
-st_bbox(adm1)      # emprise géographique
-st_crs(adm1)$epsg  # code EPSG du CRS
-```
-
-`adm1` est **à la fois** un data.frame (dplyr y fonctionne) **et** un objet spatial.
+`viridis` (Liu & Heer 2018) est le défaut moderne — perceptuellement uniforme, daltonien-friendly, lisible en N&B.
 
 ## Trois moteurs de carte en R
 
 | Moteur | Quand l'utiliser |
 |---|---|
-| `plot()` base R | Vérification rapide |
-| `ggplot2` + `geom_sf` | Cartes scientifiques personnalisables |
-| `tmap` | Cartographie thématique publiable, mode statique + interactif |
+| **`plot()`** (base R) | Vérification rapide pendant le développement |
+| **`ggplot2` + `geom_sf`** | Cartes scientifiques personnalisables, intégration aux autres `ggplot` |
+| **`tmap` v4** | Cartographie thématique publiable, mode statique + interactif, gestion native des classifications |
 
-# 6. Le CRS — la séance qui sauve des kilomètres {data-state="section-break"}
+La démo de cet après-midi balaie les trois — la même donnée, trois moteurs, trois esthétiques. À toi de choisir lequel devient ton « moteur principal ».
 
-## Trois familles de CRS
+## La carte n'est pas le territoire (Korzybski 1933)
 
-| Famille | EPSG | Usage |
+> *« Une carte n'est pas le territoire qu'elle représente, mais si elle est correcte, elle a une structure semblable à ce territoire — ce qui en fait l'utilité. »*
+>
+> — Alfred Korzybski, *Science and Sanity*, 1933.
+
+Implications pratiques pour un démographe :
+
+- **Toute carte est une simplification** — généralisation des polygones, agrégation à un niveau administratif, choix de symbologie.
+- **Les frontières administratives évoluent** — GADM v4.1 (2022) ≠ découpage RGPH 2026.
+- **La projection est un choix politique** — voir Mercator vs Gall-Peters.
+- **L'absence est aussi une information** — les zones sans données ne sont pas vides ; elles sont non observées.
+
+# Partie 7 — Cadrage RGPH 4 Cameroun {data-state="section-break"}
+
+## Le calendrier 2026-2027
+
+| Phase | Période | Activité |
 |---|---|---|
-| **WGS 84 géographique** | 4326 | Échange (GPS, GeoJSON). **Pas pour mesurer.** |
-| **UTM** | 32632 / 32633 (CMR) | Calcul de distances et surfaces en mètres |
-| **Web Mercator** | 3857 | Fonds OSM, Google Maps. **Jamais pour statistiques.** |
+| Tests pilotes | 2025 (passés) | Bamenda 1, Fongo Tongo, Buea, Mora |
+| Cartographie censitaire | 2026 H1 | Délimitation des zones de dénombrement |
+| Dénombrement principal | 2026 H2 | Collecte sur le terrain |
+| Traitement et publication | 2027 | Tableaux + microfichiers |
 
-## L'erreur n°1 du débutant
+Cet atelier (juillet–août 2026) tombe **pendant la phase de cartographie**. Plusieurs participants seront directement impliqués dans le traitement ultérieur des données.
 
-On compare deux distances entre Yaoundé et Douala : la **naïve** (Pythagore sur des degrés, sans unité), et la **correcte** (`st_distance()` qui calcule en mètres géodésiques). La différence pédagogique est immédiate.
+## La méthodologie hybride du RGPH 4
 
-```{r}
-#| echo: true
-yaounde <- st_sfc(st_point(c(11.5021, 3.8480)), crs = 4326)
-douala  <- st_sfc(st_point(c(9.7679,  4.0511)), crs = 4326)
+Le RGPH 4 est le premier recensement camerounais à combiner plusieurs sources spatiales :
 
-# Distance "naïve" sur degrés (FAUX)
-dist_naive <- sqrt((11.5021 - 9.7679)^2 + (3.8480 - 4.0511)^2)
-dist_naive   # nombre sans dimension
+| Source | Apport | Producteur |
+|---|---|---|
+| Dénombrement classique | Effectifs officiels par zone de dénombrement | BUCREP |
+| Imagerie satellite récente | Identification des structures bâties | UNFPA + WorldPop |
+| Modèles top-down 100 m | Raster de population pré-recensement | WorldPop |
+| Modèle bottom-up bayésien | Estimation post-stratification | GDSG / IFORD (méthodo Darin & Leasure 2023) |
+| Données auxiliaires | Routes, sol, NDVI, élévation | FAO + multiples |
 
-# Distance correcte (en mètres, géodésique)
-st_distance(yaounde, douala)
-```
+C'est cette hybridation qui justifie la **profondeur géospatiale** demandée pendant les 10 jours.
 
-## Reprojeter
-
-`st_transform()` recalcule chaque coordonnée vers le nouveau CRS. EPSG:3119 = Lambert Cameroun, projection conforme adaptée à un calcul national uniforme. On compare la somme des superficies au chiffre officiel.
-
-```r
-adm1_lambert <- st_transform(adm1, 3119)  # Lambert Cameroun
-adm1_lambert$superficie_km2 <- as.numeric(st_area(adm1_lambert)) / 1e6
-sum(adm1_lambert$superficie_km2)  # ~ 475 442 km² officiels
-```
-
-Le Cameroun officiel = **475 442 km²**. Si vous obtenez plus de 1 % d'écart, vous avez choisi la mauvaise projection.
-
-::: {.takeaway}
-- **`st_set_crs()`** → étiquette (utile si .prj manquant).
-- **`st_transform()`** → conversion réelle.
-
-**Confondre les deux** est l'erreur n°1 en SIG. Et elle est silencieuse.
-:::
-
-# 7. Première vraie carte {data-state="section-break"}
-
-## Densité par région
-
-`left_join()` fusionne la table population et l'objet `sf` par la clé `NAME_1`. Comme `adm1_lambert` est un `sf`, le résultat reste un `sf` (la géométrie suit). `mutate()` ajoute la colonne densité.
-
-```r
-pop_tbl <- tibble(NAME_1 = regions, pop_2019 = pop_est)
-
-adm1_pop <- adm1_lambert |>
-  left_join(pop_tbl, by = "NAME_1") |>
-  mutate(densite = pop_2019 / superficie_km2)
-```
-
-## Carte tmap publiable
-
-Empilement des couches `tmap` : `tm_shape` sélectionne les données, `tm_polygons` les dessine en choroplèthe avec une palette séquentielle Jenks à 5 classes, `tm_text` étiquette les régions, `tm_title` et `tm_credits` posent l'habillage.
-
-```r
-tm_shape(adm1_pop) +
-  tm_polygons(
-    fill = "densite",
-    fill.scale = tm_scale_intervals(style = "jenks", n = 5,
-                                    values = "brewer.yl_or_rd"),
-    fill.legend = tm_legend("Densité (hab/km²)")
-  ) +
-  tm_text("NAME_1", size = 0.6) +
-  tm_title("Densité de population — Cameroun 2019") +
-  tm_credits("Source : BUCREP estim., GADM v4.1")
-```
-
-## Lecture critique de la carte
-
-Le **Littoral** et l'**Ouest** dominent en densité.
-
-Questions à poser **en salle** :
-
-- Quelles estimations officielles utilise-t-on ?
-- WorldPop top-down dit-il la même chose ?
-- Le RGPH 4 va-t-il les confirmer ?
-
-C'est exactement ce qu'on explorera J7 à J10.
-
-# 8. Wrap-up {data-state="section-break"}
-
-## Ce qu'on a vu
+## Top-down et bottom-up : deux méthodologies complémentaires
 
 ::: {.columns}
 ::: {.column width="50%"}
-**R essentials**
+**Top-down** (WorldPop classique [@stevens2015disaggregating])
 
-- Vecteurs, tibble
-- Indexation, dplyr
-- Pipes `|>`
-- Lecture d'enquête
+- Part d'un total national connu
+- **Désagrège** sur une grille de 100 m × 100 m
+- Utilise des covariables (bâti, route, NDVI…) comme « poids »
+- Forces : couverture globale, comparabilité
+- Limites : suppose une vérité au niveau national
 :::
 ::: {.column width="50%"}
-**Spatial**
+**Bottom-up** (Darin & Leasure 2023 [@darin2023bottomup])
 
-- Anatomie `sf`
-- CRS : 4326 / 32632 / 3119
-- Reprojection
-- Première carte
+- Part de **micro-recensements** sur clusters géolocalisés
+- **Agrège** vers un niveau supérieur via modèle bayésien
+- Quantifie l'incertitude par pixel
+- Forces : pas besoin de total national fiable
+- Limites : exige une enquête échantillonnée propre
 :::
 :::
 
-## Exercices à pratiquer
+**Les deux ne s'opposent pas — elles se valident mutuellement.** Le RGPH 4 utilise les deux en parallèle. J8 et J9 de cet atelier sont dédiés à chacune.
 
-Tous les énoncés sont dans `exercice.qmd`, les solutions commentées dans `corrige.qmd` :
+## Sites pilotes RGPH 4 : pourquoi ces quatre-là
 
-- **Q1–Q3** — dplyr, aide R, agrégation d'enquête (séance, 30 min cumulé).
-- **Q4–Q5** — manipulation `sf`, distances et CRS (séance, 20 min cumulé).
-- **Q6** — devoir individuel du soir (~30 min) : cartographier votre région d'origine.
+| Site | Région | Caractéristique pédagogique |
+|---|---|---|
+| **Bamenda 1** | Nord-Ouest | Capitale régionale, contexte sécuritaire fragile (zone anglophone) |
+| **Fongo-Tongo** | Ouest | Petite commune rurale du Haut-Plateau, densité forte |
+| **Buea** | Sud-Ouest | Mont Cameroun, gradient altitudinal, urbain-rural mixte |
+| **Mora** | Extrême-Nord | Sahel, déplacés internes Boko Haram, accessibilité limitée |
 
-## Demain (J2)
+Ces quatre sites couvrent **les principales typologies camerounaises** : urbain, rural dense, zone d'altitude, sahel. Les méthodologies validées sur ces sites seront généralisées en 2026 H2.
 
-On entre dans `sf` en profondeur :
+# Partie 8 — Synthèse et passage à la pratique {data-state="section-break"}
 
-- Lecture/écriture (shp, gpkg, geojson, kml).
-- CRS et reprojection appliquées.
-- Opérations sf : `st_buffer`, `st_union`, `st_intersection`, `st_centroid`.
-- Dissolution polygones ADM3 → ADM1.
-- Validation et réparation géométries.
+## Cinq idées-clés à retenir de J1
 
-## Sources
+1. **Un objet spatial est un `data.frame` augmenté d'une colonne `geometry`.** Pas plus, pas moins. Tout `dplyr` y fonctionne.
+2. **Le format Simple Features est un standard ouvert international** — interopérable QGIS, PostGIS, ArcGIS. `sf` (R) l'implémente fidèlement.
+3. **Aucune projection n'est neutre.** Choisir un CRS, c'est choisir ce qu'on préserve (angles, aires, distances) et ce qu'on sacrifie.
+4. **Web Mercator est interdit pour la statistique.** Pour le Cameroun : UTM 32 N / 33 N selon la longitude, ou Lambert Cameroun (EPSG:3119) pour les calculs nationaux.
+5. **Le RGPH 4 est une opportunité méthodologique unique** — première combinaison BUCREP + WorldPop + bottom-up à cette échelle en Afrique.
+
+## Articulation pratique : ce qu'on a vu vs ce qu'on va faire
+
+::: {.columns}
+::: {.column width="50%"}
+**Vu en théorie (slides)**
+
+- Écosystème R / R-spatial
+- Tidy data, verbes dplyr
+- Simple Features OGC
+- Trois familles de CRS
+- Sémiologie graphique
+- Cadre RGPH 4
+:::
+::: {.column width="50%"}
+**À pratiquer (démo + exercices)**
+
+- Créer un projet RStudio + `here`
+- Manipuler un microfichier simulé EDS-MICS
+- Charger GADM v4.1 Cameroun
+- Reprojeter UTM 32 N
+- Calculer une superficie en km²
+- Produire une choroplèthe densité
+:::
+:::
+
+## Devoir individuel (Q6 — 30 min, à faire le soir)
+
+Énoncé complet dans `pedagogie/J01_intro_R_pensee_spatiale/exercice.qmd`.
+
+Résumé :
+
+1. Créer un projet RStudio personnel.
+2. Charger les ADM3 du Cameroun via `fetch_gadm_cameroon(3)`.
+3. **Filtrer la région d'origine** (la tienne — Centre, Extrême-Nord, Sud-Ouest, etc.).
+4. Reprojeter en UTM 32 N.
+5. Produire une carte des arrondissements avec `tmap`.
+6. Exporter en `.png` 300 dpi.
+
+Corrigé pédagogique dans `corrige.qmd`, à n'ouvrir qu'**après** ta tentative.
+
+## Demain (J2) — ce qu'on attaque
+
+`sf` en profondeur :
+
+- Lecture / écriture multi-format (Shapefile, GeoJSON, GeoPackage, KML).
+- Opérations vectorielles : `st_buffer`, `st_union`, `st_intersection`, `st_centroid`, `st_voronoi`.
+- Dissolution des polygones ADM3 → ADM1 (recoller les départements pour obtenir une région).
+- Validation et réparation des géométries (`st_make_valid`).
+- Premiers fichiers BUCREP officiels si disponibles d'ici là.
+
+## Sources de données et licences
 
 | Donnée | Source | Licence |
 |---|---|---|
-| GADM v4.1 | gadm.org | Académique |
-| ECAM 4 | INS Cameroun | INS |
-| EDS-MICS 2018 | dhsprogram.com | DHS Program |
+| GADM v4.1 ADM0-3 Cameroun | <https://gadm.org/download_country.html> | Libre académique |
+| Estimations population régionale 2019 | BUCREP (ordres de grandeur pédagogiques, à actualiser RGPH 4) | À actualiser |
+| Microfichier EDS-MICS Cameroun 2018 | <https://dhsprogram.com/> | DHS Program (inscription + projet) |
+| WorldPop 2020 100 m | <https://hub.worldpop.org/> | CC-BY 4.0 |
 
-**Références :** Pebesma 2018 (sf) · Tatem 2017 (WorldPop) · BUCREP RGPH 4.
+Code distribué sous **CC-BY 4.0** au nom du GDSG / IFORD.
+
+## Références méthodologiques
+
+@pebesma2018simple — fondation théorique de `sf`.
+
+@wickham2014tidy — la théorie tidy data.
+
+@stevens2015disaggregating — méthodologie WorldPop top-down.
+
+@darin2023bottomup — méthodologie WorldPop bottom-up.
+
+@tatem2017worldpop — vue d'ensemble de l'écosystème WorldPop.
+
+@hijmans2024terra — la documentation `terra` (utilisée à partir de J4).
 
 ## Questions ?
 
-À ce stade, **arrêtons-nous** et vérifions qu'on est tous sur la même longueur d'onde avant J2.
+À ce stade, **arrêtons-nous**.
 
-`ramondzita@gmail.com`
+Avant d'attaquer le matériel pratique de demain, vérifions que tout le monde est sur la même longueur d'onde sur :
+
+1. Tidy data + cinq verbes dplyr
+2. Simple Features = data.frame + geometry
+3. La différence WGS 84 / UTM / Web Mercator
+4. Le double pipe top-down × bottom-up du RGPH 4
+
+`ramondzita@gmail.com` · Geospatial Data Science Group · IFORD

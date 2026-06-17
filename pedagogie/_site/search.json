@@ -1,0 +1,100 @@
+[
+  {
+    "objectID": "J01_intro_R_pensee_spatiale/runtime.html",
+    "href": "J01_intro_R_pensee_spatiale/runtime.html",
+    "title": "J1 — Intro R + pensée spatiale",
+    "section": "",
+    "text": "Mode d’emploi. Cliquez Run code dans chaque cellule pour exécuter. Modifiez le code librement, recliquez pour relancer. Rien n’est envoyé sur un serveur — tout tourne dans votre navigateur."
+  },
+  {
+    "objectID": "J01_intro_R_pensee_spatiale/runtime.html#r-comme-calculatrice",
+    "href": "J01_intro_R_pensee_spatiale/runtime.html#r-comme-calculatrice",
+    "title": "J1 — Intro R + pensée spatiale",
+    "section": "1. R comme calculatrice",
+    "text": "1. R comme calculatrice\n\n\n\n\n\n\n\n\nÀ essayer : changez les valeurs de pop_est, ou ajoutez une 11ᵉ région imaginaire — puis relancez."
+  },
+  {
+    "objectID": "J01_intro_R_pensee_spatiale/runtime.html#vecteurs-et-opérations-vectorielles",
+    "href": "J01_intro_R_pensee_spatiale/runtime.html#vecteurs-et-opérations-vectorielles",
+    "title": "J1 — Intro R + pensée spatiale",
+    "section": "2. Vecteurs et opérations vectorielles",
+    "text": "2. Vecteurs et opérations vectorielles"
+  },
+  {
+    "objectID": "J01_intro_R_pensee_spatiale/runtime.html#tibble-la-table-de-données-moderne",
+    "href": "J01_intro_R_pensee_spatiale/runtime.html#tibble-la-table-de-données-moderne",
+    "title": "J1 — Intro R + pensée spatiale",
+    "section": "3. Tibble : la table de données moderne",
+    "text": "3. Tibble : la table de données moderne"
+  },
+  {
+    "objectID": "J01_intro_R_pensee_spatiale/runtime.html#les-verbes-dplyr-en-pratique-démographique",
+    "href": "J01_intro_R_pensee_spatiale/runtime.html#les-verbes-dplyr-en-pratique-démographique",
+    "title": "J1 — Intro R + pensée spatiale",
+    "section": "4. Les verbes dplyr en pratique démographique",
+    "text": "4. Les verbes dplyr en pratique démographique"
+  },
+  {
+    "objectID": "J01_intro_R_pensee_spatiale/runtime.html#un-mini-microfichier-denquête-simulé",
+    "href": "J01_intro_R_pensee_spatiale/runtime.html#un-mini-microfichier-denquête-simulé",
+    "title": "J1 — Intro R + pensée spatiale",
+    "section": "5. Un mini-microfichier d’enquête simulé",
+    "text": "5. Un mini-microfichier d’enquête simulé\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nÀ retenir. filter filtre les lignes, select choisit les colonnes, mutate crée une variable, group_by + summarise agrège. Quatre verbes pour 80 % de l’analyse de données."
+  },
+  {
+    "objectID": "J01_intro_R_pensee_spatiale/runtime.html#première-carte-avec-sf",
+    "href": "J01_intro_R_pensee_spatiale/runtime.html#première-carte-avec-sf",
+    "title": "J1 — Intro R + pensée spatiale",
+    "section": "6. Première carte avec sf",
+    "text": "6. Première carte avec sf"
+  },
+  {
+    "objectID": "J01_intro_R_pensee_spatiale/runtime.html#distance-entre-yaoundé-et-douala-démo-crs",
+    "href": "J01_intro_R_pensee_spatiale/runtime.html#distance-entre-yaoundé-et-douala-démo-crs",
+    "title": "J1 — Intro R + pensée spatiale",
+    "section": "7. Distance entre Yaoundé et Douala — démo CRS",
+    "text": "7. Distance entre Yaoundé et Douala — démo CRS\n\n\n\n\n\n\n\n\n\nLa distance Yaoundé–Douala sur la route est d’environ 240 km. Le calcul « naïf » sur les degrés donne un nombre sans dimension — vérifiez par vous-même qu’il ne ressemble en rien aux 240 km attendus."
+  },
+  {
+    "objectID": "J01_intro_R_pensee_spatiale/runtime.html#pour-aller-plus-loin",
+    "href": "J01_intro_R_pensee_spatiale/runtime.html#pour-aller-plus-loin",
+    "title": "J1 — Intro R + pensée spatiale",
+    "section": "8. Pour aller plus loin",
+    "text": "8. Pour aller plus loin\nLe .qmd complet du jour (avec téléchargement réel des données GADM, jointures, choroplèthes publiables, exports PNG/PDF) est dans pedagogie/J01_intro_R_pensee_spatiale/demo.qmd — à ouvrir dans RStudio ou Posit Cloud.\n← Accueil · J2 — sf + CRS →"
+  },
+  {
+    "objectID": "INDEX.html",
+    "href": "INDEX.html",
+    "title": "",
+    "section": "",
+    "text": "Code"
+  },
+  {
+    "objectID": "INDEX.html#calendrier",
+    "href": "INDEX.html#calendrier",
+    "title": "",
+    "section": "Calendrier",
+    "text": "Calendrier\n\n\n\nDate\nJour\nThème\nLien\n\n\n\n\nLundi 27 juillet 2026\nJ1\nIntroduction R + pensée spatiale\nJ01\n\n\nMardi 28 juillet 2026\nJ2\nDonnées vectorielles sf et CRS\nà venir\n\n\nMercredi 29 juillet 2026\nJ3\nCartographie thématique (tmap, ggplot2)\nà venir\n\n\nJeudi 30 juillet 2026\nJ4\nDonnées raster avec terra\nà venir\n\n\nVendredi 31 juillet 2026\nJ5\nJointures spatiales et démographie EDS-MICS\nà venir\n\n\nSamedi 1ᵉʳ août 2026\nJ6\nAutocorrélation spatiale (Moran, LISA)\nà venir\n\n\nLundi 3 août 2026\nJ7\nKDE, dasymétrie, télédétection\nà venir\n\n\nMardi 4 août 2026\nJ8\nPopulation top-down (WorldPop, GHS-POP)\nà venir\n\n\nMercredi 5 août 2026\nJ9\nPopulation bottom-up\nà venir\n\n\nJeudi 6 + Vendredi 7 août 2026\nJ10\nMini-projet et bilan\nà venir\n\n\n\n\nDimanche 2 août : jour de repos (à confirmer selon l’agenda IFORD)."
+  },
+  {
+    "objectID": "INDEX.html#statut-de-chaque-jour",
+    "href": "INDEX.html#statut-de-chaque-jour",
+    "title": "",
+    "section": "Statut de chaque jour",
+    "text": "Statut de chaque jour\nLégende : ✅ rédigé · 🚧 en cours · ⬜ à venir.\n\n\n\nJour\nREADME\ndemo\nslides\nruntime\nexercice\ncorrigé\n\n\n\n\nJ1\n✅\n✅\n✅\n✅\n✅\n✅\n\n\nJ2\n⬜\n⬜\n⬜\n⬜\n⬜\n⬜\n\n\nJ3\n⬜\n⬜\n⬜\n⬜\n⬜\n⬜\n\n\nJ4\n⬜\n⬜\n⬜\n⬜\n⬜\n⬜\n\n\nJ5\n⬜\n⬜\n⬜\n⬜\n⬜\n⬜\n\n\nJ6\n⬜\n⬜\n⬜\n⬜\n⬜\n⬜\n\n\nJ7\n⬜\n⬜\n⬜\n⬜\n⬜\n⬜\n\n\nJ8\n⬜\n⬜\n⬜\n⬜\n⬜\n⬜\n\n\nJ9\n⬜\n⬜\n⬜\n⬜\n⬜\n⬜\n\n\nJ10\n⬜\n⬜\n⬜\n⬜\n⬜\n⬜\n\n\n\nMise à jour : 16 juin 2026."
+  },
+  {
+    "objectID": "INDEX.html#ressources-transverses",
+    "href": "INDEX.html#ressources-transverses",
+    "title": "",
+    "section": "Ressources transverses",
+    "text": "Ressources transverses\n\nREADME.md — présentation générale du dossier pedagogie/.\nmanuel_animateur.md — mode d’emploi pour l’animateur (toi, en salle).\n_commons/helpers/fetch_data.R — téléchargement auto avec fallback local.\n_commons/helpers/theme_iford.R — thème ggplot + tmap commun.\n_commons/helpers/citations.bib — bibliographie commune.\n_commons/styles/ — feuilles de style SCSS pour slides et runtime."
+  },
+  {
+    "objectID": "INDEX.html#pour-les-participants",
+    "href": "INDEX.html#pour-les-participants",
+    "title": "",
+    "section": "Pour les participants",
+    "text": "Pour les participants\n\nVous avez R installé localement : ouvrir le .Rproj et lancer pedagogie/JXX_…/demo.qmd.\nVous n’avez pas R installé : utiliser le runtime WebR sur GitHub Pages (URL à venir).\nTutoriels d’auto-installation : voir environnement_technique/guide_installation.md."
+  }
+]

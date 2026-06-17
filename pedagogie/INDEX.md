@@ -7,15 +7,15 @@ Navigation rapide entre les 10 jours.
 | Date | Jour | Thème | Lien |
 |---|---|---|---|
 | Lundi 27 juillet 2026 | J1 | Introduction R + pensée spatiale | [J01](J01_intro_R_pensee_spatiale/README.md) |
-| Mardi 28 juillet 2026 | J2 | Données vectorielles `sf` et CRS | [J02](J02_sf_CRS_vecteurs/README.md) |
-| Mercredi 29 juillet 2026 | J3 | Cartographie thématique (`tmap`, `ggplot2`) | [J03](J03_cartographie_tmap_ggplot/README.md) |
-| Jeudi 30 juillet 2026 | J4 | Données raster avec `terra` | [J04](J04_terra_raster/README.md) |
-| Vendredi 31 juillet 2026 | J5 | Jointures spatiales et démographie EDS-MICS | [J05](J05_jointures_spatiales_demo/README.md) |
-| Samedi 1ᵉʳ août 2026 | J6 | Autocorrélation spatiale (Moran, LISA) | [J06](J06_autocorrelation_moran_lisa/README.md) |
-| Lundi 3 août 2026 | J7 | KDE, dasymétrie, télédétection | [J07](J07_KDE_dasymetrie_teledetection/README.md) |
-| Mardi 4 août 2026 | J8 | Population top-down (WorldPop, GHS-POP) | [J08](J08_population_top_down/README.md) |
-| Mercredi 5 août 2026 | J9 | Population bottom-up | [J09](J09_population_bottom_up/README.md) |
-| Jeudi 6 + Vendredi 7 août 2026 | J10 | Mini-projet et bilan | [J10](J10_mini_projet_synthese/README.md) |
+| Mardi 28 juillet 2026 | J2 | Données vectorielles `sf` et CRS | _à venir_ |
+| Mercredi 29 juillet 2026 | J3 | Cartographie thématique (`tmap`, `ggplot2`) | _à venir_ |
+| Jeudi 30 juillet 2026 | J4 | Données raster avec `terra` | _à venir_ |
+| Vendredi 31 juillet 2026 | J5 | Jointures spatiales et démographie EDS-MICS | _à venir_ |
+| Samedi 1ᵉʳ août 2026 | J6 | Autocorrélation spatiale (Moran, LISA) | _à venir_ |
+| Lundi 3 août 2026 | J7 | KDE, dasymétrie, télédétection | _à venir_ |
+| Mardi 4 août 2026 | J8 | Population top-down (WorldPop, GHS-POP) | _à venir_ |
+| Mercredi 5 août 2026 | J9 | Population bottom-up | _à venir_ |
+| Jeudi 6 + Vendredi 7 août 2026 | J10 | Mini-projet et bilan | _à venir_ |
 
 > Dimanche 2 août : jour de repos (à confirmer selon l'agenda IFORD).
 

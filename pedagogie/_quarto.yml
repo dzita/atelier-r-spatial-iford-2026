@@ -5,12 +5,20 @@ project:
     - "INDEX.md"
     - "README.md"
     - "J*/runtime.qmd"
+  # Quarto strip parfois le prefixe _commons/ dans la resolution d'URL.
+  # On declare explicitement le dossier image en resources : il sera copie
+  # tel quel dans _site/_commons/img/ et accessible via /_commons/img/...
+  resources:
+    - "_commons/img/**"
 
 website:
   title: "Runtime IFORD × GDSG 2026"
   description: "Atelier R-spatial — code exécutable dans le navigateur (WebR)"
   navbar:
     background: "#0F4C81"
+    logo: /_commons/img/logo-iford.jpg
+    logo-href: INDEX.md
+    logo-alt: "IFORD"
     left:
       - href: INDEX.md
         text: "Accueil"
@@ -18,29 +26,15 @@ website:
         menu:
           - href: J01_intro_R_pensee_spatiale/runtime.qmd
             text: "J1 · Intro R + pensée spatiale"
-          - href: J02_sf_CRS_vecteurs/runtime.qmd
-            text: "J2 · sf + CRS"
-          - href: J03_cartographie_tmap_ggplot/runtime.qmd
-            text: "J3 · Cartographie"
-          - href: J04_terra_raster/runtime.qmd
-            text: "J4 · Raster terra"
-          - href: J05_jointures_spatiales_demo/runtime.qmd
-            text: "J5 · Jointures + EDS-MICS"
-          - href: J06_autocorrelation_moran_lisa/runtime.qmd
-            text: "J6 · Moran / LISA"
-          - href: J07_KDE_dasymetrie_teledetection/runtime.qmd
-            text: "J7 · KDE / dasymétrie"
-          - href: J08_population_top_down/runtime.qmd
-            text: "J8 · Top-down"
-          - href: J09_population_bottom_up/runtime.qmd
-            text: "J9 · Bottom-up"
-          - href: J10_mini_projet_synthese/runtime.qmd
-            text: "J10 · Mini-projet"
+          # J2-J10 seront ajoutes ici au fur et a mesure de leur redaction.
+          # Ne pas re-activer une entree tant que le runtime.qmd correspondant
+          # n'existe pas, sinon Quarto cassera la preview.
 
 format:
   live-html:
     toc: true
     toc-depth: 2
+    toc-location: left
     theme:
       - cosmo
       - _commons/styles/runtime_quartolive.scss
@@ -48,19 +42,17 @@ format:
     code-link: true
 
 webr:
+  # Packages preinstalles globalement pour TOUS les runtime.qmd.
+  # On garde la liste minimale ; chaque runtime peut ajouter les siens
+  # via un bloc `webr.packages:` au niveau document.
+  # tmap est volontairement absent : pas garanti sur repo.r-wasm.org
+  # et trop de dependances pour un chargement navigateur fluide. Les
+  # cartes des runtimes utilisent ggplot2 + geom_sf, plus leger.
   packages:
-    - dplyr
-    - ggplot2
-    - sf
     - tibble
-    - tidyr
-    - readr
-    - stringr
-    - purrr
-    - janitor
-    - tmap
-    - classInt
-    - spdep
+    - dplyr
+    - sf
+    - ggplot2
   render-df: gt-interactive
   cell-options:
     autorun: false
