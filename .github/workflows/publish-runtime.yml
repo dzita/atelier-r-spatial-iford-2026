@@ -53,10 +53,21 @@ jobs:
         # parser l'AST des fichiers .qmd.
         run: Rscript -e 'install.packages(c("knitr", "rmarkdown"))'
 
-      - name: Publish Quarto site to gh-pages
-        uses: quarto-dev/quarto-actions/publish@v2
+      - name: Render Quarto project
+        run: |
+          cd pedagogie
+          quarto render
+
+      - name: Deploy built site to gh-pages branch
+        # On utilise peaceiris/actions-gh-pages plutot que
+        # quarto-dev/quarto-actions/publish : ce dernier exige que la branche
+        # gh-pages existe deja sur le remote (probleme classique au premier
+        # deploiement). peaceiris la cree si necessaire et y publie le dossier
+        # _site rendu par Quarto. force_orphan=true garde la branche legere
+        # (uniquement le dernier build, pas d'historique).
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          target: gh-pages
-          path: pedagogie
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./pedagogie/_site
+          publish_branch: gh-pages
+          force_orphan: true
