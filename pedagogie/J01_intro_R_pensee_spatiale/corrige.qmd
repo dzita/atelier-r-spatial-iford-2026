@@ -1,10 +1,11 @@
 ---
-title: "J1 — Corrigé du TP : cartographier votre région d'origine"
-subtitle: "Atelier IFORD × GDSG · Distribué J2 matin"
+title: "J1 — Corrigés des exercices"
+subtitle: "Atelier IFORD × GDSG · Q1–Q5 distribués en séance, Q6 distribué J2 matin"
 lang: fr
 format:
   html:
     toc: true
+    toc-depth: 2
     theme: cosmo
 execute:
   echo: true
@@ -17,15 +18,18 @@ bibliography: ../_commons/helpers/citations.bib
 
 Si vous n'avez pas encore tenté l'exercice : **fermez ce fichier et lancez-vous d'abord**. Le corrigé n'a de valeur que comparé à votre propre tentative.
 
-# Solution complète — exemple sur l'Extrême-Nord
+Chaque réponse comporte (i) le code, (ii) un court paragraphe d'explication du pourquoi, et (iii) un piège à éviter.
 
-L'Extrême-Nord est intéressant pédagogiquement : c'est la région la plus peuplée du Cameroun (~4.2 millions d'habitants), elle abrite **Mora** (site pilote RGPH 4), et son relief presque plat permet des cartes nettes.
+# Setup commun
+
+Le bloc qui suit charge tous les packages utiles pour la journée et nos helpers maison (`fetch_data.R` pour les chemins vers les datasets, `theme_iford.R` pour les défauts de carte). `library()` charge un package en mémoire ; `source()` exécute un script R pour ramener ses fonctions dans l'environnement.
 
 ```{r}
 #| label: setup
 library(here)
 library(sf)
 library(dplyr)
+library(tibble)
 library(tmap)
 
 source(here("pedagogie", "_commons", "helpers", "fetch_data.R"))
@@ -33,7 +37,259 @@ source(here("pedagogie", "_commons", "helpers", "theme_iford.R"))
 setup_tmap_iford()
 ```
 
-## 1. Charger les ADM3 du Cameroun
+# Q1 — `dplyr` et `case_when`
+
+## Q1.a — Ajouter une 11ᵉ région fictive
+
+On reconstruit le tibble de base puis on en ajoute une ligne avec `bind_rows()` (équivalent dplyr de `rbind` qui tolère des noms de colonnes mélangés). Ensuite on refait l'agrégation par classe pour vérifier que la « Diaspora » tombe bien dans « 1 à 3M ».
+
+```{r}
+#| label: q1a
+regions <- c("Adamaoua", "Centre", "Est", "Extrême-Nord", "Littoral",
+             "Nord", "Nord-Ouest", "Ouest", "Sud", "Sud-Ouest")
+pop_est <- c(1340000, 4400000, 870000, 4200000, 3400000,
+             2700000, 2000000, 2000000, 800000, 1700000)
+
+tbl_cmr <- tibble(
+  region   = regions,
+  pop_2019 = pop_est,
+  capitale = c("Ngaoundéré", "Yaoundé", "Bertoua", "Maroua", "Douala",
+               "Garoua", "Bamenda", "Bafoussam", "Ebolowa", "Buea")
+)
+
+tbl_cmr_aug <- tbl_cmr |>
+  bind_rows(tibble(region = "Diaspora", pop_2019 = 1500000, capitale = "Paris"))
+
+tbl_cmr_aug |>
+  mutate(pop_classe = case_when(
+    pop_2019 < 1e6 ~ "Moins de 1M",
+    pop_2019 < 3e6 ~ "1 à 3M",
+    TRUE           ~ "Plus de 3M"
+  )) |>
+  group_by(pop_classe) |>
+  summarise(n = n(), pop_totale = sum(pop_2019))
+```
+
+**Piège à éviter :** `rbind()` base R exige que les deux tibbles aient exactement les mêmes colonnes dans le même ordre — `bind_rows()` est plus permissif et c'est ce qui le rend idiomatique en tidyverse.
+
+## Q1.b — Changer les seuils de `case_when`
+
+Les seuils de `case_when` ne sont que des nombres : on les modifie sans changer la structure de la chaîne. La nouvelle classification met le Centre et l'Extrême-Nord seuls dans « Plus de 4 M ».
+
+```{r}
+#| label: q1b
+tbl_cmr |>
+  mutate(pop_classe = case_when(
+    pop_2019 < 1.5e6 ~ "Moins de 1.5 M",
+    pop_2019 < 4e6   ~ "1.5 à 4 M",
+    TRUE             ~ "Plus de 4 M"
+  )) |>
+  group_by(pop_classe) |>
+  summarise(n_regions = n(), pop_totale = sum(pop_2019)) |>
+  arrange(pop_totale)
+```
+
+**Piège à éviter :** `case_when` évalue les conditions **dans l'ordre** ; la première qui matche gagne. Inverser deux conditions (par exemple mettre `pop_2019 < 4e6` avant `pop_2019 < 1.5e6`) écrase silencieusement la branche du bas.
+
+## Q1.c — Grouper par la première lettre
+
+`substr(x, start, stop)` extrait une sous-chaîne par position de caractère. Combiné avec `group_by`, on découvre que trois régions commencent par « N » (Nord, Nord-Ouest, Ngaoundéré… non, Ngaoundéré est la capitale, pas la région — donc Nord, Nord-Ouest seulement). À vérifier en sortie.
+
+```{r}
+#| label: q1c
+tbl_cmr |>
+  mutate(lettre = substr(region, 1, 1)) |>
+  group_by(lettre) |>
+  summarise(n = n(), regions = paste(region, collapse = ", "))
+```
+
+**Piège à éviter :** `substr("Extrême-Nord", 1, 1)` retourne `"E"` ; pas de surprise. Mais sur certains encodages (Windows-1252 vs UTF-8), des caractères accentués peuvent compter pour plusieurs octets — `substr` travaille en octets, `stringi::stri_sub` en caractères Unicode. Pour notre usage simple ici, c'est sans incidence.
+
+# Q2 — Apprendre à demander de l'aide
+
+## Q2.a — `?dplyr::filter`
+
+L'aide s'affiche dans le panneau **Help** de RStudio (bas-droite par défaut). Les sections clés sont :
+
+- **Description** : ce que fait la fonction en une phrase.
+- **Usage** : la signature exacte.
+- **Arguments** : tous les paramètres détaillés.
+- **Value** : le type d'objet retourné.
+- **Examples** : exécutables avec le bouton « Run examples » — c'est presque toujours le meilleur point d'entrée.
+
+## Q2.b — Vignettes de `sf`
+
+Pour J2-J3, regardez `sf1` (introduction), `sf2` (lecture/écriture), `sf3` (manipulation). Pour J4-J5 quand on parlera des jointures spatiales et des CRS, `sf5` (« Plotting Simple Feature objects ») et `sf6` (« Coordinate Reference Systems »).
+
+## Q2.c — Lire une erreur
+
+`mean("trois")` retourne `NA` avec un warning du type :
+
+```
+Warning message: In mean.default("trois") :
+  argument is not numeric or logical: returning NA
+```
+
+R refuse de calculer une moyenne sur un caractère, mais au lieu de planter, il retourne `NA` + un warning — c'est un comportement « permissif » typique de R. En production, on préfère souvent forcer l'erreur stricte avec `stop()` ou `assertthat::assert_that()`. Pour la recherche Google : `R mean argument is not numeric` mène généralement à StackOverflow.
+
+**Piège à éviter :** distinguer **Warning** (R continue) et **Error** (R s'arrête). Ignorer un warning peut faire passer un bug en production.
+
+# Q3 — Agréger l'enquête simulée
+
+## Reconstruire `hh_sim`
+
+```{r}
+#| label: q3-setup
+set.seed(2026)
+n <- 11000
+hh_sim <- tibble(
+  id_menage   = sprintf("HH%05d", seq_len(n)),
+  region      = sample(regions, n, replace = TRUE,
+                       prob = pop_est / sum(pop_est)),
+  milieu      = sample(c("Urbain", "Rural"), n, replace = TRUE, prob = c(0.57, 0.43)),
+  taille_mng  = pmax(1, round(rpois(n, lambda = 5.1))),
+  quintile    = sample(1:5, n, replace = TRUE),
+  acces_eau   = sample(c("Améliorée", "Non améliorée"), n, replace = TRUE,
+                       prob = c(0.72, 0.28)),
+  electricite = sample(c("Oui", "Non"), n, replace = TRUE,
+                       prob = c(0.61, 0.39))
+)
+```
+
+## Q3.a — Électrification par quintile
+
+`group_by(quintile)` partitionne par quintile de richesse, `mean(electricite == "Oui") * 100` calcule la proportion en pourcentage. Comme la simulation est aléatoire **sans** vraie corrélation entre quintile et électricité (on a tiré indépendamment), les 5 quintiles devraient afficher des taux très proches autour de 61 % — c'est le signal qu'une simulation indépendante ne reproduit **pas** les corrélations réelles du terrain.
+
+```{r}
+#| label: q3a
+hh_sim |>
+  group_by(quintile) |>
+  summarise(
+    n_menages       = n(),
+    pct_electricite = mean(electricite == "Oui") * 100
+  ) |>
+  arrange(quintile)
+```
+
+**Lecture critique :** dans une vraie EDS-MICS, on observerait un gradient net (10 % au Q1 → 95 % au Q5). L'absence de gradient ici **rappelle** que nos données sont simulées sans corrélation — utile pour la pédagogie de R, pas pour conclure quoi que ce soit sur le terrain.
+
+## Q3.b — Croisé `quintile × milieu`
+
+On groupe par **deux** variables : `summarise` produit alors une ligne par combinaison `(quintile, milieu)`. Avec 5 quintiles × 2 milieux = 10 lignes.
+
+```{r}
+#| label: q3b
+hh_sim |>
+  group_by(quintile, milieu) |>
+  summarise(
+    n_menages       = n(),
+    pct_electricite = mean(electricite == "Oui") * 100,
+    .groups = "drop"
+  ) |>
+  arrange(quintile, milieu)
+```
+
+**Piège à éviter :** `summarise` laisse par défaut un groupement résiduel sur la première variable, ce qui peut perturber les calculs suivants. L'argument `.groups = "drop"` retire explicitement tous les groupements — bonne pratique systématique.
+
+## Q3.c — Taille de ménage par quintile
+
+```{r}
+#| label: q3c
+hh_sim |>
+  group_by(quintile) |>
+  summarise(taille_moyenne = mean(taille_mng)) |>
+  arrange(desc(taille_moyenne))
+```
+
+Là encore, comme la `taille_mng` a été tirée d'une Poisson **commune** à tous les quintiles (`lambda = 5.1`), les moyennes seront toutes proches de 5.1. Sur une vraie EDS-MICS le Q1 affiche typiquement des ménages plus grands (~6.5) que le Q5 (~4.5), ce qui n'apparaît pas ici.
+
+# Q4 — Manipuler un objet `sf`
+
+## Setup spatial
+
+```{r}
+#| label: q4-setup
+adm1 <- read_sf(fetch_gadm_cameroon(1))
+```
+
+## Q4.a — Filtrer deux régions
+
+`filter()` accepte une condition booléenne combinée par `%in%` qui teste l'appartenance à un vecteur. Le résultat reste un objet `sf` à 2 lignes.
+
+```{r}
+#| label: q4a
+adm1_cotier <- adm1 |>
+  filter(NAME_1 %in% c("Littoral", "Sud-Ouest"))
+nrow(adm1_cotier)
+```
+
+## Q4.b — Reprojection et superficie
+
+```{r}
+#| label: q4b
+adm1_cotier_utm <- st_transform(adm1_cotier, 32632)
+adm1_cotier_utm$superficie_km2 <- as.numeric(st_area(adm1_cotier_utm)) / 1e6
+
+adm1_cotier_utm |>
+  st_drop_geometry() |>
+  select(NAME_1, superficie_km2)
+```
+
+Littoral ~20 200 km², Sud-Ouest ~24 600 km² (ordres de grandeur GADM, à comparer aux 20 248 et 25 410 km² officiels BUCREP).
+
+## Q4.c — Le piège du `st_area()` sur WGS 84
+
+```{r}
+#| label: q4c
+#| warning: true
+st_area(adm1_cotier) |> head(2)
+```
+
+R retourne quand même une valeur, mais avec une **unité** affichée explicitement (souvent `[m^2]` car `sf` détecte que c'est géographique et fait une approximation géodésique). Le piège : dans certaines versions ou configurations, le résultat peut sortir en `[degrees^2]`, ce qui n'a aucun sens physique. **Toujours reprojeter avant `st_area()`** : c'est la règle d'hygiène.
+
+# Q5 — Distance Bamenda → Buea
+
+## Q5.a — Création des points en WGS 84
+
+`st_sfc()` crée une « simple feature collection » : une géométrie sans tableau d'attributs. `st_point(c(lon, lat))` crée le point. `crs = 4326` étiquette la géométrie en WGS 84.
+
+```{r}
+#| label: q5a
+bamenda <- st_sfc(st_point(c(10.1591, 5.9597)), crs = 4326)
+buea    <- st_sfc(st_point(c(9.2402, 4.1546)), crs = 4326)
+```
+
+## Q5.b — Distance en WGS 84
+
+```{r}
+#| label: q5b
+dist_wgs <- st_distance(bamenda, buea)
+dist_wgs
+```
+
+`sf` détecte que les points sont en CRS géographique et calcule automatiquement une **distance géodésique** sur l'ellipsoïde WGS 84 — résultat en mètres, ~217 km.
+
+## Q5.c — Distance après reprojection UTM 32N
+
+```{r}
+#| label: q5c
+bamenda_utm <- st_transform(bamenda, 32632)
+buea_utm    <- st_transform(buea, 32632)
+dist_utm <- st_distance(bamenda_utm, buea_utm)
+dist_utm
+```
+
+Le résultat est très proche (à ~0.5 % près) parce que les deux villes sont dans le fuseau UTM 32N et à des latitudes proches. La petite différence vient du fait que la projection UTM **planarise** la géométrie : sur une distance courte et un fuseau adapté, l'écart avec la géodésique est négligeable. Sur 5 000 km ou hors fuseau, l'écart deviendrait substantiel.
+
+## Q5.d — Pourquoi la route est plus longue
+
+La distance à vol d'oiseau est ~217 km. La route Bamenda → Buea via Bafoussam → Douala fait ~330 km : le relief volcanique de l'ouest et l'absence de route directe nord-sud dans la zone anglophone imposent un détour par les villes carrefour. **Leçon démographique :** quand on étudie l'accessibilité aux services (santé, scolarisation), la distance à vol d'oiseau **sous-estime** le coût réel ; il faut un modèle de friction (temps de trajet, type de route). On y revient J7.
+
+# Q6 — Cartographier votre région d'origine
+
+Solution illustrée sur l'**Extrême-Nord**, pédagogiquement intéressante : région la plus peuplée (~4.2 M), abrite Mora (site pilote RGPH 4), relief presque plat = cartes nettes.
+
+## Q6.1 — Charger les ADM3 du Cameroun
 
 ```{r}
 #| label: load-adm3
@@ -43,7 +299,7 @@ nrow(adm3)
 
 `adm3` contient typiquement ~360 arrondissements pour le Cameroun.
 
-## 2. Filtrer l'Extrême-Nord
+## Q6.2 — Filtrer l'Extrême-Nord
 
 ```{r}
 #| label: filter-en
@@ -55,7 +311,9 @@ nrow(extreme_nord)
 
 L'Extrême-Nord doit contenir environ 47 arrondissements répartis dans 6 départements (Diamaré, Logone-et-Chari, Mayo-Danay, Mayo-Kani, Mayo-Sava, Mayo-Tsanaga).
 
-## 3. Reprojeter et calculer les superficies
+## Q6.3 — Reprojeter et calculer les superficies
+
+`st_transform()` reprojette ; `st_area()` retourne des m² ; on divise par 1e6 pour des km². La somme doit retomber proche de la superficie officielle.
 
 ```{r}
 #| label: reproject
@@ -68,7 +326,7 @@ sum(extreme_nord_utm$superficie_km2) |> round()
 
 Si vous obtenez ~34 000 km², c'est cohérent avec le chiffre officiel BUCREP.
 
-## 4. Inspection rapide
+## Q6.4 — Inspection rapide
 
 ```{r}
 #| label: top10
@@ -81,7 +339,7 @@ extreme_nord_utm |>
 
 Les plus grands arrondissements (Kousseri, Makary…) sont en bordure du Lac Tchad et confinent au désert sahélien.
 
-## 5. Carte choroplèthe `tmap`
+## Q6.5 — Carte choroplèthe `tmap`
 
 ```{r}
 #| label: carte
@@ -106,7 +364,9 @@ carte_en <- tm_shape(extreme_nord_utm) +
 carte_en
 ```
 
-## 6. Export PNG 300 dpi
+## Q6.6 — Export PNG 300 dpi
+
+`tmap_save()` sérialise une carte vers un format raster. Le bloc reste `eval: false` parce qu'on ne veut pas écrire un fichier à chaque rendu HTML.
 
 ```{r}
 #| label: export
@@ -122,9 +382,7 @@ tmap_save(
 )
 ```
 
-# Pour aller plus loin — le bonus
-
-## Ajouter Maroua (chef-lieu) et calculer la distance à Yaoundé
+## Bonus — Distance Maroua → Yaoundé
 
 ```{r}
 #| label: bonus
@@ -141,7 +399,7 @@ La distance **à vol d'oiseau** est de ~764 km. La route Yaoundé → Maroua mes
 
 C'est une leçon clé pour la suite de l'atelier : **les distances "spatiales" ne sont pas toujours pertinentes pour les politiques publiques**, qui doivent prendre en compte l'accessibilité réelle (temps de transport, infrastructure). On y reviendra **J7** quand on parlera de KDE et d'aires d'attraction.
 
-# Erreurs fréquentes
+# Erreurs fréquentes (tableau récapitulatif)
 
 | Erreur | Cause | Remède |
 |---|---|---|
@@ -149,6 +407,7 @@ C'est une leçon clé pour la suite de l'atelier : **les distances "spatiales" n
 | Distance Yaoundé–Douala = 1.985... (sans unité) | Distance calculée sur des degrés au lieu de mètres | Toujours `st_transform()` vers une CRS projetée avant `st_distance()` |
 | `tmap_save()` plante avec « cannot find file » | Le dossier `outputs/` n'existe pas | `dir.create(..., recursive = TRUE)` avant le `tmap_save` |
 | Texte dans la carte non lisible / chevauchements | Trop d'arrondissements pour la taille | Réduire `size` dans `tm_text()` ou utiliser `tm_text("NAME_3", size = 0.3, ymod = -0.5)` |
+| `summarise()` qui retient un groupe résiduel | `.groups` non spécifié | Toujours `.groups = "drop"` quand on enchaîne |
 
 # Préparation pour J2
 

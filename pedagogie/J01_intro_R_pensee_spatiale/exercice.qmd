@@ -1,32 +1,94 @@
 ---
-title: "J1 — Exercice individuel : cartographier votre région d'origine"
-subtitle: "Atelier IFORD × GDSG · TP du soir, ~30 minutes"
+title: "J1 — Exercices : pratiquer ce qu'on a vu en séance"
+subtitle: "Atelier IFORD × GDSG · 27 juillet 2026"
 lang: fr
 format:
   html:
     toc: true
+    toc-depth: 2
     theme: cosmo
   pdf:
     toc: true
 ---
 
-# Objectifs de l'exercice
+# Mode d'emploi
 
-Mettre en pratique tout ce qu'on a vu en J1 sur **votre** terrain :
+Ce fichier rassemble **toutes les questions** de la journée J1. Pour chaque énoncé, **essayez d'abord par vous-mêmes** ; les solutions commentées sont dans `corrige.qmd`. Tapez le code dans une console R ouverte sur le projet de l'atelier — ne copiez-collez pas, vos doigts apprennent autant que votre cerveau.
+
+Les questions Q1 à Q5 sont des **micro-exercices** (5–10 min chacun) à faire pendant la séance, après le bloc de démonstration correspondant dans `demo.qmd`. La Q6 est le **devoir individuel du soir** (~30 min).
+
+# Q1 — Reprendre dplyr et `case_when` {#sec-q1}
+
+> Référence démo : section « Le verbe `summarise` — agréger » de `demo.qmd`.
+
+Reprenez le tibble `tbl_cmr` créé en séance (10 régions du Cameroun, population estimée, capitale). En modifiant uniquement le bloc `mutate(...) |> group_by(...) |> summarise(...)` :
+
+1. **a.** Ajoutez une **11ᵉ région fictive** « Diaspora » avec une population de `1 500 000` et la capitale « Paris ». Refaites l'agrégation par classe de population.
+2. **b.** Changez les **seuils** de `case_when` pour distinguer trois classes différentes : « Moins de 1.5 M », « 1.5 à 4 M », « Plus de 4 M ». Combien de régions tombent dans chaque classe ?
+3. **c.** Au lieu de grouper par `pop_classe`, groupez par la première lettre du nom de la région (utilisez `substr(region, 1, 1)`). Comptez combien de régions commencent par chaque lettre.
+
+# Q2 — Apprendre à demander de l'aide {#sec-q2}
+
+> Référence démo : section « Comment demander de l'aide en R » de `demo.qmd`.
+
+1. **a.** Tapez dans la console : `?dplyr::filter`. Dans quel panneau de RStudio l'aide s'affiche-t-elle ? Notez les sections (Description, Usage, Arguments, Examples).
+2. **b.** Tapez `vignette(package = "sf")`. Quels titres listés vous intéressent pour les jours à venir ?
+3. **c.** Provoquez volontairement une erreur en tapant `mean("trois")`. Lisez attentivement le message. Copiez-le dans Google avec le préfixe `R`. Notez les deux premiers résultats — sont-ils sur StackOverflow ? RStudio Community ?
+
+# Q3 — Agréger une enquête simulée {#sec-q3}
+
+> Référence démo : section « Calcul d'indicateurs démographiques de base » de `demo.qmd`.
+
+Avec le tibble simulé `hh_sim` (11 000 ménages) :
+
+1. **a.** Calculez la **part de ménages électrifiés** par **quintile de richesse**. Présentez le résultat trié par quintile croissant.
+2. **b.** Refaites le calcul, mais cette fois croisé `quintile × milieu` (urbain/rural). Quelle ligne attire votre œil ?
+3. **c.** Quel est le **quintile dont la taille moyenne du ménage** est la plus élevée ? Est-ce cohérent avec la littérature démographique (ménages pauvres = ménages plus grands) ?
+
+> 💡 Indice : `group_by(quintile, milieu) |> summarise(...)` ; pour le tri, `arrange(quintile, milieu)`.
+
+# Q4 — Manipuler un objet `sf` {#sec-q4}
+
+> Référence démo : sections « Anatomie d'un objet `sf` » et « Reprojeter un objet » de `demo.qmd`.
+
+À partir de `adm1` (10 régions ADM1 du Cameroun) :
+
+1. **a.** Filtrez les deux régions **« Littoral »** et **« Sud-Ouest »** dans un nouvel objet `adm1_cotier`.
+2. **b.** Reprojetez `adm1_cotier` en UTM 32N (EPSG:32632) puis calculez la superficie en km² de chacune.
+3. **c.** Sans reprojeter, essayez d'appeler `st_area(adm1_cotier)` directement sur l'objet en WGS 84. Lisez le message (warning ou résultat avec unité « degrés² ») — pourquoi est-ce un piège ?
+
+# Q5 — Distance Bamenda → Buea {#sec-q5}
+
+> Référence démo : section « Démo : la confusion qui coûte cher » de `demo.qmd`.
+
+Bamenda et Buea sont les chefs-lieux de deux régions anglophones du Cameroun. Leurs coordonnées approximatives sont :
+
+- **Bamenda** : longitude 10.1591°, latitude 5.9597°
+- **Buea** : longitude 9.2402°, latitude 4.1546°
+
+1. **a.** Créez deux objets `sf` ponctuels en WGS 84 (EPSG:4326).
+2. **b.** Calculez la distance directement avec `st_distance()` sur les objets en WGS 84. Notez la valeur en mètres.
+3. **c.** Reprojetez les deux points en UTM 32N et refaites `st_distance()`. La valeur est-elle proche ? Identique ? Pourquoi peut-il y avoir une petite différence ?
+4. **d.** Comparez à la distance routière estimée par Google Maps (~250 km en passant par Douala). Pourquoi la distance à vol d'oiseau est-elle plus courte ?
+
+# Q6 — Devoir individuel : cartographier votre région d'origine {#sec-q6}
+
+> ⏱ **~30 minutes**, à faire le soir après la séance. Référence démo : sessions 3 à 6 de `demo.qmd`.
+
+Mettre en pratique tout ce qu'on a vu en J1 sur **votre** terrain.
+
+## Objectifs
 
 1. Créer un projet RStudio personnel reproductible.
 2. Télécharger les limites administratives du Cameroun depuis GADM.
 3. Filtrer une région (celle où vous êtes né(e), travaillez, ou que vous voulez explorer).
 4. Reprojeter dans une CRS adaptée.
-5. Produire une carte des départements (ADM2) de cette région avec `tmap`.
+5. Produire une carte des arrondissements (ADM3) de cette région avec `tmap`.
 6. Exporter la carte en `.png` 300 dpi.
 
 ## Pré-requis
 
-- L'environnement R complet installé (voir `environnement_technique/guide_installation.md`).
-- Le projet RStudio `atelier-r-spatial-iford-2026.Rproj` ouvert (ou un projet personnel séparé si vous préférez).
-
-# Énoncé pas à pas
+L'environnement R complet installé (voir `environnement_technique/guide_installation.md`). Le projet RStudio `atelier-r-spatial-iford-2026.Rproj` ouvert (ou un projet personnel séparé si vous préférez).
 
 ## Étape 1 — Choisir votre région
 
@@ -56,7 +118,7 @@ adm3 <- read_sf(fetch_gadm_cameroon(3))
 nrow(adm3)
 ```
 
-> 💡 Si le téléchargement échoue (wifi instable), le helper essaie un fichier local. Si c'est aussi absent, vous verrez un message clair pour télécharger manuellement.
+> 💡 Si le fichier n'est pas présent localement, `fetch_gadm_cameroon(3)` s'arrête avec un message expliquant **où** placer le fichier — c'est la stratégie « téléchargement manuel ».
 
 ## Étape 3 — Filtrer votre région
 
@@ -128,7 +190,7 @@ tmap_save(
 
 Vérifiez que le `.png` apparaît bien dans le dossier `outputs/`.
 
-# Critères de réussite
+## Critères de réussite
 
 Vous avez réussi si :
 
@@ -138,7 +200,7 @@ Vous avez réussi si :
 - ☐ La carte affiche les arrondissements avec leur nom et une légende lisible.
 - ☐ Le `.png` exporté est lisible et la flèche du nord + l'échelle sont présentes.
 
-# Pour aller plus loin (optionnel)
+## Pour aller plus loin (optionnel, bonus)
 
 - Ajoutez le chef-lieu de votre région sous forme de point (`st_point`, `st_sfc`, `crs=4326`, `st_transform(32632)`).
 - Calculez la distance entre votre chef-lieu de région et **Yaoundé**.
@@ -148,6 +210,6 @@ Vous avez réussi si :
 
 - Relisez la section correspondante dans `demo.qmd`.
 - Demandez à un voisin (l'apprentissage par les pairs est précieux).
-- Demain matin avant la première session, le corrigé sera distribué (`corrige.qmd`).
+- Le corrigé est dans `corrige.qmd` — **à n'ouvrir qu'après votre tentative**.
 
-Bon TP !
+Bonne pratique !

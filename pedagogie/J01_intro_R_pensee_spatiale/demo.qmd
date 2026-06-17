@@ -35,9 +35,11 @@ Ce premier jour vise à **mettre tout le monde au même niveau** sur R, en l'app
 4. Charger les limites administratives du Cameroun et produire une première carte propre.
 5. Énoncer ce qu'est un **système de coordonnées de référence** (CRS) et pourquoi le confondre cause des erreurs de plusieurs kilomètres.
 
+Les exercices pratiques de la journée sont rassemblés dans `exercice.qmd` (énoncés) et `corrige.qmd` (solutions commentées). La démo ci-dessous ne contient **que** la présentation linéaire ; gardez les deux autres fichiers ouverts en parallèle.
+
 # Pré-requis et environnement {#sec-prereq}
 
-Vérifier en début de séance :
+Avant d'avancer, on s'assure que R, Quarto et les packages requis sont prêts. Le bloc suivant interroge la version de R, tente d'attraper la version de Quarto via `system2()` (sans planter si Quarto n'est pas sur le PATH grâce au `tryCatch()`), puis vérifie pour chaque package du jour s'il est installé en croisant la liste attendue avec `installed.packages()`. La sortie est un tableau `package / installed` à scanner d'un coup d'œil.
 
 ```{r}
 #| label: check-versions
@@ -53,7 +55,7 @@ installed <- pkgs_jour1 %in% rownames(installed.packages())
 data.frame(package = pkgs_jour1, installed = installed)
 ```
 
-Si l'un des packages n'est pas installé, le faire **maintenant** avant d'avancer :
+Si un package manque, on l'installe **maintenant**, pas en fin de séance. Le bloc ci-dessous est marqué `#| eval: false` : Quarto le rend pour la lecture mais ne l'exécute pas (sinon il tenterait l'installation à chaque rendu, ce qu'on ne veut surtout pas).
 
 ```{r}
 #| eval: false
@@ -77,6 +79,8 @@ Stata reste un excellent outil — l'objectif ici n'est pas de le remplacer mais
 
 ## Vecteurs : la brique élémentaire
 
+Un **vecteur** est la structure de base de R : une séquence ordonnée d'éléments du **même type**. On en crée un avec `c()` (« combine »). Le bloc qui suit construit deux vecteurs parallèles — un `character` (les 10 régions du Cameroun) et un `numeric` (population estimée) — puis interroge leurs propriétés : `length()` retourne le nombre d'éléments, `sum()` la somme, `mean()` la moyenne, `range()` le couple (min, max). Chaque appel produit un seul nombre (ou un couple).
+
 ```{r}
 #| label: vecteurs-base
 # Un vecteur numérique : les 10 régions du Cameroun par population
@@ -92,7 +96,7 @@ mean(pop_est)
 range(pop_est)
 ```
 
-Une opération vectorielle se fait sans boucle :
+R **vectorise** par défaut : une opération arithmétique sur un vecteur s'applique élément par élément, sans boucle. Le bloc ci-dessous divise les 10 populations par un million d'un seul coup, puis arrondit le résultat à deux décimales avec `round()`.
 
 ```{r}
 pop_millions <- pop_est / 1e6
@@ -102,6 +106,8 @@ round(pop_millions, 2)
 Le **recyclage** est une source d'erreurs subtiles — on en parlera demain. Pour aujourd'hui : si on additionne deux vecteurs de tailles différentes, R recycle silencieusement le plus court.
 
 ## Types et coercion
+
+R distingue plusieurs types primitifs (`character`, `numeric`, `logical`, `integer`…). Le bloc suivant les interroge avec `class()` (interprétation de haut niveau) et `typeof()` (type de stockage interne — `double` est la précision en virgule flottante 64 bits). Quand on mélange volontairement un caractère et des nombres dans `c(1, 2, "trois")`, R applique la **coercion implicite** : tout devient `character`, parce que c'est le type qui peut tout contenir. C'est la racine d'une grande famille de bugs en démographie.
 
 ```{r}
 #| label: types
@@ -120,6 +126,8 @@ En pratique démographique, on lit souvent des CSV où un code région est mal i
 ## data.frame et tibble : la table de données
 
 Le tableau est la structure dominante en démographie. R en a deux variantes principales : le `data.frame` (base R) et le `tibble` (tidyverse).
+
+On assemble un `data.frame` avec une liste de colonnes nommées de **même longueur**. Le paramètre `stringsAsFactors = FALSE` désactive un comportement historique de R qui convertissait automatiquement les chaînes en facteurs (`factor`) — c'était une source de bugs et le défaut a changé en R 4.0, mais l'écrire explicitement reste une bonne pratique défensive. Ensuite, `as_tibble()` convertit ce `data.frame` en `tibble`, qui s'affiche de façon plus lisible et adopte des règles plus strictes.
 
 ```{r}
 #| label: dataframe
@@ -142,6 +150,8 @@ Le `tibble` est plus strict (pas de conversion silencieuse des chaînes en facte
 
 ## Indexation : trois conventions à connaître
 
+R offre trois syntaxes pour accéder à une partie d'un tableau, et il faut savoir les lire toutes les trois car les forums et le code existant les mélangent. La notation `[ligne, colonne]` est la plus générale (laisser un côté vide signifie « tout »). La notation `$nom` est un raccourci pour extraire une colonne par son nom — résultat : un vecteur. La notation `[[ ]]` extrait un élément unique d'une liste/data.frame — utile quand le nom de colonne est dans une variable.
+
 ```{r}
 #| label: indexation
 # Notation [ligne, colonne ]
@@ -156,7 +166,7 @@ df_cmr$pop_2019
 df_cmr[["region"]]
 ```
 
-En tidyverse on préfère :
+En tidyverse on préfère un enchaînement de verbes. Le bloc qui suit lit comme une phrase : « prendre `tbl_cmr`, **puis** ne garder que les régions de plus de 3 millions, **puis** trier par population décroissante, **puis** garder ces trois colonnes ». Chaque verbe (`filter`, `arrange`, `select`) prend un tibble en entrée et retourne un tibble en sortie — c'est ce qui rend le pipe lisible.
 
 ```{r}
 #| label: dplyr-intro
@@ -167,9 +177,11 @@ tbl_cmr |>
   select(region, capitale, pop_2019)
 ```
 
-Le **pipe natif** `|>` (R ≥ 4.1) se lit « puis ». Il rend les pipelines lisibles à voix haute : « prendre `tbl_cmr`, **puis** filtrer les régions > 3M, **puis** trier par population décroissante, **puis** sélectionner ces trois colonnes ».
+Le **pipe natif** `|>` (R ≥ 4.1) se lit « puis ». Il rend les pipelines lisibles à voix haute et évite les imbrications du type `select(arrange(filter(...)))` qui se lisent de l'intérieur vers l'extérieur.
 
 ## Le verbe `mutate` — créer une variable
+
+`mutate()` ajoute (ou modifie) des colonnes dans un tibble. Le bloc ci-dessous calcule la population en millions, puis crée une variable catégorielle `pop_classe` via `case_when()` — l'équivalent lisible d'un `IF / ELSE IF / ELSE`. Le `TRUE ~ "Plus de 3M"` joue le rôle de la clause par défaut.
 
 ```{r}
 #| label: mutate
@@ -187,6 +199,8 @@ tbl_cmr
 
 ## Le verbe `summarise` — agréger
 
+`group_by()` partitionne le tibble selon une (ou plusieurs) variable(s) ; `summarise()` réduit ensuite **chaque groupe à une seule ligne** en appliquant des fonctions d'agrégation. Ici on obtient une ligne par classe de population, avec le nombre de régions, la population totale et la population moyenne dans chaque classe.
+
 ```{r}
 #| label: summarise
 tbl_cmr |>
@@ -200,9 +214,7 @@ tbl_cmr |>
 
 Cette grammaire `filter / mutate / group_by / summarise` couvre 80 % de ce que fait un démographe sur un microfichier. Les 20 % restants sont les jointures (J5) et les pivots (lendemain).
 
-::: {.callout-tip title="⏸ Pause-pratique (~5 min)"}
-Reprenez le bloc précédent et **changez** quelque chose : ajoutez une 11ᵉ région imaginaire, modifiez les seuils de `case_when`, ou groupez par une autre variable. **Tapez vous-mêmes**, ne copiez pas — la grammaire dplyr s'apprend par les doigts.
-:::
+> 👉 **À pratiquer en autonomie** : exercices Q1 à Q3 de `exercice.qmd` (10–15 min). Les solutions sont dans `corrige.qmd`.
 
 # Session « comment demander de l'aide en R » {#sec-aide}
 
@@ -212,6 +224,8 @@ Quand vous serez bloqué pendant l'atelier (et vous le serez), vous avez **cinq 
 
 ## 1. L'aide intégrée de R
 
+Chaque fonction installée dans R a une page d'aide accessible **sans connexion internet**. `?nom` est le raccourci ; `help(nom)` est l'équivalent verbose ; `??motclé` (deux points d'interrogation) fait une recherche full-text dans toute la doc des packages installés. Le bloc est marqué `#| eval: false` parce qu'on ne veut pas ouvrir les pages d'aide au moment du rendu HTML.
+
 ```{r}
 #| eval: false
 ?mean              # ouvre l'aide de la fonction mean()
@@ -220,7 +234,7 @@ help(mean)         # équivalent
 ??regression       # cherche "regression" dans toute la doc installée
 ```
 
-Pour chaque package, il existe aussi des **vignettes** (tutoriels longs) :
+Pour chaque package, il existe aussi des **vignettes** — tutoriels longs maintenus par les auteurs du package. `vignette(package = "sf")` liste celles disponibles, `vignette("sf1")` ouvre la première.
 
 ```{r}
 #| eval: false
@@ -259,10 +273,6 @@ Très efficaces pour le code R, **à condition de** :
 Utilisez ces outils pour **dépasser un blocage**, pas pour **éviter de comprendre**. Si vous copiez sans relire, vous apprenez à utiliser une IA — pas R. Les deux compétences sont différentes.
 :::
 
-::: {.callout-tip title="⏸ Pause-pratique (~3 min)"}
-Tapez `?dplyr::filter` dans la console. Notez où s'affiche l'aide (panneau bas-droite). Ce réflexe vous fera gagner des heures sur les 10 jours.
-:::
-
 # Deuxième session — Projet RStudio et reproductibilité {#sec-projet}
 
 > ⏱ **~1 heure**.
@@ -275,6 +285,8 @@ Créer un projet (en salle) : `File → New Project → New Directory → New Pr
 
 ## La fonction `here::here()`
 
+`here::here()` détecte la racine du projet (présence d'un fichier `.Rproj` ou `.here`) et **reconstruit** des chemins relatifs à cette racine, dans la syntaxe de chemin native de l'OS courant. Appelée sans argument, elle retourne la racine. Avec des arguments, elle assemble les morceaux : `here("data", "monfichier.csv")` devient `C:/Users/.../monfichier.csv` sous Windows et `/home/.../monfichier.csv` sous Linux, sans qu'on ait à s'en soucier.
+
 ```{r}
 #| label: here
 library(here)
@@ -286,7 +298,7 @@ here("data", "monfichier.csv")               # chemin OS-indépendant
 
 ## Lire un fichier d'enquête démographique camerounaise
 
-Démonstration sur un extrait ménages format Stata (typique DHS / MICS / ECAM). Si vous n'avez pas encore les données DHS, on simule une structure analogue.
+Démonstration sur un extrait ménages format Stata (typique DHS / MICS / ECAM). `haven::read_dta()` lit un fichier `.dta` en préservant les labels Stata. `dim()` retourne (nlignes, ncolonnes), `names()` liste les variables (on tronque à 20 ici car un microfichier DHS en a souvent ~ 1 500). Le bloc est `eval: false` parce que le fichier réel arrive après inscription DHS.
 
 ```{r}
 #| label: lecture-enquete
@@ -298,7 +310,7 @@ dim(hh)
 names(hh)[1:20]
 ```
 
-Si le fichier n'est pas disponible aujourd'hui (inscription DHS en attente), on simule :
+Si le fichier n'est pas disponible aujourd'hui (inscription DHS en attente), on **simule** une structure analogue. `set.seed()` fige le générateur aléatoire pour que la sortie soit reproductible. `sample(x, n, replace = TRUE, prob = ...)` tire `n` valeurs dans `x` avec replacement, et la probabilité de chaque valeur peut être pondérée (ici par la part de population estimée). `rpois(n, lambda)` simule un effectif de ménage suivant une loi de Poisson de moyenne `lambda`. `pmax(1, ...)` garantit qu'aucun ménage n'est de taille 0.
 
 ```{r}
 #| label: simul-eds
@@ -319,7 +331,7 @@ hh_sim <- tibble(
 hh_sim
 ```
 
-Premier coup d'œil systématique :
+Premier coup d'œil systématique : `skimr::skim()` produit en une commande un résumé par variable (type, valeurs manquantes, distribution). C'est votre **premier réflexe** sur tout nouveau microfichier — avant même d'écrire la moindre analyse.
 
 ```{r}
 #| label: skim
@@ -327,9 +339,9 @@ library(skimr)
 skim(hh_sim)
 ```
 
-`skimr::skim()` est ton premier réflexe à chaque nouveau fichier : il te donne en une commande les types, les valeurs manquantes, les distributions.
-
 ## Calcul d'indicateurs démographiques de base
+
+On enchaîne `group_by(region) |> summarise(...)` pour produire, en une seule expression, une ligne par région avec : le nombre de ménages, la taille moyenne, le pourcentage d'urbains, d'électrifiés et d'eau améliorée. `mean(milieu == "Urbain")` exploite le fait que R convertit `TRUE/FALSE` en `1/0`, donc la moyenne d'un booléen est une proportion. `arrange(desc(...))` trie en décroissant. Aucune pondération ici — la note méthodologique qui suit explique pourquoi c'est insuffisant en production.
 
 ```{r}
 #| label: indicateurs-base
@@ -361,20 +373,24 @@ Le format dominant en R aujourd'hui est `sf` (Simple Features) [@pebesma2018simp
 
 ## Le package `sf` en 3 fonctions
 
+Avant tout `sf` repose sur trois bibliothèques C/C++ — **GDAL** lit/écrit les formats (Shapefile, GeoJSON, GeoTIFF…), **GEOS** fait les opérations géométriques (intersection, union, distance), **PROJ** gère les projections. `packageVersion("sf")` renvoie la version du package R, `sf_extSoftVersion()` celle des trois bibliothèques externes — il faut savoir les retrouver en cas de bug pour reporter un environnement clair.
+
 ```{r}
 #| label: sf-intro
 library(sf)
-sf_version()
+packageVersion("sf")
 sf_extSoftVersion()  # versions de GDAL, GEOS, PROJ sous-jacentes
 ```
 
-Ces trois bibliothèques C/C++ — **GDAL** lit/écrit les formats, **GEOS** fait la géométrie, **PROJ** gère les projections — sont les fondations de tout SIG dans le monde. R les expose via `sf`.
+Ces trois bibliothèques sont les fondations de tout SIG dans le monde. R les expose via `sf`.
 
 ## Charger les limites administratives du Cameroun
 
+On charge nos données. `source()` exécute le script `fetch_data.R` qui définit la fonction `fetch_gadm_cameroon()`. Cette dernière vérifie qu'un JSON GADM existe localement et retourne son chemin ; si non, elle s'arrête avec un message expliquant où télécharger le fichier. `sf::read_sf()` lit ensuite le JSON et retourne un objet `sf` (data.frame + géométrie).
+
 ```{r}
 #| label: load-adm
-source(here("pedagogie", "_commons", "helpers", "fetch_data.R"))
+source("../_commons/helpers/fetch_data.R")
 
 # Charger les 3 niveaux administratifs GADM v4.1 telecharges manuellement
 # dans datasets/cameroun/admin_boundaries/
@@ -383,7 +399,7 @@ adm1 <- read_sf(fetch_gadm_cameroon(1))
 adm3 <- read_sf(fetch_gadm_cameroon(3))
 ```
 
-Premier réflexe : que contient l'objet ?
+Premier réflexe : que contient l'objet ? `print()` sur un `sf` affiche un en-tête standardisé (type de géométrie, dimensions, emprise, CRS) puis les premières lignes du tableau attributaire. `names()` liste les colonnes, `nrow()` compte les entités, `st_geometry_type()` retourne le type géométrique de chaque entité (MULTIPOLYGON ici) — `table()` les compte par type.
 
 ```{r}
 #| label: explore-adm
@@ -395,6 +411,8 @@ st_geometry_type(adm1) |> table()
 
 ## Anatomie d'un objet `sf`
 
+Quatre fonctions à mémoriser pour interroger un objet `sf` : `class()` montre que c'est à la fois un `sf` ET un `data.frame` (héritage multiple) ; `st_bbox()` retourne l'emprise rectangulaire (xmin, ymin, xmax, ymax) ; `st_crs()$input` la description littérale du CRS ; `st_crs()$epsg` son code EPSG numérique. EPSG est un catalogue international de CRS — 4326 = WGS 84 géographiques par exemple.
+
 ```{r}
 #| label: anatomie-sf
 class(adm1)              # "sf" + "data.frame"
@@ -404,6 +422,8 @@ st_crs(adm1)$epsg        # code EPSG
 ```
 
 L'objet `adm1` est **à la fois** un `data.frame` (tu peux y appliquer `dplyr`) **et** un objet spatial (tu peux y appliquer des opérations géométriques). C'est le génie de `sf`.
+
+Le bloc qui suit montre que `dplyr` marche directement sur un `sf`. `st_drop_geometry()` retire la colonne géométrie pour produire un tibble pur — utile quand on veut juste imprimer ou exporter une table d'attributs sans le poids des polygones.
 
 ```{r}
 #| label: dplyr-on-sf
@@ -415,6 +435,8 @@ adm1 |>
 ```
 
 ## Premier filtre spatial : la région du Centre
+
+Filtrer un `sf`, c'est juste filtrer un `data.frame` — la géométrie suit automatiquement. On obtient un objet `sf` à une seule ligne. `st_geometry()` extrait juste la géométrie (sans les attributs), ce qui est utile pour un `plot()` minimaliste.
 
 ```{r}
 #| label: centre
@@ -428,7 +450,7 @@ plot(st_geometry(centre), main = "Région du Centre")
 
 ## Avec `plot()` (base R)
 
-Le plus minimaliste, utile pour vérifier rapidement :
+Le plus minimaliste, utile pour vérifier rapidement. `plot(st_geometry(x))` dessine uniquement les contours sans coloration thématique. `add = TRUE` superpose la couche suivante sur le même graphique, ce qui permet d'empiler ici les régions et la frontière nationale ADM0.
 
 ```{r}
 #| label: plot-base
@@ -439,9 +461,11 @@ plot(st_geometry(adm0), border = "black", lwd = 2, add = TRUE)
 
 ## Avec `ggplot2`
 
+`ggplot2` étendu par `sf` ajoute le `geom_sf()` qui sait dessiner n'importe quelle géométrie (point/ligne/polygone). On l'utilise comme n'importe quel `geom_*` : on mappe des attributs sur des esthétiques (`fill = NAME_1`). `geom_sf_label()` pose une étiquette au centroïde de chaque polygone. `scale_fill_viridis_d()` applique une palette discrète daltonien-friendly. `theme_iford()` et `iford_caption()` sont nos helpers maison (chargés via `source()` ci-dessous) pour homogénéiser le rendu.
+
 ```{r}
 #| label: ggplot-adm
-source(here("pedagogie", "_commons", "helpers", "theme_iford.R"))
+source("../_commons/helpers/theme_iford.R")
 library(ggplot2)
 
 ggplot(adm1) +
@@ -459,7 +483,7 @@ ggplot(adm1) +
 
 ## Avec `tmap` (cartographie thématique)
 
-`tmap` est la grammaire « tidy » de la carte thématique [@hijmans2024terra]. Sa version 4 distingue deux **modes** : `plot` (statique, pour publication) et `view` (interactif Leaflet, pour exploration).
+`tmap` est la grammaire « tidy » de la carte thématique [@hijmans2024terra]. Sa version 4 distingue deux **modes** : `plot` (statique, pour publication) et `view` (interactif Leaflet, pour exploration). Le bloc qui suit construit une carte par couches successives : `tm_shape()` fixe la couche de données, `tm_polygons()` dessine les polygones colorés par `NAME_1`, et `tm_title()` / `tm_credits()` posent les éléments d'habillage. `setup_tmap_iford()` est notre helper qui applique les défauts visuels de l'atelier.
 
 ```{r}
 #| label: tmap-intro
@@ -476,7 +500,7 @@ tm_shape(adm1) +
   tm_credits("GADM v4.1 · IFORD × GDSG 2026", position = c("right", "bottom"))
 ```
 
-Pour basculer en interactif :
+Pour basculer en interactif on change de mode global avec `tmap_mode("view")`. Le bloc reste `eval: false` parce que le HTML statique ne sait pas afficher l'iframe Leaflet ici. `tmap_mode("plot")` revient au statique — important de toujours revenir, sinon les graphiques suivants seront eux aussi interactifs.
 
 ```{r}
 #| label: tmap-view
@@ -507,6 +531,8 @@ Le Cameroun chevauche deux fuseaux UTM (32N à l'ouest, 33N à l'est) ; pour les
 
 ## Démo : la confusion qui coûte cher
 
+On crée deux points isolés en WGS 84 (longitude, latitude) avec `st_sfc(st_point(...), crs = 4326)`. `st_sfc` = « simple feature collection » : une géométrie sans tableau d'attributs. On compare ensuite deux distances : une **naïve** (Pythagore sur les degrés, ce qui n'a aucun sens physique) et la **vraie** distance géodésique calculée par `st_distance()`. La différence pédagogique est saisissante.
+
 ```{r}
 #| label: crs-warning
 yaounde <- st_sfc(st_point(c(11.5021, 3.8480)), crs = 4326)
@@ -525,6 +551,8 @@ Sur le terrain Yaoundé–Douala fait ~240 km. Si on ne pose pas le CRS et qu'on
 
 ## Reprojeter un objet
 
+`st_transform()` reprojette un objet `sf` vers un autre CRS en recalculant chaque coordonnée. Ici on passe de WGS 84 (degrés) à UTM 32N (mètres, EPSG:32632), ce qui est le minimum pour pouvoir mesurer des surfaces. `st_area()` retourne une superficie en unités du CRS (donc m²) — on divise par 10⁶ pour obtenir des km². Le résultat est ajouté comme une colonne au tibble pour pouvoir trier dessus.
+
 ```{r}
 #| label: reprojection
 adm1_utm32 <- st_transform(adm1, crs = 32632)
@@ -538,7 +566,7 @@ adm1_utm32 |>
   arrange(desc(superficie_km2))
 ```
 
-Vérification : la somme doit être proche de **475 442 km²** (superficie officielle du Cameroun).
+Vérification : la somme doit être proche de **475 442 km²** (superficie officielle du Cameroun). `sum()` agrège la colonne, `round()` arrondit à l'entier.
 
 ```{r}
 sum(adm1_utm32$superficie_km2) |> round()
@@ -549,6 +577,8 @@ L'écart résiduel (souvent +/− 1 %) vient de la généralisation des polygone
 ## Démo critique : Web Mercator (EPSG:3857) ment sur les aires
 
 Web Mercator est la projection des fonds OpenStreetMap, Google Maps, Mapbox. **Utile** pour les cartes web. **Inadaptée** aux statistiques car elle déforme les aires en s'éloignant de l'équateur. Vérifions sur le Cameroun.
+
+On reprojette en EPSG:3857 et on recalcule les surfaces. On assemble ensuite un tibble qui met côte à côte la surface UTM (référence), la surface Web Mercator, et leur ratio. Si Web Mercator était fidèle, le ratio serait toujours 1.
 
 ```{r}
 #| label: webmercator-demo
@@ -574,6 +604,8 @@ comparaison
 
 Le bon réflexe pour une carte interactive : **garder les données en CRS adapté** (UTM, Lambert) pour les calculs, et **laisser `leaflet` / `tmap view` reprojeter en Web Mercator** automatiquement à l'affichage. Ne **jamais** stocker ses données projetées en Web Mercator.
 
+Le bloc qui suit montre la bonne pratique : on garde `adm1_utm32` (UTM) comme source, et on active le mode `view` pour que `tmap` se charge de la reprojection web automatiquement, sans qu'on n'altère le fichier source.
+
 ```{r}
 #| label: webmerc-affichage
 #| eval: false
@@ -586,7 +618,7 @@ tmap_mode("plot")
 
 > ⏱ **~1 heure**. Récap appliqué : on combine TOUT ce qu'on a vu sur un seul livrable.
 
-On combine les indicateurs simulés et la géométrie :
+On combine les indicateurs simulés et la géométrie. D'abord on assemble une table population minimaliste avec `tibble()`. Ensuite `left_join()` la fusionne avec `adm1_utm32` en utilisant `NAME_1` comme clé — comme `adm1_utm32` est un `sf`, le résultat reste un `sf` (la géométrie suit). `mutate()` calcule la densité (habitants par km²). `st_drop_geometry()` puis `arrange()` produisent un classement attributaire pur, sans le poids des polygones.
 
 ```{r}
 #| label: densite
@@ -603,6 +635,8 @@ adm1_pop |>
   select(NAME_1, pop_2019, superficie_km2, densite) |>
   arrange(desc(densite))
 ```
+
+Pour la carte choroplèthe : `tm_scale_intervals(style = "jenks", n = 5)` découpe la variable continue en 5 classes optimisées (algorithme de Fisher-Jenks qui maximise la variance inter-classe). `values = "brewer.yl_or_rd"` applique une palette séquentielle jaune→rouge adaptée à une variable positive croissante. `tm_text("NAME_1")` pose le nom de chaque région au centroïde.
 
 ```{r}
 #| label: carte-densite
@@ -643,11 +677,7 @@ Demain on attaque les opérations vectorielles sérieuses : `st_join`, `st_buffe
 
 ## Devoir individuel (30 min, à faire le soir)
 
-1. Créer un projet RStudio `tp_personnel`.
-2. Télécharger les ADM3 du Cameroun via `fetch_gadm_cameroon(3)`.
-3. Filtrer une région au choix (par ex. la région d'origine).
-4. Produire une carte des départements de cette région avec `tmap`.
-5. Sauver la carte en `.png` (300 dpi) avec `tmap_save()`.
+Le devoir individuel constitue l'exercice **Q6** de `exercice.qmd` ; le corrigé est dans `corrige.qmd`. Résumé : créer un projet RStudio `tp_personnel`, charger les ADM3 GADM Cameroun, filtrer une région d'origine, produire et exporter une carte des départements avec `tmap`.
 
 # Sources et licences {#sec-sources}
 

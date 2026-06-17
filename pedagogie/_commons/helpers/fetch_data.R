@@ -31,8 +31,13 @@ suppressPackageStartupMessages({
   library(fs)
 })
 
-# Racine du dossier datasets (relatif au projet)
-.DATASETS_ROOT <- here::here("datasets")
+# Racine du dossier datasets (relatif au projet).
+# On force la detection sur le .Rproj racine plutot que sur here::here(),
+# qui peut etre dupe par pedagogie/_quarto.yml (utilise par le runtime WebR).
+.PROJECT_ROOT <- rprojroot::find_root(
+  rprojroot::has_file("atelier-r-spatial-iford-2026.Rproj")
+)
+.DATASETS_ROOT <- file.path(.PROJECT_ROOT, "datasets")
 
 # Taille minimale acceptable pour un fichier reel (en octets).
 # En dessous : considere corrompu / placeholder vide.
