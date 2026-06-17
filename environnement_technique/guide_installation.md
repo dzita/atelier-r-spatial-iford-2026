@@ -579,12 +579,14 @@ git remote set-url origin git@github.com:<user>/<repo>.git
 
 ## 9. Créer le premier dépôt — bonnes pratiques
 
-### 9.1 Dossier dans `Documents\GitHub\` (pas dans OneDrive)
+### 9.1 Dossier dans `C:\Dev\GitHub\` (jamais sous un dossier OneDrive)
 
-OneDrive et Git peuvent entrer en conflit (locks de synchronisation). Convention :
+OneDrive et Git entrent en conflit de plusieurs façons : verrous de synchronisation sur `.git/index`, fichiers placeholders renvoyant des contenus partiels aux outils ligne de commande, lignes Markdown ou R coupées en plein milieu lors de la sauvegarde. **Documents est lui-même synchronisé par OneDrive sur une installation Windows par défaut** — donc `Documents\GitHub\` est aussi piégé que `OneDrive\GitHub\`. Convention adoptée pour cet atelier :
 
-- **Code et matériel pédagogique versionné** → `C:\Users\<user>\Documents\GitHub\<repo>\`.
+- **Code et matériel pédagogique versionné** → `C:\Dev\GitHub\<repo>\` (hors de tout dossier synchronisé).
 - **Documents non versionnés** (plaquette officielle, présentations, notes perso) → `OneDrive\...`.
+
+Pour créer `C:\Dev\` une seule fois : `New-Item -ItemType Directory -Force -Path C:\Dev\GitHub` depuis PowerShell.
 
 ### 9.2 Créer le dépôt vide sur GitHub
 
@@ -596,7 +598,7 @@ OneDrive et Git peuvent entrer en conflit (locks de synchronisation). Convention
 ### 9.3 Initialiser localement et pousser
 
 ```powershell
-$repo = "$env:USERPROFILE\Documents\GitHub\<nom-repo>"
+$repo = "C:\Dev\GitHub\<nom-repo>"
 New-Item -Path $repo -ItemType Directory -Force
 cd $repo
 
