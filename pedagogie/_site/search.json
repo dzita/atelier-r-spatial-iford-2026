@@ -60,7 +60,7 @@
     "href": "J01_intro_R_pensee_spatiale/runtime.html#pour-aller-plus-loin",
     "title": "J1 — Intro R + pensée spatiale",
     "section": "8. Pour aller plus loin",
-    "text": "8. Pour aller plus loin\nLe .qmd complet du jour (avec téléchargement réel des données GADM, jointures, choroplèthes publiables, exports PNG/PDF) est dans pedagogie/J01_intro_R_pensee_spatiale/demo.qmd — à ouvrir dans RStudio ou Posit Cloud.\n← Accueil · J2 — sf + CRS →"
+    "text": "8. Pour aller plus loin\nCe runtime couvre les bases manipulables dans le navigateur. La démo complète du jour (avec tmap pour les cartes thématiques publiables, exports PNG/PDF haute résolution, et le pipeline de chargement via fetch_data.R) est dans pedagogie/J01_intro_R_pensee_spatiale/demo.qmd — à ouvrir dans RStudio ou Posit Cloud avec R installé localement.\nLe devoir individuel Q6 (cartographier votre région d’origine) est dans exercice.qmd ; le corrigé pédagogique est dans corrige.qmd.\n← Retour à l’accueil"
   },
   {
     "objectID": "INDEX.html",
@@ -95,6 +95,76 @@
     "href": "INDEX.html#pour-les-participants",
     "title": "",
     "section": "Pour les participants",
-    "text": "Pour les participants\n\nVous avez R installé localement : ouvrir le .Rproj et lancer pedagogie/JXX_…/demo.qmd.\nVous n’avez pas R installé : utiliser le runtime WebR sur GitHub Pages (URL à venir).\nTutoriels d’auto-installation : voir environnement_technique/guide_installation.md."
+    "text": "Pour les participants\n\nVous avez R installé localement : ouvrir le .Rproj et lancer pedagogie/JXX_…/demo.qmd.\nVous n’avez pas R installé : utiliser le runtime WebR en ligne sur https://dzita.github.io/atelier-r-spatial-iford-2026/ — R s’exécute directement dans le navigateur, zéro installation.\nTutoriels d’auto-installation : voir environnement_technique/guide_installation.md."
+  },
+  {
+    "objectID": "README.html",
+    "href": "README.html",
+    "title": "",
+    "section": "",
+    "text": "Code"
+  },
+  {
+    "objectID": "README.html#comment-cest-organisé",
+    "href": "README.html#comment-cest-organisé",
+    "title": "",
+    "section": "Comment c’est organisé",
+    "text": "Comment c’est organisé\nL’arborescence est par jour : chaque dossier JXX_…/ est autoportant (tout ce qu’il faut pour ce jour-là).\npedagogie/\n├── INDEX.md                              # navigation rapide entre les 10 jours\n├── README.md                             # ce fichier\n├── manuel_animateur.md                   # mode d'emploi pour l'animateur\n├── _quarto.yml                           # config Quarto Live racine (pour le runtime WebR)\n│\n├── _commons/                             # ressources PARTAGÉES J1-J10\n│   ├── helpers/\n│   │   ├── fetch_data.R                  # téléchargement auto + fallback\n│   │   ├── theme_iford.R                 # palette + thème ggplot/tmap\n│   │   └── citations.bib                 # bibliographie commune\n│   └── styles/\n│       ├── slides_revealjs.scss          # thème slides revealjs\n│       └── runtime_quartolive.scss       # thème runtime WebR\n│\n├── J01_intro_R_pensee_spatiale/\n├── J02_sf_CRS_vecteurs/\n├── J03_cartographie_tmap_ggplot/\n├── J04_terra_raster/\n├── J05_jointures_spatiales_demo/\n├── J06_autocorrelation_moran_lisa/\n├── J07_KDE_dasymetrie_teledetection/\n├── J08_population_top_down/\n├── J09_population_bottom_up/\n└── J10_mini_projet_synthese/"
+  },
+  {
+    "objectID": "README.html#contenu-dun-dossier-de-jour",
+    "href": "README.html#contenu-dun-dossier-de-jour",
+    "title": "",
+    "section": "Contenu d’un dossier de jour",
+    "text": "Contenu d’un dossier de jour\nChaque dossier JXX_…/ contient :\n\n\n\n\n\n\n\n\nFichier\nPour qui\nDescription\n\n\n\n\nREADME.md\ntous\nObjectifs, déroulé horaire, données mobilisées, packages utilisés.\n\n\ndemo.qmd\nparticipants\nVersion animation pédagogique complète, rendue en HTML/PDF.\n\n\ndemo.R\nanimateur\nVersion exécutable rapide, à projeter ligne par ligne en salle.\n\n\nslides.qmd\nanimateur\nDeck revealjs (~30-40 slides) pour la projection.\n\n\nruntime.qmd\nparticipants\nVersion WebR — code R exécutable dans le navigateur, zéro install.\n\n\nexercice.qmd\nparticipants\nTP individuel de fin de journée (~30 min).\n\n\ncorrige.qmd\nparticipants\nCorrigé du TP, distribué le lendemain matin."
+  },
+  {
+    "objectID": "README.html#workflow-type-danimation-dune-journée",
+    "href": "README.html#workflow-type-danimation-dune-journée",
+    "title": "",
+    "section": "Workflow type d’animation d’une journée",
+    "text": "Workflow type d’animation d’une journée\n\nLa veille : tester demo.R du jour J en bout-en-bout sur ta machine. Vérifier les téléchargements (GADM, etc.).\nMatin du jour J : ouvrir RStudio sur le projet atelier-r-spatial-iford-2026. Ouvrir slides.qmd côté gauche, demo.R côté droit.\nPendant l’animation : suivre les sessions du README.md. Projeter les slides, exécuter le code du .R à la demande, montrer le demo.qmd pour les explications longues.\nFin de journée : rendre demo.qmd en HTML, distribuer aux participants avec exercice.qmd.\nLe lendemain matin : distribuer corrige.qmd du jour J-1."
+  },
+  {
+    "objectID": "README.html#workflow-type-pour-un-participant-à-domicile-post-atelier",
+    "href": "README.html#workflow-type-pour-un-participant-à-domicile-post-atelier",
+    "title": "",
+    "section": "Workflow type pour un participant à domicile (post-atelier)",
+    "text": "Workflow type pour un participant à domicile (post-atelier)\n\nCloner le dépôt : git clone https://github.com/dzita/atelier-r-spatial-iford-2026.git.\nOuvrir atelier-r-spatial-iford-2026.Rproj dans RStudio.\nLancer source(\"environnement_technique/install_packages.R\") puis verification_setup.R.\nPour rejouer le jour J : ouvrir pedagogie/JXX_…/demo.qmd → cliquer Render.\nPour s’entraîner sans tout télécharger : ouvrir le runtime WebR en ligne sur https://dzita.github.io/atelier-r-spatial-iford-2026/ — R s’exécute directement dans le navigateur (WebR), aucune installation requise. Premier chargement ~30-60 secondes (téléchargement des packages mis en cache ensuite)."
+  },
+  {
+    "objectID": "README.html#conventions",
+    "href": "README.html#conventions",
+    "title": "",
+    "section": "Conventions",
+    "text": "Conventions\n\nSnake_case minuscule pour les noms de fichiers et dossiers (sauf README.md, LICENSE, et le préfixe JXX_ pour le tri).\nTri alphabétique assuré par le préfixe J01_, J02_, …, J10_ (utiliser deux chiffres pour que J10 vienne après J09 et pas après J1).\nHelpers partagés dans _commons/helpers/, sourcés explicitement par les démos via here().\nBibliographie partagée dans _commons/helpers/citations.bib."
+  },
+  {
+    "objectID": "README.html#licence",
+    "href": "README.html#licence",
+    "title": "",
+    "section": "Licence",
+    "text": "Licence\nTout le contenu pédagogique est diffusé sous CC-BY 4.0 (Creative Commons Attribution 4.0 International). La LICENSE sera ajoutée au dépôt avant le 27 juillet 2026."
+  },
+  {
+    "objectID": "README.html#contact",
+    "href": "README.html#contact",
+    "title": "",
+    "section": "Contact",
+    "text": "Contact\nAnimation : Ramesesse Dzita — ramondzita@gmail.com — IFORD × GDSG."
+  },
+  {
+    "objectID": "J01_intro_R_pensee_spatiale/runtime.html#première-carte-vraies-limites-gadm-cameroun",
+    "href": "J01_intro_R_pensee_spatiale/runtime.html#première-carte-vraies-limites-gadm-cameroun",
+    "title": "J1 — Intro R + pensée spatiale",
+    "section": "6. Première carte — vraies limites GADM Cameroun",
+    "text": "6. Première carte — vraies limites GADM Cameroun\nLes fichiers GADM v4.1 du Cameroun sont servis par le même site que ce runtime. On les télécharge depuis le navigateur dans la machine virtuelle de WebR avec download.file(), puis on les lit avec sf::read_sf(). Premier téléchargement ~1 à 2 secondes selon le wifi, ensuite c’est en cache.\n\n\n\n\n\n\n\n\nEt maintenant la vraie carte des 10 régions du Cameroun, avec les contours administratifs officiels :\n\n\n\n\n\n\n\n\n\nÀ essayer : charge maintenant ADM2 (départements) avec download.file(\"/_commons/data/gadm41_CMR_2.json\", \"adm2.json\") puis trace une carte par département. Tu verras un découpage 5 à 10 fois plus fin."
+  },
+  {
+    "objectID": "J01_intro_R_pensee_spatiale/runtime.html#bis.-choroplèthe-densité-carte-thématique-complète",
+    "href": "J01_intro_R_pensee_spatiale/runtime.html#bis.-choroplèthe-densité-carte-thématique-complète",
+    "title": "J1 — Intro R + pensée spatiale",
+    "section": "6 bis. Choroplèthe densité — carte thématique complète",
+    "text": "6 bis. Choroplèthe densité — carte thématique complète\nOn combine la géométrie ADM1 avec le tibble de population créé en section 3, on calcule la densité (habitants par km²), et on colore."
   }
 ]

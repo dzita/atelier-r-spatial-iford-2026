@@ -10,6 +10,10 @@ project:
   # tel quel dans _site/_commons/img/ et accessible via /_commons/img/...
   resources:
     - "_commons/img/**"
+    # Datasets servis cote WebR. Le runtime les charge via
+    # download.file("/_commons/data/...") depuis le navigateur.
+    # Limiter aux fichiers vraiment utiles : la branche gh-pages est publique.
+    - "_commons/data/**"
 
 website:
   title: "Runtime IFORD × GDSG 2026"

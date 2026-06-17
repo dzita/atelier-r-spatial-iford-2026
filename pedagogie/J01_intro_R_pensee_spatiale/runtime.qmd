@@ -103,35 +103,84 @@ hh |>
 **À retenir.** `filter` filtre les lignes, `select` choisit les colonnes, `mutate` crée une variable, `group_by + summarise` agrège. Quatre verbes pour 80 % de l'analyse de données.
 :::
 
-## 6. Première carte avec sf
+## 6. Première carte — vraies limites GADM Cameroun
+
+Les fichiers GADM v4.1 du Cameroun sont servis par le même site que ce runtime. On les télécharge depuis le navigateur dans la machine virtuelle de WebR avec `download.file()`, puis on les lit avec `sf::read_sf()`. Premier téléchargement ~1 à 2 secondes selon le wifi, ensuite c'est en cache.
 
 ```{webr}
-#| edit: false
+#| autorun: true
 library(sf)
 library(ggplot2)
+library(dplyr)
 
-# Polygones simplifiés des 10 régions (forme symbolique pour l'exemple)
-# Dans la version complète, on charge GADM via fetch_gadm_cameroon()
-cmr_demo <- st_sf(
-  region = regions,
-  geometry = st_sfc(
-    lapply(seq_along(regions), function(i) {
-      x0 <- (i %% 4) * 2
-      y0 <- (i %/% 4) * 2
-      st_polygon(list(matrix(c(x0,y0, x0+1.8,y0, x0+1.8,y0+1.8, x0,y0+1.8, x0,y0),
-                             ncol = 2, byrow = TRUE)))
-    }),
-    crs = 4326
-  ),
-  pop_2019 = pop_est
-)
+# Telecharge GADM v4.1 ADM1 (10 regions, ~190 Ko)
+download.file("/_commons/data/gadm41_CMR_1.json", "adm1.json", mode = "wb")
+adm1 <- read_sf("adm1.json")
 
-ggplot(cmr_demo) +
-  geom_sf(aes(fill = pop_2019 / 1e6), color = "white") +
-  geom_sf_text(aes(label = region), size = 2.6) +
-  scale_fill_viridis_c(option = "B", name = "Pop (M)") +
-  labs(title = "Exemple symbolique — pas la vraie carte du Cameroun",
-       subtitle = "(GADM réel chargé dans le projet RStudio complet)") +
+# Inspection rapide
+nrow(adm1)
+st_crs(adm1)$epsg
+head(adm1$NAME_1)
+```
+
+Et maintenant la vraie carte des 10 régions du Cameroun, avec les contours administratifs officiels :
+
+```{webr}
+ggplot(adm1) +
+  geom_sf(aes(fill = NAME_1), color = "white", linewidth = 0.3, show.legend = FALSE) +
+  geom_sf_label(aes(label = NAME_1),
+                size = 2.4, color = "white", fontface = "bold",
+                label.padding = unit(0.1, "lines")) +
+  scale_fill_viridis_d(option = "G") +
+  labs(title = "Les 10 régions du Cameroun",
+       subtitle = "Limites administratives ADM1 — GADM v4.1",
+       caption = "Source : GADM v4.1 · Atelier IFORD × GDSG 2026") +
+  theme_minimal()
+```
+
+::: {.iford-callout}
+**À essayer :** charge maintenant ADM2 (départements) avec `download.file("/_commons/data/gadm41_CMR_2.json", "adm2.json")` puis trace une carte par département. Tu verras un découpage 5 à 10 fois plus fin.
+:::
+
+## 6 bis. Choroplèthe densité — carte thématique complète
+
+On combine la géométrie ADM1 avec le tibble de population créé en section 3, on calcule la densité (habitants par km²), et on colore.
+
+```{webr}
+# Reprojection en UTM 32N pour mesurer correctement les superficies
+adm1_utm <- st_transform(adm1, 32632)
+adm1_utm$superficie_km2 <- as.numeric(st_area(adm1_utm)) / 1e6
+
+# Verification : superficie totale ~475 000 km2 (CMR officiel)
+sum(adm1_utm$superficie_km2) |> round()
+```
+
+```{webr}
+# Jointure attributaire avec la table population
+pop_tbl <- tibble::tibble(NAME_1 = regions, pop_2019 = pop_est)
+
+adm1_pop <- adm1_utm |>
+  left_join(pop_tbl, by = "NAME_1") |>
+  mutate(densite = pop_2019 / superficie_km2)
+
+# Tableau trie par densite decroissante
+adm1_pop |>
+  st_drop_geometry() |>
+  select(NAME_1, pop_2019, superficie_km2, densite) |>
+  arrange(desc(densite))
+```
+
+```{webr}
+ggplot(adm1_pop) +
+  geom_sf(aes(fill = densite), color = "white", linewidth = 0.3) +
+  geom_sf_label(aes(label = NAME_1),
+                size = 2.2, color = "white", fontface = "bold",
+                label.padding = unit(0.08, "lines")) +
+  scale_fill_viridis_c(option = "B",
+                       name = "Densité\n(hab/km²)",
+                       trans = "sqrt") +
+  labs(title = "Densité de population par région — Cameroun (estim. 2019)",
+       caption = "Source : BUCREP (estimations), GADM v4.1 · IFORD × GDSG 2026") +
   theme_minimal()
 ```
 
@@ -159,6 +208,8 @@ La distance Yaoundé–Douala sur la route est d'environ **240 km**. Le calcul �
 
 ## 8. Pour aller plus loin
 
-Le `.qmd` complet du jour (avec téléchargement réel des données GADM, jointures, choroplèthes publiables, exports PNG/PDF) est dans **`pedagogie/J01_intro_R_pensee_spatiale/demo.qmd`** — à ouvrir dans RStudio ou Posit Cloud.
+Ce runtime couvre les bases manipulables dans le navigateur. La **démo complète du jour** (avec `tmap` pour les cartes thématiques publiables, exports PNG/PDF haute résolution, et le pipeline de chargement via `fetch_data.R`) est dans **`pedagogie/J01_intro_R_pensee_spatiale/demo.qmd`** — à ouvrir dans RStudio ou Posit Cloud avec R installé localement.
 
-[← Accueil](../INDEX.md) · [J2 — sf + CRS →](../J02_sf_CRS_vecteurs/runtime.qmd)
+Le **devoir individuel Q6** (cartographier votre région d'origine) est dans `exercice.qmd` ; le corrigé pédagogique est dans `corrige.qmd`.
+
+[← Retour à l'accueil](../INDEX.md)
