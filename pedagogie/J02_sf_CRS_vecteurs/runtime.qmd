@@ -1,0 +1,136 @@
+---
+title: "J2 — sf et CRS"
+subtitle: "Code R exécutable dans le navigateur"
+engine: knitr
+---
+
+::: {.iford-callout}
+**Mode d'emploi.** Cliquez **Run code** dans chaque cellule pour exécuter. Modifiez le code, recliquez pour relancer. Rien n'est envoyé sur un serveur — tout tourne dans votre navigateur via WebR.
+:::
+
+## 1. Charger les données GADM Cameroun
+
+On récupère les limites administratives ADM1 et ADM3 directement depuis le site, on les lit avec `sf::read_sf()`.
+
+```{webr}
+#| autorun: true
+library(sf)
+library(dplyr)
+library(tibble)
+library(ggplot2)
+
+download.file("/_commons/data/gadm41_CMR_1.json", "adm1.json", mode = "wb")
+download.file("/_commons/data/gadm41_CMR_3.json", "adm3.json", mode = "wb")
+
+adm1 <- read_sf("adm1.json")
+adm3 <- read_sf("adm3.json")
+
+c(adm1 = nrow(adm1), adm3 = nrow(adm3))
+```
+
+## 2. Reprojeter et comparer trois CRS
+
+Le même objet `adm1` dans trois CRS différents donne trois superficies différentes. Lambert Cameroun (3119) est le plus fidèle au chiffre officiel (475 442 km²).
+
+```{webr}
+adm1_lambert <- st_transform(adm1, 3119)
+adm1_utm32   <- st_transform(adm1, 32632)
+adm1_3857    <- st_transform(adm1, 3857)
+
+total_km2 <- function(x) sum(as.numeric(st_area(x))) / 1e6
+
+tibble(
+  CRS      = c("Lambert CMR", "UTM 32 N", "Web Mercator"),
+  superficie_km2 = round(c(total_km2(adm1_lambert),
+                           total_km2(adm1_utm32),
+                           total_km2(adm1_3857))),
+  ecart_pct = round((c(total_km2(adm1_lambert),
+                       total_km2(adm1_utm32),
+                       total_km2(adm1_3857)) - 475442) / 475442 * 100, 2)
+)
+```
+
+## 3. Buffer 50 km autour de Yaoundé
+
+`st_buffer(x, dist = 50000)` exige des coordonnées **en mètres** — d'où la reprojection en UTM 32 N avant l'appel.
+
+```{webr}
+yaounde_pt  <- st_sfc(st_point(c(11.5021, 3.8480)), crs = 4326)
+yaounde_utm <- st_transform(yaounde_pt, 32632)
+buffer_50km <- st_buffer(yaounde_utm, dist = 50000)
+
+# Verification : sqrt(aire/pi) doit retourner ~50 km
+sqrt(as.numeric(st_area(buffer_50km)) / pi) / 1000
+```
+
+## 4. Intersection : quels arrondissements dans le buffer ?
+
+```{webr}
+adm3_utm <- st_transform(adm3, 32632)
+dans_buffer <- st_intersection(buffer_50km, adm3_utm)
+nrow(dans_buffer)
+head(dans_buffer$NAME_3, 10)
+```
+
+## 5. Dissolve : reconstituer les régions depuis les arrondissements
+
+Le pattern `group_by + summarise(geometry = st_union(geometry))` est l'opération **dissolve** classique en SIG.
+
+```{webr}
+adm1_from_adm3 <- adm3 |>
+  group_by(NAME_1) |>
+  summarise(n_arrondissements = n(),
+            geometry = st_union(geometry),
+            .groups = "drop")
+
+c(n_regions = nrow(adm1_from_adm3),
+  total_arrondissements = sum(adm1_from_adm3$n_arrondissements))
+```
+
+## 6. Voronoï des 10 chefs-lieux régionaux
+
+```{webr}
+chefs_lieux <- tibble(
+  region = c("Adamaoua","Centre","Est","Extrême-Nord","Littoral",
+             "Nord","Nord-Ouest","Ouest","Sud","Sud-Ouest"),
+  ville  = c("Ngaoundéré","Yaoundé","Bertoua","Maroua","Douala",
+             "Garoua","Bamenda","Bafoussam","Ebolowa","Buea"),
+  lon = c(13.5870, 11.5021, 13.6818, 14.3158, 9.7679,
+          13.3917, 10.1591, 10.4170, 11.1500, 9.2402),
+  lat = c( 7.3214,  3.8480,  4.5775, 10.5910, 4.0511,
+           9.3019,  5.9597,  5.4778,  2.9000, 4.1546)
+) |>
+  st_as_sf(coords = c("lon", "lat"), crs = 4326)
+
+chefs_pts_union <- st_union(chefs_lieux)
+voronoi_box     <- st_voronoi(chefs_pts_union)
+voronoi_cells   <- st_collection_extract(voronoi_box, "POLYGON") |>
+                   st_sf(crs = 4326)
+voronoi_cmr     <- st_intersection(voronoi_cells, st_union(adm1))
+
+ggplot() +
+  geom_sf(data = voronoi_cmr, fill = NA, color = "grey50", linewidth = 0.4) +
+  geom_sf(data = adm1, fill = NA, color = "grey80", linewidth = 0.2) +
+  geom_sf(data = chefs_lieux, color = "red", size = 2.5) +
+  geom_sf_text(data = chefs_lieux, aes(label = ville),
+               nudge_y = 0.25, size = 2.6, fontface = "bold") +
+  labs(title = "Zones d'influence des chefs-lieux régionaux",
+       subtitle = "Diagramme de Voronoï coupé sur la silhouette du Cameroun") +
+  theme_minimal()
+```
+
+## 7. Validation des géométries après reprojection
+
+```{webr}
+adm3_lambert <- st_transform(adm3, 3119)
+table(st_is_valid(adm3_lambert))
+
+adm3_lambert_clean <- st_make_valid(adm3_lambert)
+all(st_is_valid(adm3_lambert_clean))
+```
+
+## 8. Pour aller plus loin
+
+La version complète du jour, avec écriture en GeoPackage multi-couches, gestion d'erreurs, et tests sur des fichiers BUCREP officiels, est dans `demo.qmd`. Le devoir individuel Q6 et son corrigé sont dans `exercice.qmd` / `corrige.qmd`.
+
+[← Retour à l'accueil](../INDEX.md)

@@ -1,0 +1,134 @@
+---
+title: "J3 — Cartographie thématique"
+subtitle: "Code R exécutable dans le navigateur"
+engine: knitr
+---
+
+::: {.iford-callout}
+**Mode d'emploi.** Cliquez **Run code** dans chaque cellule pour exécuter. Modifiez le code, recliquez pour relancer. Tout tourne dans votre navigateur via WebR.
+
+**Note importante** : `tmap` n'est pas disponible sur WebR (trop de dépendances). Ce runtime utilise `ggplot2 + geom_sf`, qui produit des résultats équivalents en mode statique. La démo `tmap` complète est dans `demo.qmd` à exécuter sous RStudio.
+:::
+
+## 1. Charger les données et construire le tibble d'indicateurs
+
+```{webr}
+#| autorun: true
+library(sf)
+library(dplyr)
+library(tibble)
+library(ggplot2)
+
+download.file("/_commons/data/gadm41_CMR_1.json", "adm1.json", mode = "wb")
+adm1 <- read_sf("adm1.json")
+
+regions <- c("Adamaoua","Centre","Est","Extrême-Nord","Littoral",
+             "Nord","Nord-Ouest","Ouest","Sud","Sud-Ouest")
+pop_est <- c(1340000, 4400000, 870000, 4200000, 3400000,
+             2700000, 2000000, 2000000, 800000, 1700000)
+
+tbl_ind <- tibble(
+  NAME_1 = regions, pop_2019 = pop_est,
+  pct_urbain      = c(35, 75, 25, 30, 95, 28, 22, 45, 38, 28),
+  pct_electricite = c(55, 88, 35, 32, 92, 42, 38, 70, 55, 60),
+  taille_mng      = c(5.8, 4.5, 6.2, 6.5, 4.1, 6.0, 5.5, 5.0, 5.5, 5.3)
+)
+
+adm1_pop <- adm1 |>
+  st_transform(3119) |>
+  st_make_valid() |>
+  mutate(superficie_km2 = as.numeric(st_area(geometry)) / 1e6) |>
+  left_join(tbl_ind, by = "NAME_1") |>
+  mutate(densite = pop_2019 / superficie_km2)
+
+head(adm1_pop |> st_drop_geometry() |> select(NAME_1, densite, pct_urbain), 5)
+```
+
+## 2. Choroplèthe minimale `ggplot2`
+
+```{webr}
+ggplot(adm1_pop) +
+  geom_sf(aes(fill = densite)) +
+  theme_minimal()
+```
+
+## 3. Choroplèthe publiable avec décorations
+
+```{webr}
+ggplot(adm1_pop) +
+  geom_sf(aes(fill = densite), color = "white", linewidth = 0.3) +
+  scale_fill_viridis_c(option = "B", trans = "sqrt",
+                       name = "Densité\n(hab/km²)") +
+  geom_sf_label(aes(label = NAME_1), size = 2.2, color = "white",
+                fontface = "bold", label.padding = unit(0.08, "lines")) +
+  labs(title = "Densité de population par région — Cameroun 2019",
+       subtitle = "Estimations BUCREP, projection Lambert (EPSG:3119)",
+       caption = "Source : BUCREP estim., GADM v4.1 · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+## 4. Comparer deux indicateurs avec `facet_wrap`
+
+Au lieu de `tmap_arrange()`, on utilise les facettes `ggplot2` après avoir restructuré la table en format long avec `tidyr::pivot_longer()`.
+
+```{webr}
+library(tidyr)
+
+adm1_long <- adm1_pop |>
+  select(NAME_1, densite, pct_urbain, geometry) |>
+  tidyr::pivot_longer(c(densite, pct_urbain),
+                      names_to = "indicateur", values_to = "valeur")
+
+ggplot(adm1_long) +
+  geom_sf(aes(fill = valeur), color = "white", linewidth = 0.2) +
+  scale_fill_viridis_c(option = "B") +
+  facet_wrap(~ indicateur, ncol = 2,
+             labeller = as_labeller(c(densite = "Densité (hab/km²)",
+                                      pct_urbain = "% urbain"))) +
+  labs(title = "Densité × Urbanisation par région — Cameroun") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        strip.text = element_text(face = "bold", size = 11))
+```
+
+## 5. Choix de palette : viridis vs séquentielle Brewer
+
+```{webr}
+g_viridis <- ggplot(adm1_pop) +
+  geom_sf(aes(fill = densite), color = "white", linewidth = 0.2) +
+  scale_fill_viridis_c(option = "D", trans = "sqrt") +
+  labs(title = "Palette viridis") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+
+g_viridis
+```
+
+```{webr}
+g_brewer <- ggplot(adm1_pop) +
+  geom_sf(aes(fill = densite), color = "white", linewidth = 0.2) +
+  scale_fill_fermenter(palette = "YlOrRd", direction = 1, n.breaks = 5) +
+  labs(title = "Palette ColorBrewer YlOrRd (5 classes)") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+
+g_brewer
+```
+
+## 6. À essayer
+
+::: {.iford-callout}
+Modifiez le code pour cartographier **`pct_electricite`** au lieu de `densite`. Changez le titre, choisissez une palette adaptée (séquentielle pour un % qui croît). Refaites tourner.
+:::
+
+## 7. Pour aller plus loin
+
+La version complète du jour avec `tmap` (modes plot/view, classifications Jenks/quantiles, compass, scalebar, multi-panel `tmap_arrange`, export PNG/PDF/HTML interactif) est dans `demo.qmd`, à exécuter sous RStudio. Le devoir individuel Q6 est dans `exercice.qmd`.
+
+[← Retour à l'accueil](../INDEX.md)

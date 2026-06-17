@@ -1,0 +1,407 @@
+---
+title: "J3 — Cartographie thématique : `tmap` et `ggplot2`"
+subtitle: "Atelier IFORD × GDSG · Yaoundé, 29 juillet 2026"
+author: "Ramesesse Dzita (GDSG)"
+date: "2026-07-29"
+lang: fr
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    number-sections: true
+    code-fold: false
+    code-tools: true
+    theme: cosmo
+    df-print: paged
+  pdf:
+    toc: true
+    number-sections: true
+execute:
+  echo: true
+  warning: false
+  message: false
+bibliography: ../_commons/helpers/citations.bib
+---
+
+# Objectifs {#sec-objectifs}
+
+Ce troisième jour est consacré à la **cartographie thématique** — le moment où les données préparées en J1 et J2 deviennent des objets de communication scientifique. On apprend à choisir une classification, une palette, un découpage et tous les éléments d'habillage qui rendent une carte publiable.
+
+Six livrables ciblés :
+
+1. Une choroplèthe simple `tmap` v4.
+2. Une comparaison à quatre classifications.
+3. Une carte multi-panel densité × urbanisation.
+4. Une carte interactive Leaflet.
+5. La même choroplèthe en `ggplot2 + geom_sf`.
+6. Un export PNG 300 dpi + PDF vectoriel + HTML interactif.
+
+# Pré-requis {#sec-prereq}
+
+On charge les packages et les données préparées en J1/J2. Le tibble de population régionale est construit à partir des estimations BUCREP utilisées en J1, on y ajoute trois indicateurs sociaux **simulés à partir des proportions EDS-MICS 2018** pour démontrer la cartographie multi-indicateurs.
+
+```{r}
+#| label: setup
+library(here)
+library(sf)
+library(dplyr)
+library(tibble)
+library(ggplot2)
+library(tmap)
+library(RColorBrewer)
+library(viridisLite)
+
+source(here("pedagogie", "_commons", "helpers", "fetch_data.R"))
+source(here("pedagogie", "_commons", "helpers", "theme_iford.R"))
+
+adm1 <- read_sf(fetch_gadm_cameroon(1))
+```
+
+## Construire le tibble de production
+
+On simule sur la base de proportions EDS-MICS 2018 — purement pédagogique, pas à utiliser pour de vraies estimations.
+
+```{r}
+#| label: tbl-prod
+set.seed(2026)
+regions <- c("Adamaoua","Centre","Est","Extrême-Nord","Littoral",
+             "Nord","Nord-Ouest","Ouest","Sud","Sud-Ouest")
+pop_est <- c(1340000, 4400000, 870000, 4200000, 3400000,
+             2700000, 2000000, 2000000, 800000, 1700000)
+
+tbl_indicateurs <- tibble(
+  NAME_1          = regions,
+  pop_2019        = pop_est,
+  pct_urbain      = c(35, 75, 25, 30, 95, 28, 22, 45, 38, 28),
+  pct_electricite = c(55, 88, 35, 32, 92, 42, 38, 70, 55, 60),
+  taille_mng      = c(5.8, 4.5, 6.2, 6.5, 4.1, 6.0, 5.5, 5.0, 5.5, 5.3)
+)
+
+adm1_pop <- adm1 |>
+  st_transform(3119) |>                       # Lambert Cameroun
+  st_make_valid() |>
+  mutate(superficie_km2 = as.numeric(st_area(geometry)) / 1e6) |>
+  left_join(tbl_indicateurs, by = "NAME_1") |>
+  mutate(densite = pop_2019 / superficie_km2)
+```
+
+# Première session — Choroplèthe `tmap` basique {#sec-choro-base}
+
+> ⏱ **~1 heure**.
+
+## La première carte minimaliste
+
+Trois lignes `tmap` pour une choroplèthe lisible : `tm_shape` charge la couche, `tm_polygons` colore par variable, `tm_text` étiquette. C'est le squelette minimum.
+
+```{r}
+#| label: choro-minimal
+setup_tmap_iford()
+
+tm_shape(adm1_pop) +
+  tm_polygons("densite") +
+  tm_text("NAME_1", size = 0.6)
+```
+
+Sortie brute, peu lisible. À enrichir.
+
+## Choroplèthe avec habillage complet
+
+On ajoute classification Jenks, palette séquentielle, contours blancs, titres, flèche du nord, échelle, crédits. C'est l'état « publiable ».
+
+```{r}
+#| label: choro-publishable
+#| fig-width: 9
+#| fig-height: 7
+tm_shape(adm1_pop) +
+  tm_polygons(
+    fill        = "densite",
+    fill.scale  = tm_scale_intervals(style = "jenks", n = 5,
+                                     values = "brewer.yl_or_rd"),
+    fill.legend = tm_legend("Densité\n(hab/km²)"),
+    col         = "white",
+    lwd         = 0.4
+  ) +
+  tm_text("NAME_1", size = 0.55, col = "grey20", fontface = "bold") +
+  tm_compass(type = "arrow", position = c("right", "top"), size = 1.2) +
+  tm_scalebar(position = c("left", "bottom"), width = 0.25) +
+  tm_title("Densité de population par région — Cameroun 2019",
+           position = c("left", "top")) +
+  tm_credits("Source : BUCREP (estim.), GADM v4.1 · IFORD × GDSG 2026",
+             position = c("right", "bottom"), size = 0.5)
+```
+
+# Deuxième session — Comparaison de classifications {#sec-classifications}
+
+> ⏱ **~1 heure**.
+
+## Une même donnée, quatre découpages
+
+On produit quatre versions de la même choroplèthe avec quatre méthodes de classification distinctes. La fonction utilitaire `carte_avec_style` réduit la duplication.
+
+```{r}
+#| label: classif-utility
+carte_avec_style <- function(style_str, titre) {
+  tm_shape(adm1_pop) +
+    tm_polygons(
+      fill        = "densite",
+      fill.scale  = tm_scale_intervals(style = style_str, n = 5,
+                                       values = "brewer.yl_or_rd"),
+      fill.legend = tm_legend("hab/km²"),
+      col         = "white", lwd = 0.3
+    ) +
+    tm_title(titre, position = c("left", "top"), size = 0.9)
+}
+```
+
+## Les quatre cartes en multi-panel
+
+`tmap_arrange()` empile les cartes. C'est la **manière la plus efficace** de démontrer à l'œil l'impact du choix de classification.
+
+```{r}
+#| label: classif-grid
+#| fig-width: 14
+#| fig-height: 10
+c_equal   <- carte_avec_style("equal",    "Intervalles égaux")
+c_quant   <- carte_avec_style("quantile", "Quantiles")
+c_jenks   <- carte_avec_style("jenks",    "Jenks (Fisher)")
+c_manual  <- tm_shape(adm1_pop) +
+  tm_polygons(
+    fill        = "densite",
+    fill.scale  = tm_scale_intervals(breaks = c(0, 10, 50, 100, 200, 400),
+                                     values = "brewer.yl_or_rd"),
+    fill.legend = tm_legend("hab/km²"),
+    col         = "white", lwd = 0.3
+  ) +
+  tm_title("Manuel : 0 / 10 / 50 / 100 / 200 / 400",
+           position = c("left", "top"), size = 0.9)
+
+tmap_arrange(c_equal, c_quant, c_jenks, c_manual, ncol = 2)
+```
+
+**Lecture critique en salle** : la version « intervalles égaux » est dominée par les valeurs extrêmes ; la version « manuel » utilise des seuils interprétables (densité < 10 = très faible, > 200 = forte urbanisation) ; Jenks est le meilleur compromis statistique mais ses bornes sont peu intuitives.
+
+## Palettes : tester viridis
+
+`viridis` est notre alternative moderne à ColorBrewer. Perceptuellement uniforme, daltonien-friendly, lisible en N&B. Test côte à côte de YlOrRd et viridis :
+
+```{r}
+#| label: palettes
+#| fig-width: 14
+#| fig-height: 6
+c_brewer <- tm_shape(adm1_pop) +
+  tm_polygons(
+    fill = "densite",
+    fill.scale = tm_scale_intervals(style = "jenks", n = 5,
+                                    values = "brewer.yl_or_rd"),
+    fill.legend = tm_legend("hab/km²"),
+    col = "white", lwd = 0.3
+  ) +
+  tm_title("Palette ColorBrewer YlOrRd", position = c("left", "top"))
+
+c_viridis <- tm_shape(adm1_pop) +
+  tm_polygons(
+    fill = "densite",
+    fill.scale = tm_scale_intervals(style = "jenks", n = 5,
+                                    values = "viridis"),
+    fill.legend = tm_legend("hab/km²"),
+    col = "white", lwd = 0.3
+  ) +
+  tm_title("Palette viridis", position = c("left", "top"))
+
+tmap_arrange(c_brewer, c_viridis, ncol = 2)
+```
+
+# Troisième session — Multi-panel densité × urbanisation {#sec-multi-panel}
+
+> ⏱ **~45 minutes**.
+
+## Une question, deux indicateurs
+
+Question pédagogique : « les régions denses sont-elles aussi les plus urbanisées ? ». Réponse par deux cartes côte à côte sur la même base administrative.
+
+```{r}
+#| label: densite-vs-urbain
+#| fig-width: 14
+#| fig-height: 8
+c_densite <- tm_shape(adm1_pop) +
+  tm_polygons(
+    fill        = "densite",
+    fill.scale  = tm_scale_intervals(style = "jenks", n = 5,
+                                     values = "brewer.yl_or_rd"),
+    fill.legend = tm_legend("Densité\n(hab/km²)"),
+    col = "white", lwd = 0.3
+  ) +
+  tm_text("NAME_1", size = 0.45, col = "grey20") +
+  tm_title("a. Densité de population", position = c("left", "top"))
+
+c_urbain <- tm_shape(adm1_pop) +
+  tm_polygons(
+    fill        = "pct_urbain",
+    fill.scale  = tm_scale_intervals(style = "jenks", n = 5,
+                                     values = "brewer.blues"),
+    fill.legend = tm_legend("% urbain"),
+    col = "white", lwd = 0.3
+  ) +
+  tm_text("NAME_1", size = 0.45, col = "grey20") +
+  tm_title("b. Taux d'urbanisation", position = c("left", "top"))
+
+tmap_arrange(c_densite, c_urbain, ncol = 2)
+```
+
+**Lecture critique** : on attend une corrélation entre densité et urbanisation (Littoral, Centre élevés des deux côtés). L'Adamaoua, à l'inverse, a une densité faible **et** une urbanisation moyenne — c'est une région où la population se concentre dans Ngaoundéré et autour, peu peuplée ailleurs. La carte raconte cette concentration.
+
+# Quatrième session — Mode interactif Leaflet {#sec-view}
+
+> ⏱ **~30 minutes**.
+
+## Bascule du mode
+
+`tmap_mode("view")` transforme **toutes** les cartes `tmap` suivantes en widgets Leaflet. Le même code source produit deux sorties différentes selon le mode.
+
+```{r}
+#| label: tmap-view
+#| eval: false
+tmap_mode("view")
+
+tm_shape(adm1_pop) +
+  tm_polygons(
+    fill = "densite",
+    fill.scale = tm_scale_intervals(style = "jenks", n = 5,
+                                    values = "brewer.yl_or_rd"),
+    fill.legend = tm_legend("Densité\n(hab/km²)"),
+    fill_alpha = 0.7
+  )
+
+tmap_mode("plot")  # revenir au statique apres
+```
+
+Au survol : popup avec les attributs. Au clic : zoom adaptatif. Le fond de carte est OpenStreetMap par défaut, modifiable avec `tm_basemap("Esri.WorldImagery")` par exemple.
+
+# Cinquième session — Alternative `ggplot2 + geom_sf` {#sec-ggplot}
+
+> ⏱ **~45 minutes**.
+
+## La même carte en `ggplot2`
+
+Quand on a besoin d'intégrer la carte à un layout multi-panneaux comprenant des graphiques non-cartes (par exemple un histogramme et une carte côte à côte), `ggplot2` reste plus polyvalent.
+
+```{r}
+#| label: ggplot-version
+#| fig-width: 9
+#| fig-height: 7
+ggplot(adm1_pop) +
+  geom_sf(aes(fill = densite), color = "white", linewidth = 0.3) +
+  scale_fill_viridis_c(option = "B", trans = "sqrt",
+                       name = "Densité\n(hab/km²)") +
+  geom_sf_label(aes(label = NAME_1),
+                size = 2.3, color = "white", fontface = "bold",
+                label.padding = unit(0.1, "lines")) +
+  labs(
+    title    = "Densité de population par région — Cameroun (estim. 2019)",
+    subtitle = "Projection : Lambert Cameroun (EPSG:3119)",
+    caption  = "Source : BUCREP (estim.), GADM v4.1 · IFORD × GDSG 2026"
+  ) +
+  theme_minimal() +
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+`trans = "sqrt"` étire l'échelle pour mieux différencier les régions de faible densité (qui se ressembleraient toutes en échelle linéaire).
+
+## Avec `ggspatial` pour la flèche et l'échelle
+
+`ggplot2` natif n'a ni flèche du nord ni échelle. `ggspatial` les fournit :
+
+```{r}
+#| label: ggspatial
+#| eval: false
+library(ggspatial)
+
+ggplot(adm1_pop) +
+  geom_sf(aes(fill = densite), color = "white") +
+  scale_fill_viridis_c(option = "B", trans = "sqrt") +
+  annotation_north_arrow(location = "tr", style = north_arrow_minimal()) +
+  annotation_scale(location = "bl") +
+  theme_minimal()
+```
+
+# Sixième session — Export multi-format {#sec-export}
+
+> ⏱ **~30 minutes**.
+
+## PNG 300 dpi pour PowerPoint
+
+```{r}
+#| label: export-png
+#| eval: false
+out_dir <- here("pedagogie", "J03_cartographie_tmap_ggplot", "outputs")
+dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+
+tmap_save(c_densite,
+          filename = file.path(out_dir, "densite_jenks.png"),
+          dpi = 300, width = 9, height = 7)
+```
+
+## PDF vectoriel pour publication scientifique
+
+```{r}
+#| label: export-pdf
+#| eval: false
+tmap_save(c_densite,
+          filename = file.path(out_dir, "densite_jenks.pdf"),
+          width = 9, height = 7)
+```
+
+## HTML interactif
+
+```{r}
+#| label: export-html
+#| eval: false
+tmap_mode("view")
+carte_interactive <- tm_shape(adm1_pop) +
+  tm_polygons(fill = "densite",
+              fill.scale = tm_scale_intervals(style = "jenks", n = 5,
+                                              values = "brewer.yl_or_rd"),
+              fill_alpha = 0.7,
+              popup.vars = c("Région" = "NAME_1",
+                             "Densité (hab/km²)" = "densite",
+                             "Population 2019" = "pop_2019"))
+tmap_save(carte_interactive, filename = file.path(out_dir, "densite_interactive.html"))
+tmap_mode("plot")
+```
+
+# Synthèse et devoir {#sec-wrap-up}
+
+## Ce qu'on a vu
+
+- `tmap` est construit comme `ggplot2` : on empile des couches `tm_*`.
+- Quatre classifications, quatre cartes, quatre histoires.
+- `viridis` ou ColorBrewer comme palette par défaut, jamais `rainbow`.
+- Tout élément d'habillage (titre, légende, flèche, échelle, crédits) **est obligatoire** pour publier.
+- `tmap_arrange()` pour comparer deux indicateurs.
+- `tmap_mode("view")` pour bascule interactive ; bien repasser `"plot"` après.
+- `ggplot2 + geom_sf` quand besoin d'intégration multi-panneaux non-cartes.
+
+## Pour demain (J4)
+
+Premier contact avec les rasters via `terra` : lecture GeoTIFF, agrégation, algèbre raster, extraction zonale. On charge le premier WorldPop top-down 100 m du Cameroun.
+
+## Devoir individuel (Q6 — 30 min)
+
+Énoncé dans `exercice.qmd` : produire **ta** carte de production sur **l'indicateur de ton choix** (parmi `pct_electricite`, `pct_urbain`, `taille_mng`), avec tous les éléments d'habillage obligatoires, exportée en PNG + PDF + HTML. Corrigé pédagogique dans `corrige.qmd`.
+
+# Sources et licences
+
+| Donnée | Source | Licence |
+|---|---|---|
+| GADM v4.1 ADM1 Cameroun | <https://gadm.org/download_country.html> | Libre académique |
+| Estimations population régionale 2019 | BUCREP (ordres de grandeur) | À actualiser RGPH 4 |
+| Indicateurs sociaux | Simulés sur la base EDS-MICS 2018 | Pédagogique |
+
+Code distribué sous **CC-BY 4.0**.
+
+## Références méthodologiques
+
+@pebesma2018simple ; @hijmans2024terra.

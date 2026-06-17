@@ -74,21 +74,21 @@
     "href": "INDEX.html#calendrier",
     "title": "",
     "section": "Calendrier",
-    "text": "Calendrier\n\n\n\nDate\nJour\nThème\nLien\n\n\n\n\nLundi 27 juillet 2026\nJ1\nIntroduction R + pensée spatiale\nJ01\n\n\nMardi 28 juillet 2026\nJ2\nDonnées vectorielles sf et CRS\nà venir\n\n\nMercredi 29 juillet 2026\nJ3\nCartographie thématique (tmap, ggplot2)\nà venir\n\n\nJeudi 30 juillet 2026\nJ4\nDonnées raster avec terra\nà venir\n\n\nVendredi 31 juillet 2026\nJ5\nJointures spatiales et démographie EDS-MICS\nà venir\n\n\nSamedi 1ᵉʳ août 2026\nJ6\nAutocorrélation spatiale (Moran, LISA)\nà venir\n\n\nLundi 3 août 2026\nJ7\nKDE, dasymétrie, télédétection\nà venir\n\n\nMardi 4 août 2026\nJ8\nPopulation top-down (WorldPop, GHS-POP)\nà venir\n\n\nMercredi 5 août 2026\nJ9\nPopulation bottom-up\nà venir\n\n\nJeudi 6 + Vendredi 7 août 2026\nJ10\nMini-projet et bilan\nà venir\n\n\n\n\nDimanche 2 août : jour de repos (à confirmer selon l’agenda IFORD)."
+    "text": "Calendrier\n\n\n\nDate\nJour\nThème\nLien\n\n\n\n\nLundi 27 juillet 2026\nJ1\nIntroduction R + pensée spatiale\nJ01\n\n\nMardi 28 juillet 2026\nJ2\nDonnées vectorielles sf et CRS\nJ02\n\n\nMercredi 29 juillet 2026\nJ3\nCartographie thématique (tmap, ggplot2)\nJ03\n\n\nJeudi 30 juillet 2026\nJ4\nDonnées raster avec terra\nà venir\n\n\nVendredi 31 juillet 2026\nJ5\nJointures spatiales et démographie EDS-MICS\nà venir\n\n\nSamedi 1ᵉʳ août 2026\nJ6\nAutocorrélation spatiale (Moran, LISA)\nà venir\n\n\nLundi 3 août 2026\nJ7\nKDE, dasymétrie, télédétection\nà venir\n\n\nMardi 4 août 2026\nJ8\nPopulation top-down (WorldPop, GHS-POP)\nà venir\n\n\nMercredi 5 août 2026\nJ9\nPopulation bottom-up\nà venir\n\n\nJeudi 6 + Vendredi 7 août 2026\nJ10\nMini-projet et bilan\nJ10\n\n\n\n\nDimanche 2 août : jour de repos (à confirmer selon l’agenda IFORD)."
   },
   {
     "objectID": "INDEX.html#statut-de-chaque-jour",
     "href": "INDEX.html#statut-de-chaque-jour",
     "title": "",
     "section": "Statut de chaque jour",
-    "text": "Statut de chaque jour\nLégende : ✅ rédigé · 🚧 en cours · ⬜ à venir.\n\n\n\nJour\nREADME\ndemo\nslides\nruntime\nexercice\ncorrigé\n\n\n\n\nJ1\n✅\n✅\n✅\n✅\n✅\n✅\n\n\nJ2\n⬜\n⬜\n⬜\n⬜\n⬜\n⬜\n\n\nJ3\n⬜\n⬜\n⬜\n⬜\n⬜\n⬜\n\n\nJ4\n⬜\n⬜\n⬜\n⬜\n⬜\n⬜\n\n\nJ5\n⬜\n⬜\n⬜\n⬜\n⬜\n⬜\n\n\nJ6\n⬜\n⬜\n⬜\n⬜\n⬜\n⬜\n\n\nJ7\n⬜\n⬜\n⬜\n⬜\n⬜\n⬜\n\n\nJ8\n⬜\n⬜\n⬜\n⬜\n⬜\n⬜\n\n\nJ9\n⬜\n⬜\n⬜\n⬜\n⬜\n⬜\n\n\nJ10\n⬜\n⬜\n⬜\n⬜\n⬜\n⬜\n\n\n\nMise à jour : 16 juin 2026."
+    "text": "Statut de chaque jour\nLégende : ✅ rédigé · 🚧 en cours · ⬜ à venir.\n\n\n\n\n\n\n\n\n\n\n\n\n\nJour\nThème (résumé)\nREADME\ndemo\nslides\nruntime\nexercice\ncorrigé\n\n\n\n\nJ1\nIntro R + pensée spatiale\n✅\n✅\n✅\n✅\n✅\n✅\n\n\nJ2\nsf et CRS\n✅\n✅\n✅\n✅\n✅\n✅\n\n\nJ3\nRaster terra\n✅\n✅\n✅\n✅\n✅\n✅\n\n\nJ4\nGestion données tidyverse\n⬜\n⬜\n⬜\n⬜\n⬜\n⬜\n\n\nJ5\nVisualisation cartographie\n✅\n✅\n✅\n✅\n✅\n✅\n\n\nJ6\nStats spatiales (Moran, LISA, KDE)\n⬜\n⬜\n⬜\n⬜\n⬜\n⬜\n\n\nJ7\nPop haute-rés + bottom-up\n⬜\n⬜\n⬜\n⬜\n⬜\n⬜\n\n\nJ8\nTélédétection (Sentinel, rgee)\n⬜\n⬜\n⬜\n⬜\n⬜\n⬜\n\n\nJ9\nSpatial & social (Malaria Atlas, ACLED)\n⬜\n⬜\n⬜\n⬜\n⬜\n⬜\n\n\nJ10\nReproductibilité + clôture\n✅\n✅\n✅\n✅\n✅\n✅\n\n\n\nMise à jour : 17 juin 2026 (J1, J2, J3, J5, J10 livrés selon programme officiel ; J4, J6, J7, J8, J9 à produire)."
   },
   {
     "objectID": "INDEX.html#ressources-transverses",
     "href": "INDEX.html#ressources-transverses",
     "title": "",
     "section": "Ressources transverses",
-    "text": "Ressources transverses\n\nREADME.md — présentation générale du dossier pedagogie/.\nmanuel_animateur.md — mode d’emploi pour l’animateur (toi, en salle).\n_commons/helpers/fetch_data.R — téléchargement auto avec fallback local.\n_commons/helpers/theme_iford.R — thème ggplot + tmap commun.\n_commons/helpers/citations.bib — bibliographie commune.\n_commons/styles/ — feuilles de style SCSS pour slides et runtime."
+    "text": "Ressources transverses\n\nREADME.md — présentation générale du dossier pedagogie/.\nmanuel_animateur.md — mode d’emploi pour l’animateur (Ramesesse Dzita).\n_commons/helpers/fetch_data.R — chargement des datasets avec fallback local.\n_commons/helpers/theme_iford.R — thème ggplot + tmap commun.\n_commons/helpers/citations.bib — bibliographie commune.\n_commons/styles/ — feuilles de style SCSS pour slides revealjs et runtime WebR.\n_commons/img/logo-iford.jpg — logo IFORD utilisé partout.\n_commons/data/ — datasets servis par le runtime WebR.\nDocumentation technique : environnement_technique/architecture_quarto.md."
   },
   {
     "objectID": "INDEX.html#pour-les-participants",
@@ -166,5 +166,292 @@
     "title": "J1 — Intro R + pensée spatiale",
     "section": "6 bis. Choroplèthe densité — carte thématique complète",
     "text": "6 bis. Choroplèthe densité — carte thématique complète\nOn combine la géométrie ADM1 avec le tibble de population créé en section 3, on calcule la densité (habitants par km²), et on colore."
+  },
+  {
+    "objectID": "J10_mini_projet_synthese/runtime.html",
+    "href": "J10_mini_projet_synthese/runtime.html",
+    "title": "J10 — Reproductibilité et clôture",
+    "section": "",
+    "text": "J10 est différent. Pas de runtime WebR ici : la journée porte sur la mise en place de votre propre projet reproductible dans votre RStudio local, avec votre compte GitHub."
+  },
+  {
+    "objectID": "J10_mini_projet_synthese/runtime.html#format-du-j10",
+    "href": "J10_mini_projet_synthese/runtime.html#format-du-j10",
+    "title": "J10 — Mini-projet de synthèse",
+    "section": "Format du J10",
+    "text": "Format du J10\nCf. slides.qmd projeté en salle. En résumé :\n\n\n\n\n\n\nDemi-journée\nActivités\n\n\n\nJeudi matin (J10a)\nCadrage + formation groupes + choix de question + pitch méthodo\n\n\nJeudi après-midi (J10a)\nAcquisition données + cartes exploratoires\n\n\nVendredi matin (J10b)\nAnalyse + cartes de production\n\n\nVendredi après-midi (J10b)\nRestitutions (15 min × 5 groupes) + Q&A + remise des certificats"
+  },
+  {
+    "objectID": "J10_mini_projet_synthese/runtime.html#boîte-à-outils-des-journées-précédentes",
+    "href": "J10_mini_projet_synthese/runtime.html#boîte-à-outils-des-journées-précédentes",
+    "title": "J10 — Mini-projet de synthèse",
+    "section": "Boîte à outils des journées précédentes",
+    "text": "Boîte à outils des journées précédentes\nPour consulter rapidement les runtimes WebR utiles à votre projet :\n\n\nJ1 — Intro R + pensée spatiale — bases dplyr + premier sf + CRS\n\nJ2 — sf + CRS — opérations vectorielles, dissolve, Voronoï\n\nJ3 — Cartographie — choroplèthes, palettes, multi-panel\n\nLes journées J4 à J9 ont chacune leur propre runtime WebR (raster, jointures, autocorrélation, KDE, top-down, bottom-up). Les pages sont liées depuis le menu Modules de la navbar."
+  },
+  {
+    "objectID": "J10_mini_projet_synthese/runtime.html#référence-exemple-complet-de-mini-projet",
+    "href": "J10_mini_projet_synthese/runtime.html#référence-exemple-complet-de-mini-projet",
+    "title": "J10 — Mini-projet de synthèse",
+    "section": "Référence : exemple complet de mini-projet",
+    "text": "Référence : exemple complet de mini-projet\nLe fichier demo.qmd de J10 contient un exemple détaillé sur la piste #4 (« comparer trois grilles de population sur le Cameroun »). À ouvrir dans RStudio comme modèle de structure."
+  },
+  {
+    "objectID": "J10_mini_projet_synthese/runtime.html#modèle-de-structure-de-projet",
+    "href": "J10_mini_projet_synthese/runtime.html#modèle-de-structure-de-projet",
+    "title": "J10 — Mini-projet de synthèse",
+    "section": "Modèle de structure de projet",
+    "text": "Modèle de structure de projet\nConventions à adopter dans votre dossier groupe :\nmini_projet_groupeN/\n├── README.md            ← question + démarche en 1 page\n├── _projet.Rproj\n├── R/\n│   ├── 01_acquisition.R\n│   ├── 02_preparation.R\n│   ├── 03_analyse.R\n│   └── 04_cartes.R\n├── data/\n│   ├── raw/             ← gitignored si gros\n│   └── intermediate/    ← .gpkg / .rds\n├── outputs/\n│   ├── figures/         ← .png et .pdf\n│   └── tables/          ← .csv\n└── rapport.qmd          ← 5 pages PDF"
+  },
+  {
+    "objectID": "J10_mini_projet_synthese/runtime.html#critères-dévaluation",
+    "href": "J10_mini_projet_synthese/runtime.html#critères-dévaluation",
+    "title": "J10 — Mini-projet de synthèse",
+    "section": "Critères d’évaluation",
+    "text": "Critères d’évaluation\n\n\nQualité méthodologique du pipeline (40 %)\n\nQualité graphique et clarté des cartes (30 %)\n\nQualité de la présentation orale (30 %)\n\nLe certificat IFORD est délivré à tous les participants ayant suivi les 10 jours, indépendamment de la qualité du mini-projet.\n← Retour à l’accueil"
+  },
+  {
+    "objectID": "J02_sf_CRS_vecteurs/runtime.html",
+    "href": "J02_sf_CRS_vecteurs/runtime.html",
+    "title": "J2 — sf et CRS",
+    "section": "",
+    "text": "Mode d’emploi. Cliquez Run code dans chaque cellule pour exécuter. Modifiez le code, recliquez pour relancer. Rien n’est envoyé sur un serveur — tout tourne dans votre navigateur via WebR."
+  },
+  {
+    "objectID": "J02_sf_CRS_vecteurs/runtime.html#charger-les-données-gadm-cameroun",
+    "href": "J02_sf_CRS_vecteurs/runtime.html#charger-les-données-gadm-cameroun",
+    "title": "J2 — sf et CRS",
+    "section": "1. Charger les données GADM Cameroun",
+    "text": "1. Charger les données GADM Cameroun\nOn récupère les limites administratives ADM1 et ADM3 directement depuis le site, on les lit avec sf::read_sf()."
+  },
+  {
+    "objectID": "J02_sf_CRS_vecteurs/runtime.html#reprojeter-et-comparer-trois-crs",
+    "href": "J02_sf_CRS_vecteurs/runtime.html#reprojeter-et-comparer-trois-crs",
+    "title": "J2 — sf et CRS",
+    "section": "2. Reprojeter et comparer trois CRS",
+    "text": "2. Reprojeter et comparer trois CRS\nLe même objet adm1 dans trois CRS différents donne trois superficies différentes. Lambert Cameroun (3119) est le plus fidèle au chiffre officiel (475 442 km²)."
+  },
+  {
+    "objectID": "J02_sf_CRS_vecteurs/runtime.html#buffer-50-km-autour-de-yaoundé",
+    "href": "J02_sf_CRS_vecteurs/runtime.html#buffer-50-km-autour-de-yaoundé",
+    "title": "J2 — sf et CRS",
+    "section": "3. Buffer 50 km autour de Yaoundé",
+    "text": "3. Buffer 50 km autour de Yaoundé\nst_buffer(x, dist = 50000) exige des coordonnées en mètres — d’où la reprojection en UTM 32 N avant l’appel."
+  },
+  {
+    "objectID": "J02_sf_CRS_vecteurs/runtime.html#intersection-quels-arrondissements-dans-le-buffer",
+    "href": "J02_sf_CRS_vecteurs/runtime.html#intersection-quels-arrondissements-dans-le-buffer",
+    "title": "J2 — sf et CRS",
+    "section": "4. Intersection : quels arrondissements dans le buffer ?",
+    "text": "4. Intersection : quels arrondissements dans le buffer ?"
+  },
+  {
+    "objectID": "J02_sf_CRS_vecteurs/runtime.html#dissolve-reconstituer-les-régions-depuis-les-arrondissements",
+    "href": "J02_sf_CRS_vecteurs/runtime.html#dissolve-reconstituer-les-régions-depuis-les-arrondissements",
+    "title": "J2 — sf et CRS",
+    "section": "5. Dissolve : reconstituer les régions depuis les arrondissements",
+    "text": "5. Dissolve : reconstituer les régions depuis les arrondissements\nLe pattern group_by + summarise(geometry = st_union(geometry)) est l’opération dissolve classique en SIG."
+  },
+  {
+    "objectID": "J02_sf_CRS_vecteurs/runtime.html#voronoï-des-10-chefs-lieux-régionaux",
+    "href": "J02_sf_CRS_vecteurs/runtime.html#voronoï-des-10-chefs-lieux-régionaux",
+    "title": "J2 — sf et CRS",
+    "section": "6. Voronoï des 10 chefs-lieux régionaux",
+    "text": "6. Voronoï des 10 chefs-lieux régionaux"
+  },
+  {
+    "objectID": "J02_sf_CRS_vecteurs/runtime.html#validation-des-géométries-après-reprojection",
+    "href": "J02_sf_CRS_vecteurs/runtime.html#validation-des-géométries-après-reprojection",
+    "title": "J2 — sf et CRS",
+    "section": "7. Validation des géométries après reprojection",
+    "text": "7. Validation des géométries après reprojection"
+  },
+  {
+    "objectID": "J02_sf_CRS_vecteurs/runtime.html#pour-aller-plus-loin",
+    "href": "J02_sf_CRS_vecteurs/runtime.html#pour-aller-plus-loin",
+    "title": "J2 — sf et CRS",
+    "section": "8. Pour aller plus loin",
+    "text": "8. Pour aller plus loin\nLa version complète du jour, avec écriture en GeoPackage multi-couches, gestion d’erreurs, et tests sur des fichiers BUCREP officiels, est dans demo.qmd. Le devoir individuel Q6 et son corrigé sont dans exercice.qmd / corrige.qmd.\n← Retour à l’accueil"
+  },
+  {
+    "objectID": "J03_cartographie_tmap_ggplot/runtime.html",
+    "href": "J03_cartographie_tmap_ggplot/runtime.html",
+    "title": "J3 — Cartographie thématique",
+    "section": "",
+    "text": "Mode d’emploi. Cliquez Run code dans chaque cellule pour exécuter. Modifiez le code, recliquez pour relancer. Tout tourne dans votre navigateur via WebR.\nNote importante : tmap n’est pas disponible sur WebR (trop de dépendances). Ce runtime utilise ggplot2 + geom_sf, qui produit des résultats équivalents en mode statique. La démo tmap complète est dans demo.qmd à exécuter sous RStudio."
+  },
+  {
+    "objectID": "J03_cartographie_tmap_ggplot/runtime.html#charger-les-données-et-construire-le-tibble-dindicateurs",
+    "href": "J03_cartographie_tmap_ggplot/runtime.html#charger-les-données-et-construire-le-tibble-dindicateurs",
+    "title": "J3 — Cartographie thématique",
+    "section": "1. Charger les données et construire le tibble d’indicateurs",
+    "text": "1. Charger les données et construire le tibble d’indicateurs"
+  },
+  {
+    "objectID": "J03_cartographie_tmap_ggplot/runtime.html#choroplèthe-minimale-ggplot2",
+    "href": "J03_cartographie_tmap_ggplot/runtime.html#choroplèthe-minimale-ggplot2",
+    "title": "J3 — Cartographie thématique",
+    "section": "2. Choroplèthe minimale ggplot2\n",
+    "text": "2. Choroplèthe minimale ggplot2"
+  },
+  {
+    "objectID": "J03_cartographie_tmap_ggplot/runtime.html#choroplèthe-publiable-avec-décorations",
+    "href": "J03_cartographie_tmap_ggplot/runtime.html#choroplèthe-publiable-avec-décorations",
+    "title": "J3 — Cartographie thématique",
+    "section": "3. Choroplèthe publiable avec décorations",
+    "text": "3. Choroplèthe publiable avec décorations"
+  },
+  {
+    "objectID": "J03_cartographie_tmap_ggplot/runtime.html#comparer-deux-indicateurs-avec-facet_wrap",
+    "href": "J03_cartographie_tmap_ggplot/runtime.html#comparer-deux-indicateurs-avec-facet_wrap",
+    "title": "J3 — Cartographie thématique",
+    "section": "4. Comparer deux indicateurs avec facet_wrap\n",
+    "text": "4. Comparer deux indicateurs avec facet_wrap\n\nAu lieu de tmap_arrange(), on utilise les facettes ggplot2 après avoir restructuré la table en format long avec tidyr::pivot_longer()."
+  },
+  {
+    "objectID": "J03_cartographie_tmap_ggplot/runtime.html#choix-de-palette-viridis-vs-séquentielle-brewer",
+    "href": "J03_cartographie_tmap_ggplot/runtime.html#choix-de-palette-viridis-vs-séquentielle-brewer",
+    "title": "J3 — Cartographie thématique",
+    "section": "5. Choix de palette : viridis vs séquentielle Brewer",
+    "text": "5. Choix de palette : viridis vs séquentielle Brewer"
+  },
+  {
+    "objectID": "J03_cartographie_tmap_ggplot/runtime.html#à-essayer",
+    "href": "J03_cartographie_tmap_ggplot/runtime.html#à-essayer",
+    "title": "J3 — Cartographie thématique",
+    "section": "6. À essayer",
+    "text": "6. À essayer\n\nModifiez le code pour cartographier pct_electricite au lieu de densite. Changez le titre, choisissez une palette adaptée (séquentielle pour un % qui croît). Refaites tourner."
+  },
+  {
+    "objectID": "J03_cartographie_tmap_ggplot/runtime.html#pour-aller-plus-loin",
+    "href": "J03_cartographie_tmap_ggplot/runtime.html#pour-aller-plus-loin",
+    "title": "J3 — Cartographie thématique",
+    "section": "7. Pour aller plus loin",
+    "text": "7. Pour aller plus loin\nLa version complète du jour avec tmap (modes plot/view, classifications Jenks/quantiles, compass, scalebar, multi-panel tmap_arrange, export PNG/PDF/HTML interactif) est dans demo.qmd, à exécuter sous RStudio. Le devoir individuel Q6 est dans exercice.qmd.\n← Retour à l’accueil"
+  },
+  {
+    "objectID": "J10_mini_projet_synthese/runtime.html#plan-de-la-journée",
+    "href": "J10_mini_projet_synthese/runtime.html#plan-de-la-journée",
+    "title": "J10 — Reproductibilité et clôture",
+    "section": "Plan de la journée",
+    "text": "Plan de la journée\n\n\nBloc\nFormat\n\n\n\nPourquoi la reproductibilité\nSlides\n\n\nConstruire un rapport Quarto\ndemo + Q1\n\n\nVersioning avec Git\ndemo + Q2\n\n\nAutomatisation : fonction et boucle\ndemo + Q3\n\n\nPrésentations courtes des participants\nRestitutions\n\n\nSession clôture : FAIR + métadonnées + feuille route INS\nSlides\n\n\nCérémonie de remise des certificats\nCérémonie"
+  },
+  {
+    "objectID": "J10_mini_projet_synthese/runtime.html#boîte-à-outils-runtimes-des-journées-précédentes",
+    "href": "J10_mini_projet_synthese/runtime.html#boîte-à-outils-runtimes-des-journées-précédentes",
+    "title": "J10 — Reproductibilité et clôture",
+    "section": "Boîte à outils — runtimes des journées précédentes",
+    "text": "Boîte à outils — runtimes des journées précédentes\nPour consulter rapidement les runtimes WebR utiles à votre présentation courte :\n\nJ1 — Intro R + pensée spatiale\nJ2 — sf + CRS\nJ3 — Données raster avec terra\n\nJ5 — Visualisation et cartographie (à activer une fois renommé)\n\n\nLes autres jours (J4, J6, J7, J8, J9) ont chacun leur runtime accessible depuis le menu Modules de la navbar."
+  },
+  {
+    "objectID": "J10_mini_projet_synthese/runtime.html#référence-démo-reproductibilité-complète",
+    "href": "J10_mini_projet_synthese/runtime.html#référence-démo-reproductibilité-complète",
+    "title": "J10 — Reproductibilité et clôture",
+    "section": "Référence : démo reproductibilité complète",
+    "text": "Référence : démo reproductibilité complète\nLe fichier demo.qmd de J10 montre comment construire un projet R-spatial reproductible en 6 étapes : création projet RStudio, init Git, pipeline 4 scripts, rapport Quarto, fonction d’automatisation, snapshot renv. À ouvrir dans RStudio comme modèle."
+  },
+  {
+    "objectID": "J10_mini_projet_synthese/runtime.html#format-des-présentations-courtes-58-min",
+    "href": "J10_mini_projet_synthese/runtime.html#format-des-présentations-courtes-58-min",
+    "title": "J10 — Reproductibilité et clôture",
+    "section": "Format des présentations courtes (5–8 min)",
+    "text": "Format des présentations courtes (5–8 min)\nChaque participant (ou binôme) présente :\n\n\nUne chose produite pendant les 9 jours : une carte, une analyse, un script.\n\nCe qu’il a appris en la faisant.\n\nComment il compte la réutiliser dans son institution.\n\nL’objectif n’est pas la perfection technique — c’est le partage d’une compétence acquise."
+  },
+  {
+    "objectID": "J10_mini_projet_synthese/runtime.html#certificats",
+    "href": "J10_mini_projet_synthese/runtime.html#certificats",
+    "title": "J10 — Reproductibilité et clôture",
+    "section": "Certificats",
+    "text": "Certificats\nÀ l’issue des présentations, Pr Kuépié remet les certificats IFORD nominatifs. Photo de groupe pour la communication institutionnelle.\n← Retour à l’accueil"
+  },
+  {
+    "objectID": "INDEX.html#calendrier-officiel",
+    "href": "INDEX.html#calendrier-officiel",
+    "title": "",
+    "section": "Calendrier officiel",
+    "text": "Calendrier officiel\n\n\n\nDate\nJour\nThème (programme officiel IFORD)\nLien\n\n\n\n\nLundi 27 juillet 2026\nJ1\nIntroduction à R et à la pensée spatiale\nJ01\n\n\nMardi 28 juillet 2026\nJ2\nDonnées vectorielles dans R (sf)\nJ02\n\n\nMercredi 29 juillet 2026\nJ3\nDonnées raster dans R (terra)\nJ03\n\n\nJeudi 30 juillet 2026\nJ4\nGestion des données pour l’analyse spatiale\nà venir\n\n\nVendredi 31 juillet 2026\nJ5\nVisualisation et cartographie\nà venir\n\n\nSamedi 1ᵉʳ août 2026\nJ6\nStatistiques spatiales et analyse\nà venir\n\n\nLundi 3 août 2026\nJ7\nCartographie population haute résolution + bottom-up\nà venir\n\n\nMardi 4 août 2026\nJ8\nTélédétection et observation de la Terre\nà venir\n\n\nMercredi 5 août 2026\nJ9\nSciences spatiales et sociales : projets inspirants\nà venir\n\n\nJeudi 6 août 2026\nJ10\nFlux de travail reproductibles + clôture\nJ10\n\n\n\n\nDimanche 2 août : jour de repos.\nVendredi 7 août : éventuelle journée tampon / activités optionnelles selon le calendrier IFORD."
+  },
+  {
+    "objectID": "INDEX.html#détail-des-thèmes-officiels-synthèse-du-programme-iford",
+    "href": "INDEX.html#détail-des-thèmes-officiels-synthèse-du-programme-iford",
+    "title": "",
+    "section": "Détail des thèmes officiels (synthèse du programme IFORD)",
+    "text": "Détail des thèmes officiels (synthèse du programme IFORD)\nJour 1 — Introduction à R et à la pensée spatiale. Configuration R & RStudio, bases de R pour la science des données, introduction aux concepts de données spatiales, systèmes de référence de coordonnées (CRS), aperçu des données spatiales en statistiques nationales.\nJour 2 — Données vectorielles dans R. Introduction au package sf, lecture et écriture de fichiers Shapefile et GeoJSON, inspection d’objets spatiaux, opérations spatiales de base (sous-réglages, filtrage, jointure), cartographie des frontières administratives du Cameroun, lien avec données CSV (districts de santé).\nJour 3 — Données raster dans R. Introduction aux packages terra et raster, lecture des rasters dérivés des satellites, opérations raster (découpe, masque, rééchantillonnage, agrégation), combinaison raster + vecteur, étude de cas : MNT SRTM et couverture des sols pour le Cameroun.\nJour 4 — Gestion des données pour l’analyse spatiale. Remise à niveau Tidyverse (dplyr, tidyr), lien entre données tabulaires/recensements et objets spatiaux, gestion des données manquantes et incohérentes, jointures spatiales et agrégation d’attributs, étude de cas : lien entre données d’enquêtes ménagères et unités administratives.\nJour 5 — Visualisation et cartographie. Cartes thématiques avec ggplot2 et tmap, choroplèthes et cartes à points, cartes interactives avec leaflet et tmap view, principes d’une bonne conception cartographique, production de cartes pour rapports officiels et publications.\nJour 6 — Statistiques spatiales et analyse. Analyse des motifs ponctuels, autocorrélation spatiale (Moran's I), estimation de la densité de noyau (KDE), cartographie des points chauds, pratique : analyse de la répartition spatiale des établissements de santé ou des écoles.\nJour 7 — Cartographie des populations à haute résolution. Ensembles de données démographiques en grille (WorldPop, GHSL, Meta HRSL), approche de modélisation ascendante (bottom-up) : concept et flux de travail, utilisation de données auxiliaires (bâtiments, utilisation des sols, lumières nocturnes), désagrégation des recensements, évaluation et validation de la précision, étude de cas : construction de la grille de population camerounaise.\nJour 8 — Télédétection et observation de la Terre. Bases de l’imagerie satellite pour les non-spécialistes, accès aux données gratuites (Copernicus, SRTM, MODIS), extraction des statistiques de zones bâties et de couverture des sols, utilisation de Google Earth Engine via rgee en R, pratique : suivi de la croissance urbaine à Yaoundé/Douala.\nJour 9 — Applications en sciences spatiales et sociales. Combinaison des données spatiales et socioéconomiques pour les politiques, cartographie de la pauvreté et estimation de petites surfaces (SAE), analyse de l’accessibilité en santé et éducation, données de conflits et de déplacements (ACLED, HCR), présentations de projets inspirants (Malaria Atlas, exposition aux inondations, sécurité alimentaire, mobilité CDR).\nJour 10 — Flux de travail reproductibles et renforcement des capacités. Rapports reproductibles avec R Markdown / Quarto, contrôle de version avec Git, automatisation des tâches spatiales répétitives, présentations de projets de groupe, session de clôture (principes FAIR, normes de métadonnées, feuille de route pour une infrastructure de données spatiales à l’INS/BUCREP, ressources pour l’apprentissage continu)."
+  },
+  {
+    "objectID": "INDEX.html#référence-officielle",
+    "href": "INDEX.html#référence-officielle",
+    "title": "",
+    "section": "Référence officielle",
+    "text": "Référence officielle\nLe programme détaillé du jour est dans Atelier sur l'analyse des données Géospatiales avec R.docx (référence officielle IFORD). Ce dépôt en est l’implémentation technique reproductible."
+  },
+  {
+    "objectID": "J03_donnees_raster_terra/runtime.html",
+    "href": "J03_donnees_raster_terra/runtime.html",
+    "title": "J3 — Données raster avec terra",
+    "section": "",
+    "text": "Mode d’emploi. Cliquez Run code dans chaque cellule. WebR charge terra au premier appel (∼20 s la première fois). Tout tourne dans votre navigateur.\nNote : pour ce runtime, on utilise un raster simulé du Cameroun. Le vrai SRTM 30 m du Cameroun pèse ∼80 Mo et est manipulé côté desktop dans demo.qmd."
+  },
+  {
+    "objectID": "J03_donnees_raster_terra/runtime.html#charger-terra-et-créer-un-raster-simulé",
+    "href": "J03_donnees_raster_terra/runtime.html#charger-terra-et-créer-un-raster-simulé",
+    "title": "J3 — Données raster avec terra",
+    "section": "1. Charger terra et créer un raster simulé",
+    "text": "1. Charger terra et créer un raster simulé"
+  },
+  {
+    "objectID": "J03_donnees_raster_terra/runtime.html#inspecter-le-spatraster",
+    "href": "J03_donnees_raster_terra/runtime.html#inspecter-le-spatraster",
+    "title": "J3 — Données raster avec terra",
+    "section": "2. Inspecter le SpatRaster",
+    "text": "2. Inspecter le SpatRaster"
+  },
+  {
+    "objectID": "J03_donnees_raster_terra/runtime.html#crop-mask-sur-la-silhouette-du-cameroun",
+    "href": "J03_donnees_raster_terra/runtime.html#crop-mask-sur-la-silhouette-du-cameroun",
+    "title": "J3 — Données raster avec terra",
+    "section": "3. Crop + mask sur la silhouette du Cameroun",
+    "text": "3. Crop + mask sur la silhouette du Cameroun"
+  },
+  {
+    "objectID": "J03_donnees_raster_terra/runtime.html#algèbre-raster-zones-de-basse-altitude",
+    "href": "J03_donnees_raster_terra/runtime.html#algèbre-raster-zones-de-basse-altitude",
+    "title": "J3 — Données raster avec terra",
+    "section": "4. Algèbre raster : zones de basse altitude",
+    "text": "4. Algèbre raster : zones de basse altitude\nsrtm &lt; 500 produit un raster booléen (1 = vrai, 0 = faux, NA = hors masque)."
+  },
+  {
+    "objectID": "J03_donnees_raster_terra/runtime.html#classification-multi-niveaux",
+    "href": "J03_donnees_raster_terra/runtime.html#classification-multi-niveaux",
+    "title": "J3 — Données raster avec terra",
+    "section": "5. Classification multi-niveaux",
+    "text": "5. Classification multi-niveaux\nifel() permet une cascade de conditions."
+  },
+  {
+    "objectID": "J03_donnees_raster_terra/runtime.html#statistique-globale",
+    "href": "J03_donnees_raster_terra/runtime.html#statistique-globale",
+    "title": "J3 — Données raster avec terra",
+    "section": "6. Statistique globale",
+    "text": "6. Statistique globale"
+  },
+  {
+    "objectID": "J03_donnees_raster_terra/runtime.html#extraction-zonale-par-région",
+    "href": "J03_donnees_raster_terra/runtime.html#extraction-zonale-par-région",
+    "title": "J3 — Données raster avec terra",
+    "section": "7. Extraction zonale par région",
+    "text": "7. Extraction zonale par région\nCombiner raster + vecteur pour calculer l’élévation moyenne par région du Cameroun."
+  },
+  {
+    "objectID": "J03_donnees_raster_terra/runtime.html#carte-choroplèthe-de-lélévation-moyenne-par-région",
+    "href": "J03_donnees_raster_terra/runtime.html#carte-choroplèthe-de-lélévation-moyenne-par-région",
+    "title": "J3 — Données raster avec terra",
+    "section": "8. Carte choroplèthe de l’élévation moyenne par région",
+    "text": "8. Carte choroplèthe de l’élévation moyenne par région"
+  },
+  {
+    "objectID": "J03_donnees_raster_terra/runtime.html#pour-aller-plus-loin",
+    "href": "J03_donnees_raster_terra/runtime.html#pour-aller-plus-loin",
+    "title": "J3 — Données raster avec terra",
+    "section": "9. Pour aller plus loin",
+    "text": "9. Pour aller plus loin\nLa version complète du jour avec le vrai SRTM 30 m du Cameroun (∼80 Mo), exactextractr pour la précision aux bords, et le cas RGPH 4 « arrondissements en basse altitude » est dans demo.qmd. Le devoir individuel Q6 est dans exercice.qmd.\n← Retour à l’accueil"
   }
 ]

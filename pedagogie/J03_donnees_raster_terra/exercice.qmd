@@ -1,0 +1,115 @@
+---
+title: "J3 — Exercices : raster avec terra"
+subtitle: "Atelier IFORD × GDSG · 29 juillet 2026"
+lang: fr
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    toc-location: left
+    theme: cosmo
+  pdf:
+    toc: true
+---
+
+# Mode d'emploi
+
+Q1 à Q5 en séance (5–10 min chacun). Q6 le soir (∼30 min). Solutions dans `corrige.qmd`.
+
+# Q1 — Inspection d'un raster {#sec-q1}
+
+> Référence démo : section « Lire et inspecter un raster ».
+
+À partir du `srtm` simulé (ou du vrai si tu l'as téléchargé) :
+
+1. **a.** Quelle est sa résolution en degrés ? En mètres approximatifs (sachant que 1° de latitude ≈ 111 km) ?
+2. **b.** Combien de cellules le raster contient-il ? Combien restera-t-il après `crop` sur le Cameroun ?
+3. **c.** Le raster a-t-il une seule bande ou plusieurs ? Pourquoi un SRTM a-t-il une seule bande tandis qu'une scène Sentinel-2 en a 13 ?
+
+# Q2 — Crop + Mask {#sec-q2}
+
+> Référence démo : section « Crop : réduire à une emprise rectangulaire ».
+
+1. **a.** Crop le SRTM sur la région du **Centre** uniquement. Combien de cellules reste-t-il ?
+2. **b.** Mask le résultat avec les polygones du Centre. Quel pourcentage de cellules est devenu `NA` ?
+3. **c.** Pourquoi enchaîne-t-on toujours `crop` puis `mask` plutôt que `mask` seul ?
+
+# Q3 — Algèbre raster sur deux conditions {#sec-q3}
+
+> Référence démo : section « Algèbre raster ».
+
+Crée un masque combiné « zones intéressantes pour le RGPH 4 » : altitude **entre 200 et 800 m** (ni trop bas, ni trop haut).
+
+1. **a.** Construis le raster booléen `interesting <- (srtm > 200) & (srtm < 800)`.
+2. **b.** Calcule la **superficie totale** des zones intéressantes en km² (somme des cellules TRUE × surface d'une cellule).
+3. **c.** Quel pourcentage de la superficie du Cameroun cela représente-t-il ?
+
+# Q4 — Extraction zonale par département {#sec-q4}
+
+> Référence démo : section « Extraction zonale ».
+
+À partir de `adm2` (départements) :
+
+1. **a.** Calcule l'**élévation moyenne** par département avec `exact_extract`.
+2. **b.** Quel département a l'élévation moyenne la plus élevée ? Le plus basse ?
+3. **c.** Compare avec le top 3 des régions ADM1 (calculé en démo). Le département gagnant ADM2 appartient-il à la région gagnante ADM1 ?
+
+# Q5 — Aggregate et resample {#sec-q5}
+
+> Référence démo : sections « aggregate » et « resample ».
+
+1. **a.** Aggrege le SRTM Cameroun avec un facteur 10 (méthode `mean`). Quelle est la nouvelle résolution ? Combien de cellules ?
+2. **b.** Crée un template raster à 1 km de résolution. Resample le SRTM dessus avec `method = "bilinear"`.
+3. **c.** Pour quelle situation utiliser `near` (nearest neighbor) plutôt que `bilinear` ?
+
+# Q6 — Devoir : carte des 20 arrondissements les plus bas {#sec-q6}
+
+> ⏱ **~30 minutes**, à faire le soir.
+
+## Objectif
+
+Identifier les 20 arrondissements (ADM3) du Cameroun les plus bas en altitude et produire **une carte de production complète** qui les met en évidence, avec leur population estimée.
+
+## Étape 1 — Données
+
+1. Charger SRTM Cameroun (vrai si dispo, simulé sinon).
+2. Charger GADM ADM3 (365 arrondissements).
+3. Optionnel : charger WorldPop 2020 si tu l'as.
+
+## Étape 2 — Extraction zonale
+
+4. Calculer l'**élévation moyenne** par arrondissement via `exact_extract`.
+5. Calculer la **superficie** de chaque arrondissement (cf. J2).
+6. Si WorldPop dispo : calculer la **population estimée** par arrondissement via `exact_extract(worldpop, adm3, "sum")`.
+
+## Étape 3 — Sélection
+
+7. Trier les arrondissements par élévation croissante.
+8. Garder les **20 plus bas**.
+
+## Étape 4 — Carte de production
+
+9. Construire une carte montrant **tous** les arrondissements du Cameroun en gris clair.
+10. **Surcouche** des 20 arrondissements les plus bas en rouge/orange.
+11. **Étiquettes** des 20 arrondissements concernés.
+12. Tous les éléments d'habillage obligatoires (cf. J5/cartographie : titre, légende, flèche, échelle, crédits).
+
+## Étape 5 — Export
+
+13. PNG 300 dpi + PDF vectoriel dans `outputs/`.
+
+## Critères de réussite
+
+- ☐ Les 20 arrondissements identifiés correspondent à des zones cohérentes (Logone-Chari, Mayo-Sava, plaine littorale, plaine du Mbam, etc.).
+- ☐ Les altitudes moyennes calculées sont plausibles (∼ 200–400 m pour la plaine du nord, ∼ 0–100 m pour le Littoral).
+- ☐ La carte a tous les éléments d'habillage.
+- ☐ Les exports PNG et PDF sont produits sans erreur.
+
+## Pour aller plus loin (bonus)
+
+- Croiser avec WorldPop : quel est le **nombre total d'habitants** dans ces 20 arrondissements ? Quel pourcentage de la population du Cameroun cela représente-t-il ?
+- Discuter en commentaire : est-ce que « élévation < seuil » est un bon proxy pour le risque d'inondation ? Quelles autres variables il faudrait croiser (pluviométrie, hydrographie, drainage) ?
+
+# Si tu bloques
+
+Le corrigé est dans `corrige.qmd`. Bonne pratique !

@@ -1,0 +1,338 @@
+---
+title: "J3 — Données raster dans R avec `terra`"
+subtitle: "Atelier IFORD × GDSG · Yaoundé, 29 juillet 2026"
+author: "Ramesesse Dzita (GDSG)"
+date: "2026-07-29"
+lang: fr
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    number-sections: true
+    code-fold: false
+    code-tools: true
+    theme: cosmo
+    df-print: paged
+  pdf:
+    toc: true
+    number-sections: true
+execute:
+  echo: true
+  warning: false
+  message: false
+bibliography: ../_commons/helpers/citations.bib
+---
+
+# Objectifs {#sec-objectifs}
+
+Aujourd'hui on bascule des données vectorielles (J1, J2) vers les **données raster** — la grille régulière de pixels. On apprend `terra` (le moteur moderne, successeur de `raster`), on pratique les sept opérations fondamentales (`crop`, `mask`, `resample`, `aggregate`, `project`, `extract`, `global`), on découvre l'**algèbre raster** (calculs cellule par cellule), et on combine raster + vecteur pour produire des statistiques zonales par région ou arrondissement.
+
+Cas concret du jour : le **MNT SRTM 30 m du Cameroun**. À partir d'un fichier global, on découpe sur le Cameroun, on calcule l'élévation moyenne par région, et on identifie les zones de basse altitude (proxy pour le risque d'inondation).
+
+# Pré-requis {#sec-prereq}
+
+On charge les packages et les helpers communs. `terra` doit être installé en version ≥ 1.7 (sinon `install.packages("terra", dependencies = TRUE)`).
+
+```{r}
+#| label: setup
+library(here)
+library(sf)
+library(terra)
+library(dplyr)
+library(tibble)
+library(ggplot2)
+library(exactextractr)
+
+source(here("pedagogie", "_commons", "helpers", "fetch_data.R"))
+source(here("pedagogie", "_commons", "helpers", "theme_iford.R"))
+```
+
+# Première session — Lire et inspecter un raster {#sec-lire}
+
+> ⏱ **~45 minutes**.
+
+## Lire un GeoTIFF
+
+`terra::rast()` ouvre un raster. Important : elle **ne charge pas** les pixels en RAM, elle crée juste un pointeur vers le fichier sur disque. Le résultat (`SpatRaster`) connaît résolution, étendue, CRS et nombre de bandes immédiatement.
+
+```{r}
+#| label: load-srtm
+#| eval: false
+srtm_path <- here("datasets", "cameroun", "elevation", "CMR_SRTM_30m.tif")
+srtm <- rast(srtm_path)
+srtm
+```
+
+Pour rendre ce demo exécutable sans dépendre du fichier réel, on simule un raster d'élévation cohérent avec le Cameroun.
+
+```{r}
+#| label: simul-srtm
+set.seed(2026)
+srtm <- rast(
+  ncol = 200, nrow = 240,
+  xmin = 8.5, xmax = 16.5,
+  ymin = 1.5, ymax = 13.5,
+  crs = "EPSG:4326"
+)
+# Gradient nord-sud : plus haut au nord (plateau Adamaoua), plus bas au sud
+y_coords <- terra::yFromRow(srtm, 1:nrow(srtm))
+y_norm <- (y_coords - min(y_coords)) / (max(y_coords) - min(y_coords))
+elev_base <- matrix(rep(200 + 1200 * y_norm, each = ncol(srtm)),
+                    nrow = nrow(srtm), byrow = TRUE)
+values(srtm) <- as.vector(elev_base + rnorm(ncell(srtm), 0, 80))
+names(srtm) <- "elevation_m"
+srtm
+```
+
+## Anatomie d'un SpatRaster
+
+Cinq propriétés à interroger systématiquement après lecture :
+
+```{r}
+#| label: anatomy
+res(srtm)        # taille d'une cellule (unite du CRS)
+ext(srtm)        # emprise
+crs(srtm, describe = TRUE)$name  # nom du CRS
+nlyr(srtm)       # nombre de bandes (couches)
+ncell(srtm)      # nombre total de cellules
+```
+
+## Visualisation rapide avec `plot()` puis `ggplot2`
+
+`plot()` de `terra` est rapide pour vérifier visuellement. Pour une carte publishable, on convertit en data.frame pour `ggplot2 + geom_raster`.
+
+```{r}
+#| label: plot-rapide
+plot(srtm, main = "MNT simulé du Cameroun (élévation en m)")
+```
+
+```{r}
+#| label: ggplot-raster
+srtm_df <- as.data.frame(srtm, xy = TRUE)
+ggplot(srtm_df) +
+  geom_raster(aes(x = x, y = y, fill = elevation_m)) +
+  scale_fill_viridis_c(option = "G", name = "Élévation (m)") +
+  coord_fixed() +
+  labs(title = "MNT simulé du Cameroun",
+       subtitle = "Élévation moyenne 200 m (sud) → 1400 m (nord)") +
+  theme_minimal()
+```
+
+# Deuxième session — Opérations raster {#sec-operations}
+
+> ⏱ **~1 heure**.
+
+## Charger les polygones ADM0 et ADM1 pour les opérations
+
+```{r}
+#| label: load-vec
+adm0 <- read_sf(fetch_gadm_cameroon(0))
+adm1 <- read_sf(fetch_gadm_cameroon(1))
+adm3 <- read_sf(fetch_gadm_cameroon(3))
+```
+
+## `crop` : réduire à une emprise rectangulaire
+
+`crop(raster, vecteur)` retourne un raster restreint à l'**emprise** (bbox) du vecteur — la grille reste rectangulaire mais le nombre de cellules diminue.
+
+```{r}
+#| label: crop
+srtm_cmr <- crop(srtm, adm0)
+ncell(srtm)
+ncell(srtm_cmr)
+```
+
+## `mask` : mettre `NA` hors des polygones
+
+`mask(raster, vecteur)` conserve l'étendue du raster mais met **`NA`** dans tout pixel qui n'est pas couvert par les polygones. On l'enchaîne après `crop` pour avoir une zone propre.
+
+```{r}
+#| label: mask
+srtm_cmr_masked <- mask(srtm_cmr, vect(adm0))
+plot(srtm_cmr_masked, main = "Cropé + masqué sur la silhouette du Cameroun")
+```
+
+## `aggregate` : réduire la résolution
+
+`aggregate(raster, fact = N)` regroupe `N × N` cellules en une seule, en appliquant une fonction (moyenne par défaut). C'est utile pour des analyses régionales rapides ou pour publier des cartes moins lourdes.
+
+```{r}
+#| label: aggregate
+srtm_agg <- aggregate(srtm_cmr_masked, fact = 5, fun = "mean", na.rm = TRUE)
+res(srtm_cmr_masked)
+res(srtm_agg)
+ncell(srtm_cmr_masked)
+ncell(srtm_agg)
+```
+
+L'aggregation par facteur 5 réduit le nombre de cellules par ∼25. Pratique pour des cartes nationales rapides.
+
+## `resample` : aligner sur une autre grille
+
+Quand on veut combiner deux rasters de **résolutions différentes** (par ex. SRTM 30 m avec WorldPop 100 m), il faut les aligner. `resample(x, y)` redimensionne `x` pour qu'il partage la même grille que `y`.
+
+```{r}
+#| label: resample
+# Simuler une grille cible plus grossière pour démontrer
+template_100m <- rast(srtm_cmr_masked)
+res(template_100m) <- c(0.001, 0.001)  # ~100 m approx
+srtm_aligned <- resample(srtm_cmr_masked, template_100m, method = "bilinear")
+res(srtm_aligned)
+```
+
+Méthode `bilinear` pour les variables continues (élévation, NDVI), `near` (nearest neighbor) pour les variables catégorielles (occupation du sol).
+
+# Troisième session — Algèbre raster {#sec-algebre}
+
+> ⏱ **~45 minutes**.
+
+## Opérations arithmétiques
+
+L'algèbre raster utilise la **syntaxe R standard** pour des opérations cellule à cellule.
+
+```{r}
+#| label: algebra-base
+# Élévation en kilomètres
+srtm_km <- srtm_cmr_masked / 1000
+
+# Carte logique : zones < 500 m
+basse_alt <- srtm_cmr_masked < 500
+
+plot(basse_alt, main = "Zones d'élévation < 500 m (TRUE = basse altitude)")
+```
+
+## Combiner avec une condition
+
+`ifel()` est l'équivalent raster de `dplyr::if_else()`.
+
+```{r}
+#| label: algebra-ifel
+zones_classes <- ifel(srtm_cmr_masked < 200,  1,
+                      ifel(srtm_cmr_masked < 500,  2,
+                           ifel(srtm_cmr_masked < 1000, 3, 4)))
+plot(zones_classes, main = "Classification altitude : 1=<200m, 2=200-500, 3=500-1000, 4=>1000")
+```
+
+## Statistique globale
+
+```{r}
+#| label: global
+global(srtm_cmr_masked, c("mean", "min", "max", "sd"), na.rm = TRUE) |> round()
+```
+
+# Quatrième session — Extraction zonale {#sec-extraction}
+
+> ⏱ **~1 heure**. Cœur de la journée : croiser raster (continu) et vecteur (zonage administratif).
+
+## Avec `terra::extract`
+
+```{r}
+#| label: terra-extract
+elev_par_region <- terra::extract(srtm_cmr_masked, vect(adm1), fun = "mean", na.rm = TRUE)
+elev_par_region$NAME_1 <- adm1$NAME_1
+elev_par_region |>
+  select(NAME_1, elevation_m) |>
+  arrange(desc(elevation_m)) |>
+  mutate(elevation_m = round(elevation_m))
+```
+
+## Avec `exactextractr::exact_extract` (plus rapide et plus précis)
+
+`exact_extract()` exploite la fraction de chaque pixel qui tombe dans le polygone — plus précis sur les bords des régions, et 5–10× plus rapide sur les gros rasters.
+
+```{r}
+#| label: exact-extract
+elev_exact <- exact_extract(srtm_cmr_masked, adm1, c("mean", "min", "max"))
+adm1_avec_elev <- adm1 |>
+  mutate(
+    elev_moy = round(elev_exact$mean),
+    elev_min = round(elev_exact$min),
+    elev_max = round(elev_exact$max)
+  )
+
+adm1_avec_elev |>
+  st_drop_geometry() |>
+  select(NAME_1, elev_moy, elev_min, elev_max) |>
+  arrange(desc(elev_moy))
+```
+
+## Carte choroplèthe de l'élévation moyenne
+
+```{r}
+#| label: carte-elev
+ggplot(adm1_avec_elev) +
+  geom_sf(aes(fill = elev_moy), color = "white", linewidth = 0.3) +
+  scale_fill_viridis_c(option = "G", name = "Élévation\nmoyenne (m)") +
+  geom_sf_label(aes(label = NAME_1), size = 2.2,
+                color = "white", fontface = "bold") +
+  labs(title = "Élévation moyenne par région — Cameroun",
+       subtitle = "MNT SRTM 30 m agrégé par exact_extract",
+       caption = "Source : SRTM 30 m · GADM v4.1 · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+# Cinquième session — Cas RGPH 4 : zones inondables {#sec-rgph}
+
+> ⏱ **~30 minutes**.
+
+## Combinaison raster ↔ raster ↔ vecteur
+
+Identifier les arrondissements à fort risque d'inondation par croisement altitude × population (simulée ici).
+
+```{r}
+#| label: risque-inondation
+# Masque des zones de basse altitude (proxy risque inondation)
+basse_alt <- srtm_cmr_masked < 500
+
+# Calculer la part de chaque arrondissement en basse altitude
+adm3$pct_basse_alt <- exact_extract(basse_alt, adm3, "mean") * 100
+
+# Top 10 arrondissements les plus exposés
+adm3 |>
+  st_drop_geometry() |>
+  select(NAME_1, NAME_3, pct_basse_alt) |>
+  arrange(desc(pct_basse_alt)) |>
+  head(10) |>
+  mutate(pct_basse_alt = round(pct_basse_alt, 1))
+```
+
+**Lecture critique** : ce proxy « altitude < 500 m » est très grossier. Un vrai modèle de risque inondation combine hydrographie, pluviométrie, drainage. On y reviendra en J9 (sciences spatiales et sociales).
+
+# Synthèse et devoir {#sec-wrap-up}
+
+## Ce qu'on a vu
+
+- Un raster = grille régulière de cellules avec résolution, étendue, CRS, bandes.
+- `terra::rast()` lit n'importe quel format GDAL en mode pointeur.
+- Sept opérations fondamentales : `crop`, `mask`, `resample`, `aggregate`, `project`, `extract`, `global`.
+- Algèbre raster avec syntaxe R standard (`+`, `*`, `<`, `ifel`).
+- `exact_extract` est l'outil de référence pour la statistique zonale par polygones administratifs.
+
+## Pour demain (J4) — Gestion des données
+
+Tidyverse appliqué à l'analyse spatiale :
+
+- Lien tables d'enquête (CSV, Stata) ↔ objets spatiaux
+- Jointures attributaires et spatiales
+- Étude de cas : ECAM 4, MICS, EDS-MICS Cameroun 2018
+
+## Devoir individuel (Q6 — 30 min)
+
+Énoncé dans `exercice.qmd` : calculer l'**élévation moyenne par arrondissement** (ADM3) du Cameroun à partir du SRTM 30 m, et produire une carte des 20 arrondissements les plus bas (avec leur population estimée WorldPop). Corrigé dans `corrige.qmd`.
+
+# Sources et licences
+
+| Donnée | Source | Licence |
+|---|---|---|
+| SRTM 30 m | NASA / USGS | Libre |
+| GADM v4.1 ADM0–3 | gadm.org | Académique |
+| WorldPop 100 m 2020 | Univ. Southampton | CC-BY 4.0 |
+
+Code distribué sous **CC-BY 4.0**.
+
+## Références
+
+@hijmans2024terra ; @tatem2017worldpop.

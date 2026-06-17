@@ -1,0 +1,52 @@
+---
+title: "J10 — Reproductibilité et clôture"
+subtitle: "Pas de cellules WebR — travail sur vos projets locaux"
+engine: knitr
+---
+
+::: {.iford-callout}
+**J10 est différent.** Pas de runtime WebR ici : la journée porte sur la **mise en place de votre propre projet reproductible** dans votre RStudio local, avec votre compte GitHub.
+:::
+
+## Plan de la journée
+
+| Bloc | Format |
+|---|---|
+| Pourquoi la reproductibilité | Slides |
+| Construire un rapport Quarto | demo + Q1 |
+| Versioning avec Git | demo + Q2 |
+| Automatisation : fonction et boucle | demo + Q3 |
+| Présentations courtes des participants | Restitutions |
+| Session clôture : FAIR + métadonnées + feuille route INS | Slides |
+| Cérémonie de remise des certificats | Cérémonie |
+
+## Boîte à outils — runtimes des journées précédentes
+
+Pour consulter rapidement les runtimes WebR utiles à votre présentation courte :
+
+- [J1 — Intro R + pensée spatiale](../J01_intro_R_pensee_spatiale/runtime.qmd)
+- [J2 — sf + CRS](../J02_sf_CRS_vecteurs/runtime.qmd)
+- [J3 — Données raster avec terra](../J03_donnees_raster_terra/runtime.qmd)
+- [J5 — Visualisation et cartographie](../J05_visualisation_cartographie/runtime.qmd) *(à activer une fois renommé)*
+
+Les autres jours (J4, J6, J7, J8, J9) ont chacun leur runtime accessible depuis le menu **Modules** de la navbar.
+
+## Référence : démo reproductibilité complète
+
+Le fichier `demo.qmd` de J10 montre comment construire un projet R-spatial reproductible en **6 étapes** : création projet RStudio, init Git, pipeline 4 scripts, rapport Quarto, fonction d'automatisation, snapshot renv. À ouvrir dans RStudio comme modèle.
+
+## Format des présentations courtes (5–8 min)
+
+Chaque participant (ou binôme) présente :
+
+1. **Une chose produite pendant les 9 jours** : une carte, une analyse, un script.
+2. **Ce qu'il a appris** en la faisant.
+3. **Comment il compte la réutiliser** dans son institution.
+
+L'objectif n'est pas la perfection technique — c'est le partage d'une compétence acquise.
+
+## Certificats
+
+À l'issue des présentations, **Pr Kuépié** remet les certificats IFORD nominatifs. Photo de groupe pour la communication institutionnelle.
+
+[← Retour à l'accueil](../INDEX.md)

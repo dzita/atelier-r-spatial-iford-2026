@@ -1,0 +1,365 @@
+---
+title: "J10 — Flux de travail reproductibles et renforcement des capacités"
+subtitle: "Atelier IFORD × GDSG · Yaoundé · 6 août 2026"
+author: "Ramesesse Dzita · Geospatial Data Science Group"
+date: "2026-08-06"
+format:
+  revealjs:
+    theme:
+      - default
+      - ../_commons/styles/slides_revealjs.scss
+    slide-number: c/t
+    transition: fade
+    progress: true
+    chalkboard: true
+    footer: "IFORD × GDSG 2026 — J10 · Reproductibilité + clôture"
+    incremental: false
+    code-fold: false
+    code-line-numbers: false
+execute:
+  echo: false
+  warning: false
+  message: false
+bibliography: ../_commons/helpers/citations.bib
+---
+
+# Partie 0 — Bienvenue au dernier jour {data-state="section-break"}
+
+## Où en sommes-nous ?
+
+Vous arrivez **au bout** d'un atelier de 10 jours. Récap :
+
+| Jour | Thème |
+|---|---|
+| J1 | Intro R + pensée spatiale |
+| J2 | Données vectorielles `sf` |
+| J3 | Données raster avec `terra` |
+| J4 | Gestion des données pour l'analyse spatiale |
+| J5 | Visualisation et cartographie |
+| J6 | Statistiques spatiales (Moran, LISA, KDE) |
+| J7 | Cartographie population haute résolution + bottom-up |
+| J8 | Télédétection et observation de la Terre |
+| J9 | Sciences spatiales et sociales : projets inspirants |
+| **J10** | **Reproductibilité + restitutions + clôture** |
+
+## Pourquoi un dernier jour sur la reproductibilité ?
+
+Trois raisons :
+
+1. **Le code produit n'a de valeur que si on peut l'exécuter à nouveau** — chez vous, six mois plus tard, sur un autre ordinateur.
+2. **Le RGPH 4 exige des chaînes de traitement auditables** — chaque chiffre publié doit être traçable jusqu'à sa source.
+3. **La science ouverte impose** que les analyses soient partageables, vérifiables, réutilisables (principes FAIR).
+
+::: {.takeaway}
+Une analyse non reproductible est, en pratique, perdue dès qu'on ferme RStudio.
+:::
+
+## Plan détaillé J10
+
+| Bloc | Durée |
+|---|---|
+| Wrap-up J1–J9 + intro J10 | 30 min |
+| **Théorie 1** — Pourquoi la reproductibilité ? | 30 min |
+| **Démo 1** — Construire un rapport Quarto | 1 h |
+| **Théorie 2** — Versioning avec Git | 30 min |
+| **Démo 2** — Init Git + commit + push | 45 min |
+| **Théorie 3** — Automatisation | 30 min |
+| **Démo 3** — Fonction + boucle batch | 30 min |
+| **Présentations courtes** | 1 h |
+| **Session clôture** : FAIR + métadonnées + feuille route INS | 30 min |
+| Q&A + remise certificats | 30 min |
+
+# Partie 1 — Pourquoi la reproductibilité ? {data-state="section-break"}
+
+## Le test des six mois
+
+Imaginez que **six mois après l'atelier**, votre directeur vous demande : « peux-tu refaire l'analyse de septembre, avec les données d'octobre ? ».
+
+Si votre travail est reproductible :
+
+- Vous ouvrez votre repo, mettez à jour le fichier de données, relancez le pipeline, livrez en 30 minutes.
+
+S'il ne l'est pas :
+
+- Vous passez deux jours à essayer de retrouver « comment vous aviez fait », sans y arriver complètement.
+
+## Les cinq piliers d'un workflow reproductible
+
+| Pilier | Outil R / standard |
+|---|---|
+| **1. Projet structuré** | Projet RStudio avec `here::here()` pour les chemins |
+| **2. Code documenté** | Quarto / R Markdown avec narration scientifique |
+| **3. Versioning du code** | Git + plateforme (GitHub, GitLab) |
+| **4. Gestion des dépendances** | `renv` pour figer les versions de packages |
+| **5. Métadonnées des données** | ISO 19115 ou Dublin Core, fichiers `README` |
+
+## Trois niveaux de reproductibilité
+
+| Niveau | Définition | Effort |
+|---|---|---|
+| **Reproductibilité méthodologique** | « Quelqu'un d'autre, avec les mêmes données, obtient les mêmes résultats » | Moyen |
+| **Reproductibilité computationnelle** | « N'importe qui, sur n'importe quelle machine, retrouve les chiffres exacts » | Élevé — exige `renv` ou Docker |
+| **Reproductibilité scientifique** | « Avec d'autres données comparables, on retrouve les mêmes conclusions » | Le plus élevé — exige plusieurs études |
+
+Pour l'atelier : on vise le niveau **méthodologique** (un projet RStudio versionné Git, un Quarto exécutable).
+
+# Partie 2 — Quarto pour les rapports reproductibles {data-state="section-break"}
+
+## Anatomie d'un rapport Quarto
+
+Un fichier `.qmd` est du texte Markdown + des blocs de code R (ou Python, Julia) + une YAML d'en-tête.
+
+```{verbatim}
+---
+title: "Mon rapport"
+author: "Mon nom"
+format: pdf
+---
+
+# Introduction
+
+Le Cameroun compte 10 régions :
+
+{r}
+library(sf)
+adm1 <- read_sf(...)
+nrow(adm1)
+```
+
+À la commande `quarto render rapport.qmd`, Quarto exécute le code R, capture les sorties, et produit un PDF ou HTML.
+
+## L'avantage : code + narration + résultats dans un seul fichier
+
+::: {.columns}
+::: {.column width="50%"}
+**Sans Quarto**
+
+- Le code est dans `analyse.R`.
+- Les graphiques sont sauvegardés en PNG.
+- Le rapport est rédigé dans Word.
+- À chaque modification de données, refaire tout manuellement.
+:::
+::: {.column width="50%"}
+**Avec Quarto**
+
+- Code + texte + graphiques **dans un seul `.qmd`**.
+- À chaque modification de données : `quarto render` re-génère tout en automatique.
+- Sortie PDF, HTML, Word, et même slides revealjs depuis la **même source**.
+:::
+:::
+
+## Le standard scientifique en 2026
+
+Quarto est **adopté massivement** depuis 2023 :
+
+- *Nature*, *Science* recommandent la soumission de matériel supplémentaire en R Markdown / Quarto.
+- *JAMA Network* exige des données + code reproductibles.
+- WorldPop, le DHS Program, l'INED publient leur méthode en Quarto.
+- Le BUCREP devrait s'aligner sur cette pratique pour le RGPH 4.
+
+# Partie 3 — Versioning avec Git {data-state="section-break"}
+
+## Le problème que Git résout
+
+Sans Git, votre arborescence ressemble vite à :
+
+```
+analyse_v1.R
+analyse_v2.R
+analyse_v3_FINAL.R
+analyse_v3_FINAL_corrigé.R
+analyse_v3_FINAL_corrigé_VRAIMENT_FINAL.R
+```
+
+Avec Git, vous avez **un seul fichier** `analyse.R`, et l'historique de **toutes ses versions** est dans un sous-dossier `.git`. Vous pouvez revenir à n'importe quelle version précédente en une commande.
+
+## Trois opérations Git de base
+
+| Commande | Action |
+|---|---|
+| `git status` | Voir ce qui a changé depuis le dernier commit |
+| `git add fichier.R` | Préparer un fichier pour le commit |
+| `git commit -m "Message"` | Enregistrer un instantané |
+| `git push` | Envoyer les commits vers GitHub |
+| `git pull` | Récupérer les commits depuis GitHub |
+
+::: {.takeaway}
+**Un commit par modification cohérente.** Pas par jour, pas par fichier. Une logique = un commit.
+:::
+
+## Bonne pratique : messages de commit
+
+| ❌ Mauvais | ✅ Bon |
+|---|---|
+| « MAJ » | « Ajouter Q4 corrigé — distance Bamenda-Buea » |
+| « update » | « Corriger CRS dans la fonction `dissolve_adm()` |
+| « Pour Pierre » | « Refonte du chapitre 3 selon retours de M. Kuepié » |
+
+Les messages sont lus dans 6 mois — ils doivent être interprétables hors contexte.
+
+## GitHub comme infrastructure publique
+
+GitHub n'est pas qu'un stockage de code. C'est une **infrastructure de collaboration** :
+
+- **Issues** : suivre les bugs et idées (chaque problème a son fil de discussion).
+- **Pull requests** : proposer des modifications, les faire relire.
+- **Actions** : automatiser des tâches (cf. notre déploiement du runtime WebR).
+- **Pages** : héberger un site web statique gratuit (notre runtime en ligne).
+
+# Partie 4 — Automatisation {data-state="section-break"}
+
+## La règle des trois
+
+Toute tâche **répétée trois fois** mérite d'être automatisée.
+
+Exemples typiques en analyse spatiale :
+
+- Calculer le même indicateur pour 10 régions → fonction + boucle.
+- Produire une carte mensuelle → fonction qui prend le mois en paramètre.
+- Vérifier 365 fichiers de données → fonction qui scanne un dossier.
+
+## Trois outils d'automatisation en R
+
+| Outil | Quand l'utiliser |
+|---|---|
+| **`for` boucle** | Pour 2–3 itérations simples |
+| **`purrr::map_*`** | Boucle fonctionnelle, sortie typée, code lisible |
+| **Script + `Rscript`** | Automatisation système (cron) |
+
+## Exemple : calculer la densité pour chaque région
+
+```r
+library(purrr)
+library(sf)
+
+# Une fonction qui prend un nom de région et retourne la densité
+densite_region <- function(nom) {
+  region <- adm1 |> filter(NAME_1 == nom)
+  pop <- pop_par_region[pop_par_region$NAME_1 == nom, "pop_2020"]
+  superficie <- as.numeric(st_area(region)) / 1e6
+  tibble(region = nom, densite = pop / superficie)
+}
+
+# Appliquer à toutes les régions
+resultats <- map_dfr(adm1$NAME_1, densite_region)
+```
+
+`map_dfr` applique la fonction à chaque élément et combine les résultats en un seul tibble. C'est l'équivalent fonctionnel d'une boucle.
+
+# Partie 5 — Présentations courtes {data-state="section-break"}
+
+## Format
+
+Chaque participant (ou binôme) présente **5 à 8 minutes** sur :
+
+- Une carte, une analyse, un script qu'il a produit pendant les 9 jours.
+- Ce qu'il a appris en le faisant.
+- Comment il compte réutiliser cet outil dans son institution.
+
+::: {.takeaway}
+L'objectif n'est pas la perfection technique — c'est de **partager une compétence acquise**.
+:::
+
+## Tous les profils sont valorisés
+
+| Profil | Type de présentation typique |
+|---|---|
+| Statisticien INS | Carte d'un indicateur ECAM par région avec décoration soignée |
+| Démographe IFORD | Comparaison top-down/bottom-up sur un département pilote |
+| Technicien ministère sectoriel | Application au secteur d'attache (santé, éducation, agriculture) |
+| Cadre ONG | Cartographie d'un programme géré par l'institution |
+
+# Partie 6 — Principes FAIR et clôture {data-state="section-break"}
+
+## Les principes FAIR (2016)
+
+Quatre principes pour la **science ouverte** :
+
+| Lettre | Principe | Implication pratique |
+|---|---|---|
+| **F** | **Findable** (Trouvable) | Identifiant unique (DOI), métadonnées complètes, indexé dans un catalogue |
+| **A** | **Accessible** (Accessible) | Protocoles standards (HTTPS), authentification claire, archivage long terme |
+| **I** | **Interoperable** (Interopérable) | Formats ouverts (GeoPackage, NetCDF), vocabulaires standardisés (CF Conventions) |
+| **R** | **Reusable** (Réutilisable) | Licence claire (CC-BY recommandé), métadonnées de provenance, documentation |
+
+Les principes FAIR sont devenus la **norme de référence** des bailleurs internationaux (UE Horizon, NIH, Wellcome) — toute donnée publique non-FAIR sera de plus en plus rejetée.
+
+## Métadonnées géospatiales
+
+| Standard | Domaine d'application |
+|---|---|
+| **ISO 19115** | Métadonnées géospatiales générales (le standard de référence pour les SIG nationaux) |
+| **Dublin Core étendu** | Métadonnées scientifiques génériques |
+| **DataCite Schema** | DOI pour les jeux de données scientifiques |
+| **OGC CSW** | Catalogue de services pour la découverte |
+
+Pour un INS : les sorties RGPH 4 devraient être documentées en **ISO 19115**, publiées sur un catalogue conforme **OGC CSW** (par exemple via GeoNetwork open source).
+
+## Feuille de route pour l'INS / BUCREP
+
+Cinq étapes pour mettre en place une infrastructure de données spatiales (IDS) :
+
+1. **Inventaire** des données spatiales déjà détenues (où, qui, dans quel format).
+2. **Standardisation** : convertir tout en formats ouverts (GeoPackage, GeoTIFF cloud-optimisé).
+3. **Métadonnées** : documenter chaque jeu en ISO 19115.
+4. **Catalogue** : déployer GeoNetwork ou équivalent pour la découverte interne et publique.
+5. **Politique de partage** : définir ce qui est public, restreint, interne.
+
+L'IDS du BUCREP, une fois en place, sera **la référence** pour toutes les analyses post-RGPH 4.
+
+## Ressources pour continuer
+
+- **Geocomputation with R** (Lovelace, Nowosad, Muenchow) : <https://r.geocompx.org/>
+- **Spatial Data Science** (Pebesma, Bivand) : <https://r-spatial.org/book/>
+- **R Packages** (Wickham, Bryan) : <https://r-pkgs.org/>
+- **Happy Git and GitHub for the useR** (Bryan) : <https://happygitwithr.com/>
+- **WorldPop documentation** : <https://www.worldpop.org/>
+- **DHS Spatial Analysis Reports** : <https://dhsprogram.com/publications/>
+- **Afrimapr** (communauté R-spatial Afrique) : <https://afrimapr.github.io/>
+
+## La communauté GDSG après l'atelier
+
+Le **Geospatial Data Science Group** de l'IFORD est ouvert aux anciens de l'atelier :
+
+- Slack / WhatsApp pour les questions techniques.
+- Sessions mensuelles de présentation de projets.
+- Co-publications scientifiques sur les questions RGPH 4.
+- Stages possibles à l'IFORD pour les profils plus jeunes.
+
+Contact : ramondzita@gmail.com (technique) et Pr Kuépié (institutionnel).
+
+# Partie 7 — Cérémonie de clôture {data-state="section-break"}
+
+## Évaluation de l'atelier (questionnaire)
+
+10 questions, 5 minutes max. Anonyme. Lien Forms IFORD distribué.
+
+Trois axes :
+
+1. **Contenu** : les 10 jours étaient-ils équilibrés ? Quel jour était trop dense / trop léger ?
+2. **Forme** : qualité des supports (slides, démos, runtimes WebR, exercices) ?
+3. **Suite** : besoins de formation continue, formats préférés ?
+
+Vos réponses influenceront les itérations 2027 et au-delà.
+
+## Remise des certificats
+
+À l'issue des présentations courtes, **Pr Kuépié** remet les certificats IFORD nominatifs.
+
+Photo officielle de groupe pour la communication institutionnelle.
+
+Pour les institutions qui exigent un **livret pédagogique annexe** : on émet sur demande, listant les compétences validées.
+
+## Merci
+
+À vous tous d'avoir suivi ces 10 jours intensifs.
+
+À **Pr Mathias Kuépié**, **Pr Franklin Bouba Djourdebbé**, **Edith Darin**, **Jean Saturnin Alogo Samba**, **Marcial Teda Soh Fossi** — l'équipe GDSG.
+
+À l'**IFORD** pour l'accueil et l'organisation.
+
+Au **BUCREP** et au **MINEPAT** pour les données et l'appui institutionnel.
+
+`ramondzita@gmail.com` · Geospatial Data Science Group · IFORD
+
+**Bonne continuation. À bientôt sur le terrain.**

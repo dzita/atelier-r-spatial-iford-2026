@@ -1,0 +1,141 @@
+---
+title: "J3 — Exercices"
+subtitle: "Atelier IFORD × GDSG · 29 juillet 2026"
+lang: fr
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    toc-location: left
+    theme: cosmo
+  pdf:
+    toc: true
+---
+
+# Mode d'emploi
+
+Q1 à Q5 sont des **micro-exercices** (5–10 min chacun) en séance. Q6 est le **devoir individuel du soir** (∼30 min). Solutions dans `corrige.qmd`, à n'ouvrir qu'**après** ta tentative.
+
+# Q1 — Choroplèthe simple {#sec-q1}
+
+> Référence démo : section « Choroplèthe `tmap` basique ».
+
+À partir de `adm1_pop` (construit en démo) :
+
+1. **a.** Produis une choroplèthe `tmap` de **`pct_electricite`** avec une palette **séquentielle Blues**.
+2. **b.** Ajoute les étiquettes des régions et un titre.
+3. **c.** Lecture critique : quelle région a le taux d'électrification le plus bas ? Le plus élevé ? Est-ce cohérent avec ce que tu sais du terrain ?
+
+# Q2 — Trois classifications, trois lectures {#sec-q2}
+
+> Référence démo : section « Comparaison de classifications ».
+
+Sur la variable **`taille_mng`** (taille moyenne du ménage) :
+
+1. **a.** Produis trois choroplèthes côte à côte (`tmap_arrange`) avec : intervalles égaux, quantiles, Jenks.
+2. **b.** Choisis 2 régions où les trois cartes ne s'accordent pas sur la classe. Pourquoi ?
+3. **c.** Quelle classification recommanderais-tu pour communiquer cette variable à un décideur ? Justifie en 2 phrases.
+
+# Q3 — Palette divergente {#sec-q3}
+
+> Référence démo : section « Palettes ».
+
+`pct_urbain` peut se lire comme un écart par rapport à la moyenne nationale (∼50 %) :
+
+1. **a.** Calcule `ecart_urbain = pct_urbain - mean(pct_urbain)`.
+2. **b.** Produis une choroplèthe avec une **palette divergente** (par exemple `brewer.rd_bu`, centrée sur 0).
+3. **c.** Que distingue cette représentation d'une choroplèthe séquentielle simple ? Quand utiliser l'une plutôt que l'autre ?
+
+# Q4 — Carte interactive {#sec-q4}
+
+> Référence démo : section « Mode interactif Leaflet ».
+
+1. **a.** Active `tmap_mode("view")`.
+2. **b.** Produis une choroplèthe **densité × population 2019** avec popups affichant : nom de la région, densité, population, superficie.
+3. **c.** Zoome sur le Littoral. Le fond OpenStreetMap montre-t-il bien Douala ? Compare la couverture des arrondissements à ce que tu connais.
+4. **d.** N'oublie pas `tmap_mode("plot")` à la fin !
+
+# Q5 — Version `ggplot2` {#sec-q5}
+
+> Référence démo : section « Alternative `ggplot2 + geom_sf` ».
+
+Reprends la choroplèthe `densite` mais en `ggplot2 + geom_sf` :
+
+1. **a.** Choisis une palette `viridis` (option `B` ou `D`).
+2. **b.** Étire l'échelle avec `trans = "sqrt"` pour mieux différencier les régions de faible densité.
+3. **c.** Compare visuellement à la version `tmap` Jenks. Quelle est la plus lisible selon toi ?
+
+# Q6 — Devoir : ta carte de production complète {#sec-q6}
+
+> ⏱ **~30 minutes**, à faire le soir.
+
+## Objectif
+
+Produire **une carte de production complète** sur l'indicateur de ton choix, prête à être insérée dans un rapport ou une présentation.
+
+## Étape 1 — Choix de l'indicateur
+
+Choisis **un** des trois indicateurs disponibles : `pct_electricite`, `pct_urbain`, `taille_mng`. Note ton choix.
+
+## Étape 2 — Choix de la classification
+
+Choisis une méthode de classification adaptée à la distribution de ton indicateur (Jenks, quantiles, manuel). Justifie ton choix en commentaire dans le script.
+
+## Étape 3 — Choix de la palette
+
+Choisis une palette adaptée à la nature de l'indicateur :
+
+- `pct_*` (proportions) → palette **séquentielle** (Blues, YlOrRd, viridis).
+- Si tu calcules un écart à la moyenne → palette **divergente** (RdBu, BrBG).
+
+## Étape 4 — Construire la carte avec tous les éléments d'habillage
+
+Utilise `tmap` (ou `ggplot2 + ggspatial`) en t'assurant que ta carte contient **tous** ces éléments :
+
+- Titre clair (la question à laquelle la carte répond)
+- Sous-titre (méthodologie : palette + classification + projection)
+- Légende lisible
+- Étiquettes des régions
+- Flèche du nord
+- Échelle (scalebar)
+- Crédits (Source : … · IFORD × GDSG 2026)
+
+## Étape 5 — Exporter en trois formats
+
+```r
+out_dir <- here("pedagogie", "J03_cartographie_tmap_ggplot", "outputs")
+dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+
+# PNG haute résolution pour PowerPoint
+tmap_save(ma_carte, file.path(out_dir, "ma_carte.png"), dpi = 300,
+          width = 9, height = 7)
+
+# PDF vectoriel pour publication
+tmap_save(ma_carte, file.path(out_dir, "ma_carte.pdf"),
+          width = 9, height = 7)
+
+# HTML interactif
+tmap_mode("view")
+tmap_save(ma_carte_interactive, file.path(out_dir, "ma_carte.html"))
+tmap_mode("plot")
+```
+
+## Critères de réussite
+
+- ☐ La carte porte sur un indicateur clairement choisi.
+- ☐ La classification est justifiée en commentaire.
+- ☐ La palette est adaptée à la nature de la variable.
+- ☐ Les sept éléments d'habillage sont présents.
+- ☐ Les trois exports (PNG, PDF, HTML) sont produits sans erreur.
+- ☐ Tu peux ouvrir le PDF et l'HTML interactif sans bug d'affichage.
+
+## Pour aller plus loin (bonus)
+
+- Ajoute **les chefs-lieux régionaux** sous forme de points (tibble construit en démo J2).
+- Produis une **carte comparative deux périodes** (ton indicateur en 2019 vs une projection 2024 à +10 %) en `tmap_arrange()`.
+
+# Si tu bloques
+
+Le corrigé est dans `corrige.qmd`, à n'ouvrir qu'**après** ta tentative.
+
+Bonne pratique !

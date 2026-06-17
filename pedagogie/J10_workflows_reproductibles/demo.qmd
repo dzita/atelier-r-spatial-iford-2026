@@ -1,0 +1,297 @@
+---
+title: "J10 — Démo : un projet R-spatial reproductible en 30 minutes"
+subtitle: "Atelier IFORD × GDSG · Yaoundé, 6 août 2026"
+author: "Ramesesse Dzita (GDSG)"
+date: "2026-08-06"
+lang: fr
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    number-sections: true
+    code-fold: false
+    code-tools: true
+    theme: cosmo
+    df-print: paged
+execute:
+  echo: true
+  warning: false
+  message: false
+bibliography: ../_commons/helpers/citations.bib
+---
+
+# Ce que cette démo montre
+
+On construit **en direct** un mini-projet R-spatial reproductible en suivant les cinq piliers : projet structuré + Quarto + Git + automatisation + métadonnées. À la fin, le projet est sur GitHub et publiable.
+
+Cas d'usage : *« Densité de population par département du Cameroun en 2020, à partir de WorldPop »*.
+
+# Étape 1 — Créer le projet RStudio
+
+`usethis` automatise la création de la structure standard. Cette commande crée un dossier, un `.Rproj`, un `.gitignore`, et ouvre RStudio dans le nouveau projet.
+
+```{r}
+#| label: create-project
+#| eval: false
+usethis::create_project("~/projets/cmr_densite_dep")
+```
+
+Le résultat :
+
+```
+cmr_densite_dep/
+├── cmr_densite_dep.Rproj
+├── .gitignore
+└── R/
+```
+
+On crée ensuite à la main l'arborescence convention de l'atelier (cf. J10 cahier des charges) :
+
+```{r}
+#| label: structure
+#| eval: false
+library(here)
+
+dir.create(here("R"),               showWarnings = FALSE)
+dir.create(here("data", "raw"),     showWarnings = FALSE, recursive = TRUE)
+dir.create(here("data", "intermediate"), showWarnings = FALSE, recursive = TRUE)
+dir.create(here("outputs", "figures"),   showWarnings = FALSE, recursive = TRUE)
+dir.create(here("outputs", "tables"),    showWarnings = FALSE, recursive = TRUE)
+```
+
+# Étape 2 — Initialiser Git
+
+```{r}
+#| label: git-init
+#| eval: false
+usethis::use_git()           # init + premier commit
+usethis::use_github()        # creer le repo distant + push (necessite gh CLI ou token)
+```
+
+Si tu n'as pas configuré `usethis::use_github()`, tu peux le faire manuellement en ligne de commande :
+
+```bash
+git init
+git add .
+git commit -m "Initial commit: structure projet cmr_densite_dep"
+git branch -M main
+git remote add origin https://github.com/<user>/cmr_densite_dep.git
+git push -u origin main
+```
+
+# Étape 3 — Le pipeline de traitement en quatre scripts
+
+## `R/01_acquisition.R`
+
+```{r}
+#| label: script01
+#| eval: false
+library(here)
+library(sf)
+library(terra)
+
+# Limites departementales (ADM2)
+adm2 <- read_sf(here("..", "atelier-r-spatial-iford-2026",
+                     "datasets", "cameroun", "admin_boundaries",
+                     "gadm41_CMR_2.json"))
+
+# WorldPop 100 m 2020
+worldpop_path <- here("..", "atelier-r-spatial-iford-2026",
+                      "datasets", "cameroun", "population_grids",
+                      "CMR_pop_WorldPop_top-down_100m_2020.tif")
+worldpop <- rast(worldpop_path)
+
+# Sauvegarder en intermediate
+saveRDS(adm2,     here("data", "intermediate", "adm2.rds"))
+writeRaster(worldpop, here("data", "intermediate", "worldpop.tif"),
+            overwrite = TRUE)
+```
+
+## `R/02_preparation.R`
+
+```{r}
+#| label: script02
+#| eval: false
+library(here)
+library(sf)
+library(terra)
+library(dplyr)
+
+adm2 <- readRDS(here("data", "intermediate", "adm2.rds")) |>
+  st_transform(3119) |>     # Lambert Cameroun
+  st_make_valid() |>
+  mutate(superficie_km2 = as.numeric(st_area(geometry)) / 1e6)
+
+saveRDS(adm2, here("data", "intermediate", "adm2_lambert.rds"))
+```
+
+## `R/03_analyse.R`
+
+```{r}
+#| label: script03
+#| eval: false
+library(here)
+library(sf)
+library(terra)
+library(dplyr)
+library(exactextractr)
+
+adm2 <- readRDS(here("data", "intermediate", "adm2_lambert.rds"))
+worldpop <- rast(here("data", "intermediate", "worldpop.tif"))
+
+# Reprojeter le raster pour aligner avec ADM2 Lambert
+worldpop_lam <- project(worldpop, "EPSG:3119")
+
+# Extraction zonale : population totale par departement
+adm2$pop_2020 <- exact_extract(worldpop_lam, adm2, "sum")
+adm2$densite_km2 <- adm2$pop_2020 / adm2$superficie_km2
+
+# Sauvegarder le resultat
+saveRDS(adm2, here("data", "intermediate", "adm2_avec_pop.rds"))
+write.csv(adm2 |> st_drop_geometry() |>
+            select(NAME_1, NAME_2, pop_2020, superficie_km2, densite_km2),
+          here("outputs", "tables", "densite_par_dep.csv"),
+          row.names = FALSE)
+```
+
+## `R/04_cartes.R`
+
+```{r}
+#| label: script04
+#| eval: false
+library(here)
+library(sf)
+library(dplyr)
+library(ggplot2)
+
+adm2 <- readRDS(here("data", "intermediate", "adm2_avec_pop.rds"))
+
+carte <- ggplot(adm2) +
+  geom_sf(aes(fill = densite_km2), color = "white", linewidth = 0.2) +
+  scale_fill_viridis_c(option = "B", trans = "sqrt",
+                       name = "Densité\n(hab/km²)") +
+  labs(title = "Densité de population par département — Cameroun 2020",
+       subtitle = "WorldPop top-down 100 m, agrégation Lambert (EPSG:3119)",
+       caption = "Source : WorldPop · GADM v4.1 · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+
+ggsave(here("outputs", "figures", "densite_dep.png"),
+       carte, width = 9, height = 7, dpi = 300)
+ggsave(here("outputs", "figures", "densite_dep.pdf"),
+       carte, width = 9, height = 7)
+```
+
+# Étape 4 — Le rapport Quarto reproductible
+
+Le fichier `rapport.qmd` (4–5 pages) rassemble narration + cartes + résultats. Il **réexécute** les scripts 1–4 à chaque rendu.
+
+```{r}
+#| label: rapport-template
+#| eval: false
+quarto::quarto_render(here("rapport.qmd"), output_format = "pdf")
+```
+
+Structure type du rapport :
+
+1. **Introduction** (½ page) — contexte RGPH 4, question.
+2. **Données** (½ page) — sources (WorldPop, GADM), licences.
+3. **Méthode** (1 page) — pipeline 4 scripts, justifications CRS et extraction.
+4. **Résultats** (2 pages) — carte densité + tableau top 10 départements.
+5. **Discussion** (1 page) — limites, recommandations RGPH 4.
+
+# Étape 5 — Fonction d'automatisation
+
+Au lieu de répéter le pipeline pour chaque source de données (WorldPop, GHS-POP, HRSL), on l'**enveloppe** dans une fonction et on l'applique en boucle.
+
+```{r}
+#| label: function-batch
+#| eval: false
+pipeline_source <- function(raster_path, source_nom, adm2_template) {
+  r <- rast(raster_path) |> project("EPSG:3119")
+  pop <- exact_extract(r, adm2_template, "sum")
+
+  tibble(
+    source = source_nom,
+    NAME_1 = adm2_template$NAME_1,
+    NAME_2 = adm2_template$NAME_2,
+    pop = pop
+  )
+}
+
+# Charger ADM2 une fois
+adm2 <- readRDS(here("data", "intermediate", "adm2_lambert.rds"))
+
+# Appliquer le pipeline à trois sources
+library(purrr)
+trois_sources <- map_dfr(
+  list(worldpop = "data/intermediate/worldpop.tif",
+       ghspop   = "data/intermediate/ghspop.tif",
+       hrsl     = "data/intermediate/hrsl.tif"),
+  ~ pipeline_source(.x, .y, adm2),
+  .id = "source"
+)
+```
+
+`map_dfr` applique la fonction à chaque chemin et combine en un tibble long, prêt pour comparaison ou ggplot facet.
+
+# Étape 6 — Gérer les versions de packages avec `renv`
+
+Pour garantir que le projet tourne identique dans **2 ans** sur **n'importe quelle machine** :
+
+```{r}
+#| label: renv
+#| eval: false
+renv::init()        # snapshot des packages installes
+# travailler sur le projet
+renv::snapshot()    # quand on ajoute / met a jour des packages
+```
+
+`renv` crée un fichier `renv.lock` qui liste **chaque package avec sa version exacte**. Un collègue qui clone le repo et exécute `renv::restore()` retrouve l'environnement identique.
+
+# Étape 7 — Métadonnées minimales
+
+Au minimum, ajouter un `README.md` au racine du projet qui contient :
+
+```{verbatim}
+# CMR — Densité de population par département (2020)
+
+## Question
+Quelle est la densité de population estimée par département du Cameroun
+en 2020, selon les estimations WorldPop ?
+
+## Sources
+- WorldPop top-down 2020, 100 m (Univ. Southampton, CC-BY 4.0)
+- GADM v4.1 ADM2 Cameroun (gadm.org, libre académique)
+
+## Reproduction
+1. Cloner le repo
+2. `renv::restore()`
+3. Exécuter `R/01_acquisition.R` à `R/04_cartes.R` dans l'ordre
+4. Ou : `quarto render rapport.qmd`
+
+## Licence
+Code CC-BY 4.0 — IFORD × GDSG 2026.
+
+## Citation
+Dzita, R. (2026). Densité de population par département du Cameroun 2020.
+Atelier IFORD × GDSG. https://github.com/dzita/cmr_densite_dep
+```
+
+# Conclusion
+
+En **6 étapes** et **moins d'une journée de travail**, un projet R-spatial est :
+
+- structuré (projet RStudio + arborescence convention)
+- documenté (Quarto + README)
+- versionné (Git + GitHub)
+- reproductible (renv + scripts numérotés)
+- partageable (licence CC-BY + métadonnées)
+
+C'est cette discipline qui transforme une analyse one-shot en **bien commun scientifique**.
+
+# Références
+
+@pebesma2018simple ; @tatem2017worldpop ; @hijmans2024terra.

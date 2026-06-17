@@ -1,0 +1,333 @@
+---
+title: "J3 — Données raster dans R avec `terra`"
+subtitle: "Atelier IFORD × GDSG · Yaoundé · 29 juillet 2026"
+author: "Ramesesse Dzita · Geospatial Data Science Group"
+date: "2026-07-29"
+format:
+  revealjs:
+    theme:
+      - default
+      - ../_commons/styles/slides_revealjs.scss
+    slide-number: c/t
+    transition: fade
+    progress: true
+    chalkboard: true
+    footer: "IFORD × GDSG 2026 — J3 · Raster avec terra"
+    incremental: false
+    code-fold: false
+    code-line-numbers: false
+execute:
+  echo: false
+  warning: false
+  message: false
+bibliography: ../_commons/helpers/citations.bib
+---
+
+# Partie 0 — Reprise J2 et plan J3 {data-state="section-break"}
+
+## Ce qu'on a vu hier
+
+::: {.columns}
+::: {.column width="50%"}
+**`sf` en profondeur**
+
+- Lecture / écriture multi-format (Shapefile, GeoJSON, GeoPackage)
+- Trois CRS Cameroun : 4326 / 32632 / 3119
+- Règle d'or : reprojeter le plus tard possible
+:::
+::: {.column width="50%"}
+**Opérations vectorielles**
+
+- Buffer, intersection, union
+- Dissolve = `group_by + summarise(geometry = st_union)`
+- Voronoï pour zones d'influence
+- Validation `st_make_valid`
+:::
+:::
+
+## Aujourd'hui : changement de paradigme
+
+J1 et J2 portent sur les **données vectorielles** (points, lignes, polygones avec des attributs). Aujourd'hui on bascule sur les **données raster** — des **grilles régulières de pixels**.
+
+::: {.takeaway}
+Vecteur = des objets géométriques discrets. Raster = un quadrillage continu de valeurs numériques.
+Les deux sont **complémentaires**, pas concurrents. La majorité des analyses spatiales sérieuses combinent les deux.
+:::
+
+## Plan détaillé de J3 (6 h d'instruction)
+
+| Bloc | Durée | Format |
+|---|---|---|
+| Wrap-up J2 + intro J3 | 30 min | Slides |
+| **Théorie 1** — Concepts raster | 45 min | Slides |
+| **Démo 1** — Lire et inspecter un raster | 45 min | Démo + Q1 |
+| **Théorie 2** — Opérations raster | 45 min | Slides |
+| **Démo 2** — Crop, mask, resample, aggregate | 1 h | Démo + Q2 |
+| **Théorie 3** — Algèbre raster + combinaison | 30 min | Slides |
+| **Démo 3** — Extraction zonale SRTM Cameroun | 1 h | Démo + Q3–Q5 |
+| **Synthèse + Q6 + Q&A** | 15 min | Slides |
+
+# Partie 1 — Concepts raster {data-state="section-break"}
+
+## Anatomie d'un raster
+
+Un **raster** est une **matrice rectangulaire de cellules** (pixels), chacune portant une valeur numérique. Quatre caractéristiques le définissent :
+
+| Propriété | Définition |
+|---|---|
+| **Résolution** | Taille d'une cellule au sol (par exemple 30 m × 30 m, 100 m × 100 m) |
+| **Étendue** | Emprise géographique (xmin, xmax, ymin, ymax) |
+| **CRS** | Système de coordonnées de référence |
+| **Bandes** | Nombre de matrices empilées (RGB = 3, Sentinel-2 = 13, MODIS = variable) |
+
+Une cellule de 100 m × 100 m représente **un hectare au sol**. Une scène Sentinel-2 de 10 980 × 10 980 cellules de 10 m couvre une zone de ~110 km × 110 km.
+
+## Raster vs Vecteur : quand l'un, quand l'autre ?
+
+| Critère | Vecteur (sf) | Raster (terra) |
+|---|---|---|
+| **Données discrètes** (frontières, points GPS) | ✅ Naturel | ❌ Inadapté |
+| **Phénomènes continus** (élévation, NDVI, température) | ❌ Difficile | ✅ Naturel |
+| **Calculs cellule par cellule** | ❌ | ✅ Algèbre raster rapide |
+| **Précision géométrique exacte** | ✅ | ❌ Limitée à la résolution |
+| **Volume de données** | Compact pour quelques milliers d'objets | Lourd (1 raster 100m mondial = 600 Mo) |
+
+## Trois types de phénomènes représentés par raster
+
+### Continu
+
+Élévation (SRTM), température, précipitation, NDVI, densité de population (WorldPop).
+
+### Catégoriel
+
+Occupation du sol (classes : forêt, urbain, eau…), classification climatique.
+
+### Comptage
+
+Nombre de bâtiments par cellule, population estimée par pixel.
+
+## `terra` : le moteur raster moderne en R
+
+`terra` (Hijmans, 2020) [@hijmans2024terra] est le **successeur** du package `raster`. Il offre :
+
+- Code C++ optimisé (5–10× plus rapide que `raster`).
+- API simplifiée et plus cohérente.
+- Support natif des SpatRaster multi-bandes.
+- Gestion mémoire intelligente (out-of-memory pour les gros rasters).
+
+::: {.takeaway}
+**En 2026 : utiliser `terra`, pas `raster`.** L'ancien package est en mode maintenance.
+:::
+
+## L'objet `SpatRaster`
+
+Tout raster lu par `terra::rast()` est un **SpatRaster** : un pointeur vers le fichier sur disque (pas une matrice chargée en RAM) **+** un en-tête contenant les métadonnées (résolution, étendue, CRS, nombre de bandes).
+
+Conséquence : on peut ouvrir un fichier de plusieurs gigaoctets quasi instantanément, et `terra` ne charge en RAM que les portions nécessaires aux calculs.
+
+# Partie 2 — Opérations raster {data-state="section-break"}
+
+## Les sept opérations à connaître
+
+| Opération | Question répondue |
+|---|---|
+| **`crop(x, y)`** | Réduire le raster à l'étendue (bbox) de `y` |
+| **`mask(x, y)`** | Mettre `NA` tout pixel hors des polygones `y` |
+| **`resample(x, y)`** | Aligner `x` sur la grille de `y` (changer la résolution / le décalage) |
+| **`aggregate(x, fact)`** | Réduire la résolution d'un facteur (`fact = 10` : pixel 10× plus grand) |
+| **`project(x, crs)`** | Reprojeter dans un autre CRS |
+| **`extract(x, y)`** | Extraire les valeurs de `x` aux positions / polygones `y` |
+| **`global(x, fun)`** | Statistique globale (somme, moyenne, écart-type) sur tout le raster |
+
+## Crop vs Mask : nuance importante
+
+::: {.columns}
+::: {.column width="50%"}
+**`crop`** — réduit l'**étendue rectangulaire**
+
+```r
+srtm_cmr <- crop(srtm_global, adm0_cmr)
+```
+
+Le résultat est un raster plus petit, mais conserve sa forme rectangulaire (avec toutes les cellules à l'intérieur, y compris autour du Cameroun jusqu'aux frontières du Tchad, Nigeria, etc.).
+:::
+::: {.column width="50%"}
+**`mask`** — met `NA` hors des polygones
+
+```r
+srtm_cmr <- mask(srtm_global, adm0_cmr)
+```
+
+Le résultat conserve l'étendue d'origine mais **toutes les cellules hors du Cameroun deviennent `NA`**.
+
+**Workflow type** : on enchaîne `crop` puis `mask` pour avoir un raster compact ET propre.
+:::
+:::
+
+## Algèbre raster
+
+L'algèbre raster est un calcul **cellule à cellule** sur un ou plusieurs SpatRaster. La syntaxe R standard fonctionne :
+
+```r
+# Carte de l'élévation en kilomètres
+srtm_km <- srtm_m / 1000
+
+# NDVI à partir de bandes Red et NIR
+ndvi <- (nir - red) / (nir + red)
+
+# Combinaison de plusieurs rasters
+indicateur <- 0.5 * pop_density + 0.3 * urban_mask + 0.2 * road_density
+```
+
+Sous le capot, `terra` exécute le calcul en C++, bloc par bloc, sans charger l'ensemble en RAM.
+
+## Combinaison raster ↔ vecteur
+
+C'est le **moment-clé** de l'analyse : croiser un raster (continu) avec un vecteur (zonage administratif).
+
+Deux fonctions complémentaires :
+
+- **`terra::extract(raster, polygones, fun = "mean")`** — la fonction native, simple à utiliser.
+- **`exactextractr::exact_extract(raster, polygones, "mean")`** — 5–10× plus rapide, prend en compte la **fraction** de chaque pixel qui tombe dans le polygone (plus précis pour les bords).
+
+**Convention** : utiliser `exact_extract` dès qu'on touche à des polygones administratifs réels.
+
+# Partie 3 — Algèbre raster appliquée {data-state="section-break"}
+
+## Exemple démographique : densité de population
+
+Le raster WorldPop 100 m donne le **nombre estimé d'habitants par pixel**. Pour calculer la **densité par km²**, il suffit de l'algèbre raster :
+
+```r
+# Chaque pixel WorldPop 100m fait 1 hectare = 0.01 km²
+# Densité par km² = nombre d'habitants par pixel × 100
+densite <- worldpop * 100
+```
+
+Pour agréger à l'échelle départementale, on combine avec les polygones ADM2 :
+
+```r
+pop_par_dep <- exact_extract(worldpop, adm2, "sum")
+adm2$pop_2020 <- pop_par_dep
+adm2$densite_km2 <- adm2$pop_2020 / adm2$superficie_km2
+```
+
+## Exemple environnemental : élévation moyenne par région
+
+```r
+srtm_cmr <- rast("CMR_SRTM_30m.tif")
+adm1 <- read_sf(...)
+adm1$elev_moy <- exact_extract(srtm_cmr, adm1, "mean")
+```
+
+Lecture : l'Adamaoua a une élévation moyenne autour de 1 100 m (plateau d'altitude), l'Extrême-Nord autour de 350 m (plaine sahélienne), le Littoral autour de 50 m (côte).
+
+## Zones inondables : une combinaison utile pour le RGPH 4
+
+Identifier les arrondissements à risque inondation par croisement SRTM + populations vulnérables :
+
+```r
+# Étape 1 : masquer les zones de basse altitude (< 50 m)
+basse_alt <- srtm_cmr < 50
+
+# Étape 2 : croiser avec WorldPop pour estimer la population concernée
+pop_basse_alt <- worldpop * basse_alt   # pop à NA quand altitude >= 50 m
+
+# Étape 3 : agréger par arrondissement
+adm3$pop_inondable <- exact_extract(pop_basse_alt, adm3, "sum")
+```
+
+C'est un cas typique de J7 / J9 — on l'illustre ici en démo simplifiée.
+
+# Partie 4 — Cadrage RGPH 4 et statistiques officielles {data-state="section-break"}
+
+## Pourquoi les rasters comptent pour les INS
+
+Trois cas d'usage critiques pour le BUCREP et les Instituts Nationaux de Statistique :
+
+1. **Estimations inter-recensementales** : entre deux RGPH (1976, 1987, 2005, 2026), les rasters de population (WorldPop, GHS-POP) permettent d'actualiser annuellement les estimations.
+2. **Cartographie censitaire** : avant le dénombrement, les rasters identifient les zones bâties pour calibrer le nombre de zones de dénombrement.
+3. **Réponse humanitaire** : en cas de crise (inondations Logone, Mokolo), il faut estimer rapidement les populations affectées par croisement raster de population × emprise crise.
+
+## Sources raster libres pour le Cameroun
+
+| Source | Résolution | Producteur | Usage |
+|---|---|---|---|
+| SRTM | 30 m | NASA | Élévation, modélisation hydrologique |
+| Sentinel-2 | 10 m / 20 m | ESA Copernicus | Occupation du sol, urbanisation |
+| Landsat 8/9 | 30 m | USGS | Séries temporelles longues |
+| MODIS | 250 m – 1 km | NASA | NDVI, températures terrestres |
+| WorldPop 100 m | 100 m | Univ. Southampton | Population estimée |
+| GHS-POP | 100 m / 1 km | JRC Commission UE | Population + bâti |
+| Meta HRSL | 30 m | Meta + CIESIN | Population basée bâti |
+
+# Partie 5 — Synthèse {data-state="section-break"}
+
+## Cinq idées-clés à retenir de J3
+
+1. **Un raster est une grille de pixels** — résolution, étendue, CRS, bandes.
+2. **`terra` est le moteur moderne** — `raster` est en maintenance.
+3. **`crop` + `mask`** est le couple standard pour réduire un raster à une zone d'intérêt.
+4. **L'algèbre raster** se fait avec la syntaxe R standard (`+`, `-`, `*`, `/`) — `terra` exécute en C++.
+5. **`exact_extract`** est l'outil de référence pour croiser raster et polygones administratifs.
+
+## Articulation avec la démo et les exercices
+
+::: {.columns}
+::: {.column width="50%"}
+**Vu en théorie**
+
+- Concepts raster (résolution, étendue, CRS, bandes)
+- Sept opérations fondamentales
+- Algèbre raster
+- Combinaison raster ↔ vecteur
+- Cadrage RGPH 4
+:::
+::: {.column width="50%"}
+**À pratiquer**
+
+- Lire SRTM Cameroun
+- Crop sur ADM0
+- Mask avec ADM1
+- Algèbre : carte des zones < 500 m
+- Extraction zonale par région
+:::
+:::
+
+## Devoir individuel (Q6 — 30 min)
+
+Énoncé dans `exercice.qmd` : calculer l'**élévation moyenne par arrondissement** (ADM3) du Cameroun à partir du SRTM 30 m, et produire une carte de classement des arrondissements les plus bas (risque inondation).
+
+## Demain (J4) — Gestion des données
+
+Tidyverse appliqué à l'analyse spatiale :
+
+- Lien tables d'enquête (CSV, Stata) ↔ objets spatiaux
+- Jointures attributaires et spatiales
+- Gestion des valeurs manquantes
+- Étude de cas : ECAM 4, MICS, EDS-MICS Cameroun 2018
+
+## Sources et licences
+
+| Donnée | Source | Licence |
+|---|---|---|
+| SRTM 30 m | NASA / USGS | Libre |
+| WorldPop 100 m | Univ. Southampton | CC-BY 4.0 |
+| GADM v4.1 | gadm.org | Académique |
+
+Code distribué sous **CC-BY 4.0**.
+
+## Références méthodologiques
+
+@hijmans2024terra ; @tatem2017worldpop ; @schiavina2023ghsl.
+
+## Questions ?
+
+Avant la démo, vérifions :
+
+1. La différence raster vs vecteur (continu vs discret).
+2. Le couple `crop` + `mask`.
+3. La syntaxe de l'algèbre raster (cellule à cellule).
+4. L'usage d'`exact_extract` pour les polygones administratifs.
+
+`ramondzita@gmail.com` · Geospatial Data Science Group · IFORD

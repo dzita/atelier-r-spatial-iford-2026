@@ -1,0 +1,126 @@
+---
+title: "J3 — Données raster avec terra"
+subtitle: "Code R exécutable dans le navigateur"
+engine: knitr
+---
+
+::: {.iford-callout}
+**Mode d'emploi.** Cliquez **Run code** dans chaque cellule. WebR charge `terra` au premier appel (∼20 s la première fois). Tout tourne dans votre navigateur.
+
+**Note** : pour ce runtime, on utilise un raster simulé du Cameroun. Le vrai SRTM 30 m du Cameroun pèse ∼80 Mo et est manipulé côté desktop dans `demo.qmd`.
+:::
+
+## 1. Charger terra et créer un raster simulé
+
+```{webr}
+#| autorun: true
+library(sf)
+library(terra)
+library(dplyr)
+library(ggplot2)
+
+# Telecharger les limites du Cameroun pour le crop/mask
+download.file("/_commons/data/gadm41_CMR_0.json", "adm0.json", mode = "wb")
+adm0 <- read_sf("adm0.json")
+
+# Simuler un raster d'elevation cohérent (gradient nord-sud)
+set.seed(2026)
+srtm <- rast(ncol = 80, nrow = 100,
+             xmin = 8.5, xmax = 16.5, ymin = 1.5, ymax = 13.5,
+             crs = "EPSG:4326")
+y_norm <- (terra::yFromRow(srtm, 1:nrow(srtm)) - 1.5) / 12
+values(srtm) <- as.vector(matrix(rep(200 + 1200 * y_norm, each = ncol(srtm)),
+                                 nrow = nrow(srtm), byrow = TRUE) +
+                          rnorm(ncell(srtm), 0, 80))
+names(srtm) <- "elevation_m"
+srtm
+```
+
+## 2. Inspecter le SpatRaster
+
+```{webr}
+c(resolution = res(srtm)[1],
+  nb_cellules = ncell(srtm),
+  nb_bandes = nlyr(srtm),
+  EPSG = crs(srtm, describe = TRUE)$code)
+
+ext(srtm)
+```
+
+## 3. Crop + mask sur la silhouette du Cameroun
+
+```{webr}
+srtm_cmr <- crop(srtm, adm0)
+srtm_cmr_masked <- mask(srtm_cmr, vect(adm0))
+
+plot(srtm_cmr_masked, main = "SRTM simulé cropé + masqué sur le Cameroun")
+```
+
+## 4. Algèbre raster : zones de basse altitude
+
+`srtm < 500` produit un raster booléen (1 = vrai, 0 = faux, NA = hors masque).
+
+```{webr}
+basse_alt <- srtm_cmr_masked < 500
+plot(basse_alt, main = "Zones < 500 m (TRUE = basse altitude)")
+```
+
+## 5. Classification multi-niveaux
+
+`ifel()` permet une cascade de conditions.
+
+```{webr}
+zones <- ifel(srtm_cmr_masked < 200, 1,
+        ifel(srtm_cmr_masked < 500, 2,
+        ifel(srtm_cmr_masked < 1000, 3, 4)))
+plot(zones, main = "1: <200m | 2: 200-500 | 3: 500-1000 | 4: >1000")
+```
+
+## 6. Statistique globale
+
+```{webr}
+global(srtm_cmr_masked, c("mean", "min", "max", "sd"), na.rm = TRUE) |> round()
+```
+
+## 7. Extraction zonale par région
+
+Combiner raster + vecteur pour calculer l'élévation moyenne par région du Cameroun.
+
+```{webr}
+download.file("/_commons/data/gadm41_CMR_1.json", "adm1.json", mode = "wb")
+adm1 <- read_sf("adm1.json")
+
+# terra::extract retourne un data.frame
+elev_par_region <- terra::extract(srtm_cmr_masked, vect(adm1),
+                                   fun = "mean", na.rm = TRUE)
+elev_par_region$NAME_1 <- adm1$NAME_1
+
+elev_par_region |>
+  select(NAME_1, elev_moy = elevation_m) |>
+  mutate(elev_moy = round(elev_moy)) |>
+  arrange(desc(elev_moy))
+```
+
+## 8. Carte choroplèthe de l'élévation moyenne par région
+
+```{webr}
+adm1_elev <- adm1 |>
+  mutate(elev_moy = round(elev_par_region$elevation_m))
+
+ggplot(adm1_elev) +
+  geom_sf(aes(fill = elev_moy), color = "white", linewidth = 0.3) +
+  scale_fill_viridis_c(option = "G", name = "Élévation\nmoyenne (m)") +
+  geom_sf_label(aes(label = NAME_1), size = 2.1,
+                color = "white", fontface = "bold") +
+  labs(title = "Élévation moyenne par région — Cameroun",
+       subtitle = "MNT simulé, agrégation par terra::extract") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+## 9. Pour aller plus loin
+
+La version complète du jour avec le **vrai SRTM 30 m du Cameroun** (∼80 Mo), `exactextractr` pour la précision aux bords, et le cas RGPH 4 « arrondissements en basse altitude » est dans `demo.qmd`. Le devoir individuel Q6 est dans `exercice.qmd`.
+
+[← Retour à l'accueil](../INDEX.md)

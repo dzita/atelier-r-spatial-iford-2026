@@ -1,0 +1,418 @@
+---
+title: "J2 — Données vectorielles `sf` et CRS"
+subtitle: "Atelier IFORD × GDSG · Yaoundé · 28 juillet 2026"
+author: "Ramesesse Dzita · Geospatial Data Science Group"
+date: "2026-07-28"
+format:
+  revealjs:
+    theme:
+      - default
+      - ../_commons/styles/slides_revealjs.scss
+    slide-number: c/t
+    transition: fade
+    progress: true
+    chalkboard: true
+    footer: "IFORD × GDSG 2026 — J2 · sf + CRS"
+    incremental: false
+    code-fold: false
+    code-line-numbers: false
+execute:
+  echo: false
+  warning: false
+  message: false
+bibliography: ../_commons/helpers/citations.bib
+---
+
+# Partie 0 — Reprise de J1 et plan J2 {data-state="section-break"}
+
+## Ce qu'on a vu hier
+
+::: {.columns}
+::: {.column width="50%"}
+**R + dplyr**
+
+- Cinq verbes : `filter`, `select`, `mutate`, `group_by + summarise`, `arrange`
+- Pipe `|>` lisible à voix haute
+- Tidy data (Wickham 2014)
+:::
+::: {.column width="50%"}
+**Premier contact `sf`**
+
+- Un `sf` = data.frame + colonne `geometry`
+- Trois CRS clés : 4326 (WGS 84), 32632 (UTM 32 N), 3857 (Web Mercator)
+- `st_transform()` reprojette, `st_set_crs()` étiquette
+- `st_area()`, `st_distance()`, `st_bbox()`
+:::
+:::
+
+## Synthèse du devoir Q6 (la veille)
+
+Avant d'attaquer, on revient 10 minutes sur **votre carte de la région d'origine**.
+
+Trois questions à débattre en salle :
+
+1. Quel CRS as-tu choisi ? Pourquoi ?
+2. Combien d'arrondissements ta région contient-elle ? Le chiffre correspond-il à ce que tu connais du terrain ?
+3. Sur quoi as-tu buté (libellé exact, palette, taille du texte) ?
+
+## J2 — Plan détaillé (8 h)
+
+| Bloc | Durée | Format |
+|---|---|---|
+| **Wrap-up J1 + intro J2** | 30 min | Slides |
+| **Théorie 1** — Lecture/écriture multi-format | 45 min | Slides |
+| **Démo 1** — shp, gpkg, geojson, kml | 1 h | demo + Q1 |
+| **Théorie 2** — CRS appliqué | 45 min | Slides |
+| **Démo 2** — Reprojection, superficies | 1 h | demo + Q2 |
+| **Théorie 3** — Opérations vectorielles | 1 h | Slides |
+| **Démo 3** — buffer, intersection, dissolve, voronoi | 1 h 30 | demo + Q3–Q5 |
+| **Synthèse + Q6 + Q&A** | 30 min | Slides |
+
+# Partie 1 — Lecture et écriture multi-format {data-state="section-break"}
+
+## Le paysage des formats vectoriels
+
+Quatre formats dominants en démographie spatiale :
+
+| Format | Extension | Atouts | Limites |
+|---|---|---|---|
+| **Shapefile** | `.shp + .shx + .dbf + .prj + .cpg` | Standard de fait depuis 1998, lu partout | 4 fichiers à transporter ensemble, noms de colonnes ≤ 10 caractères, pas de NULL natif |
+| **GeoJSON** | `.json` ou `.geojson` | Texte lisible, web-friendly, un seul fichier | Gros volumes lourds (texte) |
+| **GeoPackage** | `.gpkg` | Format SQLite moderne, OGC standard, plusieurs couches dans un fichier | Adoption plus récente, certains anciens outils ne le lisent pas |
+| **KML / KMZ** | `.kml` ou `.kmz` | Google Earth, partage avec non-techniciens | Limité aux attributs simples |
+
+**Convention 2026** : GeoPackage par défaut pour la production, GeoJSON pour le partage web, Shapefile pour la rétro-compatibilité.
+
+## `sf` lit et écrit tous les formats GDAL
+
+Une seule fonction pour lire : `sf::read_sf()` (alias de `st_read()`). Une seule pour écrire : `sf::write_sf()` (alias de `st_write()`).
+
+`sf` repose sur GDAL (cf. J1), qui supporte **plus de 100 formats** vectoriels. La fonction détecte le format à partir de l'extension du fichier.
+
+::: {.takeaway}
+Un seul appel — `read_sf("ma_couche.shp")` ou `read_sf("ma_couche.gpkg")` — quel que soit le format. C'est la beauté de la couche d'abstraction GDAL.
+:::
+
+## Les Shapefiles : convention non écrite
+
+Quand quelqu'un te transmet « le Shapefile », il s'agit en réalité d'**au moins 4 fichiers** qui doivent voyager ensemble dans le même dossier :
+
+| Fichier | Rôle |
+|---|---|
+| `.shp` | Géométries (binaire) |
+| `.shx` | Index des géométries (binaire) |
+| `.dbf` | Attributs (format dBase) |
+| `.prj` | CRS (texte WKT) |
+| `.cpg` | Encodage des attributs (optionnel mais salvateur pour les accents) |
+
+**Erreur classique** : un participant t'envoie seulement le `.shp`. La lecture par `sf` plante. **Toujours zipper les 5 fichiers ensemble** quand on partage un Shapefile.
+
+## Lire une couche : trois patterns courants
+
+**Pattern 1 — fichier simple** :
+
+```r
+adm1 <- read_sf("gadm41_CMR_1.json")
+```
+
+**Pattern 2 — GeoPackage multi-couches** :
+
+```r
+st_layers("CMR_all.gpkg")              # lister les couches disponibles
+adm1 <- read_sf("CMR_all.gpkg", layer = "ADM1")
+adm3 <- read_sf("CMR_all.gpkg", layer = "ADM3")
+```
+
+**Pattern 3 — filtrer dès la lecture (très efficace sur gros fichiers)** :
+
+```r
+litoral <- read_sf("gadm41_CMR_1.json", query = "SELECT * FROM gadm41_CMR_1 WHERE NAME_1 = 'Littoral'")
+```
+
+Le `query =` est un SQL géré par GDAL : on ne charge en mémoire que ce qu'on veut.
+
+## Écrire : convention de production propre
+
+```r
+write_sf(adm1_pop, "outputs/CMR_adm1_pop.gpkg",
+         layer = "adm1_densite",
+         delete_dsn = TRUE)   # remplace si existe
+```
+
+Bonnes pratiques :
+
+- Toujours préciser `delete_dsn = TRUE` ou `delete_layer = TRUE` si l'on veut écraser une couche existante (sinon `sf` jette une erreur).
+- Privilégier `.gpkg` plutôt que `.shp` pour la production : noms de colonnes longs, encodage UTF-8, valeurs NULL préservées.
+- Inclure le CRS dans le nom du fichier si reproductibilité critique : `CMR_adm1_pop_UTM32N.gpkg`.
+
+# Partie 2 — CRS appliqué : choisir et reprojeter {data-state="section-break"}
+
+## Le triple choix : pourquoi, quoi, comment
+
+Trois questions à se poser avant toute opération spatiale :
+
+1. **Pourquoi un CRS projeté ?** Pour mesurer (distances, aires) ou pour cartographier de façon non déformée.
+2. **Quel CRS choisir ?** Selon l'emprise géographique et la propriété qu'on veut préserver (cf. famille équivalente / conforme / équidistante de J1).
+3. **Comment basculer ?** Une seule fonction : `st_transform()`.
+
+## Pour le Cameroun : trois CRS à connaître
+
+| EPSG | Nom | Quand l'utiliser |
+|---|---|---|
+| **4326** | WGS 84 géographique | Stockage GPS, échange entre systèmes, GeoJSON / KML / GPS terrain |
+| **32632** | UTM zone 32 N | Calcul de distances et superficies à l'**ouest** du Cameroun (longitudes < 12°) |
+| **32633** | UTM zone 33 N | Idem pour l'**est** du pays (longitudes ≥ 12°) |
+| **3119** | Lambert Cameroun | Cartographie nationale uniforme avec faible déformation |
+
+::: {.takeaway}
+Pour un calcul national sans coupure, **Lambert Cameroun (3119)** est le bon défaut.
+:::
+
+## Les zones UTM : pourquoi deux fuseaux ?
+
+UTM (Universal Transverse Mercator) découpe la Terre en **60 fuseaux** de 6° de longitude chacun. La déformation est faible **à l'intérieur** d'un fuseau (≤ 0.04 %) mais explose en s'en éloignant.
+
+Le Cameroun est à cheval sur les fuseaux 32 (longitudes 6°–12° E) et 33 (longitudes 12°–18° E) :
+
+- Ouest (Bafoussam, Buea, Yaoundé, Douala) → fuseau 32 N → EPSG:32632
+- Est (Bertoua, Ngaoundéré, Garoua) → fuseau 33 N → EPSG:32633
+
+Pour les calculs nationaux qui mélangent les deux zones, **Lambert Cameroun (3119)** évite la coupure UTM.
+
+## La règle d'or de la reprojection
+
+Une seule règle : **reprojeter le plus tard possible**. Idéalement, on garde les données en WGS 84 jusqu'au moment où on a besoin d'un calcul de distance ou d'aire, et **alors seulement** on reprojette pour ce calcul.
+
+Pourquoi ? Trois raisons :
+
+1. Toute reprojection introduit une **erreur de calcul** (transformation numérique).
+2. Les données d'origine sont presque toujours fournies en WGS 84 — c'est le format d'échange standard.
+3. On peut faire toutes les opérations vectorielles (filtrage attributaire, jointures, sélection) sans avoir besoin de reprojeter.
+
+## L'erreur du débutant : `set_crs` confondu avec `transform`
+
+Re-rappel rapide vu en J1 — c'est tellement fréquent qu'on le re-pose.
+
+::: {.columns}
+::: {.column width="50%"}
+**`st_set_crs(x, 4326)`**
+
+= « ÉTIQUETTE en WGS 84 »
+
+— ne touche **pas** aux coordonnées.
+
+Utile uniquement si le CRS est absent (Shapefile sans `.prj`).
+:::
+::: {.column width="50%"}
+**`st_transform(x, 4326)`**
+
+= « REPROJETTE vers WGS 84 »
+
+— **recalcule** chaque coordonnée.
+
+C'est ce qu'on veut 99 % du temps.
+:::
+:::
+
+# Partie 3 — Opérations vectorielles {data-state="section-break"}
+
+## Une opération géométrique = une question spatiale
+
+Chaque opération `sf` répond à une question concrète :
+
+| Fonction | Question |
+|---|---|
+| `st_buffer(x, d)` | Quelle zone autour de `x` à une distance ≤ `d` ? |
+| `st_intersection(x, y)` | Quelle est la portion commune à `x` et `y` ? |
+| `st_difference(x, y)` | Quelle est `x` privée de `y` ? |
+| `st_union(x)` | Quelle est la fusion de tous les `x` en un seul polygone ? |
+| `st_centroid(x)` | Quel est le « centre » géométrique de `x` ? |
+| `st_voronoi(x)` | Quelle est la zone d'influence de chaque point de `x` ? |
+| `st_is_valid(x)` | Les géométries sont-elles bien formées ? |
+| `st_make_valid(x)` | Répare les géométries malformées |
+
+## `st_buffer` — zone tampon
+
+`st_buffer(x, dist = 5000)` retourne tous les points à **moins de 5 000 mètres** de `x`. Pour que cette distance soit en mètres, **il faut que `x` soit en CRS projeté** (UTM ou Lambert), pas en WGS 84.
+
+Cas d'usage démographique :
+
+- Zone d'attraction d'un hôpital (rayon de 5 km).
+- Frontière administrative étendue (buffer de 1 km pour gérer une couture).
+- Aire de service d'une école (distance scolaire).
+
+## `st_intersection` — la portion commune
+
+`st_intersection(zones, parcelles)` retourne la **portion de chaque parcelle qui tombe dans une zone**. Les attributs des deux couches sont préservés.
+
+Cas d'usage démographique :
+
+- Quels arrondissements tombent dans le buffer d'un site pilote RGPH 4 ?
+- Quelle portion d'un raster WorldPop tombe dans une zone protégée ?
+
+::: {.callout-important title="Performance"}
+`st_intersection` est lent sur des gros volumes. Si on doit croiser 1000 polygones avec 1 million de points, préférer `st_join(..., join = st_intersects)` qui est optimisé pour ce cas.
+:::
+
+## `st_union` — fusionner
+
+Deux usages distincts :
+
+**Fusion totale** : tous les polygones deviennent un seul.
+
+```r
+cmr_silhouette <- st_union(adm1)   # 10 régions → 1 polygone "Cameroun"
+```
+
+**Dissolve par groupe** : agréger ADM3 en ADM2 par exemple.
+
+```r
+adm1_from_adm3 <- adm3 |>
+  group_by(NAME_1) |>
+  summarise(geometry = st_union(geometry))
+```
+
+C'est l'opération **dissolve** classique en SIG — agréger une couche fine en une couche grossière par identifiant.
+
+## `st_centroid` — réduire un polygone à son centre
+
+Le centroïde géométrique est utile pour :
+
+- Placer un texte au centre d'un polygone.
+- Construire un diagramme de Voronoï à partir des centres administratifs.
+- Calculer une « distance entre régions » (centroïde-à-centroïde).
+
+::: {.callout-warning title="Centroïde ≠ chef-lieu"}
+Le centroïde géométrique d'une région **n'est pas** son chef-lieu. Pour Yaoundé (Centre) ou Douala (Littoral), il vaut mieux utiliser les vraies coordonnées GPS du chef-lieu plutôt que le centroïde.
+:::
+
+## `st_voronoi` — zone d'influence
+
+Le diagramme de Voronoï d'un ensemble de points partitionne le plan en cellules : chaque cellule contient tous les lieux **plus proches du point `i`** que de n'importe quel autre point.
+
+Cas d'usage démographique :
+
+- Zone d'influence d'un chef-lieu régional.
+- Aire d'attraction d'un hôpital, d'une école.
+- Cellules de dénombrement RGPH (en complément du découpage admin).
+
+C'est l'opération qu'on fera en démo 3 sur les **10 chefs-lieux régionaux** du Cameroun.
+
+## Géométries malformées : pourquoi et comment réparer
+
+Une géométrie « malformée » viole un invariant OGC : auto-intersection d'un polygone, anneau ouvert, multiline avec doublons. Les causes habituelles :
+
+- Numérisation manuelle (digitization), erreurs humaines.
+- Simplifications agressives qui pincent des polygones.
+- Reprojections sur les zones de coupure (à 180°, aux pôles).
+
+Diagnostic et réparation :
+
+```r
+st_is_valid(adm1)              # logique TRUE/FALSE par feature
+adm1_clean <- st_make_valid(adm1)
+```
+
+`st_make_valid` utilise l'algorithme GEOS pour fermer les anneaux, supprimer les auto-intersections, fusionner les doublons. **Toujours faire un `st_make_valid()` après une reprojection**.
+
+# Partie 4 — Cadrage spécifique RGPH 4 {data-state="section-break"}
+
+## Pourquoi les opérations vectorielles comptent pour le RGPH 4
+
+Le BUCREP doit produire d'ici 2027 :
+
+1. Les **zones de dénombrement** (ZD) — petites unités opérationnelles couvrant l'ensemble du territoire sans chevauchement.
+2. Les **limites administratives** mises à jour (ADM3 a évolué depuis le dernier RGPH).
+3. Les **micro-zones** pour les estimations bottom-up.
+
+Tous ces produits exigent des opérations `sf` propres : dissolve, intersection, validation. C'est ce qu'on travaille aujourd'hui.
+
+## Anatomie d'un Shapefile BUCREP type
+
+Quand tu récupères un Shapefile BUCREP officiel, tu trouveras typiquement :
+
+| Colonne | Type | Note |
+|---|---|---|
+| `ID_ZD` | character | Identifiant unique de la zone de dénombrement |
+| `ID_ARR` | character | Identifiant de l'arrondissement |
+| `NOM_ARR` | character | Nom officiel |
+| `NOM_DEP` | character | Département |
+| `NOM_REG` | character | Région |
+| `POP_2005` | numeric | Population au dernier RGPH (RGPH 3, 2005) |
+| `geometry` | sfc_POLYGON | Forme |
+
+Les attributs sont en français, encodage UTF-8 (espérons-le, sinon `read_sf(..., options = "ENCODING=UTF-8")`).
+
+# Partie 5 — Synthèse {data-state="section-break"}
+
+## Cinq idées-clés à retenir de J2
+
+1. **Un seul appel suffit pour lire ou écrire** un fichier spatial — `read_sf()` / `write_sf()`. GDAL gère le format sous le capot.
+2. **GeoPackage est le format moderne par défaut** ; Shapefile reste pour rétro-compatibilité.
+3. **Reprojeter le plus tard possible**. Stocker en WGS 84, reprojeter pour le calcul ou la carte.
+4. **Lambert Cameroun (EPSG:3119)** pour les calculs nationaux ; UTM 32 N / 33 N pour les calculs régionaux.
+5. **Dissolve = `group_by` + `st_union`** ; Voronoï construit des zones d'influence ; `st_make_valid` répare les géométries après reprojection.
+
+## Articulation avec la démo et les exercices
+
+::: {.columns}
+::: {.column width="50%"}
+**Vu en théorie (slides)**
+
+- Formats vectoriels et leurs usages
+- Trois CRS clés du Cameroun
+- Sept opérations vectorielles
+- Validation des géométries
+- Cadrage RGPH 4
+:::
+::: {.column width="50%"}
+**À pratiquer (démo + exercices)**
+
+- Lire un .shp, un .gpkg, un .geojson
+- Reprojeter UTM 32 N ↔ Lambert 3119
+- Buffer 50 km autour des chefs-lieux
+- Dissolve ADM3 → ADM1
+- Voronoï des 10 chefs-lieux
+:::
+:::
+
+## Devoir individuel (Q6 — 30 min)
+
+Énoncé complet dans `pedagogie/J02_sf_CRS_vecteurs/exercice.qmd`.
+
+Résumé : à partir des ADM2 (départements) du Cameroun, construire un GeoPackage avec deux couches — la couche départementale (ADM2) avec la superficie, et la couche régionale (ADM1) reconstituée par dissolve.
+
+## Demain (J3) — Données raster avec `terra`
+
+`terra` en profondeur :
+
+- Concepts raster : résolution, étendue, CRS, bandes.
+- Sept opérations fondamentales (`crop`, `mask`, `resample`, `aggregate`, `project`, `extract`, `global`).
+- Algèbre raster cellule à cellule.
+- Combinaison raster + vecteur (extraction zonale).
+- Cas concret : MNT SRTM Cameroun, élévation moyenne par région.
+
+## Sources et licences
+
+| Donnée | Source | Licence |
+|---|---|---|
+| GADM v4.1 ADM0–3 Cameroun | <https://gadm.org/download_country.html> | Libre académique |
+| Polygones BUCREP (si dispo) | BUCREP, Yaoundé | Usage atelier autorisé |
+
+Code distribué sous **CC-BY 4.0** au nom du GDSG / IFORD.
+
+## Références méthodologiques
+
+@pebesma2018simple ; @hijmans2024terra ; @bucrep_rgph4.
+
+## Questions ?
+
+À ce stade, **arrêtons-nous**.
+
+Avant d'attaquer le matériel pratique, vérifions que tout le monde est sur :
+
+1. La distinction `set_crs` ≠ `transform`
+2. L'analogie `dissolve` = `group_by + st_union`
+3. La règle « reprojeter le plus tard possible »
+
+`ramondzita@gmail.com` · Geospatial Data Science Group · IFORD

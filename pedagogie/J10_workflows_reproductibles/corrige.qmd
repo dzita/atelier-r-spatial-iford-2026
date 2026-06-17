@@ -1,0 +1,292 @@
+---
+title: "J10 — Corrigés et exemple de présentation réussie"
+subtitle: "Atelier IFORD × GDSG · Distribué à la fin de la journée"
+lang: fr
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    toc-location: left
+    theme: cosmo
+execute:
+  echo: true
+  warning: false
+  message: false
+bibliography: ../_commons/helpers/citations.bib
+---
+
+# Avant le corrigé
+
+Si tu n'as pas tenté les activités : **ferme ce fichier**. La valeur du corrigé est dans la **comparaison** avec ta tentative.
+
+# Q1 — Projet RStudio + Git
+
+## Q1.a — `usethis::create_project()`
+
+```{r}
+#| label: q1a
+#| eval: false
+usethis::create_project("~/projets/cmr_demo_j10")
+```
+
+`usethis` crée :
+
+- Le dossier `cmr_demo_j10/`.
+- Un fichier `cmr_demo_j10.Rproj` (qui définit le projet RStudio).
+- Un `.gitignore` minimal (ignore `.Rproj.user/`, `.Rhistory`, etc.).
+- Ouvre RStudio dans le nouveau projet.
+
+## Q1.b — `usethis::use_git()`
+
+```{r}
+#| label: q1b
+#| eval: false
+usethis::use_git()
+```
+
+Cette commande :
+
+1. `git init` le projet.
+2. Fait un premier commit avec tous les fichiers existants.
+3. Demande s'il faut redémarrer RStudio pour activer le panneau Git (répondre Yes).
+
+## Q1.c — `usethis::use_github()` ou manuel
+
+```{r}
+#| label: q1c
+#| eval: false
+# Approche idéale
+usethis::use_github()    # nécessite gh CLI installé ou token configuré
+
+# Si ça plante, manuel via terminal RStudio :
+# 1. Créer le repo sur github.com/<user>/cmr_demo_j10 (sans README ni gitignore)
+# 2. Dans le terminal :
+#    git remote add origin https://github.com/<user>/cmr_demo_j10.git
+#    git branch -M main
+#    git push -u origin main
+```
+
+## Q1.d — Premier push
+
+Vérifier sur <https://github.com/`<user>`/cmr_demo_j10> que le code apparaît. Si oui : ton projet est versionné publiquement et reproductible.
+
+# Q2 — Rapport Quarto
+
+## Q2.a — Squelette de `rapport.qmd`
+
+```{verbatim}
+---
+title: "Densité de population du Cameroun 2020"
+author: "<Ton nom>"
+date: "2026-08-06"
+format:
+  pdf:
+    toc: true
+    number-sections: true
+execute:
+  echo: true
+  warning: false
+---
+
+# Introduction
+
+Cette analyse répond à la question : *quelle est la densité de population
+estimée par région du Cameroun en 2020 ?* Elle s'appuie sur les limites
+administratives GADM v4.1 (ADM1, 10 régions) et sur les estimations
+WorldPop top-down 2020 à 100 m.
+
+Le Cameroun compte officiellement 475 442 km² pour une population
+estimée 2020 d'environ 26 millions d'habitants, soit une densité moyenne
+nationale de 55 hab/km². Les contrastes régionaux sont importants — le
+Littoral (Douala) approche 170 hab/km² tandis que le Sud reste sous
+10 hab/km².
+```
+
+## Q2.b — Deux blocs R
+
+```{r}
+#| label: q2b-block1
+#| eval: false
+library(sf)
+library(here)
+
+adm1 <- read_sf(
+  "~/projets/atelier-r-spatial-iford-2026/datasets/cameroun/admin_boundaries/gadm41_CMR_1.json"
+)
+nrow(adm1)
+```
+
+```{r}
+#| label: q2b-block2
+#| eval: false
+library(ggplot2)
+
+ggplot(adm1) +
+  geom_sf(aes(fill = NAME_1), color = "white", show.legend = FALSE) +
+  geom_sf_label(aes(label = NAME_1), size = 2.4, color = "white",
+                fontface = "bold") +
+  scale_fill_viridis_d() +
+  labs(title = "Les 10 régions du Cameroun") +
+  theme_minimal()
+```
+
+## Q2.c — Rendu PDF
+
+```{r}
+#| label: q2c
+#| eval: false
+quarto::quarto_render("rapport.qmd", output_format = "pdf")
+# OU dans le terminal :
+# quarto render rapport.qmd --to pdf
+```
+
+Si Quarto demande TinyTeX, l'installer : `quarto install tinytex`.
+
+## Q2.d — Commit
+
+```bash
+git add rapport.qmd
+git commit -m "Ajouter rapport Quarto initial avec carte des 10 régions"
+git push
+```
+
+# Q3 — Automatisation
+
+## Q3.a — Fonction `superficie_region()`
+
+```{r}
+#| label: q3a
+#| eval: false
+library(sf)
+library(dplyr)
+
+superficie_region <- function(nom) {
+  region <- adm1 |> filter(NAME_1 == nom)
+  region_utm <- st_transform(region, 32632)
+  as.numeric(st_area(region_utm)) / 1e6   # km²
+}
+
+# Test
+superficie_region("Centre")
+```
+
+## Q3.b — Boucle fonctionnelle avec `purrr`
+
+```{r}
+#| label: q3b
+#| eval: false
+library(purrr)
+
+superficies <- map_dbl(adm1$NAME_1, superficie_region)
+names(superficies) <- adm1$NAME_1
+sort(superficies, decreasing = TRUE)
+```
+
+`map_dbl` applique la fonction à chaque élément et retourne un vecteur numérique typé.
+
+## Q3.c — Comparaison avec boucle `for`
+
+```{r}
+#| label: q3c
+#| eval: false
+# Avec boucle for
+superficies_for <- numeric(nrow(adm1))
+for (i in seq_along(adm1$NAME_1)) {
+  superficies_for[i] <- superficie_region(adm1$NAME_1[i])
+}
+names(superficies_for) <- adm1$NAME_1
+
+# Comparaison de durée
+microbenchmark::microbenchmark(
+  for_loop = {
+    for (i in seq_along(adm1$NAME_1))
+      superficies_for[i] <- superficie_region(adm1$NAME_1[i])
+  },
+  purrr = map_dbl(adm1$NAME_1, superficie_region),
+  times = 10
+)
+```
+
+**Verdict** : sur 10 éléments, les deux sont **équivalents en performance**. `purrr::map_dbl` est plus lisible et type le résultat. Le `for` reste valide pour 2–3 itérations simples. Au-delà : `purrr`.
+
+## Q3.d — Commit
+
+```bash
+git add R/superficie.R
+git commit -m "Ajouter fonction superficie_region + benchmark map vs for"
+git push
+```
+
+# Q4 — Présentation courte (exemples de réussite)
+
+## Exemple 1 : Statisticienne INS Cameroun
+
+**Slide 1** : *« J'ai construit une carte des taux d'urbanisation par région avec ColorBrewer YlOrBr et tous les éléments d'habillage. »*
+
+**Slides 2–3** : Capture d'écran de la carte (J5 + Q6 J5). Bref commentaire : choix de palette, classification quantile.
+
+**Slide 4** : *« J'ai compris pourquoi la classification Jenks raconte une histoire différente des quantiles — c'est ça que je transmettrai à mes collègues. »*
+
+**Slide 5** : *« J'intègre cette méthodologie dans nos publications ECAM 4 — chaque indicateur régional aura sa carte standardisée IFORD. »*
+
+**Slide 6** : *« Merci à tous. Questions ? »*
+
+→ **5 minutes**, message clair, applicabilité immédiate. Réussite.
+
+## Exemple 2 : Démographe IFORD doctorant
+
+**Slide 1** : *« J'ai comparé WorldPop top-down et un proto bottom-up sur Yaoundé. »*
+
+**Slides 2–3** : Deux cartes côte à côte (J7 + J9). Tableau des écarts.
+
+**Slide 4** : *« Les écarts atteignent 12 % sur certains arrondissements urbains. C'est la limite du top-down quand le bâti évolue rapidement. »*
+
+**Slide 5** : *« Je veux soumettre cette analyse comme contribution à mon papier de thèse sur les dynamiques urbaines du Cameroun. »*
+
+**Slide 6** : Q&A.
+
+→ **7 minutes**, projet de recherche, ouverture sur publication. Réussite.
+
+## Exemple 3 : Technicien ministère santé
+
+**Slide 1** : *« J'ai cartographié la couverture vaccinale par département avec un effet « buffer 30 km autour des hôpitaux ». »*
+
+**Slides 2–3** : Carte choroplèthe avec buffers superposés. Commentaire : 18 départements ont une couverture < 60 %, et tous sont à plus de 30 km du chef-lieu de santé le plus proche.
+
+**Slide 4** : *« Le pipeline R me permet de refaire cette analyse en 10 minutes avec les nouvelles données DHIS2. »*
+
+**Slide 5** : *« Mes collègues du MINSANTÉ verront cette carte en réunion lundi. »*
+
+**Slide 6** : Q&A.
+
+→ **6 minutes**, application sectorielle, valorisation institutionnelle. Réussite.
+
+# Bonus — Erreurs à éviter en présentation
+
+| Erreur | Pourquoi c'est problématique | Remède |
+|---|---|---|
+| Slides 100 % de code | Le public ne peut pas lire et écouter en même temps | 1 slide visuelle (carte) + commentaire à l'oral |
+| Présentation > 8 minutes | Mange le temps des suivants | Répéter chez soi avec un chronomètre |
+| Pas de slide « réutilisation » | L'apport pour ton institution n'est pas visible | Toujours finir par « comment je vais utiliser ça » |
+| Tout dans le titre | Le titre devrait être l'**accroche**, pas le résumé | Titre court, slide 1 développe |
+| Aucune question préparée | Les Q&A créent un blanc | Avoir 2 questions ouvertes en réserve |
+
+# Conclusion : et après ?
+
+Tu repars de cet atelier avec :
+
+- **Un repo GitHub personnel** versionné, reproductible.
+- **Un certificat IFORD** validant 10 jours d'atelier R-spatial.
+- **Une compétence professionnelle** rare en Afrique subsaharienne en 2026.
+
+Trois actions concrètes dans les 30 jours :
+
+1. **Présente ta carte** au moins une fois dans ton institution.
+2. **Active la communauté GDSG** (Slack / WhatsApp).
+3. **Identifie un cas d'usage** dans ton service où R-spatial peut remplacer Excel.
+
+Bonne suite à toi.
+
+# Références
+
+@pebesma2018simple ; @hijmans2024terra ; @tatem2017worldpop ; @bucrep_rgph4.

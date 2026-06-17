@@ -30,7 +30,15 @@ website:
         menu:
           - href: J01_intro_R_pensee_spatiale/runtime.qmd
             text: "J1 · Intro R + pensée spatiale"
-          # J2-J10 seront ajoutes ici au fur et a mesure de leur redaction.
+          - href: J02_sf_CRS_vecteurs/runtime.qmd
+            text: "J2 · Données vectorielles sf"
+          - href: J03_donnees_raster_terra/runtime.qmd
+            text: "J3 · Données raster terra"
+          - href: J05_visualisation_cartographie/runtime.qmd
+            text: "J5 · Visualisation et cartographie"
+          - href: J10_mini_projet_synthese/runtime.qmd
+            text: "J10 · Reproductibilité + clôture"
+          # J4, J6, J7, J8, J9 seront ajoutes ici au fur et a mesure de leur redaction.
           # Ne pas re-activer une entree tant que le runtime.qmd correspondant
           # n'existe pas, sinon Quarto cassera la preview.
 

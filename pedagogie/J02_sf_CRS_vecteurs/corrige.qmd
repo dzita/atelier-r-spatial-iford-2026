@@ -1,0 +1,311 @@
+---
+title: "J2 — Corrigés"
+subtitle: "Atelier IFORD × GDSG · Distribué J3 matin"
+lang: fr
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    toc-location: left
+    theme: cosmo
+execute:
+  echo: true
+  warning: false
+  message: false
+bibliography: ../_commons/helpers/citations.bib
+---
+
+# Avant de regarder le corrigé
+
+Si tu n'as pas encore tenté l'exercice : **ferme ce fichier et lance-toi d'abord**. Le corrigé n'a de valeur que comparé à ta propre tentative.
+
+# Setup commun
+
+```{r}
+#| label: setup
+library(here)
+library(sf)
+library(dplyr)
+library(tibble)
+library(ggplot2)
+
+source(here("pedagogie", "_commons", "helpers", "fetch_data.R"))
+
+adm1 <- read_sf(fetch_gadm_cameroon(1))
+adm2 <- read_sf(fetch_gadm_cameroon(2))
+adm3 <- read_sf(fetch_gadm_cameroon(3))
+```
+
+# Q1 — Lire trois formats
+
+## Q1.a — Combien de départements ?
+
+```{r}
+#| label: q1a
+nrow(adm2)
+```
+
+Le Cameroun compte officiellement 58 départements (chiffre stable depuis 2008). GADM v4.1 doit retomber sur ce nombre ou très proche.
+
+## Q1.b — Colonnes utiles
+
+```{r}
+#| label: q1b
+names(adm2)
+```
+
+Pour la démographie : `NAME_2` (nom du département), `NAME_1` (région), `GID_2` (identifiant standardisé), `geometry`. Les colonnes `VARNAME_2` (variantes orthographiques) et `TYPE_2` (type administratif) sont aussi utiles pour les jointures avec d'autres bases.
+
+## Q1.c — Filtre SQL embarqué
+
+```{r}
+#| label: q1c
+centre_dep <- read_sf(
+  fetch_gadm_cameroon(2),
+  query = "SELECT * FROM gadm41_CMR_2 WHERE NAME_1 = 'Centre'"
+)
+nrow(centre_dep)
+```
+
+La région du Centre compte 10 départements. Le filtre SQL est exécuté **par GDAL** avant que R reçoive les données — pratique sur de gros volumes.
+
+# Q2 — Trois CRS sur le Nord-Ouest
+
+## Q2.a — Filtrer
+
+```{r}
+#| label: q2a
+nord_ouest <- adm1 |> filter(NAME_1 == "Nord-Ouest")
+```
+
+## Q2.b — Trois superficies
+
+```{r}
+#| label: q2b
+total_km2 <- function(x) as.numeric(st_area(x)) / 1e6
+
+tibble(
+  CRS = c("Lambert (3119)", "UTM 32N (32632)", "Web Mercator (3857)"),
+  superficie_km2 = c(total_km2(st_transform(nord_ouest, 3119)),
+                     total_km2(st_transform(nord_ouest, 32632)),
+                     total_km2(st_transform(nord_ouest, 3857))) |> round()
+)
+```
+
+La superficie officielle du Nord-Ouest est ∼17 300 km². Lambert et UTM sont très proches ; Web Mercator est notablement plus élevé.
+
+## Q2.c — Écart Mercator / Lambert
+
+```{r}
+#| label: q2c
+lambert <- total_km2(st_transform(nord_ouest, 3119))
+mercator <- total_km2(st_transform(nord_ouest, 3857))
+ecart_pct <- (mercator - lambert) / lambert * 100
+round(ecart_pct, 2)
+```
+
+À 6° N, le facteur de distorsion d'aire Web Mercator est environ `1/cos²(6°)` = 1.011. Donc un écart d'environ +1 %. C'est cohérent.
+
+**Lecture critique** : pour une seule région à basse latitude l'erreur Web Mercator est faible. Sur le Groenland (60°+) ce serait +400 % et plus. **Ne pas généraliser** à partir d'un cas où l'écart est petit.
+
+# Q3 — Buffer 10 km autour des chefs-lieux
+
+## Q3.a — `sf` puis UTM
+
+```{r}
+#| label: q3a
+chefs_lieux <- tibble(
+  region = c("Adamaoua","Centre","Est","Extrême-Nord","Littoral",
+             "Nord","Nord-Ouest","Ouest","Sud","Sud-Ouest"),
+  ville  = c("Ngaoundéré","Yaoundé","Bertoua","Maroua","Douala",
+             "Garoua","Bamenda","Bafoussam","Ebolowa","Buea"),
+  lon = c(13.5870, 11.5021, 13.6818, 14.3158, 9.7679,
+          13.3917, 10.1591, 10.4170, 11.1500, 9.2402),
+  lat = c( 7.3214,  3.8480,  4.5775, 10.5910, 4.0511,
+           9.3019,  5.9597,  5.4778,  2.9000, 4.1546)
+) |>
+  st_as_sf(coords = c("lon", "lat"), crs = 4326) |>
+  st_transform(32632)
+```
+
+## Q3.b — Buffer 10 km
+
+```{r}
+#| label: q3b
+buffers_10km <- st_buffer(chefs_lieux, dist = 10000)
+```
+
+## Q3.c — Arrondissements intégralement dans le buffer de Yaoundé
+
+```{r}
+#| label: q3c
+buf_yaounde <- buffers_10km |> filter(ville == "Yaoundé")
+adm3_utm <- st_transform(adm3, 32632)
+
+# st_contains retourne une liste d'index ; on aplatit
+dans_buffer_yde <- adm3_utm[st_contains(buf_yaounde, adm3_utm, sparse = FALSE), ]
+nrow(dans_buffer_yde)
+head(dans_buffer_yde$NAME_3, 10)
+```
+
+**Piège à éviter** : `st_intersects()` (au moins une portion en commun) ≠ `st_contains()` (intégralement à l'intérieur). Pour la question « lesquels sont dans le buffer », `st_contains()` est plus strict.
+
+# Q4 — Dissolve ADM3 → ADM2
+
+## Q4.a — Pipeline
+
+```{r}
+#| label: q4a
+adm2_from_adm3 <- adm3 |>
+  group_by(NAME_1, NAME_2) |>
+  summarise(n_arrondissements = n(),
+            geometry = st_union(geometry),
+            .groups = "drop")
+
+nrow(adm2_from_adm3)
+```
+
+## Q4.b — Comparaison avec ADM2 direct
+
+```{r}
+#| label: q4b
+c(adm2_directement = nrow(adm2),
+  adm2_dissous = nrow(adm2_from_adm3))
+```
+
+Les deux nombres devraient être proches (∼58). Petite différence possible si certains arrondissements de GADM n'ont pas de département parent correctement renseigné, ou si la version ADM2 a été nettoyée différemment de l'ADM3.
+
+## Q4.c — Comparaison de superficie
+
+```{r}
+#| label: q4c
+sup_directement <- sum(as.numeric(st_area(st_transform(adm2, 3119)))) / 1e6
+sup_dissous     <- sum(as.numeric(st_area(st_transform(adm2_from_adm3, 3119)))) / 1e6
+c(directement = round(sup_directement),
+  dissous = round(sup_dissous),
+  ecart_pct = round((sup_dissous - sup_directement) / sup_directement * 100, 3))
+```
+
+L'écart est < 0.1 % en général. Il vient de la **généralisation** des contours : ADM2 et ADM3 peuvent avoir des contours légèrement différents au niveau des frontières inter-départementales.
+
+# Q5 — Voronoï sur le Nord
+
+## Q5.a — Silhouette des trois régions du nord
+
+```{r}
+#| label: q5a
+nord_union <- adm1 |>
+  filter(NAME_1 %in% c("Nord","Adamaoua","Extrême-Nord")) |>
+  st_union()
+```
+
+## Q5.b — Couper le Voronoï
+
+```{r}
+#| label: q5b
+#| fig-width: 8
+#| fig-height: 6
+chefs_lieux_4326 <- tibble(
+  region = c("Adamaoua","Centre","Est","Extrême-Nord","Littoral",
+             "Nord","Nord-Ouest","Ouest","Sud","Sud-Ouest"),
+  ville  = c("Ngaoundéré","Yaoundé","Bertoua","Maroua","Douala",
+             "Garoua","Bamenda","Bafoussam","Ebolowa","Buea"),
+  lon = c(13.5870, 11.5021, 13.6818, 14.3158, 9.7679,
+          13.3917, 10.1591, 10.4170, 11.1500, 9.2402),
+  lat = c( 7.3214,  3.8480,  4.5775, 10.5910, 4.0511,
+           9.3019,  5.9597,  5.4778,  2.9000, 4.1546)
+) |>
+  st_as_sf(coords = c("lon", "lat"), crs = 4326)
+
+pts_union <- st_union(chefs_lieux_4326)
+voronoi_complet <- st_collection_extract(st_voronoi(pts_union), "POLYGON") |> st_sf(crs = 4326)
+voronoi_nord <- st_intersection(voronoi_complet, nord_union)
+
+ggplot() +
+  geom_sf(data = voronoi_nord, fill = NA, color = "grey50") +
+  geom_sf(data = nord_union, fill = NA, color = "black", linewidth = 0.5) +
+  geom_sf(data = chefs_lieux_4326 |>
+            filter(region %in% c("Nord","Adamaoua","Extrême-Nord")),
+          color = "red", size = 3) +
+  labs(title = "Voronoï des chefs-lieux limité au nord du Cameroun") +
+  theme_minimal()
+```
+
+## Q5.c — Interprétation
+
+Les cellules ainsi obtenues délimitent les **zones d'influence** des trois chefs-lieux (Ngaoundéré, Maroua, Garoua) **à l'intérieur de la macro-région du nord**. Une frontière entre deux cellules est l'ensemble des points équidistants à deux chefs-lieux — c'est une bissectrice perpendiculaire au segment qui les relie.
+
+**Limite à signaler** : cette modélisation suppose que la « proximité » est uniquement géométrique, sans tenir compte du relief, des routes, ou des barrières administratives. Pour l'accessibilité réelle aux services (santé, scolarisation), il faut un modèle de friction (cf. J7).
+
+# Q6 — GeoPackage multi-couches
+
+## Étapes 1 et 2 — Préparation et validation
+
+```{r}
+#| label: q6-prep
+adm1_lambert <- st_transform(adm1, 3119) |> st_make_valid()
+adm2_lambert <- st_transform(adm2, 3119) |> st_make_valid()
+adm3_lambert <- st_transform(adm3, 3119) |> st_make_valid()
+
+# Calculer les superficies
+adm1_lambert$superficie_km2 <- as.numeric(st_area(adm1_lambert)) / 1e6
+adm2_lambert$superficie_km2 <- as.numeric(st_area(adm2_lambert)) / 1e6
+adm3_lambert$superficie_km2 <- as.numeric(st_area(adm3_lambert)) / 1e6
+
+# Pour ADM2, ajouter n_arrondissements via dissolve depuis ADM3
+n_arr_par_dep <- adm3_lambert |>
+  st_drop_geometry() |>
+  group_by(NAME_1, NAME_2) |>
+  summarise(n_arrondissements = n(), .groups = "drop")
+
+adm2_lambert <- adm2_lambert |>
+  left_join(n_arr_par_dep, by = c("NAME_1", "NAME_2"))
+```
+
+## Étape 3 — Écriture multi-couches
+
+```{r}
+#| label: q6-write
+#| eval: false
+out_path <- here("pedagogie", "J02_sf_CRS_vecteurs", "outputs",
+                 "CMR_admin_lambert.gpkg")
+dir.create(dirname(out_path), showWarnings = FALSE, recursive = TRUE)
+
+write_sf(adm1_lambert, out_path, layer = "adm1", delete_dsn = TRUE)
+write_sf(adm2_lambert, out_path, layer = "adm2", delete_layer = TRUE)
+write_sf(adm3_lambert, out_path, layer = "adm3", delete_layer = TRUE)
+
+st_layers(out_path)
+```
+
+## Étape 4 — Inspection croisée
+
+```{r}
+#| label: q6-readback
+#| eval: false
+adm2_relu <- read_sf(out_path, layer = "adm2")
+
+c(n_dep = nrow(adm2_relu),
+  total_arrondissements = sum(adm2_relu$n_arrondissements, na.rm = TRUE),
+  superficie_totale_km2 = sum(adm2_relu$superficie_km2) |> round())
+```
+
+Valeurs attendues : ∼58 départements, ∼365 arrondissements, ∼475 442 km².
+
+# Erreurs fréquentes
+
+| Erreur | Cause | Remède |
+|---|---|---|
+| `st_buffer` donne un résultat absurde (un point au lieu d'un cercle) | Tu as appelé `st_buffer` sur un objet en WGS 84 avec une distance en mètres | Reprojeter en UTM avant : `st_transform(x, 32632) |> st_buffer(50000)` |
+| `Error : agr columns and geometries differ` après `summarise(geometry = st_union(...))` | dplyr a perdu la classe `sf` | Récupérer en `st_as_sf(result)` ou retourner explicitement `geometry = st_union(geometry)` dans `summarise` |
+| `write_sf` plante avec « Dataset already exists » | Le `.gpkg` existe déjà | Ajouter `delete_dsn = TRUE` (pour tout le fichier) ou `delete_layer = TRUE` (pour une seule couche) |
+| Géométrie invalide après reprojection | GEOS pincée par la transformation | `st_make_valid()` systématiquement après `st_transform()` |
+| Encodage cassé sur les accents (« Extr�me-Nord ») | `.dbf` sans `.cpg` indiquant l'encodage | Lire avec `read_sf(..., options = "ENCODING=UTF-8")` |
+
+# Préparation pour J3
+
+Demain on entre dans `tmap` v4 en profondeur : modes plot/view, classifications (Jenks, quantiles, intervalles), palettes (ColorBrewer, viridis), décoration (compass, scale, multi-panel), export interactif. Le pipeline du jour combinera GADM ADM1 (la sortie de J1) + données BUCREP simulées + carte choroplèthe publiable.
+
+# Références
+
+@pebesma2018simple ; @bucrep_rgph4.

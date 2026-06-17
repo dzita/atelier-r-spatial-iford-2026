@@ -1,0 +1,115 @@
+---
+title: "J10 — Activités du jour : reproductibilité + présentation"
+subtitle: "Atelier IFORD × GDSG · 6 août 2026"
+lang: fr
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    toc-location: left
+    theme: cosmo
+  pdf:
+    toc: true
+---
+
+# Mode d'emploi
+
+J10 mêle **activités techniques en séance** (Q1 à Q3) et **préparation de la présentation courte** (cahier des charges Q4). Pas de devoir du soir — c'est le dernier jour.
+
+# Q1 — Initialiser un projet RStudio versionné Git {#sec-q1}
+
+> Référence démo : section « Étapes 1 et 2 ».
+
+À partir de RStudio sur ta machine :
+
+1. **a.** Crée un nouveau projet avec `usethis::create_project("~/projets/cmr_demo_j10")`.
+2. **b.** Active Git dessus avec `usethis::use_git()`.
+3. **c.** Crée un dépôt distant GitHub avec `usethis::use_github()` **OU** manuellement via le navigateur + commandes git.
+4. **d.** Fais un premier commit + push. Vérifie sur github.com que ton repo est en ligne.
+
+> 💡 Si `usethis::use_github()` plante : c'est probablement que ton token GitHub n'est pas configuré. Manuel via terminal RStudio : `git remote add origin https://github.com/<user>/cmr_demo_j10.git` puis `git push -u origin main`.
+
+# Q2 — Construire un rapport Quarto reproductible {#sec-q2}
+
+> Référence démo : section « Étape 4 ».
+
+Dans ton projet `cmr_demo_j10` :
+
+1. **a.** Crée un fichier `rapport.qmd` avec le squelette YAML + introduction de 100 mots sur la question « densité de population du Cameroun 2020 ».
+2. **b.** Ajoute **deux blocs de code R** : un qui charge `sf` et lit GADM ADM1 ; un qui produit une carte ggplot des 10 régions.
+3. **c.** Rends en PDF avec `quarto render rapport.qmd --to pdf`. Vérifie que le PDF s'ouvre.
+4. **d.** Commit + push.
+
+# Q3 — Automatisation : fonction + boucle {#sec-q3}
+
+> Référence démo : section « Étape 5 ».
+
+À partir des données ADM1 :
+
+1. **a.** Écris une fonction `superficie_region(nom)` qui prend un nom de région et retourne sa superficie en km² (UTM 32 N).
+2. **b.** Applique cette fonction à toutes les 10 régions avec `purrr::map_dbl(adm1$NAME_1, superficie_region)`.
+3. **c.** Compare le temps avec une **boucle `for`** classique. Lequel est plus lisible ? Lequel est plus rapide ?
+4. **d.** Commit ton script avec un message descriptif.
+
+# Q4 — Cahier des charges de la présentation courte {#sec-q4}
+
+## Format
+
+**5 à 8 minutes** par participant (ou binôme).
+
+## Contenu attendu
+
+| Élément | Durée approximative |
+|---|---|
+| **Slide 1** : « Ce que j'ai produit » | 30 s |
+| **Slides 2–3** : Démonstration du livrable (carte, analyse, script) | 3 min |
+| **Slide 4** : « Ce que j'ai appris en le faisant » | 1 min |
+| **Slide 5** : « Comment je vais le réutiliser dans mon institution » | 1 min |
+| **Slide 6** : Questions / Remerciements | 30 s |
+
+## Choix du livrable à présenter
+
+Tout ce qui a été produit pendant les 9 jours précédents est valide :
+
+- Une **carte de production** complète (J5/cartographie).
+- Une **analyse top-down** sur un département (J7).
+- Une **fonction R utile** que tu as construite.
+- Un **croisement raster × vecteur** (J3 + J6).
+- Un **micro-projet** d'application à ton institution.
+
+## Conseils tactiques
+
+1. **Pas plus de 6 slides** — le format court oblige à choisir.
+2. **Une slide = une idée** — pas de bullet points denses.
+3. **Une carte par slide visuelle** — laisse le visuel parler.
+4. **Préparer la question « comment je vais réutiliser ? »** — c'est ce que le jury de l'IFORD retient le plus.
+
+## Préparation
+
+Tu peux utiliser `slides.qmd` (revealjs) construit comme on a vu en J1 / J5. Ou un PowerPoint classique si tu préfères. L'important est la **clarté du message**, pas l'outil.
+
+## Bonus : graviter sur ton portfolio
+
+Si tu as un compte GitHub, **publie ton projet** sur celui-ci avant la fin de l'atelier — tu repars avec un livrable que tu peux montrer à ton institution ou à un futur employeur.
+
+# Activité collective — Évaluation de l'atelier
+
+À la fin de la journée, **évaluation anonyme** via Forms IFORD. 10 questions, 5 minutes.
+
+Trois axes :
+
+1. **Contenu** : équilibrage des 10 jours.
+2. **Forme** : qualité des supports (slides, démos, runtimes WebR).
+3. **Suite** : besoins de formation continue.
+
+Tes réponses influencent directement l'atelier 2027.
+
+# Activité collective — Cérémonie
+
+À l'issue des présentations, **remise des certificats** par Pr Kuépié + photo de groupe.
+
+# Si tu bloques
+
+Demande à l'animateur ou aux co-formateurs présents. Pas de devoir du soir — repos amplement mérité.
+
+**Bonne dernière journée !**

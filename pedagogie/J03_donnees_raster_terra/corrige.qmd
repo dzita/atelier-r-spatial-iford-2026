@@ -1,0 +1,234 @@
+---
+title: "J3 — Corrigés : raster avec terra"
+subtitle: "Atelier IFORD × GDSG · Distribué J4 matin"
+lang: fr
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    toc-location: left
+    theme: cosmo
+execute:
+  echo: true
+  warning: false
+  message: false
+bibliography: ../_commons/helpers/citations.bib
+---
+
+# Avant le corrigé
+
+Si tu n'as pas tenté l'exercice : ferme ce fichier et lance-toi.
+
+# Setup commun
+
+```{r}
+#| label: setup
+library(here)
+library(sf)
+library(terra)
+library(dplyr)
+library(tibble)
+library(ggplot2)
+library(exactextractr)
+
+source(here("pedagogie", "_commons", "helpers", "fetch_data.R"))
+source(here("pedagogie", "_commons", "helpers", "theme_iford.R"))
+
+set.seed(2026)
+srtm <- rast(ncol = 200, nrow = 240,
+             xmin = 8.5, xmax = 16.5, ymin = 1.5, ymax = 13.5,
+             crs = "EPSG:4326")
+y_norm <- (terra::yFromRow(srtm, 1:nrow(srtm)) - 1.5) / 12
+values(srtm) <- as.vector(matrix(rep(200 + 1200 * y_norm, each = ncol(srtm)),
+                                 nrow = nrow(srtm), byrow = TRUE) +
+                          rnorm(ncell(srtm), 0, 80))
+names(srtm) <- "elevation_m"
+
+adm0 <- read_sf(fetch_gadm_cameroon(0))
+adm1 <- read_sf(fetch_gadm_cameroon(1))
+adm2 <- read_sf(fetch_gadm_cameroon(2))
+adm3 <- read_sf(fetch_gadm_cameroon(3))
+```
+
+# Q1 — Inspection
+
+```{r}
+#| label: q1
+c(resolution_deg = res(srtm)[1],
+  resolution_metres_approx = res(srtm)[1] * 111000,
+  nb_cellules = ncell(srtm),
+  nb_bandes = nlyr(srtm))
+```
+
+**Q1.a** : résolution 0.04° ≈ 4.4 km. Beaucoup plus grossière que le vrai SRTM 30 m (qui serait à 0.00028°).
+
+**Q1.b** : 48 000 cellules globales → après crop sur le Cameroun ∼ 11 000–14 000 cellules selon l'orientation.
+
+**Q1.c** : SRTM = 1 bande (élévation). Sentinel-2 = 13 bandes (chacune une longueur d'onde spectrale différente : bleu, vert, rouge, NIR, SWIR, etc.). Multi-bande quand la donnée a plusieurs dimensions par pixel.
+
+# Q2 — Crop + Mask
+
+```{r}
+#| label: q2
+centre <- adm1 |> filter(NAME_1 == "Centre")
+srtm_centre_crop   <- crop(srtm, centre)
+srtm_centre_masked <- mask(srtm_centre_crop, vect(centre))
+
+c(crop_seul = ncell(srtm_centre_crop),
+  apres_mask = ncell(srtm_centre_masked),
+  pixels_NA  = sum(is.na(values(srtm_centre_masked))))
+```
+
+**Q2.c** : `crop` réduit l'étendue rectangulaire (gain mémoire et performance), `mask` met `NA` hors des polygones (propreté analytique). Faire `mask` seul garde la bbox complète du raster d'origine — beaucoup de cellules `NA` inutiles. Le couple `crop` + `mask` est optimal.
+
+# Q3 — Algèbre raster
+
+```{r}
+#| label: q3
+srtm_cmr <- mask(crop(srtm, adm0), vect(adm0))
+interesting <- (srtm_cmr > 200) & (srtm_cmr < 800)
+
+# Superficie d'une cellule en km^2 (approximation a la latitude du Cameroun)
+area_cell_km2 <- prod(res(srtm_cmr)) * (111 ** 2) * cos(7 * pi / 180)
+
+# Cellules TRUE
+n_true <- sum(values(interesting) == 1, na.rm = TRUE)
+sup_interesting_km2 <- n_true * area_cell_km2
+
+# Total Cameroun
+n_total <- sum(!is.na(values(srtm_cmr)))
+sup_totale_km2 <- n_total * area_cell_km2
+
+c(superficie_interesting_km2 = round(sup_interesting_km2),
+  superficie_totale_km2 = round(sup_totale_km2),
+  pct = round(sup_interesting_km2 / sup_totale_km2 * 100, 1))
+```
+
+**Lecture** : 50–60 % du territoire camerounais est à altitude moyenne (200–800 m). C'est cohérent avec la géographie du pays : plateau central + collines transitoires.
+
+# Q4 — Extraction zonale par département
+
+```{r}
+#| label: q4
+elev_dep <- exact_extract(srtm_cmr, adm2, "mean")
+adm2_avec_elev <- adm2 |>
+  mutate(elev_moy = round(elev_dep))
+
+# Top et bottom
+adm2_avec_elev |>
+  st_drop_geometry() |>
+  select(NAME_1, NAME_2, elev_moy) |>
+  arrange(desc(elev_moy)) |>
+  head(5)
+
+adm2_avec_elev |>
+  st_drop_geometry() |>
+  select(NAME_1, NAME_2, elev_moy) |>
+  arrange(elev_moy) |>
+  head(5)
+```
+
+**Q4.c** : sur le simulé, le département gagnant ADM2 est généralement dans la région Adamaoua ou Nord (gradient nord). Cohérent avec ce qu'on a vu sur ADM1. Sur le vrai SRTM, c'est confirmé : les départements du Mbéré et de la Vina (Adamaoua) sont les plus élevés.
+
+# Q5 — Aggregate et resample
+
+```{r}
+#| label: q5
+srtm_agg10 <- aggregate(srtm_cmr, fact = 10, fun = "mean", na.rm = TRUE)
+res(srtm_agg10)
+ncell(srtm_agg10)
+
+template_1km <- rast(srtm_cmr)
+res(template_1km) <- c(0.009, 0.009)  # ~1km
+srtm_1km <- resample(srtm_cmr, template_1km, method = "bilinear")
+res(srtm_1km)
+```
+
+**Q5.c** : `near` (nearest neighbor) pour les variables **catégorielles** (occupation du sol, classes climatiques). `bilinear` pour les variables **continues** (élévation, NDVI, température). Si on utilise `bilinear` sur une donnée catégorielle, on obtient des valeurs fractionnaires absurdes (par exemple « classe 1.7 » quand les classes sont {1, 2, 3}).
+
+# Q6 — 20 arrondissements les plus bas
+
+```{r}
+#| label: q6
+adm3_elev <- adm3 |>
+  mutate(elev_moy = round(exact_extract(srtm_cmr, adm3, "mean")))
+
+# 20 plus bas
+top20_bas <- adm3_elev |>
+  arrange(elev_moy) |>
+  head(20)
+
+top20_bas |>
+  st_drop_geometry() |>
+  select(NAME_1, NAME_2, NAME_3, elev_moy)
+```
+
+## Carte de production
+
+```{r}
+#| label: q6-carte
+#| fig-width: 10
+#| fig-height: 8
+ggplot() +
+  geom_sf(data = adm3, fill = "grey92", color = "white", linewidth = 0.15) +
+  geom_sf(data = top20_bas, aes(fill = elev_moy),
+          color = "darkred", linewidth = 0.4) +
+  scale_fill_distiller(palette = "OrRd", direction = 1,
+                       name = "Élévation\nmoyenne (m)") +
+  geom_sf_text(data = top20_bas, aes(label = NAME_3),
+               size = 2, color = "black",
+               check_overlap = TRUE) +
+  labs(
+    title = "Les 20 arrondissements à plus basse altitude — Cameroun",
+    subtitle = "MNT SRTM agrégé par exact_extract(adm3, fun = mean)",
+    caption = "Sources : SRTM 30 m · GADM v4.1 · IFORD × GDSG 2026"
+  ) +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+```{r}
+#| label: q6-export
+#| eval: false
+out_dir <- here("pedagogie", "J03_donnees_raster_terra", "outputs")
+dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+ggsave(file.path(out_dir, "top20_arr_bas.png"), width = 10, height = 8, dpi = 300)
+ggsave(file.path(out_dir, "top20_arr_bas.pdf"), width = 10, height = 8)
+```
+
+## Lecture critique
+
+Les 20 arrondissements identifiés sont attendus dans :
+
+- **Logone-et-Chari, Mayo-Sava, Mayo-Tsanaga** (Extrême-Nord) — plaine sahélienne et bordure du Lac Tchad.
+- **Wouri, Sanaga-Maritime** (Littoral) — plaine côtière de Douala.
+- **Mvila, Vallée-du-Ntem** (Sud) — basse altitude du sud forestier.
+
+**« Élévation < seuil » est un proxy très grossier** pour le risque inondation. Variables qui manquent :
+
+- **Pluviométrie annuelle** (Extrême-Nord = 600–900 mm/an, Mokolo = bassin du Logone — risque saisonnier élevé).
+- **Hydrographie** : présence et orientation des cours d'eau.
+- **Drainage** : capacité du sol à évacuer (sol sableux vs argileux).
+- **Urbanisation** : les zones bâties imperméables augmentent le ruissellement.
+- **Couverture forestière** : la déforestation augmente le risque.
+
+Pour un modèle sérieux : il faudrait combiner SRTM + climatologie + bâti + sols. C'est ce qui sera abordé en J7 (cartographie haute résolution) et J9 (sciences sociales et spatiales — exposition aux inondations).
+
+# Erreurs fréquentes
+
+| Erreur | Cause | Remède |
+|---|---|---|
+| `extract` retourne des NA partout | Le raster et les polygones n'ont pas le même CRS | `project()` le raster ou `st_transform()` les polygones pour aligner |
+| `aggregate` plante avec une erreur mémoire | Raster trop gros pour la RAM | Augmenter `terraOptions(memfrac = 0.7)` ou découper d'abord par `crop` |
+| `resample(bilinear)` produit des classes fractionnaires | Donnée catégorielle traitée comme continue | Utiliser `method = "near"` pour les rasters catégoriels |
+| `exact_extract` n'est pas trouvé | Package non installé | `install.packages("exactextractr")` |
+| Élévations négatives sur le simulé | Le `rnorm(sd = 80)` peut produire des valeurs négatives | Sur la vraie donnée SRTM, les océans sont à 0 et les altitudes vraies sont positives |
+
+# Préparation pour J4
+
+Demain on entre dans le **tidyverse appliqué à l'analyse spatiale** : jointures CSV ↔ sf, gestion des valeurs manquantes, et étude de cas EDS-MICS 2018. C'est le passage du raster au tabulaire d'enquête.
+
+# Références
+
+@hijmans2024terra ; @tatem2017worldpop ; @bucrep_rgph4.

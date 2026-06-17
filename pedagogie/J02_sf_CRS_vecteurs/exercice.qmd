@@ -1,0 +1,114 @@
+---
+title: "J2 — Exercices"
+subtitle: "Atelier IFORD × GDSG · 28 juillet 2026"
+lang: fr
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    toc-location: left
+    theme: cosmo
+  pdf:
+    toc: true
+---
+
+# Mode d'emploi
+
+Six exercices : Q1 à Q5 sont des **micro-exercices** (5–10 min chacun) à pratiquer pendant la séance, après le bloc de démonstration correspondant. Q6 est le **devoir individuel du soir** (∼30 min). Les solutions sont dans `corrige.qmd`, à n'ouvrir qu'**après** ta tentative.
+
+# Q1 — Lire trois formats {#sec-q1}
+
+> Référence démo : section « Lecture et écriture multi-format ».
+
+1. **a.** Lis le fichier GADM ADM2 (`fetch_gadm_cameroon(2)`). Combien de départements le Cameroun compte-t-il ?
+2. **b.** Liste les colonnes attributaires. Lesquelles te paraissent les plus utiles pour des analyses démographiques ?
+3. **c.** Avec `query =`, ne charge que les départements de la **région du Centre** (`NAME_1 = 'Centre'`). Combien en obtiens-tu ?
+
+# Q2 — Trois CRS, trois superficies {#sec-q2}
+
+> Référence démo : section « CRS appliqué ».
+
+Pour la région du **Nord-Ouest** (anglophone, contexte sécuritaire) :
+
+1. **a.** Filtre `adm1` sur cette région.
+2. **b.** Calcule sa superficie dans les trois CRS : Lambert Cameroun (3119), UTM 32 N (32632), Web Mercator (3857). Quelle valeur retient-on comme « vraie » ?
+3. **c.** Quel est l'écart relatif (en %) entre Web Mercator et Lambert ? Est-ce cohérent avec la latitude du Nord-Ouest (∼6° N) ?
+
+# Q3 — Buffer 10 km autour des chefs-lieux {#sec-q3}
+
+> Référence démo : section « Buffer ».
+
+À partir du tibble `chefs_lieux` (10 villes capitales régionales) :
+
+1. **a.** Convertis en `sf` puis reprojette en UTM 32 N.
+2. **b.** Construis un buffer de 10 km autour de chaque chef-lieu.
+3. **c.** Quels arrondissements (ADM3) sont **intégralement** dans le buffer de Yaoundé ? (Astuce : `st_contains()`.)
+
+# Q4 — Dissolve par département {#sec-q4}
+
+> Référence démo : section « Dissolve ».
+
+Au lieu de dissoudre ADM3 vers ADM1, dissous ADM3 vers **ADM2** (départements) :
+
+1. **a.** Écris le pipeline `group_by + summarise` correspondant.
+2. **b.** Combien obtiens-tu de départements ? Cohérent avec ce que GADM ADM2 indique directement ?
+3. **c.** Compare la superficie totale des deux versions (ton dissolve vs `adm2` directement). Différence attendue ?
+
+# Q5 — Voronoï corrigé sur la silhouette du Nord {#sec-q5}
+
+> Référence démo : section « Voronoï ».
+
+Reprends le diagramme de Voronoï des chefs-lieux, mais cette fois limite-le aux **trois régions du nord** (Nord, Adamaoua, Extrême-Nord) :
+
+1. **a.** Construis la silhouette `nord_union = st_union(adm1 |> filter(NAME_1 %in% c("Nord","Adamaoua","Extrême-Nord")))`.
+2. **b.** Coupe le diagramme de Voronoï complet sur cette silhouette.
+3. **c.** Comment interprètes-tu les cellules ainsi obtenues ? Quel sens donner aux frontières entre cellules dans cette zone ?
+
+# Q6 — Devoir : GeoPackage multi-couches du Cameroun {#sec-q6}
+
+> ⏱ **~30 minutes**, à faire le soir.
+
+## Objectif
+
+Produire un GeoPackage `CMR_admin_lambert.gpkg` à trois couches, prêt à être distribué à un collègue pour ses propres analyses.
+
+## Étape 1 — Préparer les trois couches
+
+1. Charger ADM1, ADM2, ADM3.
+2. Reprojeter chacune en Lambert Cameroun (EPSG:3119).
+3. Pour chaque couche, ajouter une colonne `superficie_km2` calculée avec `st_area()`.
+4. Pour ADM2, ajouter aussi une colonne `n_arrondissements` calculée par dissolve depuis ADM3.
+
+## Étape 2 — Vérifier les géométries
+
+5. Sur chaque couche reprojetée, appliquer `st_is_valid()`. Si une géométrie est invalide, la réparer avec `st_make_valid()`.
+
+## Étape 3 — Écrire le GeoPackage
+
+6. Créer le dossier `pedagogie/J02_sf_CRS_vecteurs/outputs/` si nécessaire.
+7. Écrire les trois couches dans `CMR_admin_lambert.gpkg` (utiliser `delete_layer = TRUE` pour les deux dernières).
+8. Vérifier le résultat avec `st_layers()`.
+
+## Étape 4 — Inspection croisée
+
+9. Re-lire **uniquement la couche ADM2** depuis le `.gpkg` (avec `layer = "adm2"`).
+10. Compter le nombre total d'arrondissements (somme de `n_arrondissements`) — doit retomber sur ∼365.
+
+## Critères de réussite
+
+- ☐ Le `.gpkg` contient bien trois couches : `adm1`, `adm2`, `adm3`.
+- ☐ Toutes les géométries sont valides.
+- ☐ La somme des superficies ADM1 ≈ somme des superficies ADM2 ≈ somme ADM3 ≈ 475 442 km².
+- ☐ La somme des `n_arrondissements` (sur ADM2) est cohérente avec `nrow(adm3)`.
+
+## Pour aller plus loin (bonus)
+
+- Ouvre le `.gpkg` dans **QGIS** (Layer → Add Layer → Add Vector Layer). Les trois couches doivent apparaître. Affiche-les superposées avec des couleurs différentes.
+- Compare l'affichage QGIS à ce que tu vois dans R — c'est le même fichier, le même CRS, le même algorithme GEOS sous-jacent. C'est la **portabilité** des standards OGC.
+
+# Si tu bloques
+
+- Relis la section correspondante de `demo.qmd`.
+- Le corrigé est dans `corrige.qmd`, à n'ouvrir qu'**après** ta tentative.
+
+Bonne pratique !

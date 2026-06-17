@@ -1,0 +1,395 @@
+---
+title: "J3 — Cartographie thématique : `tmap` et `ggplot2`"
+subtitle: "Atelier IFORD × GDSG · Yaoundé · 29 juillet 2026"
+author: "Ramesesse Dzita · Geospatial Data Science Group"
+date: "2026-07-29"
+format:
+  revealjs:
+    theme:
+      - default
+      - ../_commons/styles/slides_revealjs.scss
+    slide-number: c/t
+    transition: fade
+    progress: true
+    chalkboard: true
+    footer: "IFORD × GDSG 2026 — J3 · Cartographie thématique"
+    incremental: false
+    code-fold: false
+    code-line-numbers: false
+execute:
+  echo: false
+  warning: false
+  message: false
+bibliography: ../_commons/helpers/citations.bib
+---
+
+# Partie 0 — Reprise J2 et plan J3 {data-state="section-break"}
+
+## Ce qu'on a vu hier
+
+::: {.columns}
+::: {.column width="50%"}
+**Formats et CRS**
+
+- `read_sf` / `write_sf` pour tous formats
+- GeoPackage = format moderne par défaut
+- Trois CRS Cameroun : 4326 / 32632 / 3119
+- Règle d'or : reprojeter le plus tard possible
+:::
+::: {.column width="50%"}
+**Opérations vectorielles**
+
+- `st_buffer`, `st_intersection`, `st_union`
+- Dissolve = `group_by + summarise(geometry = st_union)`
+- `st_voronoi` pour zones d'influence
+- `st_make_valid` après reprojection
+:::
+:::
+
+## Plan détaillé de J3 (8 h)
+
+| Bloc | Durée | Format |
+|---|---|---|
+| **Wrap-up J2 + intro J3** | 30 min | Slides |
+| **Théorie 1** — Sémiologie graphique appliquée | 45 min | Slides |
+| **Démo 1** — Choroplèthe `tmap` basique | 1 h | Démo + Q1 |
+| **Théorie 2** — Classifications et palettes | 45 min | Slides |
+| **Démo 2** — Quatre classifications comparées | 1 h | Démo + Q2–Q3 |
+| **Théorie 3** — Décoration et publication | 45 min | Slides |
+| **Démo 3** — Multi-panel, export, interactif | 1 h 30 | Démo + Q4–Q5 |
+| **Synthèse + Q6 + Q&A** | 30 min | Slides |
+
+# Partie 1 — Sémiologie graphique appliquée {data-state="section-break"}
+
+## Rappel : les six variables visuelles de Bertin (1967)
+
+| Variable visuelle | Type encodable | Exemple |
+|---|---|---|
+| **Taille** | Quantitative | Cercles proportionnels à la population |
+| **Valeur** (clair → foncé) | Ordinale ou quantitative | Choroplèthe densité |
+| **Grain / texture** | Ordinale | Hachures pour zone non observée |
+| **Couleur** (teinte) | Catégorielle | Une teinte par typologie |
+| **Orientation** | Catégorielle | Symboles directionnels |
+| **Forme** | Catégorielle | Carrés vs triangles vs cercles |
+
+Pour une carte démographique : **valeur** (choroplèthe) et **taille** (symboles proportionnels) sont les deux outils dominants.
+
+## Quand choroplèthe, quand symboles proportionnels ?
+
+::: {.columns}
+::: {.column width="50%"}
+**Choroplèthe**
+
+Une seule variable quantitative encodée en valeur (clair → foncé) sur des polygones administratifs.
+
+**À privilégier** quand :
+
+- La variable est un **ratio normalisé** (densité, pourcentage, indicateur).
+- Les polygones sont d'aires comparables.
+:::
+::: {.column width="50%"}
+**Symboles proportionnels**
+
+Cercles dont l'aire est proportionnelle à un effectif brut, placés sur le centroïde.
+
+**À privilégier** quand :
+
+- La variable est un **effectif absolu** (population totale, nombre de cas).
+- Les polygones sont d'aires très inégales.
+:::
+:::
+
+::: {.callout-important title="Erreur fréquente"}
+Choroplèthe sur un **effectif brut** (population totale) sur des régions de tailles très différentes — le Centre apparaît « rouge » simplement parce qu'il est grand, pas parce qu'il est dense. Toujours **normaliser** avant choroplèthe : densité, pourcentage, ratio.
+:::
+
+## La hiérarchie de l'attention visuelle
+
+Une carte n'a qu'**une question principale** à raconter. Tout le reste doit s'effacer pour ne pas distraire. Hiérarchie type :
+
+1. **Donnée principale** (choroplèthe ou symboles) — couleur saturée.
+2. **Frontières administratives** — trait blanc ou gris clair.
+3. **Étiquettes** — texte blanc sur fond foncé, texte foncé sur fond clair.
+4. **Habillage** (titre, légende, flèche, échelle) — petit, discret, en marge.
+5. **Crédits, sources** — encore plus petit, en bas à droite.
+
+Le **fond de carte** (relief, hydrographie) ne sert qu'en cartographie de précision (J5+). Pour les choroplèthes thématiques, on s'en passe.
+
+# Partie 2 — Classifications et palettes {data-state="section-break"}
+
+## Quatre algorithmes de classification
+
+Pour transformer une variable continue en classes colorées :
+
+| Méthode | Logique | Quand l'utiliser |
+|---|---|---|
+| **Intervalles égaux** | Découpe l'amplitude en n parts de même largeur | Données uniformément distribuées |
+| **Quantiles** | Chaque classe contient le même nombre d'unités | Garantit la lisibilité de la légende |
+| **Jenks (Fisher)** | Maximise la variance inter-classes | Distributions très inégales (souvent le cas démographique) |
+| **Manuel** | Seuils choisis par expert | Comparaison à des seuils réglementaires |
+
+Le choix de la méthode **change la carte**. La même donnée avec deux découpages peut raconter deux histoires opposées.
+
+## Démonstration : densité du Cameroun, quatre méthodes
+
+À voir en démo : la densité par région du Cameroun (sortie de J1) projetée avec :
+
+1. Intervalles égaux (5 classes)
+2. Quantiles (5 classes)
+3. Jenks (5 classes)
+4. Manuel : seuils 10, 50, 100, 200 hab/km²
+
+Conclusion attendue : Jenks est le plus informatif sur cette donnée — la distribution de la densité est très inégale (Littoral ∼170 vs Sud ∼7).
+
+## Palettes : choisir par nature de la donnée
+
+| Nature de la donnée | Type de palette | Exemples |
+|---|---|---|
+| **Séquentielle** (croissante) | Une teinte qui s'intensifie | `viridis`, `Blues`, `YlOrRd` |
+| **Divergente** (autour d'un centre) | Deux teintes qui s'opposent | `RdBu`, `BrBG`, `PiYG` |
+| **Catégorielle** (sans ordre) | Plusieurs teintes distinctes | `Set3`, `Paired`, `Dark2` |
+
+`viridis` (Liu & Heer 2018) est le défaut moderne : perceptuellement uniforme, daltonien-friendly, lisible en niveaux de gris.
+
+## ColorBrewer : la référence académique
+
+Cynthia Brewer (1994) a posé les fondations des palettes cartographiques scientifiques. Toutes ses palettes sont accessibles dans `RColorBrewer` :
+
+```r
+RColorBrewer::display.brewer.all()
+```
+
+Caractéristiques de chaque palette ColorBrewer documentées : nombre maximum de classes lisibles, friendly daltonien, friendly photocopie N&B.
+
+::: {.takeaway}
+Pour la cartographie démographique sérieuse : `viridis` ou `RColorBrewer`. Éviter `rainbow` et les palettes par défaut de Matlab (perceptuellement non uniformes).
+:::
+
+## Daltonisme et accessibilité
+
+8 % des hommes (1 % des femmes) sont daltoniens — souvent rouge/vert confondus. Une carte qui repose sur le contraste rouge/vert est illisible pour eux.
+
+Test rapide :
+
+```r
+colorblindr::cvd_grid(ma_carte)  # affiche la carte vue par 4 types de daltonismes
+```
+
+Toutes les palettes `viridis` sont **par construction** daltonien-friendly. C'est le défaut le plus sûr.
+
+# Partie 3 — Décoration et publication {data-state="section-break"}
+
+## Les éléments obligatoires d'une carte publiable
+
+Une carte qui va dans un rapport, une publication ou une présentation doit avoir :
+
+| Élément | Pourquoi | Position recommandée |
+|---|---|---|
+| **Titre** | Question posée par la carte | Haut centre, taille principale |
+| **Sous-titre** | Précisions méthodologiques | Sous le titre, taille intermédiaire |
+| **Légende** | Interprétation des couleurs / tailles | Droite milieu ou bas-droite, à côté de la carte |
+| **Flèche du nord** | Orientation | Coin (gauche-haut ou droite-haut) |
+| **Échelle** | Lecture des distances | Bas-gauche, simple barre graduée |
+| **Crédits / sources** | Traçabilité | Bas-droite, petit, en italique |
+
+## `tmap` v4 : la grammaire
+
+`tmap` est construit comme `ggplot2` : on empile des couches.
+
+```r
+tm_shape(adm1_pop) +
+  tm_polygons(
+    fill = "densite",
+    fill.scale = tm_scale_intervals(style = "jenks", n = 5,
+                                    values = "brewer.yl_or_rd"),
+    fill.legend = tm_legend("Densité (hab/km²)")
+  ) +
+  tm_text("NAME_1", size = 0.6) +
+  tm_compass(position = c("right", "top")) +
+  tm_scalebar(position = c("left", "bottom")) +
+  tm_title("Densité de population — Cameroun 2019") +
+  tm_credits("Source : BUCREP estim., GADM v4.1")
+```
+
+`tm_shape` change la couche de données ; tous les `tm_*` qui suivent s'appliquent à cette couche jusqu'au prochain `tm_shape`.
+
+## Modes `plot` vs `view`
+
+Une seule bascule globale change tout :
+
+```r
+tmap_mode("plot")   # statique, pour publication PDF / PNG (défaut)
+tmap_mode("view")   # interactif, basé sur Leaflet
+```
+
+Le **même code `tmap`** produit alternativement :
+
+- une image PNG / PDF prête pour un rapport (mode `plot`),
+- une carte interactive zoomable, avec popups au survol, fond OpenStreetMap (mode `view`).
+
+::: {.callout-warning title="Toujours revenir à `plot` après `view`"}
+Après une carte interactive, repasser explicitement `tmap_mode("plot")`, sinon tous les graphiques suivants seront également interactifs (ce qui peut casser le rendu HTML / PDF).
+:::
+
+## Multi-panel : comparer deux indicateurs
+
+`tmap_arrange()` empile plusieurs cartes côte à côte. Idéal pour répondre à « comment varie l'indicateur entre deux périodes / deux variantes ? ».
+
+```r
+carte_a <- tm_shape(adm1_pop) + tm_polygons("densite", ...)
+carte_b <- tm_shape(adm1_pop) + tm_polygons("pct_urbain", ...)
+
+tmap_arrange(carte_a, carte_b, ncol = 2)
+```
+
+Cas d'usage : densité de population vs taux d'urbanisation par région. Lecture jointe : les régions denses sont-elles aussi les plus urbanisées ?
+
+## Export : trois formats, trois usages
+
+| Format | Quand l'utiliser | Commande |
+|---|---|---|
+| **PNG** 300 dpi | Diapositives PowerPoint, intégration Word, web | `tmap_save(c, "out.png", dpi = 300, width = 8, height = 6)` |
+| **PDF vectoriel** | Articles scientifiques, posters | `tmap_save(c, "out.pdf", width = 8, height = 6)` |
+| **HTML interactif** | Pages web, rapports interactifs | `tmap_save(c, "out.html")` en mode `view` |
+
+Le **PDF vectoriel** est imprimable à toute taille sans pixelisation — choix par défaut pour la publication scientifique.
+
+# Partie 4 — `ggplot2 + geom_sf` comme alternative {data-state="section-break"}
+
+## Quand préférer `ggplot2` à `tmap`
+
+`tmap` est optimisé pour la cartographie thématique. `ggplot2` est plus polyvalent quand on veut :
+
+- **Intégrer une carte dans un layout multi-panneaux** comportant des graphiques non-cartes (`patchwork`, `cowplot`).
+- **Recycler un thème graphique** déjà utilisé pour les graphiques scientifiques du rapport.
+- **Exploiter `gganimate`** pour des cartes animées (J7+).
+- **Personnaliser finement** des éléments que `tmap` ne propose pas directement.
+
+Pour la cartographie thématique courante, `tmap` reste plus rapide.
+
+## La syntaxe `geom_sf`
+
+```r
+ggplot(adm1_pop) +
+  geom_sf(aes(fill = densite), color = "white", linewidth = 0.3) +
+  scale_fill_viridis_c(option = "B", trans = "sqrt",
+                       name = "Densité (hab/km²)") +
+  geom_sf_label(aes(label = NAME_1), size = 2.5,
+                color = "white", fontface = "bold") +
+  labs(title = "Densité de population — Cameroun 2019",
+       subtitle = "Estimations BUCREP, palette viridis",
+       caption = "Source : BUCREP estim., GADM v4.1 · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+`geom_sf` détecte automatiquement le CRS, dessine les polygones, gère la projection (au prix d'une légère perte de contrôle par rapport à `tmap`).
+
+## `ggspatial` pour la flèche du nord et l'échelle
+
+`ggplot2` natif ne sait pas dessiner une flèche du nord ni une barre d'échelle. Le package `ggspatial` comble ce manque :
+
+```r
+library(ggspatial)
+
+ggplot(adm1_pop) +
+  geom_sf(aes(fill = densite)) +
+  annotation_north_arrow(location = "tr", style = north_arrow_minimal()) +
+  annotation_scale(location = "bl")
+```
+
+# Partie 5 — Cartographie critique {data-state="section-break"}
+
+## La carte n'est pas le territoire (rappel de J1)
+
+Toute carte est une **simplification consciente** :
+
+- Choix de l'**emprise** (cadrage). Une carte du « Cameroun » sans le bassin du Tchad efface l'enjeu sahélien.
+- Choix de la **projection**. Mercator surévalue le nord, Gall-Peters surévalue l'équateur.
+- Choix de la **classification**. Jenks vs quantiles change la perception.
+- Choix de la **palette**. Rouge évoque l'alerte, bleu la tranquillité — ce sont des choix sémiotiques.
+
+Une carte démographique n'est jamais neutre. **Documenter ses choix méthodologiques** dans une note explicative ou un encart de la carte est une bonne pratique.
+
+## L'effet « modifiable aire unit » (MAUP)
+
+Le MAUP (Modifiable Areal Unit Problem, Openshaw 1984) est le constat que les résultats d'une analyse spatiale **dépendent du découpage administratif** utilisé.
+
+Exemple : la « densité moyenne » calculée par ADM1 (régions) ≠ celle calculée par ADM3 (arrondissements). Les arrondissements peu denses qui contiennent une grande ville sont diluants à l'ADM1 mais visibles à l'ADM3.
+
+**Implication pour la formation** : toujours préciser **à quel niveau administratif** la carte est faite, et signaler que le résultat pourrait différer à un autre niveau.
+
+# Partie 6 — Synthèse {data-state="section-break"}
+
+## Cinq idées-clés à retenir de J3
+
+1. **Choroplèthe seulement pour les ratios normalisés**, pas les effectifs bruts (symboles proportionnels alors).
+2. **Le choix de la classification change la carte**. Jenks est un bon défaut sur les distributions démographiques inégales.
+3. **`viridis` est le défaut moderne** ; ColorBrewer est l'alternative académique de référence ; éviter `rainbow`.
+4. **`tmap` pour la cartographie thématique** ; `ggplot2 + geom_sf` pour l'intégration multi-panneaux ; `leaflet` (via `tmap_mode("view")`) pour l'interactif.
+5. **Toute carte doit avoir** : titre, légende, flèche du nord, échelle, crédits. Pas négociable pour la publication.
+
+## Articulation avec la démo et les exercices
+
+::: {.columns}
+::: {.column width="50%"}
+**Vu en théorie**
+
+- Sémiologie graphique (Bertin)
+- Quatre classifications
+- Palettes (viridis, ColorBrewer)
+- Décoration de carte
+- Cartographie critique (MAUP)
+:::
+::: {.column width="50%"}
+**À pratiquer**
+
+- Choroplèthe simple `tmap`
+- Comparaison 4 classifications
+- Multi-panel densité × urbanisation
+- Export PNG + PDF + HTML
+- Alternative `geom_sf`
+:::
+:::
+
+## Devoir individuel (Q6 — 30 min)
+
+Énoncé dans `exercice.qmd` : produire **une carte de production complète** sur l'indicateur de ton choix (taux d'électrification, taille moyenne des ménages, etc.) avec tous les éléments obligatoires + export en trois formats.
+
+## Demain (J4) — Raster avec `terra`
+
+`terra` en profondeur :
+
+- Lecture / écriture de rasters (GeoTIFF, NetCDF)
+- Agrégation spatiale (`aggregate`, `resample`)
+- Algèbre raster (calculs pixel à pixel)
+- Extraction zonale (`extract` par polygone)
+- Premier contact avec WorldPop 2020 100 m
+- Reprojection raster (différente du vecteur)
+
+## Sources et licences
+
+| Donnée | Source | Licence |
+|---|---|---|
+| GADM v4.1 ADM1 Cameroun | <https://gadm.org/download_country.html> | Libre académique |
+| Estimations BUCREP 2019 | BUCREP (pédagogique) | À actualiser RGPH 4 |
+
+Code distribué sous **CC-BY 4.0**.
+
+## Références méthodologiques
+
+@pebesma2018simple ; @hijmans2024terra ; @bucrep_rgph4.
+
+## Questions ?
+
+À ce stade, **arrêtons-nous**.
+
+Vérifions ensemble :
+
+1. La différence choroplèthe / symboles proportionnels
+2. L'impact du choix de classification sur la lecture
+3. La règle « toute carte publiable a titre + légende + flèche + échelle + crédits »
+
+`ramondzita@gmail.com` · Geospatial Data Science Group · IFORD
