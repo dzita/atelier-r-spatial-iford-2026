@@ -64,7 +64,7 @@ Chaque dossier `JXX_…/` contient :
 2. Ouvrir `atelier-r-spatial-iford-2026.Rproj` dans RStudio.
 3. Lancer `source("environnement_technique/install_packages.R")` puis `verification_setup.R`.
 4. Pour rejouer le jour J : ouvrir `pedagogie/JXX_…/demo.qmd` → cliquer **Render**.
-5. Pour s'entraîner sans tout télécharger : ouvrir le runtime WebR sur `https://dzita.github.io/atelier-r-spatial-iford-2026/` (déploiement GitHub Pages, à activer).
+5. Pour s'entraîner sans tout télécharger : ouvrir le runtime WebR en ligne sur <https://dzita.github.io/atelier-r-spatial-iford-2026/> — R s'exécute directement dans le navigateur (WebR), aucune installation requise. Premier chargement ~30-60 secondes (téléchargement des packages mis en cache ensuite).
 
 ## Conventions
 

@@ -50,5 +50,5 @@ Mise à jour : 16 juin 2026.
 ## Pour les participants
 
 - **Vous avez R installé localement** : ouvrir le `.Rproj` et lancer `pedagogie/JXX_…/demo.qmd`.
-- **Vous n'avez pas R installé** : utiliser le runtime WebR sur GitHub Pages (URL à venir).
+- **Vous n'avez pas R installé** : utiliser le runtime WebR en ligne sur <https://dzita.github.io/atelier-r-spatial-iford-2026/> — R s'exécute directement dans le navigateur, zéro installation.
 - **Tutoriels d'auto-installation** : voir `environnement_technique/guide_installation.md`.
