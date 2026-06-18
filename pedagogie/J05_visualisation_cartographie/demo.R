@@ -1,6 +1,6 @@
 # =====================================================================
-# J03 — Cartographie thématique tmap + ggplot2 (version exécution salle)
-# Atelier IFORD x GDSG · Yaoundé 29 juillet 2026 · Animateur : R. Dzita
+# J05 — Visualisation et cartographie tmap + ggplot2 (exécution salle)
+# Atelier IFORD x GDSG · Yaoundé 31 juillet 2026 · Animateur : R. Dzita
 # =====================================================================
 
 # ---- 0. Pré-vol -----------------------------------------------------
@@ -135,4 +135,4 @@ ggplot(adm1_pop) +
 # tmap_save(c_dens, file.path(out_dir, "densite_jenks.pdf"),
 #           width = 9, height = 7)
 
-# Fin J3
+# Fin J5

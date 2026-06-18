@@ -2,7 +2,7 @@
 
 **Atelier IFORD × GDSG · Jeudi 6 août 2026 · Yaoundé · 6 heures**
 
-> **Renommer ce dossier en `J10_workflows_reproductibles`** (cf. instruction animateur). Le contenu pédagogique a été aligné sur le programme officiel IFORD : Flux de travail reproductibles + projets + session de clôture.
+> Contenu aligné sur le programme officiel IFORD : flux de travail reproductibles + présentations courtes des participants + session de clôture (FAIR, métadonnées, feuille de route INS/BUCREP).
 
 ## Objectifs pédagogiques
 
@@ -65,6 +65,7 @@ L'objectif n'est pas une production exhaustive mais une **démonstration de maî
 | `runtime.qmd` | Pas de runtime spécifique — voir liens vers runtimes J1–J9 |
 | `exercice.qmd` | Activités du jour (Q1 : init Git + commit ; Q2 : Quarto rapport ; Q3 : automatisation) + cahier des charges présentation |
 | `corrige.qmd` | Solutions commentées + exemple de présentation réussie |
+| `install_packages_day.R` | Installation des packages pour J10 (`usethis`, `renv`, `quarto`, `bookdown`…) |
 
 ## Après l'atelier
 

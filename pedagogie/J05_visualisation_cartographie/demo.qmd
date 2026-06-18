@@ -1,8 +1,8 @@
 ---
-title: "J3 — Cartographie thématique : `tmap` et `ggplot2`"
-subtitle: "Atelier IFORD × GDSG · Yaoundé, 29 juillet 2026"
+title: "J5 — Visualisation et cartographie : `tmap` et `ggplot2`"
+subtitle: "Atelier IFORD × GDSG · Yaoundé, 31 juillet 2026"
 author: "Ramesesse Dzita (GDSG)"
-date: "2026-07-29"
+date: "2026-07-31"
 lang: fr
 format:
   html:
@@ -43,7 +43,6 @@ On charge les packages et les données préparées en J1/J2. Le tibble de popula
 
 ```{r}
 #| label: setup
-library(here)
 library(sf)
 library(dplyr)
 library(tibble)
@@ -52,8 +51,10 @@ library(tmap)
 library(RColorBrewer)
 library(viridisLite)
 
-source(here("pedagogie", "_commons", "helpers", "fetch_data.R"))
-source(here("pedagogie", "_commons", "helpers", "theme_iford.R"))
+# Chemins relatifs depuis le .qmd : here::here() peut etre dupe par
+# pedagogie/_quarto.yml et resoudre vers pedagogie/pedagogie/_commons/...
+source("../_commons/helpers/fetch_data.R")
+source("../_commons/helpers/theme_iford.R")
 
 adm1 <- read_sf(fetch_gadm_cameroon(1))
 ```
@@ -384,9 +385,9 @@ tmap_mode("plot")
 - `tmap_mode("view")` pour bascule interactive ; bien repasser `"plot"` après.
 - `ggplot2 + geom_sf` quand besoin d'intégration multi-panneaux non-cartes.
 
-## Pour demain (J4)
+## Pour demain (J6)
 
-Premier contact avec les rasters via `terra` : lecture GeoTIFF, agrégation, algèbre raster, extraction zonale. On charge le premier WorldPop top-down 100 m du Cameroun.
+**Statistiques spatiales et analyse** : autocorrélation spatiale (I de Moran, LISA), analyse de motifs ponctuels, estimation de densité de noyau (KDE), cartographie des points chauds. Application : répartition spatiale des établissements de santé ou des écoles au Cameroun.
 
 ## Devoir individuel (Q6 — 30 min)
 

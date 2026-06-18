@@ -3,6 +3,7 @@ title: "J1 — Introduction à R et à la pensée spatiale"
 subtitle: "Atelier régional IFORD × GDSG · Yaoundé · 27 juillet 2026"
 author: "Ramesesse Dzita · Geospatial Data Science Group"
 date: "2026-07-27"
+engine: knitr
 format:
   revealjs:
     theme:

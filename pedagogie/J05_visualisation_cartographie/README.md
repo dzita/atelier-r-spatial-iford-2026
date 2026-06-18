@@ -1,10 +1,10 @@
-# J3 — Cartographie thématique : `tmap` et `ggplot2`
+# J5 — Visualisation et cartographie : `tmap` et `ggplot2`
 
-**Atelier IFORD × GDSG · Mercredi 29 juillet 2026 · Yaoundé · 8 heures**
+**Atelier IFORD × GDSG · Vendredi 31 juillet 2026 · Yaoundé · 6 heures**
 
 ## Objectifs pédagogiques
 
-À la fin de J3, chaque participant doit pouvoir :
+À la fin de J5, chaque participant doit pouvoir :
 
 1. Construire une carte choroplèthe propre avec `tmap` v4 — choisir une classification, une palette, un découpage adapté à la donnée.
 2. Basculer entre le mode statique (`tmap_mode("plot")`) pour la publication et le mode interactif (`tmap_mode("view")`) pour l'exploration.
@@ -13,11 +13,11 @@
 5. Empiler plusieurs cartes côte à côte avec `tmap_arrange()` pour comparer deux indicateurs.
 6. Exporter en PNG haute résolution, en PDF vectoriel et en HTML interactif.
 
-## Déroulé horaire (8 h)
+## Déroulé horaire (6 h selon programme officiel)
 
 | Bloc | Durée | Format |
 |---|---|---|
-| Wrap-up J2 + intro J3 | 30 min | Slides |
+| Wrap-up J4 + intro J5 | 30 min | Slides |
 | Théorie 1 — Sémiologie graphique appliquée | 45 min | Slides |
 | Démo 1 — Choroplèthe `tmap` basique | 1 h | demo + Q1 |
 | Théorie 2 — Classifications et palettes | 45 min | Slides |
@@ -45,9 +45,9 @@
 
 ## Pré-requis
 
-- J1 et J2 validés
-- Q6 du J2 terminé (GeoPackage multi-couches dans `outputs/`)
+- J1 à J4 validés
+- Q6 du J4 terminé (table d'indicateurs jointe à un fond ADM)
 
 ## Fichiers du jour
 
-`README.md`, `slides.qmd`, `demo.qmd`, `demo.R`, `runtime.qmd`, `exercice.qmd`, `corrige.qmd`.
+`README.md`, `slides.qmd`, `demo.qmd`, `demo.R`, `runtime.qmd`, `exercice.qmd`, `corrige.qmd`, `install_packages_day.R` (installation ciblée des packages introduits ce jour : `tmap`, `classInt`, `RColorBrewer`, `viridisLite`, `leaflet`, `ggspatial`).

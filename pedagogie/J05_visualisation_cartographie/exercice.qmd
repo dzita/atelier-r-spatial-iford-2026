@@ -1,6 +1,6 @@
 ---
-title: "J3 — Exercices"
-subtitle: "Atelier IFORD × GDSG · 29 juillet 2026"
+title: "J5 — Exercices"
+subtitle: "Atelier IFORD × GDSG · 31 juillet 2026"
 lang: fr
 format:
   html:

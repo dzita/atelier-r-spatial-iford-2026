@@ -1,8 +1,9 @@
 ---
-title: "J3 — Cartographie thématique : `tmap` et `ggplot2`"
-subtitle: "Atelier IFORD × GDSG · Yaoundé · 29 juillet 2026"
+title: "J5 — Visualisation et cartographie : `tmap` et `ggplot2`"
+subtitle: "Atelier IFORD × GDSG · Yaoundé · 31 juillet 2026"
 author: "Ramesesse Dzita · Geospatial Data Science Group"
-date: "2026-07-29"
+date: "2026-07-31"
+engine: knitr
 format:
   revealjs:
     theme:
@@ -12,7 +13,7 @@ format:
     transition: fade
     progress: true
     chalkboard: true
-    footer: "IFORD × GDSG 2026 — J3 · Cartographie thématique"
+    footer: "IFORD × GDSG 2026 — J5 · Visualisation et cartographie"
     incremental: false
     code-fold: false
     code-line-numbers: false
@@ -23,34 +24,34 @@ execute:
 bibliography: ../_commons/helpers/citations.bib
 ---
 
-# Partie 0 — Reprise J2 et plan J3 {data-state="section-break"}
+# Partie 0 — Reprise J4 et plan J5 {data-state="section-break"}
 
-## Ce qu'on a vu hier
+## Ce qu'on a vu hier (J4)
 
 ::: {.columns}
 ::: {.column width="50%"}
-**Formats et CRS**
+**Tidyverse appliqué**
 
-- `read_sf` / `write_sf` pour tous formats
-- GeoPackage = format moderne par défaut
-- Trois CRS Cameroun : 4326 / 32632 / 3119
-- Règle d'or : reprojeter le plus tard possible
+- Remise à niveau `dplyr`, `tidyr`
+- Pivoting wide ↔ long
+- Gestion des valeurs manquantes
+- Détection d'incohérences
 :::
 ::: {.column width="50%"}
-**Opérations vectorielles**
+**Jointures**
 
-- `st_buffer`, `st_intersection`, `st_union`
-- Dissolve = `group_by + summarise(geometry = st_union)`
-- `st_voronoi` pour zones d'influence
-- `st_make_valid` après reprojection
+- Tables d'enquête (CSV, Stata) ↔ objets spatiaux
+- Jointures attributaires + spatiales
+- Agrégation d'attributs
+- Étude de cas EDS-MICS Cameroun 2018
 :::
 :::
 
-## Plan détaillé de J3 (8 h)
+## Plan détaillé de J5 (6 h)
 
 | Bloc | Durée | Format |
 |---|---|---|
-| **Wrap-up J2 + intro J3** | 30 min | Slides |
+| **Wrap-up J4 + intro J5** | 30 min | Slides |
 | **Théorie 1** — Sémiologie graphique appliquée | 45 min | Slides |
 | **Démo 1** — Choroplèthe `tmap` basique | 1 h | Démo + Q1 |
 | **Théorie 2** — Classifications et palettes | 45 min | Slides |
@@ -358,16 +359,16 @@ Exemple : la « densité moyenne » calculée par ADM1 (régions) ≠ celle calc
 
 Énoncé dans `exercice.qmd` : produire **une carte de production complète** sur l'indicateur de ton choix (taux d'électrification, taille moyenne des ménages, etc.) avec tous les éléments obligatoires + export en trois formats.
 
-## Demain (J4) — Raster avec `terra`
+## Demain (J6) — Statistiques spatiales et analyse
 
-`terra` en profondeur :
+`spdep` en profondeur :
 
-- Lecture / écriture de rasters (GeoTIFF, NetCDF)
-- Agrégation spatiale (`aggregate`, `resample`)
-- Algèbre raster (calculs pixel à pixel)
-- Extraction zonale (`extract` par polygone)
-- Premier contact avec WorldPop 2020 100 m
-- Reprojection raster (différente du vecteur)
+- Autocorrélation spatiale globale : I de Moran
+- Indicateurs locaux LISA (Anselin 1995)
+- Analyse de motifs ponctuels (point pattern)
+- KDE — Kernel Density Estimation
+- Cartographie des points chauds
+- Application : répartition spatiale des établissements de santé / écoles
 
 ## Sources et licences
 

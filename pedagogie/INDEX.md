@@ -17,7 +17,7 @@ Navigation rapide entre les 10 jours de l'atelier **« Données spatiales, analy
 | Lundi 3 août 2026 | J7 | Cartographie population haute résolution + bottom-up | _à venir_ |
 | Mardi 4 août 2026 | J8 | Télédétection et observation de la Terre | _à venir_ |
 | Mercredi 5 août 2026 | J9 | Sciences spatiales et sociales : projets inspirants | _à venir_ |
-| Jeudi 6 août 2026 | J10 | Flux de travail reproductibles + clôture | [J10](J10_mini_projet_synthese/README.md) |
+| Jeudi 6 août 2026 | J10 | Flux de travail reproductibles + clôture | [J10](J10_workflows_reproductibles/README.md) |
 
 > Dimanche 2 août : jour de repos.
 >

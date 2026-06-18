@@ -44,13 +44,15 @@ On charge les packages nécessaires et le helper `fetch_data.R` qui résout les 
 
 ```{r}
 #| label: setup
-library(here)
 library(sf)
 library(dplyr)
 library(tibble)
 library(ggplot2)
 
-source(here("pedagogie", "_commons", "helpers", "fetch_data.R"))
+# Chemin relatif depuis le .qmd (pedagogie/JXX_.../) car here::here()
+# peut etre dupe par pedagogie/_quarto.yml et nous proposer
+# pedagogie/pedagogie/_commons/... inexistant.
+source("../_commons/helpers/fetch_data.R")
 ```
 
 # Première session — Lecture et écriture multi-format {#sec-formats}

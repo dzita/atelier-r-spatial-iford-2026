@@ -3,6 +3,7 @@ title: "J3 — Données raster dans R avec `terra`"
 subtitle: "Atelier IFORD × GDSG · Yaoundé · 29 juillet 2026"
 author: "Ramesesse Dzita · Geospatial Data Science Group"
 date: "2026-07-29"
+engine: knitr
 format:
   revealjs:
     theme:

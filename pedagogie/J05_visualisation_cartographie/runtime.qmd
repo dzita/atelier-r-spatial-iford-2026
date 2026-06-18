@@ -1,5 +1,5 @@
 ---
-title: "J3 — Cartographie thématique"
+title: "J5 — Visualisation et cartographie"
 subtitle: "Code R exécutable dans le navigateur"
 engine: knitr
 ---

@@ -36,7 +36,7 @@ website:
             text: "J3 · Données raster terra"
           - href: J05_visualisation_cartographie/runtime.qmd
             text: "J5 · Visualisation et cartographie"
-          - href: J10_mini_projet_synthese/runtime.qmd
+          - href: J10_workflows_reproductibles/runtime.qmd
             text: "J10 · Reproductibilité + clôture"
           # J4, J6, J7, J8, J9 seront ajoutes ici au fur et a mesure de leur redaction.
           # Ne pas re-activer une entree tant que le runtime.qmd correspondant

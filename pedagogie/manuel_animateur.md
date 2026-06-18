@@ -37,6 +37,7 @@ Chaque dossier `JXX_…/` est **autoportant** et contient les artefacts pédagog
 | `runtime.qmd` | live-html WebR | participant non équipé | Code R exécutable directement dans le navigateur, zéro install |
 | `exercice.qmd` | HTML statique | participant | Énoncés Q1 à Q5 (micro-exercices en séance, 5–10 min chacun) + Q6 (devoir individuel du soir, ~30 min). Pas de solutions |
 | `corrige.qmd` | HTML statique | participant | Solutions commentées Q1 à Q6. Distribué le **matin du jour suivant**, jamais le jour même |
+| `install_packages_day.R` | script R | participant | Installation des packages **strictement nécessaires pour ce jour**. Utile pour les retardataires ou les participants qui n'ont pas exécuté `environnement_technique/install_packages.R` en amont |
 | `README.md` | markdown | tous | Index local du jour : objectifs, déroulé horaire, données mobilisées, packages utilisés |
 
 ## 4. Conventions de rédaction du code

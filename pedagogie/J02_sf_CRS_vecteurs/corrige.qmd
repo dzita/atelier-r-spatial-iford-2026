@@ -23,13 +23,13 @@ Si tu n'as pas encore tenté l'exercice : **ferme ce fichier et lance-toi d'abor
 
 ```{r}
 #| label: setup
-library(here)
 library(sf)
 library(dplyr)
 library(tibble)
 library(ggplot2)
 
-source(here("pedagogie", "_commons", "helpers", "fetch_data.R"))
+# Chemin relatif depuis le .qmd (cf. demo.qmd pour le commentaire detaille).
+source("../_commons/helpers/fetch_data.R")
 
 adm1 <- read_sf(fetch_gadm_cameroon(1))
 adm2 <- read_sf(fetch_gadm_cameroon(2))

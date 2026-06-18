@@ -23,7 +23,6 @@ Si tu n'as pas tenté l'exercice : ferme ce fichier et lance-toi.
 
 ```{r}
 #| label: setup
-library(here)
 library(sf)
 library(terra)
 library(dplyr)
@@ -31,8 +30,9 @@ library(tibble)
 library(ggplot2)
 library(exactextractr)
 
-source(here("pedagogie", "_commons", "helpers", "fetch_data.R"))
-source(here("pedagogie", "_commons", "helpers", "theme_iford.R"))
+# Chemins relatifs depuis le .qmd (cf. demo.qmd pour le commentaire detaille).
+source("../_commons/helpers/fetch_data.R")
+source("../_commons/helpers/theme_iford.R")
 
 set.seed(2026)
 srtm <- rast(ncol = 200, nrow = 240,

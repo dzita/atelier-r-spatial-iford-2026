@@ -1,6 +1,6 @@
 ---
-title: "J3 — Corrigés"
-subtitle: "Atelier IFORD × GDSG · Distribué J4 matin"
+title: "J5 — Corrigés"
+subtitle: "Atelier IFORD × GDSG · Distribué J6 matin"
 lang: fr
 format:
   html:
@@ -23,15 +23,15 @@ Si tu n'as pas encore tenté l'exercice : **ferme ce fichier et lance-toi d'abor
 
 ```{r}
 #| label: setup
-library(here)
 library(sf)
 library(dplyr)
 library(tibble)
 library(ggplot2)
 library(tmap)
 
-source(here("pedagogie", "_commons", "helpers", "fetch_data.R"))
-source(here("pedagogie", "_commons", "helpers", "theme_iford.R"))
+# Chemins relatifs depuis le .qmd (cf. demo.qmd pour le commentaire detaille).
+source("../_commons/helpers/fetch_data.R")
+source("../_commons/helpers/theme_iford.R")
 
 adm1 <- read_sf(fetch_gadm_cameroon(1))
 
@@ -281,9 +281,9 @@ tmap_save(ma_carte, file.path(out_dir, "electrification_quantile.pdf"),
 | `tmap_save()` produit un PDF flou | Mauvaise dimension, ratio non respecté | Définir `width` et `height` cohérents avec l'aspect ratio de la carte |
 | Palette divergente sans `midpoint` | Le centre est mal défini | Ajouter `midpoint = 0` dans `tm_scale_intervals()` |
 
-# Préparation pour J4
+# Préparation pour J6
 
-Demain on entre dans le monde **raster** : `terra` en profondeur, premier WorldPop 100 m, agrégation et resampling, extraction zonale. C'est le passage des vecteurs (polygones, points, lignes) aux grilles régulières.
+Demain : **statistiques spatiales et analyse**. Autocorrélation spatiale globale (I de Moran), indicateurs locaux LISA (Anselin 1995), analyse de motifs ponctuels, estimation de densité de noyau (KDE), cartographie des points chauds. On pratiquera sur la répartition spatiale des établissements de santé du Cameroun.
 
 # Références
 

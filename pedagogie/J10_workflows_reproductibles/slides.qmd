@@ -3,6 +3,7 @@ title: "J10 — Flux de travail reproductibles et renforcement des capacités"
 subtitle: "Atelier IFORD × GDSG · Yaoundé · 6 août 2026"
 author: "Ramesesse Dzita · Geospatial Data Science Group"
 date: "2026-08-06"
+engine: knitr
 format:
   revealjs:
     theme:

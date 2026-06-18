@@ -3,6 +3,7 @@ title: "J2 — Données vectorielles `sf` et CRS"
 subtitle: "Atelier IFORD × GDSG · Yaoundé · 28 juillet 2026"
 author: "Ramesesse Dzita · Geospatial Data Science Group"
 date: "2026-07-28"
+engine: knitr
 format:
   revealjs:
     theme:

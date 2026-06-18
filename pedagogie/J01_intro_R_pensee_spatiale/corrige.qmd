@@ -33,8 +33,10 @@ library(dplyr)
 library(tibble)
 library(tmap)
 
-source(here("pedagogie", "_commons", "helpers", "fetch_data.R"))
-source(here("pedagogie", "_commons", "helpers", "theme_iford.R"))
+# Chemins relatifs depuis le .qmd : here::here() peut etre dupe par
+# pedagogie/_quarto.yml et resoudre vers pedagogie/pedagogie/_commons/...
+source("../_commons/helpers/fetch_data.R")
+source("../_commons/helpers/theme_iford.R")
 setup_tmap_iford()
 ```
 
