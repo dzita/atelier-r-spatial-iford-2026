@@ -614,5 +614,96 @@
     "title": "J10 — Reproductibilité et clôture",
     "section": "Certificats",
     "text": "Certificats\nÀ l’issue des présentations, Pr Kuépié remet les certificats IFORD nominatifs. Photo de groupe pour la communication institutionnelle.\n← Retour à l’accueil"
+  },
+  {
+    "objectID": "J06_statistiques_spatiales/runtime.html",
+    "href": "J06_statistiques_spatiales/runtime.html",
+    "title": "J6 — Statistiques spatiales sur OSM Cameroun",
+    "section": "",
+    "text": "Mode d’emploi. Cliquez Run code dans chaque cellule. Données réelles : facilités de santé OSM du Cameroun + polygones GADM ADM2 (départements).\nPipeline analytique : Jean Saturnin Alogo Samba (GDSG/IFORD). Bascule OSM + runtime : Ramesesse Dzita.\nNote technique : spdep n’est pas portable sur WebR. On code Moran’s I à la main + test par permutation Monte Carlo. La version spdep complète est dans demo.qmd.\nDonnées 100 % réelles : aucune variable simulée. Variable d’analyse = nombre de facilités OSM par département ADM2 (compté par agrégation spatiale)."
+  },
+  {
+    "objectID": "J06_statistiques_spatiales/runtime.html#charger-facilités-osm-départements-gadm",
+    "href": "J06_statistiques_spatiales/runtime.html#charger-facilités-osm-départements-gadm",
+    "title": "J6 — Statistiques spatiales sur OSM Cameroun",
+    "section": "1. Charger facilités OSM + départements GADM",
+    "text": "1. Charger facilités OSM + départements GADM"
+  },
+  {
+    "objectID": "J06_statistiques_spatiales/runtime.html#carte-de-localisation-par-catégorie",
+    "href": "J06_statistiques_spatiales/runtime.html#carte-de-localisation-par-catégorie",
+    "title": "J6 — Statistiques spatiales sur OSM Cameroun",
+    "section": "2. Carte de localisation par catégorie",
+    "text": "2. Carte de localisation par catégorie"
+  },
+  {
+    "objectID": "J06_statistiques_spatiales/runtime.html#ratio-r-motifs-ponctuels-sur-les-points",
+    "href": "J06_statistiques_spatiales/runtime.html#ratio-r-motifs-ponctuels-sur-les-points",
+    "title": "J6 — Statistiques spatiales sur OSM Cameroun",
+    "section": "3. Ratio R — motifs ponctuels (sur les points)",
+    "text": "3. Ratio R — motifs ponctuels (sur les points)"
+  },
+  {
+    "objectID": "J06_statistiques_spatiales/runtime.html#kde-densité-par-noyau-sur-les-points",
+    "href": "J06_statistiques_spatiales/runtime.html#kde-densité-par-noyau-sur-les-points",
+    "title": "J6 — Statistiques spatiales sur OSM Cameroun",
+    "section": "4. KDE — densité par noyau (sur les points)",
+    "text": "4. KDE — densité par noyau (sur les points)"
+  },
+  {
+    "objectID": "J06_statistiques_spatiales/runtime.html#agrégation-par-département-adm2-jointure-spatiale",
+    "href": "J06_statistiques_spatiales/runtime.html#agrégation-par-département-adm2-jointure-spatiale",
+    "title": "J6 — Statistiques spatiales sur OSM Cameroun",
+    "section": "5. Agrégation par département ADM2 (jointure spatiale)",
+    "text": "5. Agrégation par département ADM2 (jointure spatiale)\nC’est ici qu’on construit la variable réelle d’analyse statistique : n_facilites par département."
+  },
+  {
+    "objectID": "J06_statistiques_spatiales/runtime.html#choroplèthe-du-comptage-par-département",
+    "href": "J06_statistiques_spatiales/runtime.html#choroplèthe-du-comptage-par-département",
+    "title": "J6 — Statistiques spatiales sur OSM Cameroun",
+    "section": "6. Choroplèthe du comptage par département",
+    "text": "6. Choroplèthe du comptage par département"
+  },
+  {
+    "objectID": "J06_statistiques_spatiales/runtime.html#morans-i-global-manuel-sur-le-comptage-par-département",
+    "href": "J06_statistiques_spatiales/runtime.html#morans-i-global-manuel-sur-le-comptage-par-département",
+    "title": "J6 — Statistiques spatiales sur OSM Cameroun",
+    "section": "7. Moran’s I global manuel (sur le comptage par département)",
+    "text": "7. Moran’s I global manuel (sur le comptage par département)\nMatrice de voisinage entre départements = contiguïté (deux départements voisins s’ils partagent une frontière). On la calcule à la main avec st_touches()."
+  },
+  {
+    "objectID": "J06_statistiques_spatiales/runtime.html#test-de-significativité-par-permutation",
+    "href": "J06_statistiques_spatiales/runtime.html#test-de-significativité-par-permutation",
+    "title": "J6 — Statistiques spatiales sur OSM Cameroun",
+    "section": "8. Test de significativité par permutation",
+    "text": "8. Test de significativité par permutation"
+  },
+  {
+    "objectID": "J06_statistiques_spatiales/runtime.html#lisa-local-par-département",
+    "href": "J06_statistiques_spatiales/runtime.html#lisa-local-par-département",
+    "title": "J6 — Statistiques spatiales sur OSM Cameroun",
+    "section": "9. LISA local par département",
+    "text": "9. LISA local par département"
+  },
+  {
+    "objectID": "J06_statistiques_spatiales/runtime.html#carte-lisa-des-départements",
+    "href": "J06_statistiques_spatiales/runtime.html#carte-lisa-des-départements",
+    "title": "J6 — Statistiques spatiales sur OSM Cameroun",
+    "section": "10. Carte LISA des départements",
+    "text": "10. Carte LISA des départements"
+  },
+  {
+    "objectID": "J06_statistiques_spatiales/runtime.html#liste-des-déserts-médicaux-pour-transmission",
+    "href": "J06_statistiques_spatiales/runtime.html#liste-des-déserts-médicaux-pour-transmission",
+    "title": "J6 — Statistiques spatiales sur OSM Cameroun",
+    "section": "11. Liste des déserts médicaux pour transmission",
+    "text": "11. Liste des déserts médicaux pour transmission"
+  },
+  {
+    "objectID": "J06_statistiques_spatiales/runtime.html#pour-aller-plus-loin",
+    "href": "J06_statistiques_spatiales/runtime.html#pour-aller-plus-loin",
+    "title": "J6 — Statistiques spatiales sur OSM Cameroun",
+    "section": "12. Pour aller plus loin",
+    "text": "12. Pour aller plus loin\nLa version desktop demo.qmd utilise spdep avec les tests asymptotiques officiels. Elle inclut le diagramme de Moran et permet d’éprouver des matrices de poids alternatives (k plus proches voisins, distance fixe). Le devoir Q6 (exercice.qmd) propose de refaire le pipeline sur une sous-catégorie de facilités (pharmacies, hôpitaux).\n← Retour à l’accueil"
   }
 ]
