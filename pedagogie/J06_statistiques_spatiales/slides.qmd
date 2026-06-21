@@ -1,0 +1,323 @@
+---
+title: "J6 — Statistiques spatiales et analyse"
+subtitle: "Atelier IFORD × GDSG · Yaoundé · 1ᵉʳ août 2026"
+author: "Jean Saturnin Alogo Samba · Ramesesse Dzita · Geospatial Data Science Group"
+date: "2026-08-01"
+engine: knitr
+format:
+  revealjs:
+    theme:
+      - default
+      - ../_commons/styles/slides_revealjs.scss
+    slide-number: c/t
+    transition: fade
+    progress: true
+    chalkboard: true
+    footer: "IFORD × GDSG 2026 — J6 · Statistiques spatiales"
+    incremental: false
+    code-fold: false
+    code-line-numbers: false
+execute:
+  echo: false
+  warning: false
+  message: false
+bibliography: ../_commons/helpers/citations.bib
+---
+
+# Partie 0 — Reprise J5 et plan J6 {data-state="section-break"}
+
+## Ce qu'on a vu hier (J5)
+
+Cartographie thématique : `tmap` v4, classifications (Jenks, quantiles), palettes (viridis, ColorBrewer), décoration (titre, légende, flèche, échelle), multi-panel, export PNG/PDF/HTML.
+
+## Aujourd'hui : passer de la description à l'**analyse**
+
+J5 décrivait une distribution (« voici la densité de population par région »). J6 **mesure** des propriétés statistiques de l'espace :
+
+- Les points sont-ils **regroupés** par hasard ou y a-t-il un processus sous-jacent ?
+- Les valeurs voisines se ressemblent-elles **plus que le hasard** ne le voudrait ?
+- Où sont les **points chauds** statistiquement significatifs ?
+
+## Plan détaillé J6 (6 h)
+
+| Bloc | Durée |
+|---|---|
+| Wrap-up J5 + intro J6 | 30 min |
+| Théorie 1 — Pourquoi mesurer l'autocorrélation spatiale ? | 30 min |
+| Démo 1 — Motifs ponctuels (plus proche voisin) | 45 min |
+| Théorie 2 — Estimation de densité par noyau (KDE) | 30 min |
+| Démo 2 — KDE sur établissements de santé | 45 min |
+| Théorie 3 — Moran's I global | 45 min |
+| Démo 3 — Moran's I + diagramme | 45 min |
+| Théorie 4 — LISA + points chauds | 30 min |
+| Démo 4 — LISA + cartographie HH/LL/HL/LH | 45 min |
+| Synthèse + Q6 + Q&A | 15 min |
+
+## Cas d'étude (par Saturnin)
+
+80 établissements de santé du Cameroun simulés sur la base d'ordres de grandeur réalistes :
+
+- **Localisation** : dispersion autour des 10 chefs-lieux régionaux.
+- **Type** : hôpital de district (10 %), centre de santé (35 %), dispensaire (40 %), clinique privée (15 %).
+- **Consultations mensuelles** : 1 400 pour un hôpital, 480 pour un centre, 160 pour un dispensaire.
+
+Question pédagogique : **où sont les déserts médicaux ?**
+
+# Partie 1 — Pourquoi l'autocorrélation spatiale ? {data-state="section-break"}
+
+## La première loi de la géographie (Tobler 1970)
+
+> *« Tout est lié à tout, mais ce qui est proche est plus lié que ce qui est loin. »*
+>
+> — Waldo Tobler, *Economic Geography*, 1970.
+
+C'est la **prémisse de toute statistique spatiale** : les observations voisines ne sont pas indépendantes.
+
+::: {.takeaway}
+Ignorer l'autocorrélation spatiale = sous-estimer la variance, surestimer la significativité. Tous les modèles statistiques classiques (régression OLS) sont biaisés sur des données spatialement autocorrélées.
+:::
+
+## Trois questions distinctes
+
+| Question | Méthode |
+|---|---|
+| Les **points** sont-ils regroupés / dispersés ? | Analyse de motifs ponctuels (nearest neighbor, K de Ripley) |
+| Où se **concentrent** les points dans l'espace ? | Estimation de densité par noyau (KDE) |
+| Les **valeurs** sont-elles spatialement structurées ? | Moran's I global + LISA local |
+
+On les aborde dans l'ordre, du plus simple au plus statistique.
+
+# Partie 2 — Motifs ponctuels : ratio R {data-state="section-break"}
+
+## Trois patterns possibles
+
+::: {.columns}
+::: {.column width="33%"}
+**Regroupé** (cluster)
+
+Les points s'attirent. Distance moyenne au plus proche voisin **inférieure** à l'attendu aléatoire.
+
+R < 1.
+:::
+::: {.column width="33%"}
+**Aléatoire** (CSR)
+
+Pas de motif. Distance ≈ attendu aléatoire.
+
+R ≈ 1.
+:::
+::: {.column width="33%"}
+**Dispersé** (régulier)
+
+Les points s'évitent. Distance moyenne **supérieure** à l'attendu aléatoire.
+
+R > 1.
+:::
+:::
+
+## La formule
+
+Soit `n` points dans une aire `A`.
+
+- **Distance moyenne observée** : moyenne sur toutes les paires (point, plus proche voisin).
+- **Distance moyenne attendue** (sous CSR) : `0.5 / sqrt(n / A)`.
+- **Ratio R** = observé / attendu.
+
+Interprétation pragmatique :
+
+| Valeur de R | Verdict |
+|---|---|
+| **R < 0.85** | Regroupé (cluster significatif) |
+| **0.85 ≤ R ≤ 1.15** | Aléatoire (pas de motif) |
+| **R > 1.15** | Dispersé (répartition régulière) |
+
+## Application aux établissements de santé
+
+Pour les 80 établissements simulés : **R typiquement < 0.5**. Les établissements sont **fortement regroupés** parce qu'ils suivent l'implantation urbaine, qui est elle-même très inégale au Cameroun.
+
+C'est attendu. **L'absence de cluster** dans les établissements de santé serait elle-même une anomalie révélatrice — soit d'une politique d'aménagement très volontariste, soit d'une erreur dans les données.
+
+# Partie 3 — Estimation de densité par noyau (KDE) {data-state="section-break"}
+
+## L'intuition
+
+Transformer un **nuage de points discret** en une **surface continue** qui montre l'intensité.
+
+Analogie : **étaler de la crème solaire** sur la carte. Là où les points sont nombreux et proches, la couche est épaisse (densité forte). Là où ils sont rares, transparent.
+
+## La formule
+
+Pour chaque cellule de grille `s`, la densité est :
+
+$$\hat{f}(s) = \frac{1}{n \cdot 2\pi h^2} \sum_{i=1}^{n} \exp\left(-\frac{d(s, x_i)^2}{2h^2}\right)$$
+
+Où :
+
+- `h` est le **bandwidth** (rayon de lissage, en unités du CRS),
+- `d(s, x_i)` est la distance entre la cellule `s` et le point `i`.
+
+C'est un **noyau gaussien** : chaque point a une influence qui décroît avec le carré de la distance.
+
+## Le choix critique : le bandwidth `h`
+
+| `h` petit | `h` grand |
+|---|---|
+| Surface très détaillée, pics fins | Surface lissée, pics dilués |
+| Risque de **sur-ajustement** | Risque de **sur-lissage** |
+| Bruyant | Trompeur |
+
+**Règle de Scott** (1992, valeur par défaut raisonnable) :
+
+$$h_{\text{Scott}} = 1.06 \cdot \sigma_x \cdot n^{-1/5}$$
+
+Cette règle est implémentée par défaut dans `bw.nrd0()` et dans la plupart des packages KDE. **Toujours documenter le `h` choisi** sur la carte produite.
+
+# Partie 4 — Moran's I global {data-state="section-break"}
+
+## L'idée
+
+Mesurer si les **valeurs aux endroits voisins** sont plus similaires qu'attendu sous l'hypothèse d'indépendance spatiale.
+
+| Moran's I | Interprétation |
+|---|---|
+| **+1** | Autocorrélation positive maximale (les valeurs hautes sont voisines, les basses aussi) |
+| **0** | Aucun motif spatial (CSR sur les valeurs) |
+| **−1** | Autocorrélation négative maximale (en damier) |
+
+## La formule
+
+$$I = \frac{n}{S_0} \cdot \frac{\sum_i \sum_j w_{ij} (y_i - \bar{y})(y_j - \bar{y})}{\sum_i (y_i - \bar{y})^2}$$
+
+Où :
+
+- `n` = nombre d'observations.
+- `w_{ij}` = poids spatial entre les unités `i` et `j` (1 si voisins, 0 sinon ; ou inversement proportionnel à la distance).
+- `S_0 = \sum_i \sum_j w_{ij}`.
+
+## Le test de significativité
+
+R retourne un I + une **p-valeur** issue d'une comparaison entre I observé et la distribution de I sous permutation aléatoire.
+
+| p-valeur | Conclusion |
+|---|---|
+| **p < 0.05** ET **I > 0** | Autocorrélation positive significative |
+| **p < 0.05** ET **I < 0** | Autocorrélation négative significative |
+| **p ≥ 0.05** | Pas de structure spatiale détectable |
+
+## Définir le voisinage
+
+Le résultat **dépend** de la matrice de poids `W`. Trois choix courants :
+
+| Méthode | Quand l'utiliser |
+|---|---|
+| **K plus proches voisins** (`knearneigh(k=5)`) | Données ponctuelles, garantit un voisinage non vide |
+| **Polygones contigus** (`poly2nb`) | Données par zones administratives |
+| **Distance maximale** (`dnearneigh`) | Phénomène avec portée connue (1 km, 10 km…) |
+
+**Toujours documenter** le choix de `W` — il conditionne le résultat.
+
+# Partie 5 — LISA : du global au local {data-state="section-break"}
+
+## Limite du Moran global
+
+Moran's I global donne **une seule valeur** pour tout le territoire. Il dit « il y a un motif » mais pas **où** le motif se manifeste.
+
+LISA (Local Indicators of Spatial Association, Anselin 1995 [@anselin1995lisa]) répond à cette limite : il **décompose** le Moran global en contributions locales, **une par observation**.
+
+## Quatre quadrants
+
+Pour chaque observation, on lit son `z_value` (standardisé) et le `z_lag` (moyenne pondérée des voisins).
+
+| Quadrant | Interprétation | Signification |
+|---|---|---|
+| **HH** (z > 0, lag > 0) | Forte valeur entourée de fortes valeurs | **Point chaud** : cluster à valoriser ou à surveiller selon le sujet |
+| **LL** (z < 0, lag < 0) | Faible valeur entourée de faibles valeurs | **Point froid** : cluster de carence (déserts médicaux, par exemple) |
+| **HL** (z > 0, lag < 0) | Forte valeur isolée | **Anomalie haute** : ressource exceptionnelle dans un environnement faible |
+| **LH** (z < 0, lag > 0) | Faible valeur entourée de fortes valeurs | **Anomalie basse** : trou local dans un environnement riche |
+
+Le test de significativité local filtre les observations dont la classification est statistiquement crédible (généralement `p < 0.05`).
+
+## Lecture pour la décision publique
+
+Une **carte LISA** est un outil de **ciblage** pour les politiques publiques :
+
+- **HH (santé)** : zones bien équipées — modèle à étudier ou à dé-prioriser pour l'allocation.
+- **LL (santé)** : zones à équiper en priorité — déserts médicaux confirmés.
+- **HL (santé)** : isolement institutionnel — un hôpital sans réseau secondaire.
+- **LH (santé)** : trou local dans une zone riche — anomalie à corriger.
+
+C'est le type d'analyse que les Programmes Verticaux (PEV, paludisme) et les bailleurs (Banque Mondiale, USAID) demandent systématiquement.
+
+# Partie 6 — Cadrage RGPH 4 / sectoriel {data-state="section-break"}
+
+## Utilité pour le BUCREP et les INS
+
+| Domaine | Question type |
+|---|---|
+| **Santé** | Cluster de départements en désert médical OSM → priorisation des dépôts pharmaceutiques |
+| **Éducation** | Cluster d'écoles avec faible taux de scolarisation → causes structurelles |
+| **Sécurité alimentaire** | Hot spots de malnutrition infantile (MICS) → ciblage des programmes |
+| **Démographie** | Hot spots de fécondité élevée → planification familiale ciblée |
+| **Conflits** | Cluster d'événements ACLED → cartes de risque sécuritaire |
+
+## Articulation avec J7 (cartographie populations haute résolution)
+
+Demain (J7) : **WorldPop + bottom-up**. Les analyses de J6 fournissent les **co-variables spatiales** dont le bottom-up bayésien a besoin (densité KDE, indicateurs LISA des établissements de santé, etc.).
+
+# Partie 7 — Synthèse {data-state="section-break"}
+
+## Cinq idées-clés de J6
+
+1. **Tobler 1970** : tout est lié à tout, mais le proche est plus lié que le lointain. Premier postulat de la statistique spatiale.
+2. **Ratio R** : R < 1 = regroupé, R > 1 = dispersé. Simple et lisible.
+3. **KDE** : transforme des points en surface continue. Le bandwidth `h` est le choix critique (règle de Scott par défaut).
+4. **Moran's I global** ne dit que « il y a un motif » — pas où. Sa p-valeur dépend de la matrice de poids `W` choisie.
+5. **LISA local** identifie HH/LL/HL/LH par observation, avec test de significativité — c'est l'outil de **ciblage** pour la décision publique.
+
+## Articulation avec la démo
+
+| Section démo | Outil R |
+|---|---|
+| Distance plus proche voisin | `spdep::knearneigh(k=1) + nbdists` |
+| KDE | Boucle gaussienne ou `stats::density` |
+| Voisinage spatial | `spdep::knearneigh(k=5) + nb2listw` |
+| Moran global + test | `spdep::moran.test` |
+| LISA | `spdep::localmoran + lag.listw` |
+| Cartographie HH/LL | `ggplot + geom_sf + scale_color_manual` |
+
+## Devoir Q6
+
+Énoncé dans `exercice.qmd` : ré-appliquer le pipeline complet J6 sur une **sous-catégorie de facilités OSM** (les pharmacies, ou les hôpitaux seulement) en reconstruisant `n_pharmacies` ou `n_hopitaux` par département. Documenter le choix du voisinage (contiguïté vs knn) et discuter la cohérence des points chauds entre les deux variables.
+
+## Demain (J7) — Cartographie populations haute résolution
+
+WorldPop top-down, méthodologie bottom-up (Darin & Leasure 2023), construction d'une grille de population pour le Cameroun.
+
+## Sources et licences
+
+| Donnée | Source | Licence |
+|---|---|---|
+| Établissements simulés | Saturnin, calé sur ordres de grandeur Cameroun | Pédagogique |
+
+Code distribué sous **CC-BY 4.0**.
+
+## Crédits
+
+Cas d'étude et code analytique : **Jean Saturnin Alogo Samba** (GDSG / IFORD).
+
+Intégration convention atelier : **Ramesesse Dzita**.
+
+## Références méthodologiques
+
+@moran1950notes ; @anselin1995lisa ; @pebesma2018simple.
+
+## Questions ?
+
+Vérifions :
+
+1. Ratio R : seuils 0.85 et 1.15.
+2. Bandwidth KDE : règle de Scott par défaut.
+3. Moran I : 0 = aléatoire, ±1 = structure forte.
+4. LISA : quatre quadrants, test de significativité.
+
+`ramondzita@gmail.com` · Geospatial Data Science Group · IFORD

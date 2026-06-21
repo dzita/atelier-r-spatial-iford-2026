@@ -36,17 +36,17 @@ Reprenez le tibble `tbl_cmr` créé en séance (10 régions du Cameroun, populat
 2. **b.** Tapez `vignette(package = "sf")`. Quels titres listés vous intéressent pour les jours à venir ?
 3. **c.** Provoquez volontairement une erreur en tapant `mean("trois")`. Lisez attentivement le message. Copiez-le dans Google avec le préfixe `R`. Notez les deux premiers résultats — sont-ils sur StackOverflow ? RStudio Community ?
 
-# Q3 — Agréger une enquête simulée {#sec-q3}
+# Q3 — Lire et résumer les indicateurs DHS Cameroun 2018 {#sec-q3}
 
 > Référence démo : section « Calcul d'indicateurs démographiques de base » de `demo.qmd`.
 
-Avec le tibble simulé `hh_sim` (11 000 ménages) :
+À partir du CSV `pedagogie/_commons/data/dhs_cmr/indicateurs_dhs_cmr_2018.csv` (vraies données DHS StatCompiler agrégées par région) :
 
-1. **a.** Calculez la **part de ménages électrifiés** par **quintile de richesse**. Présentez le résultat trié par quintile croissant.
-2. **b.** Refaites le calcul, mais cette fois croisé `quintile × milieu` (urbain/rural). Quelle ligne attire votre œil ?
-3. **c.** Quel est le **quintile dont la taille moyenne du ménage** est la plus élevée ? Est-ce cohérent avec la littérature démographique (ménages pauvres = ménages plus grands) ?
+1. **a.** Charger le CSV, pivoter en wide (`pivot_wider` sur `indicateur` / `valeur`), puis **trier les régions par taux d'électrification décroissant** (`tx_electricite`). Quelle est la 1ère ? La dernière ? Quel est l'écart en points ?
+2. **b.** Créer avec `mutate` + `case_when` une **typologie à 4 classes** croisant `tx_alpha_femmes` (seuil 70 %) et `tx_eau_ameliore` (seuil 75 %). Combien de régions tombent dans chaque case ?
+3. **c.** Calculer l'**écart hommes-femmes en alphabétisation** (`tx_alpha_hommes - tx_alpha_femmes`) puis trier par écart décroissant. Quelles régions ont l'écart le plus marqué ? Est-ce cohérent avec ce que tu sais des dynamiques de scolarisation au Cameroun ?
 
-> 💡 Indice : `group_by(quintile, milieu) |> summarise(...)` ; pour le tri, `arrange(quintile, milieu)`.
+> 💡 Indices : `library(readr); library(tidyr)` ; `pivot_wider(names_from = indicateur, values_from = valeur)` ; `mutate(typologie = case_when(...))`.
 
 # Q4 — Manipuler un objet `sf` {#sec-q4}
 

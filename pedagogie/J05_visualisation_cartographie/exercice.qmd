@@ -1,5 +1,5 @@
 ---
-title: "J5 — Exercices"
+title: "J5 — Exercices : cartographie sur EDS-MICS Cameroun 2018"
 subtitle: "Atelier IFORD × GDSG · 31 juillet 2026"
 lang: fr
 format:
@@ -14,55 +14,57 @@ format:
 
 # Mode d'emploi
 
-Q1 à Q5 sont des **micro-exercices** (5–10 min chacun) en séance. Q6 est le **devoir individuel du soir** (∼30 min). Solutions dans `corrige.qmd`, à n'ouvrir qu'**après** ta tentative.
+Q1 à Q5 = micro-exercices en séance (5–10 min). Q6 = devoir individuel du soir (∼30 min). Solutions dans `corrige.qmd`.
 
-# Q1 — Choroplèthe simple {#sec-q1}
+**Données réelles uniquement** : indicateurs EDS-MICS Cameroun 2018 agrégés par région (calculés localement depuis le microfichier DHS via `srvyr`, méthodologie ICF) + polygones GADM v4.1. Aucune simulation.
+
+# Q1 — Choroplèthe accès à l'eau {#sec-q1}
 
 > Référence démo : section « Choroplèthe `tmap` basique ».
 
-À partir de `adm1_pop` (construit en démo) :
+À partir de `adm1_indic` (construit en démo) :
 
-1. **a.** Produis une choroplèthe `tmap` de **`pct_electricite`** avec une palette **séquentielle Blues**.
-2. **b.** Ajoute les étiquettes des régions et un titre.
-3. **c.** Lecture critique : quelle région a le taux d'électrification le plus bas ? Le plus élevé ? Est-ce cohérent avec ce que tu sais du terrain ?
+1. **a.** Produis une choroplèthe `tmap` de **`tx_eau_ameliore`** avec une palette **séquentielle Blues**.
+2. **b.** Ajoute les étiquettes des régions et un titre clair.
+3. **c.** Lecture critique : quelle région a le taux d'accès à l'eau améliorée le plus bas ? Le plus élevé ? Est-ce cohérent avec ce que tu sais du terrain camerounais ?
 
 # Q2 — Trois classifications, trois lectures {#sec-q2}
 
 > Référence démo : section « Comparaison de classifications ».
 
-Sur la variable **`taille_mng`** (taille moyenne du ménage) :
+Sur la variable **`taille_menage`** (taille moyenne du ménage selon DHS) :
 
 1. **a.** Produis trois choroplèthes côte à côte (`tmap_arrange`) avec : intervalles égaux, quantiles, Jenks.
 2. **b.** Choisis 2 régions où les trois cartes ne s'accordent pas sur la classe. Pourquoi ?
 3. **c.** Quelle classification recommanderais-tu pour communiquer cette variable à un décideur ? Justifie en 2 phrases.
 
-# Q3 — Palette divergente {#sec-q3}
+# Q3 — Palette divergente : écart à la moyenne nationale {#sec-q3}
 
 > Référence démo : section « Palettes ».
 
-`pct_urbain` peut se lire comme un écart par rapport à la moyenne nationale (∼50 %) :
+Le taux d'alphabétisation national pondéré est ∼60 %. L'écart régional à cette moyenne s'interprète comme un avantage / désavantage relatif.
 
-1. **a.** Calcule `ecart_urbain = pct_urbain - mean(pct_urbain)`.
+1. **a.** Calcule `ecart_alpha = tx_alpha_femmes - mean(tx_alpha_femmes, na.rm = TRUE)`.
 2. **b.** Produis une choroplèthe avec une **palette divergente** (par exemple `brewer.rd_bu`, centrée sur 0).
-3. **c.** Que distingue cette représentation d'une choroplèthe séquentielle simple ? Quand utiliser l'une plutôt que l'autre ?
+3. **c.** Que distingue cette représentation d'une choroplèthe séquentielle ? Quand utiliser l'une plutôt que l'autre ?
 
-# Q4 — Carte interactive {#sec-q4}
+# Q4 — Carte interactive Leaflet {#sec-q4}
 
 > Référence démo : section « Mode interactif Leaflet ».
 
 1. **a.** Active `tmap_mode("view")`.
-2. **b.** Produis une choroplèthe **densité × population 2019** avec popups affichant : nom de la région, densité, population, superficie.
-3. **c.** Zoome sur le Littoral. Le fond OpenStreetMap montre-t-il bien Douala ? Compare la couverture des arrondissements à ce que tu connais.
+2. **b.** Produis une choroplèthe alphabétisation femmes avec popups affichant : nom région, % alphabétisation femmes/hommes, % électricité, % eau améliorée, taille ménage moyenne.
+3. **c.** Zoome sur le Littoral et l'Extrême-Nord. Compare visuellement les fonds OpenStreetMap des deux régions. Que t'apprend l'urbanisation visible sur le fond de carte ?
 4. **d.** N'oublie pas `tmap_mode("plot")` à la fin !
 
-# Q5 — Version `ggplot2` {#sec-q5}
+# Q5 — Version `ggplot2` avec `ggspatial` {#sec-q5}
 
 > Référence démo : section « Alternative `ggplot2 + geom_sf` ».
 
-Reprends la choroplèthe `densite` mais en `ggplot2 + geom_sf` :
+Reprends la choroplèthe `tx_alpha_femmes` en `ggplot2 + geom_sf` :
 
-1. **a.** Choisis une palette `viridis` (option `B` ou `D`).
-2. **b.** Étire l'échelle avec `trans = "sqrt"` pour mieux différencier les régions de faible densité.
+1. **a.** Choisis une palette `viridis` (option `D` ou `B`).
+2. **b.** Ajoute la flèche du nord (`ggspatial::annotation_north_arrow`) et la barre d'échelle (`annotation_scale`).
 3. **c.** Compare visuellement à la version `tmap` Jenks. Quelle est la plus lisible selon toi ?
 
 # Q6 — Devoir : ta carte de production complète {#sec-q6}
@@ -71,68 +73,64 @@ Reprends la choroplèthe `densite` mais en `ggplot2 + geom_sf` :
 
 ## Objectif
 
-Produire **une carte de production complète** sur l'indicateur de ton choix, prête à être insérée dans un rapport ou une présentation.
+Produire **une carte de production complète** sur l'indicateur de ton choix parmi les vraies variables DHS Cameroun 2018, prête à être insérée dans un rapport ou une présentation institutionnelle.
 
 ## Étape 1 — Choix de l'indicateur
 
-Choisis **un** des trois indicateurs disponibles : `pct_electricite`, `pct_urbain`, `taille_mng`. Note ton choix.
+Choisis **un** des cinq indicateurs DHS disponibles :
+
+- `tx_alpha_femmes` (alphabétisation femmes 15-49)
+- `tx_alpha_hommes` (alphabétisation hommes 15-49)
+- `tx_electricite` (% ménages électrifiés)
+- `tx_eau_ameliore` (% ménages avec eau améliorée)
+- `taille_menage` (taille moyenne du ménage)
 
 ## Étape 2 — Choix de la classification
 
-Choisis une méthode de classification adaptée à la distribution de ton indicateur (Jenks, quantiles, manuel). Justifie ton choix en commentaire dans le script.
+Choisis une méthode adaptée à la distribution observée (Jenks, quantiles, manuel). **Justifie ton choix en commentaire dans le script.**
 
 ## Étape 3 — Choix de la palette
 
-Choisis une palette adaptée à la nature de l'indicateur :
-
-- `pct_*` (proportions) → palette **séquentielle** (Blues, YlOrRd, viridis).
-- Si tu calcules un écart à la moyenne → palette **divergente** (RdBu, BrBG).
+- Pour un **% qui croît** (alphabétisation, eau, électricité) → palette **séquentielle** (Blues, YlOrRd, viridis).
+- Pour un **écart à la moyenne** → palette **divergente** (RdBu, BrBG).
 
 ## Étape 4 — Construire la carte avec tous les éléments d'habillage
 
-Utilise `tmap` (ou `ggplot2 + ggspatial`) en t'assurant que ta carte contient **tous** ces éléments :
+Sept éléments obligatoires :
 
 - Titre clair (la question à laquelle la carte répond)
-- Sous-titre (méthodologie : palette + classification + projection)
+- Sous-titre (méthodologie : indicateur DHS + palette + classification + projection)
 - Légende lisible
 - Étiquettes des régions
 - Flèche du nord
 - Échelle (scalebar)
-- Crédits (Source : … · IFORD × GDSG 2026)
+- Crédits (Source : EDS-MICS Cameroun 2018 · DHS StatCompiler · GADM v4.1 · IFORD × GDSG 2026)
 
 ## Étape 5 — Exporter en trois formats
 
 ```r
-out_dir <- here("pedagogie", "J03_cartographie_tmap_ggplot", "outputs")
+out_dir <- here("pedagogie", "J05_visualisation_cartographie", "outputs")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
-# PNG haute résolution pour PowerPoint
-tmap_save(ma_carte, file.path(out_dir, "ma_carte.png"), dpi = 300,
+tmap_save(ma_carte, file.path(out_dir, "ma_carte_dhs2018.png"),
+          dpi = 300, width = 9, height = 7)
+tmap_save(ma_carte, file.path(out_dir, "ma_carte_dhs2018.pdf"),
           width = 9, height = 7)
-
-# PDF vectoriel pour publication
-tmap_save(ma_carte, file.path(out_dir, "ma_carte.pdf"),
-          width = 9, height = 7)
-
-# HTML interactif
-tmap_mode("view")
-tmap_save(ma_carte_interactive, file.path(out_dir, "ma_carte.html"))
-tmap_mode("plot")
 ```
 
 ## Critères de réussite
 
-- ☐ La carte porte sur un indicateur clairement choisi.
+- ☐ La carte porte sur un indicateur DHS 2018 clairement choisi.
 - ☐ La classification est justifiée en commentaire.
 - ☐ La palette est adaptée à la nature de la variable.
 - ☐ Les sept éléments d'habillage sont présents.
-- ☐ Les trois exports (PNG, PDF, HTML) sont produits sans erreur.
-- ☐ Tu peux ouvrir le PDF et l'HTML interactif sans bug d'affichage.
+- ☐ Les exports PNG + PDF sont produits sans erreur.
+- ☐ Tu cites correctement la source EDS-MICS 2018.
 
 ## Pour aller plus loin (bonus)
 
-- Ajoute **les chefs-lieux régionaux** sous forme de points (tibble construit en démo J2).
-- Produis une **carte comparative deux périodes** (ton indicateur en 2019 vs une projection 2024 à +10 %) en `tmap_arrange()`.
+- Ajoute **les chefs-lieux régionaux** (cf. tibble construit en J2) sous forme de points.
+- Produis une **carte comparative** d'un indicateur DHS 2011 vs 2018 (si tu as accès au CSV historique).
 
 # Si tu bloques
 

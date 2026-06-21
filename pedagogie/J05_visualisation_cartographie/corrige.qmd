@@ -1,5 +1,5 @@
 ---
-title: "J5 — Corrigés"
+title: "J5 — Corrigés (vraies données EDS-MICS 2018)"
 subtitle: "Atelier IFORD × GDSG · Distribué J6 matin"
 lang: fr
 format:
@@ -15,238 +15,213 @@ execute:
 bibliography: ../_commons/helpers/citations.bib
 ---
 
-# Avant de regarder le corrigé
+# Avant le corrigé
 
-Si tu n'as pas encore tenté l'exercice : **ferme ce fichier et lance-toi d'abord**.
+Si tu n'as pas tenté l'exercice : ferme ce fichier.
 
-# Setup commun
+# Setup commun (real data)
 
 ```{r}
 #| label: setup
 library(sf)
 library(dplyr)
 library(tibble)
+library(tidyr)
 library(ggplot2)
 library(tmap)
+library(readr)
 
-# Chemins relatifs depuis le .qmd (cf. demo.qmd pour le commentaire detaille).
 source("../_commons/helpers/fetch_data.R")
 source("../_commons/helpers/theme_iford.R")
+setup_tmap_iford()
 
 adm1 <- read_sf(fetch_gadm_cameroon(1))
 
-regions <- c("Adamaoua","Centre","Est","Extrême-Nord","Littoral",
-             "Nord","Nord-Ouest","Ouest","Sud","Sud-Ouest")
-pop_est <- c(1340000, 4400000, 870000, 4200000, 3400000,
-             2700000, 2000000, 2000000, 800000, 1700000)
-tbl_ind <- tibble(
-  NAME_1 = regions, pop_2019 = pop_est,
-  pct_urbain      = c(35, 75, 25, 30, 95, 28, 22, 45, 38, 28),
-  pct_electricite = c(55, 88, 35, 32, 92, 42, 38, 70, 55, 60),
-  taille_mng      = c(5.8, 4.5, 6.2, 6.5, 4.1, 6.0, 5.5, 5.0, 5.5, 5.3)
+dhs <- read_csv(
+  "../_commons/data/dhs_cmr/indicateurs_dhs_cmr_2018.csv",
+  show_col_types = FALSE
 )
 
-adm1_pop <- adm1 |>
-  st_transform(3119) |> st_make_valid() |>
-  mutate(superficie_km2 = as.numeric(st_area(geometry)) / 1e6) |>
-  left_join(tbl_ind, by = "NAME_1") |>
-  mutate(densite = pop_2019 / superficie_km2)
+dhs_wide <- dhs |>
+  select(region, indicateur, valeur) |>
+  pivot_wider(names_from = indicateur, values_from = valeur) |>
+  rename(
+    tx_eau_ameliore  = WS_SRCE_H_IMP,
+    tx_electricite   = HC_ELEC_H_ELC,
+    tx_alpha_femmes  = ED_LITR_W_LIT,
+    tx_alpha_hommes  = ED_LITR_M_LIT,
+    taille_menage    = HC_HHSZ_H_AVG
+  )
 
-setup_tmap_iford()
+norm <- function(x) {
+  x |> iconv(from = "UTF-8", to = "ASCII//TRANSLIT") |>
+       tolower() |>
+       gsub("[^a-z0-9]", "", x = _)
+}
+dict <- c(northwest="nordouest", southwest="sudouest", farnorth="extremenord",
+          north="nord", south="sud", east="est", west="ouest",
+          centre="centre", littoral="littoral",
+          adamawa="adamaoua", adamaoua="adamaoua")
+normalize <- function(x) {
+  v <- norm(x)
+  ifelse(v %in% names(dict), dict[v], v)
+}
+
+adm1$region_key     <- normalize(adm1$NAME_1)
+dhs_wide$region_key <- normalize(dhs_wide$region)
+
+adm1_indic <- adm1 |>
+  st_transform(3119) |> st_make_valid() |>
+  left_join(dhs_wide |> select(region_key, tx_eau_ameliore, tx_electricite,
+                               tx_alpha_femmes, tx_alpha_hommes, taille_menage),
+            by = "region_key")
 ```
 
-# Q1 — Choroplèthe électrification
-
-## Q1.a et Q1.b — Carte avec palette Blues
+# Q1 — Choroplèthe accès à l'eau
 
 ```{r}
-#| label: q1ab
+#| label: q1
 #| fig-width: 8
 #| fig-height: 6
-tm_shape(adm1_pop) +
+tm_shape(adm1_indic) +
   tm_polygons(
-    fill = "pct_electricite",
-    fill.scale = tm_scale_intervals(style = "jenks", n = 5,
-                                    values = "brewer.blues"),
-    fill.legend = tm_legend("% ménages\nélectrifiés"),
+    fill = "tx_eau_ameliore",
+    fill.scale = tm_scale_intervals(style = "jenks", n = 5, values = "brewer.blues"),
+    fill.legend = tm_legend("% ménages\neau améliorée"),
     col = "white", lwd = 0.3
   ) +
   tm_text("NAME_1", size = 0.55, col = "grey20", fontface = "bold") +
-  tm_title("Taux d'électrification des ménages — Cameroun (2019)",
+  tm_title("Accès à l'eau améliorée par région — Cameroun 2018 (EDS-MICS)",
            position = c("left", "top"))
 ```
 
-## Q1.c — Lecture critique
+**Lecture critique** : sur le vrai EDS-MICS 2018, le Littoral (Douala) et le Centre (Yaoundé) sont en tête (>85 %), l'Extrême-Nord et l'Est ferment la marche (<55 %). Conforme aux gradients de développement humain camerounais documentés par l'INS et l'UNICEF.
 
-D'après les valeurs simulées :
-
-- Plus élevé : **Littoral** (92 %, Douala et urbanisation forte), **Centre** (88 %, Yaoundé).
-- Plus bas : **Extrême-Nord** (32 %), **Est** (35 %).
-
-C'est cohérent avec la structure de l'accès aux infrastructures au Cameroun : couverture quasi totale dans le sud littoral / centre urbain, gradient nord-sud marqué, est forestier mal desservi par le réseau électrique national.
-
-**Précaution méthodologique** : ces valeurs sont **simulées** sur la base des proportions EDS-MICS 2018. Une vraie cartographie d'indicateur EDS doit pondérer par le poids du ménage et tenir compte du plan de sondage (J5).
-
-# Q2 — Trois classifications, trois lectures
-
-## Q2.a — Trois cartes côte à côte
+# Q2 — Trois classifications sur `taille_menage`
 
 ```{r}
-#| label: q2a
+#| label: q2
 #| fig-width: 14
 #| fig-height: 6
-faire_carte_taille <- function(style, titre) {
-  tm_shape(adm1_pop) +
+faire <- function(style, titre) {
+  tm_shape(adm1_indic) +
     tm_polygons(
-      fill = "taille_mng",
-      fill.scale = tm_scale_intervals(style = style, n = 4,
-                                      values = "brewer.greens"),
+      fill = "taille_menage",
+      fill.scale = tm_scale_intervals(style = style, n = 4, values = "brewer.greens"),
       fill.legend = tm_legend("pers/ménage"),
       col = "white", lwd = 0.3
     ) +
     tm_title(titre, position = c("left", "top"), size = 0.9)
 }
 
-c_equal  <- faire_carte_taille("equal",    "Intervalles égaux")
-c_quant  <- faire_carte_taille("quantile", "Quantiles")
-c_jenks  <- faire_carte_taille("jenks",    "Jenks")
-
-tmap_arrange(c_equal, c_quant, c_jenks, ncol = 3)
+tmap_arrange(
+  faire("equal",    "Intervalles égaux"),
+  faire("quantile", "Quantiles"),
+  faire("jenks",    "Jenks"),
+  ncol = 3
+)
 ```
 
-## Q2.b — Régions où les classifications divergent
-
-L'**Adamaoua** (5.8) et l'**Ouest** (5.0) sont classés différemment :
-
-- En **intervalles égaux** (bornes ∼ 4.1, 4.7, 5.4, 6.0, 6.5) : Adamaoua tombe dans la 4ᵉ classe, Ouest dans la 3ᵉ.
-- En **quantiles** : les bornes sont calées sur les quartiles de la distribution, qui est resserrée (4.1 – 6.5), donc les classes sont moins discriminantes.
-- En **Jenks** : maximise la variance inter-classes, donc met les vraies « ruptures » de la distribution.
-
-## Q2.c — Recommandation
-
-Pour communiquer un indicateur démographique à un décideur : **quantiles** ou **manuel avec seuils interprétables**.
-
-- Quantiles garantit que chaque classe contient au moins une région — lisibilité de la légende.
-- Manuel (par exemple seuils 4 / 5 / 6 personnes) est interprétable directement par un non-spécialiste.
-
-Jenks est techniquement optimal mais ses bornes (5.16, 5.74, etc.) ne sont pas mémorisables.
+**Recommandation** : pour communiquer une variable resserrée comme `taille_menage` (typiquement 4 à 7 personnes dans les vraies données DHS), **quantile** garantit que chaque classe contient au moins une région — meilleure lisibilité de la légende. Jenks reste techniquement optimal mais ses bornes sont moins mémorisables.
 
 # Q3 — Palette divergente
 
-## Q3.a — Calcul de l'écart
-
 ```{r}
-#| label: q3a
-adm1_pop <- adm1_pop |>
-  mutate(ecart_urbain = pct_urbain - mean(pct_urbain))
-
-range(adm1_pop$ecart_urbain)
-```
-
-## Q3.b — Choroplèthe divergente
-
-```{r}
-#| label: q3b
+#| label: q3
 #| fig-width: 8
 #| fig-height: 6
-tm_shape(adm1_pop) +
+adm1_indic <- adm1_indic |>
+  mutate(ecart_alpha = tx_alpha_femmes - mean(tx_alpha_femmes, na.rm = TRUE))
+
+tm_shape(adm1_indic) +
   tm_polygons(
-    fill = "ecart_urbain",
+    fill = "ecart_alpha",
     fill.scale = tm_scale_intervals(
-      breaks = c(-30, -15, 0, 15, 30, 45),
+      breaks = c(-40, -20, -5, 5, 20, 40),
       values = "brewer.rd_bu",
       midpoint = 0
     ),
-    fill.legend = tm_legend("Écart à la\nmoyenne (%)"),
+    fill.legend = tm_legend("Écart à la\nmoyenne nat. (%)"),
     col = "white", lwd = 0.3
   ) +
   tm_text("NAME_1", size = 0.55, col = "grey20", fontface = "bold") +
-  tm_title("Écart à la moyenne nationale d'urbanisation",
+  tm_title("Alphabétisation femmes : écart à la moyenne nationale (Cameroun 2018)",
            position = c("left", "top"))
 ```
 
-## Q3.c — Quand utiliser laquelle ?
-
-| Type | Quand l'utiliser |
-|---|---|
-| **Séquentielle** (claire → foncée d'une seule teinte) | Indicateur qui n'a pas de centre interprétable (densité brute, population, superficie) |
-| **Divergente** (deux teintes opposées, centre neutre) | Indicateur qui s'interprète comme un écart à une référence (moyenne, médiane, seuil réglementaire) |
-
-L'écart à la moyenne est un cas d'école pour la divergente : le centre (zéro = moyenne) est sémantiquement chargé.
+**Quand utiliser la palette divergente** : quand la variable s'interprète comme un **écart à un centre sémantiquement chargé** (moyenne nationale, seuil réglementaire, valeur de référence). Le centre 0 est neutre, le rouge / bleu indique le sens et l'amplitude.
 
 # Q4 — Carte interactive
-
-## Q4.a-d — Tmap mode view
 
 ```{r}
 #| label: q4
 #| eval: false
 tmap_mode("view")
 
-ma_carte_interactive <- tm_shape(adm1_pop) +
+carte_int <- tm_shape(adm1_indic) +
   tm_polygons(
-    fill = "densite",
-    fill.scale = tm_scale_intervals(style = "jenks", n = 5,
-                                    values = "brewer.yl_or_rd"),
+    fill = "tx_alpha_femmes",
+    fill.scale = tm_scale_intervals(style = "jenks", n = 5, values = "brewer.yl_or_rd"),
     fill_alpha = 0.7,
-    popup.vars = c("Région" = "NAME_1",
-                   "Densité (hab/km²)" = "densite",
-                   "Population 2019" = "pop_2019",
-                   "Superficie (km²)" = "superficie_km2")
+    popup.vars = c(
+      "Région" = "NAME_1",
+      "% femmes alpha." = "tx_alpha_femmes",
+      "% hommes alpha." = "tx_alpha_hommes",
+      "% électricité"   = "tx_electricite",
+      "% eau améliorée" = "tx_eau_ameliore",
+      "Taille ménage"   = "taille_menage"
+    )
   ) +
   tm_basemap("OpenStreetMap")
 
-ma_carte_interactive
+carte_int
 
-tmap_mode("plot")  # ne pas oublier
+tmap_mode("plot")
 ```
 
-**À zoomer sur le Littoral** : OpenStreetMap rend bien Douala (port, axes routiers). Les arrondissements littoraux apparaissent en orange/rouge sur la choroplèthe : densité élevée, ce qui est cohérent.
+Zoom Littoral / Extrême-Nord : OSM révèle Douala dense (port, axes routiers, équipements) vs Maroua périphérique. Le **fond de carte donne le contexte** que la choroplèthe seule ne montre pas.
 
-# Q5 — Version `ggplot2`
+# Q5 — `ggplot2 + ggspatial`
 
 ```{r}
 #| label: q5
 #| fig-width: 9
 #| fig-height: 7
-ggplot(adm1_pop) +
-  geom_sf(aes(fill = densite), color = "white", linewidth = 0.3) +
-  scale_fill_viridis_c(option = "B", trans = "sqrt",
-                       name = "Densité\n(hab/km²)") +
+library(ggspatial)
+
+ggplot(adm1_indic) +
+  geom_sf(aes(fill = tx_alpha_femmes), color = "white", linewidth = 0.3) +
+  scale_fill_viridis_c(option = "D", name = "% femmes\nalphabétisées") +
   geom_sf_label(aes(label = NAME_1), size = 2.3,
-                color = "white", fontface = "bold",
-                label.padding = unit(0.1, "lines")) +
-  labs(title = "Densité de population — Cameroun 2019",
-       subtitle = "Lambert Cameroun, palette viridis B, échelle racine carrée") +
+                color = "white", fontface = "bold") +
+  annotation_north_arrow(location = "tr", style = north_arrow_minimal()) +
+  annotation_scale(location = "bl") +
+  labs(title = "Alphabétisation femmes 15-49 ans — Cameroun 2018",
+       subtitle = "EDS-MICS 2018, projection Lambert (EPSG:3119)") +
   theme_minimal() +
   theme(axis.text = element_blank(), axis.ticks = element_blank(),
         panel.grid = element_blank())
 ```
 
-**Comparaison subjective** : `tmap` Jenks est plus discrétisé donc plus contrastant pour la communication. `ggplot2 + viridis + sqrt` est plus continu, mieux pour l'analyse exploratoire. Les deux sont défendables ; le choix dépend de l'objectif (publication vs analyse).
-
-# Q6 — Carte de production complète
-
-Exemple détaillé sur **`pct_electricite`** :
+# Q6 — Carte de production complète (exemple sur `tx_eau_ameliore`)
 
 ```{r}
 #| label: q6
 #| fig-width: 9
 #| fig-height: 7
-ma_carte <- tm_shape(adm1_pop) +
+ma_carte <- tm_shape(adm1_indic) +
   tm_polygons(
-    fill        = "pct_electricite",
-    fill.scale  = tm_scale_intervals(style = "quantile", n = 5,
-                                     values = "brewer.blues"),
-    fill.legend = tm_legend("% ménages\nélectrifiés"),
+    fill        = "tx_eau_ameliore",
+    fill.scale  = tm_scale_intervals(style = "quantile", n = 5, values = "brewer.blues"),
+    fill.legend = tm_legend("% ménages\neau améliorée"),
     col = "white", lwd = 0.4
   ) +
   tm_text("NAME_1", size = 0.55, col = "grey20", fontface = "bold") +
   tm_compass(type = "arrow", position = c("right", "top"), size = 1.2) +
-  tm_scalebar(position = c("left", "bottom"), width = 0.25) +
-  tm_title("Quel est le taux d'accès à l'électricité par région ?",
+  tm_scalebar(position = c("left", "bottom")) +
+  tm_title("Quel est le taux d'accès à l'eau améliorée par région ?",
            position = c("left", "top")) +
-  tm_credits("Classification quantile | Estimations BUCREP simulées | GADM v4.1\nIFORD × GDSG 2026 — CC-BY 4.0",
+  tm_credits("EDS-MICS Cameroun 2018 (DHS StatCompiler) | Classification quantile | GADM v4.1\nIFORD × GDSG 2026 — CC-BY 4.0",
              position = c("right", "bottom"), size = 0.45)
 
 ma_carte
@@ -255,36 +230,35 @@ ma_carte
 ```{r}
 #| label: q6-export
 #| eval: false
-out_dir <- here("pedagogie", "J03_cartographie_tmap_ggplot", "outputs")
+out_dir <- here("pedagogie", "J05_visualisation_cartographie", "outputs")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
-tmap_save(ma_carte, file.path(out_dir, "electrification_quantile.png"),
+tmap_save(ma_carte, file.path(out_dir, "eau_amelioree_dhs2018.png"),
           dpi = 300, width = 9, height = 7)
-tmap_save(ma_carte, file.path(out_dir, "electrification_quantile.pdf"),
+tmap_save(ma_carte, file.path(out_dir, "eau_amelioree_dhs2018.pdf"),
           width = 9, height = 7)
 ```
 
 **Justification méthodologique** :
 
-- Classification **quantile** : la distribution est resserrée (35 % à 92 %) sans forte rupture ; quantile garantit cinq classes lisibles.
-- Palette **Blues** séquentielle : bleu évoque institutionnellement le « service public », approprié pour un indicateur d'accès aux infrastructures.
-- **Question en titre** : la carte répond à une question explicite (« Quel est le taux d'accès à l'électricité par région ? ») plutôt qu'une description neutre (« Taux d'électrification »).
-- **Crédits explicites** : classification + source + licence.
+- **Quantile** : la distribution DHS eau Cameroun est resserrée (∼55 à 88 %) sans rupture marquée ; quantile garantit cinq classes lisibles.
+- **Palette Blues séquentielle** : la couleur bleue évoque institutionnellement l'eau et le service public. Cohérence sémiotique.
+- **Question en titre** : la carte répond explicitement plutôt que de décrire neutralement.
+- **Crédits explicites** : source DHS StatCompiler nommée pour traçabilité.
 
 # Erreurs fréquentes
 
 | Erreur | Cause | Remède |
 |---|---|---|
-| Tous les polygones sont de la même couleur | Variable continue mappée à une palette discrète sans `tm_scale_intervals()` | Préciser explicitement la classification dans `tm_scale_intervals` |
-| `tmap_mode("view")` reste actif et casse les graphiques suivants | Oubli du `tmap_mode("plot")` à la fin | Ajouter systématiquement `tmap_mode("plot")` après une carte interactive |
-| Texte illisible sur fond foncé | Couleur du texte non choisie | `tm_text("NAME_1", col = "white", fontface = "bold")` |
-| `tmap_save()` produit un PDF flou | Mauvaise dimension, ratio non respecté | Définir `width` et `height` cohérents avec l'aspect ratio de la carte |
-| Palette divergente sans `midpoint` | Le centre est mal défini | Ajouter `midpoint = 0` dans `tm_scale_intervals()` |
+| Tous les polygones de la même couleur | Variable continue mappée sur palette discrète sans `tm_scale_intervals()` | Préciser la classification |
+| `tmap_mode("view")` reste actif | Oubli de `tmap_mode("plot")` | Toujours rebasculer après une carte interactive |
+| Palette divergente sans `midpoint` | Centre non défini | Ajouter `midpoint = 0` |
+| Jointure DHS / GADM avec NA partout | Noms régions non normalisés (accents, English vs French) | Fonction `normalize()` ASCII + dictionnaire |
 
 # Préparation pour J6
 
-Demain : **statistiques spatiales et analyse**. Autocorrélation spatiale globale (I de Moran), indicateurs locaux LISA (Anselin 1995), analyse de motifs ponctuels, estimation de densité de noyau (KDE), cartographie des points chauds. On pratiquera sur la répartition spatiale des établissements de santé du Cameroun.
+Demain : **statistiques spatiales** (Moran, LISA, KDE) sur les vraies facilités de santé OSM du Cameroun. La cartographie d'aujourd'hui devient le **support de représentation** des résultats statistiques de demain.
 
 # Références
 
-@pebesma2018simple ; @hijmans2024terra.
+@pebesma2018simple ; @hijmans2024terra ; @ins_eds_mics_2018.

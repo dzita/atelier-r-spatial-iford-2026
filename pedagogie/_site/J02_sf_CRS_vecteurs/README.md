@@ -55,3 +55,4 @@
 | `runtime.qmd` | Version WebR pour participants sans R local |
 | `exercice.qmd` | Énoncés Q1 à Q6 |
 | `corrige.qmd` | Solutions Q1 à Q6 (distribué J+1 matin) |
+| `install_packages_day.R` | Installation des packages strictement nécessaires pour J2 |

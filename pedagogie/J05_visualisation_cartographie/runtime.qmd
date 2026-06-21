@@ -1,6 +1,6 @@
 ---
 title: "J5 — Visualisation et cartographie"
-subtitle: "Code R exécutable dans le navigateur"
+subtitle: "Code R exécutable dans le navigateur — vraies données EDS-MICS 2018"
 engine: knitr
 ---
 
@@ -8,127 +8,154 @@ engine: knitr
 **Mode d'emploi.** Cliquez **Run code** dans chaque cellule pour exécuter. Modifiez le code, recliquez pour relancer. Tout tourne dans votre navigateur via WebR.
 
 **Note importante** : `tmap` n'est pas disponible sur WebR (trop de dépendances). Ce runtime utilise `ggplot2 + geom_sf`, qui produit des résultats équivalents en mode statique. La démo `tmap` complète est dans `demo.qmd` à exécuter sous RStudio.
+
+**Données réelles** : indicateurs EDS-MICS Cameroun 2018 agrégés par région, calculés localement depuis le microfichier DHS via `srvyr` (cf. `pedagogie/_commons/data/dhs_cmr/00_telecharger_dhs_indicateurs.R`). Aucune simulation.
 :::
 
-## 1. Charger les données et construire le tibble d'indicateurs
+## 1. Charger GADM + indicateurs DHS réels
 
 ```{webr}
 #| autorun: true
 library(sf)
 library(dplyr)
 library(tibble)
+library(tidyr)
 library(ggplot2)
 
-download.file("/_commons/data/gadm41_CMR_1.json", "adm1.json", mode = "wb")
+download.file("../_commons/data/gadm41_CMR_1.json", "adm1.json", mode = "wb")
+download.file("../_commons/data/dhs_cmr/indicateurs_dhs_cmr_2018.csv", "dhs.csv", mode = "wb")
+
 adm1 <- read_sf("adm1.json")
+dhs  <- read.csv("dhs.csv", stringsAsFactors = FALSE)
 
-regions <- c("Adamaoua","Centre","Est","Extrême-Nord","Littoral",
-             "Nord","Nord-Ouest","Ouest","Sud","Sud-Ouest")
-pop_est <- c(1340000, 4400000, 870000, 4200000, 3400000,
-             2700000, 2000000, 2000000, 800000, 1700000)
-
-tbl_ind <- tibble(
-  NAME_1 = regions, pop_2019 = pop_est,
-  pct_urbain      = c(35, 75, 25, 30, 95, 28, 22, 45, 38, 28),
-  pct_electricite = c(55, 88, 35, 32, 92, 42, 38, 70, 55, 60),
-  taille_mng      = c(5.8, 4.5, 6.2, 6.5, 4.1, 6.0, 5.5, 5.0, 5.5, 5.3)
-)
-
-adm1_pop <- adm1 |>
-  st_transform(3119) |>
-  st_make_valid() |>
-  mutate(superficie_km2 = as.numeric(st_area(geometry)) / 1e6) |>
-  left_join(tbl_ind, by = "NAME_1") |>
-  mutate(densite = pop_2019 / superficie_km2)
-
-head(adm1_pop |> st_drop_geometry() |> select(NAME_1, densite, pct_urbain), 5)
+cat("Indicateurs DHS Cameroun 2018 :", nrow(dhs), "lignes\n")
+head(dhs, 6)
 ```
 
-## 2. Choroplèthe minimale `ggplot2`
+## 2. Passer en format wide et joindre à GADM
 
 ```{webr}
-ggplot(adm1_pop) +
-  geom_sf(aes(fill = densite)) +
+dhs_wide <- dhs |>
+  select(region, indicateur, valeur) |>
+  pivot_wider(names_from = indicateur, values_from = valeur) |>
+  rename(
+    tx_eau_ameliore  = WS_SRCE_H_IMP,
+    tx_electricite   = HC_ELEC_H_ELC,
+    tx_alpha_femmes  = ED_LITR_W_LIT,
+    tx_alpha_hommes  = ED_LITR_M_LIT,
+    taille_menage    = HC_HHSZ_H_AVG
+  )
+
+# Normaliser les noms de régions pour la jointure
+norm <- function(x) {
+  x |> iconv(from = "UTF-8", to = "ASCII//TRANSLIT") |>
+       tolower() |>
+       gsub("[^a-z0-9]", "", x = _)
+}
+dict <- c(northwest="nordouest", southwest="sudouest", farnorth="extremenord",
+          north="nord", south="sud", east="est", west="ouest",
+          centre="centre", littoral="littoral",
+          adamawa="adamaoua", adamaoua="adamaoua")
+normalize <- function(x) {
+  v <- norm(x)
+  ifelse(v %in% names(dict), dict[v], v)
+}
+
+adm1$region_key     <- normalize(adm1$NAME_1)
+dhs_wide$region_key <- normalize(dhs_wide$region)
+
+adm1_indic <- adm1 |>
+  left_join(dhs_wide |> select(region_key, tx_eau_ameliore, tx_electricite,
+                               tx_alpha_femmes, tx_alpha_hommes, taille_menage),
+            by = "region_key")
+
+adm1_indic |>
+  st_drop_geometry() |>
+  select(NAME_1, tx_alpha_femmes, tx_electricite, tx_eau_ameliore) |>
+  arrange(desc(tx_alpha_femmes))
+```
+
+## 3. Choroplèthe minimale `ggplot2`
+
+```{webr}
+ggplot(adm1_indic) +
+  geom_sf(aes(fill = tx_alpha_femmes)) +
   theme_minimal()
 ```
 
-## 3. Choroplèthe publiable avec décorations
+## 4. Choroplèthe publiable avec décorations
 
 ```{webr}
-ggplot(adm1_pop) +
-  geom_sf(aes(fill = densite), color = "white", linewidth = 0.3) +
-  scale_fill_viridis_c(option = "B", trans = "sqrt",
-                       name = "Densité\n(hab/km²)") +
+ggplot(adm1_indic) +
+  geom_sf(aes(fill = tx_alpha_femmes), color = "white", linewidth = 0.3) +
+  scale_fill_viridis_c(option = "D", name = "% femmes\nalphabétisées") +
   geom_sf_label(aes(label = NAME_1), size = 2.2, color = "white",
                 fontface = "bold", label.padding = unit(0.08, "lines")) +
-  labs(title = "Densité de population par région — Cameroun 2019",
-       subtitle = "Estimations BUCREP, projection Lambert (EPSG:3119)",
-       caption = "Source : BUCREP estim., GADM v4.1 · IFORD × GDSG 2026") +
+  labs(title = "Alphabétisation des femmes 15-49 ans — Cameroun 2018",
+       subtitle = "Source : EDS-MICS Cameroun 2018 (DHS StatCompiler)",
+       caption = "GADM v4.1 · IFORD × GDSG 2026") +
   theme_minimal() +
   theme(axis.text = element_blank(),
         axis.ticks = element_blank(),
         panel.grid = element_blank())
 ```
 
-## 4. Comparer deux indicateurs avec `facet_wrap`
+## 5. Comparer deux indicateurs avec `facet_wrap`
 
 Au lieu de `tmap_arrange()`, on utilise les facettes `ggplot2` après avoir restructuré la table en format long avec `tidyr::pivot_longer()`.
 
 ```{webr}
-library(tidyr)
-
-adm1_long <- adm1_pop |>
-  select(NAME_1, densite, pct_urbain, geometry) |>
-  tidyr::pivot_longer(c(densite, pct_urbain),
-                      names_to = "indicateur", values_to = "valeur")
+adm1_long <- adm1_indic |>
+  select(NAME_1, tx_alpha_femmes, tx_electricite, geometry) |>
+  pivot_longer(c(tx_alpha_femmes, tx_electricite),
+               names_to = "indicateur", values_to = "valeur")
 
 ggplot(adm1_long) +
   geom_sf(aes(fill = valeur), color = "white", linewidth = 0.2) +
-  scale_fill_viridis_c(option = "B") +
+  scale_fill_viridis_c(option = "D") +
   facet_wrap(~ indicateur, ncol = 2,
-             labeller = as_labeller(c(densite = "Densité (hab/km²)",
-                                      pct_urbain = "% urbain"))) +
-  labs(title = "Densité × Urbanisation par région — Cameroun") +
+             labeller = as_labeller(c(
+               tx_alpha_femmes = "% femmes alphabétisées",
+               tx_electricite  = "% ménages électrifiés"
+             ))) +
+  labs(title = "Alphabétisation femmes × Électricité — Cameroun 2018",
+       caption = "Source : EDS-MICS Cameroun 2018 (DHS StatCompiler)") +
   theme_minimal() +
   theme(axis.text = element_blank(), axis.ticks = element_blank(),
         panel.grid = element_blank(),
         strip.text = element_text(face = "bold", size = 11))
 ```
 
-## 5. Choix de palette : viridis vs séquentielle Brewer
+## 6. Choix de palette : viridis vs ColorBrewer
 
 ```{webr}
-g_viridis <- ggplot(adm1_pop) +
-  geom_sf(aes(fill = densite), color = "white", linewidth = 0.2) +
-  scale_fill_viridis_c(option = "D", trans = "sqrt") +
-  labs(title = "Palette viridis") +
+ggplot(adm1_indic) +
+  geom_sf(aes(fill = tx_alpha_femmes), color = "white", linewidth = 0.2) +
+  scale_fill_viridis_c(option = "D") +
+  labs(title = "Palette viridis (perceptuellement uniforme)") +
   theme_minimal() +
   theme(axis.text = element_blank(), axis.ticks = element_blank(),
         panel.grid = element_blank())
-
-g_viridis
 ```
 
 ```{webr}
-g_brewer <- ggplot(adm1_pop) +
-  geom_sf(aes(fill = densite), color = "white", linewidth = 0.2) +
+ggplot(adm1_indic) +
+  geom_sf(aes(fill = tx_alpha_femmes), color = "white", linewidth = 0.2) +
   scale_fill_fermenter(palette = "YlOrRd", direction = 1, n.breaks = 5) +
-  labs(title = "Palette ColorBrewer YlOrRd (5 classes)") +
+  labs(title = "Palette ColorBrewer YlOrRd (5 classes Jenks-like)") +
   theme_minimal() +
   theme(axis.text = element_blank(), axis.ticks = element_blank(),
         panel.grid = element_blank())
-
-g_brewer
 ```
 
-## 6. À essayer
+## 7. À essayer
 
 ::: {.iford-callout}
-Modifiez le code pour cartographier **`pct_electricite`** au lieu de `densite`. Changez le titre, choisissez une palette adaptée (séquentielle pour un % qui croît). Refaites tourner.
+Modifie le code pour cartographier **`tx_eau_ameliore`** (accès eau améliorée) au lieu de `tx_alpha_femmes`. Change le titre, choisis une palette adaptée (séquentielle bleue). Relance la cellule.
 :::
 
-## 7. Pour aller plus loin
+## 8. Pour aller plus loin
 
-La version complète du jour avec `tmap` (modes plot/view, classifications Jenks/quantiles, compass, scalebar, multi-panel `tmap_arrange`, export PNG/PDF/HTML interactif) est dans `demo.qmd`, à exécuter sous RStudio. Le devoir individuel Q6 est dans `exercice.qmd`.
+La version complète du jour avec `tmap` (modes plot/view, classifications Jenks/quantiles, compass, scalebar, multi-panel `tmap_arrange`, export PNG/PDF/HTML interactif, palette divergente sur les écarts à la moyenne nationale) est dans `demo.qmd`, à exécuter sous RStudio. Le devoir individuel Q6 est dans `exercice.qmd`.
 
 [← Retour à l'accueil](../INDEX.md)

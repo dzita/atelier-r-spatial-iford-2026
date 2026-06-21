@@ -49,4 +49,4 @@
 
 ## Fichiers du jour
 
-`README.md`, `slides.qmd`, `demo.qmd`, `demo.R`, `runtime.qmd`, `exercice.qmd`, `corrige.qmd`.
+`README.md`, `slides.qmd`, `demo.qmd`, `demo.R`, `runtime.qmd`, `exercice.qmd`, `corrige.qmd`, `install_packages_day.R` (installation ciblée des packages introduits ce jour : `terra`, `exactextractr`, `tidyterra`).

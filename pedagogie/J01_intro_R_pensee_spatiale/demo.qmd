@@ -299,68 +299,64 @@ here("data", "monfichier.csv")               # chemin OS-indépendant
 
 ## Lire un fichier d'enquête démographique camerounaise
 
-Démonstration sur un extrait ménages format Stata (typique DHS / MICS / ECAM). `haven::read_dta()` lit un fichier `.dta` en préservant les labels Stata. `dim()` retourne (nlignes, ncolonnes), `names()` liste les variables (on tronque à 20 ici car un microfichier DHS en a souvent ~ 1 500). Le bloc est `eval: false` parce que le fichier réel arrive après inscription DHS.
+Démonstration sur un extrait ménages format Stata (typique DHS / MICS / ECAM). `haven::read_dta()` lit un fichier `.dta` en préservant les labels Stata. `dim()` retourne (nlignes, ncolonnes), `names()` liste les variables (on tronque à 20 ici car un microfichier DHS en a souvent ~ 1 500). Le bloc est `eval: false` parce que le fichier réel arrive après inscription DHS et fait l'objet du J4.
 
 ```{r}
 #| label: lecture-enquete
 #| eval: false
 library(haven)
-# Lecture du fichier ménages EDS-MICS Cameroun 2018
+# Lecture du fichier ménages EDS-MICS Cameroun 2018 (apres inscription DHS)
 hh <- read_dta(here("datasets", "cameroun", "dhs_mics", "CMHR71FL.DTA"))
 dim(hh)
 names(hh)[1:20]
 ```
 
-Si le fichier n'est pas disponible aujourd'hui (inscription DHS en attente), on **simule** une structure analogue. `set.seed()` fige le générateur aléatoire pour que la sortie soit reproductible. `sample(x, n, replace = TRUE, prob = ...)` tire `n` valeurs dans `x` avec replacement, et la probabilité de chaque valeur peut être pondérée (ici par la part de population estimée). `rpois(n, lambda)` simule un effectif de ménage suivant une loi de Poisson de moyenne `lambda`. `pmax(1, ...)` garantit qu'aucun ménage n'est de taille 0.
+En attendant l'arrivée du microfichier brut (J4), on travaille sur les **indicateurs agrégés DHS Cameroun 2018** par région, déjà téléchargés via `rdhs::dhs_data()` depuis l'API officielle DHS StatCompiler. Format long, une ligne par couple (région × indicateur), aucune valeur simulée.
 
 ```{r}
-#| label: simul-eds
-set.seed(2026)
-n <- 11000  # ordre de grandeur du nombre de ménages EDS-MICS 2018
-hh_sim <- tibble(
-  id_menage   = sprintf("HH%05d", seq_len(n)),
-  region      = sample(regions, n, replace = TRUE,
-                       prob = pop_est / sum(pop_est)),
-  milieu      = sample(c("Urbain", "Rural"), n, replace = TRUE, prob = c(0.57, 0.43)),
-  taille_mng  = pmax(1, round(rpois(n, lambda = 5.1))),
-  quintile    = sample(1:5, n, replace = TRUE),
-  acces_eau   = sample(c("Améliorée", "Non améliorée"), n, replace = TRUE,
-                       prob = c(0.72, 0.28)),
-  electricite = sample(c("Oui", "Non"), n, replace = TRUE,
-                       prob = c(0.61, 0.39))
-)
-hh_sim
+#| label: load-dhs-cmr2018
+library(readr)
+library(tidyr)
+
+dhs <- read_csv("../_commons/data/dhs_cmr/indicateurs_dhs_cmr_2018.csv",
+                show_col_types = FALSE)
+
+dhs_wide <- dhs |>
+  select(region, indicateur, valeur) |>
+  pivot_wider(names_from = indicateur, values_from = valeur) |>
+  rename(
+    tx_eau_ameliore  = WS_SRCE_H_IMP,
+    tx_electricite   = HC_ELEC_H_ELC,
+    tx_alpha_femmes  = ED_LITR_W_LIT,
+    tx_alpha_hommes  = ED_LITR_M_LIT,
+    taille_menage    = HC_HHSZ_H_AVG
+  )
+
+dhs_wide
 ```
 
-Premier coup d'œil systématique : `skimr::skim()` produit en une commande un résumé par variable (type, valeurs manquantes, distribution). C'est votre **premier réflexe** sur tout nouveau microfichier — avant même d'écrire la moindre analyse.
+Premier coup d'œil systématique : `skimr::skim()` produit en une commande un résumé par variable (type, valeurs manquantes, distribution). C'est votre **premier réflexe** sur toute table — avant même d'écrire la moindre analyse.
 
 ```{r}
 #| label: skim
 library(skimr)
-skim(hh_sim)
+skim(dhs_wide)
 ```
 
 ## Calcul d'indicateurs démographiques de base
 
-On enchaîne `group_by(region) |> summarise(...)` pour produire, en une seule expression, une ligne par région avec : le nombre de ménages, la taille moyenne, le pourcentage d'urbains, d'électrifiés et d'eau améliorée. `mean(milieu == "Urbain")` exploite le fait que R convertit `TRUE/FALSE` en `1/0`, donc la moyenne d'un booléen est une proportion. `arrange(desc(...))` trie en décroissant. Aucune pondération ici — la note méthodologique qui suit explique pourquoi c'est insuffisant en production.
+Sur des données déjà agrégées par région, on illustre `arrange(desc(...))` pour ordonner, `mutate()` pour dériver un nouvel indicateur (écart hommes-femmes en alphabétisation, par exemple), et `summarise()` global pour produire les statistiques nationales pondérées par taille de région (à venir J4).
 
 ```{r}
 #| label: indicateurs-base
-# Taille moyenne des ménages par région (sans pondération - juste démo)
-hh_sim |>
-  group_by(region) |>
-  summarise(
-    n_menages       = n(),
-    taille_moyenne  = mean(taille_mng),
-    pct_urbain      = mean(milieu == "Urbain") * 100,
-    pct_electricite = mean(electricite == "Oui") * 100,
-    pct_eau_amelio  = mean(acces_eau == "Améliorée") * 100,
-    .groups = "drop"
-  ) |>
-  arrange(desc(pct_electricite))
+dhs_wide |>
+  mutate(ecart_alpha_hf = tx_alpha_hommes - tx_alpha_femmes) |>
+  arrange(desc(ecart_alpha_hf)) |>
+  select(region, tx_alpha_femmes, tx_alpha_hommes, ecart_alpha_hf,
+         tx_electricite, taille_menage)
 ```
 
-> **Note méthodologique importante :** sur une vraie EDS-MICS, ces calculs **doivent être pondérés** par le poids ménage (`hv005 / 1e6`) et tenir compte du plan de sondage stratifié à deux degrés. Voir le package `survey` et `srvyr`. On y reviendra J5.
+> **Note méthodologique importante :** ces indicateurs sont déjà pondérés par le plan de sondage DHS (poids `hv005 / 1e6`, stratification à deux degrés) côté StatCompiler. Si tu veux les recalculer depuis le microfichier brut, il faut explicitement `srvyr::as_survey_design()` — on y revient J4.
 
 # Troisième session — Qu'est-ce qu'un objet spatial ? {#sec-spatial-intro}
 
@@ -619,7 +615,7 @@ tmap_mode("plot")
 
 > ⏱ **~1 heure**. Récap appliqué : on combine TOUT ce qu'on a vu sur un seul livrable.
 
-On combine les indicateurs simulés et la géométrie. D'abord on assemble une table population minimaliste avec `tibble()`. Ensuite `left_join()` la fusionne avec `adm1_utm32` en utilisant `NAME_1` comme clé — comme `adm1_utm32` est un `sf`, le résultat reste un `sf` (la géométrie suit). `mutate()` calcule la densité (habitants par km²). `st_drop_geometry()` puis `arrange()` produisent un classement attributaire pur, sans le poids des polygones.
+On combine les estimations BUCREP par région et la géométrie. D'abord on assemble une table population minimaliste avec `tibble()`. Ensuite `left_join()` la fusionne avec `adm1_utm32` en utilisant `NAME_1` comme clé — comme `adm1_utm32` est un `sf`, le résultat reste un `sf` (la géométrie suit). `mutate()` calcule la densité (habitants par km²). `st_drop_geometry()` puis `arrange()` produisent un classement attributaire pur, sans le poids des polygones.
 
 ```{r}
 #| label: densite
@@ -686,7 +682,7 @@ Le devoir individuel constitue l'exercice **Q6** de `exercice.qmd` ; le corrigé
 |---|---|---|
 | GADM v4.1 ADM0-3 Cameroun | <https://gadm.org/download_country.html> | Académique gratuit |
 | Estimations population régionale 2019 | BUCREP (ordres de grandeur pédagogiques) | À actualiser RGPH 4 |
-| Microfichier EDS-MICS 2018 (réel ou simulé) | <https://dhsprogram.com/> | DHS Program |
+| Indicateurs agrégés DHS Cameroun 2018 (rdhs/StatCompiler) | <https://dhsprogram.com/data/dataset/Cameroon_Standard-DHS_2018.cfm> | DHS Program |
 
 Code distribué sous **CC-BY 4.0** au nom du GDSG / IFORD.
 

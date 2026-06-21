@@ -32,22 +32,24 @@ Six livrables ciblés :
 
 1. Une choroplèthe simple `tmap` v4.
 2. Une comparaison à quatre classifications.
-3. Une carte multi-panel densité × urbanisation.
+3. Une carte multi-panel alphabétisation × électricité.
 4. Une carte interactive Leaflet.
 5. La même choroplèthe en `ggplot2 + geom_sf`.
 6. Un export PNG 300 dpi + PDF vectoriel + HTML interactif.
 
 # Pré-requis {#sec-prereq}
 
-On charge les packages et les données préparées en J1/J2. Le tibble de population régionale est construit à partir des estimations BUCREP utilisées en J1, on y ajoute trois indicateurs sociaux **simulés à partir des proportions EDS-MICS 2018** pour démontrer la cartographie multi-indicateurs.
+On charge les packages et **uniquement des données réelles** : les polygones GADM v4.1 (J2) et les indicateurs régionaux EDS-MICS Cameroun 2018 publiés par DHS StatCompiler (J4 bonus). Pas de simulation à aucune étape — c'est essentiel pour que les cartes produites puissent servir directement à la décision publique.
 
 ```{r}
 #| label: setup
 library(sf)
 library(dplyr)
 library(tibble)
+library(tidyr)
 library(ggplot2)
 library(tmap)
+library(readr)
 library(RColorBrewer)
 library(viridisLite)
 
@@ -59,33 +61,105 @@ source("../_commons/helpers/theme_iford.R")
 adm1 <- read_sf(fetch_gadm_cameroon(1))
 ```
 
-## Construire le tibble de production
+## Charger les vrais indicateurs DHS Cameroun 2018
 
-On simule sur la base de proportions EDS-MICS 2018 — purement pédagogique, pas à utiliser pour de vraies estimations.
+Le CSV `indicateurs_dhs_cmr_2018.csv` est calculé directement depuis le **microfichier DHS Cameroun 2018** (HR + IR + MR) via `srvyr` avec plan de sondage stratifié à deux degrés — exactement la méthodologie ICF. Le script de production est `pedagogie/_commons/data/dhs_cmr/00_telecharger_dhs_indicateurs.R` (calcul local, pas d'appel API). Cinq indicateurs publiés par région ADM1.
 
 ```{r}
-#| label: tbl-prod
-set.seed(2026)
-regions <- c("Adamaoua","Centre","Est","Extrême-Nord","Littoral",
-             "Nord","Nord-Ouest","Ouest","Sud","Sud-Ouest")
-pop_est <- c(1340000, 4400000, 870000, 4200000, 3400000,
-             2700000, 2000000, 2000000, 800000, 1700000)
-
-tbl_indicateurs <- tibble(
-  NAME_1          = regions,
-  pop_2019        = pop_est,
-  pct_urbain      = c(35, 75, 25, 30, 95, 28, 22, 45, 38, 28),
-  pct_electricite = c(55, 88, 35, 32, 92, 42, 38, 70, 55, 60),
-  taille_mng      = c(5.8, 4.5, 6.2, 6.5, 4.1, 6.0, 5.5, 5.0, 5.5, 5.3)
+#| label: load-dhs
+dhs <- read_csv(
+  "../_commons/data/dhs_cmr/indicateurs_dhs_cmr_2018.csv",
+  show_col_types = FALSE
 )
 
-adm1_pop <- adm1 |>
-  st_transform(3119) |>                       # Lambert Cameroun
+dhs |> count(indicateur)
+head(dhs, 10)
+```
+
+## Passer en format wide et joindre à GADM ADM1
+
+Les indicateurs DHS arrivent en format **long** (une ligne par couple région × indicateur). On les passe en **wide** pour les joindre au shapefile.
+
+```{r}
+#| label: dhs-wide
+dhs_wide <- dhs |>
+  select(region, indicateur, valeur) |>
+  pivot_wider(names_from = indicateur, values_from = valeur) |>
+  rename(
+    tx_eau_ameliore  = WS_SRCE_H_IMP,
+    tx_electricite   = HC_ELEC_H_ELC,
+    tx_alpha_femmes  = ED_LITR_W_LIT,
+    tx_alpha_hommes  = ED_LITR_M_LIT,
+    taille_menage    = HC_HHSZ_H_AVG
+  )
+
+dhs_wide
+```
+
+## Harmoniser les noms de régions et joindre
+
+Les noms GADM utilisent les accents français (`Extrême-Nord`, `Nord-Ouest`) ; DHS utilise des variantes (`Extreme-Nord`, `North-West`). On normalise via translitération ASCII avant la jointure.
+
+```{r}
+#| label: join-adm
+norm_name <- function(x) {
+  x |>
+    iconv(from = "UTF-8", to = "ASCII//TRANSLIT") |>
+    tolower() |>
+    gsub("[^a-z0-9]", "", x = _)
+}
+
+# Dictionnaire manuel pour les régions où la translitération ne suffit pas
+dict_region <- c(
+  "northwest" = "nordouest",
+  "southwest" = "sudouest",
+  "farnorth"  = "extremenord",
+  "north"     = "nord",
+  "south"     = "sud",
+  "east"      = "est",
+  "west"      = "ouest",
+  "centre"    = "centre",
+  "littoral"  = "littoral",
+  "adamawa"   = "adamaoua",
+  "adamaoua"  = "adamaoua"
+)
+
+normalize <- function(x) {
+  v <- norm_name(x)
+  ifelse(v %in% names(dict_region), dict_region[v], v)
+}
+
+dhs_wide <- dhs_wide |> mutate(region_key = normalize(region))
+adm1     <- adm1     |> mutate(region_key = normalize(NAME_1))
+
+# Vérification : tous les noms DHS retrouvent leur polygone GADM ?
+manquants <- dhs_wide |> anti_join(adm1, by = "region_key")
+cat("Régions DHS sans correspondance GADM :", nrow(manquants), "\n")
+if (nrow(manquants) > 0) print(manquants$region)
+```
+
+## Construire la couche `sf` pour la cartographie
+
+```{r}
+#| label: adm-indic
+adm1_indic <- adm1 |>
+  st_transform(3119) |>           # Lambert Cameroun
   st_make_valid() |>
   mutate(superficie_km2 = as.numeric(st_area(geometry)) / 1e6) |>
-  left_join(tbl_indicateurs, by = "NAME_1") |>
-  mutate(densite = pop_2019 / superficie_km2)
+  left_join(
+    dhs_wide |> select(region_key, tx_eau_ameliore, tx_electricite,
+                       tx_alpha_femmes, tx_alpha_hommes, taille_menage),
+    by = "region_key"
+  )
+
+# Aperçu
+adm1_indic |>
+  st_drop_geometry() |>
+  select(NAME_1, tx_alpha_femmes, tx_electricite, tx_eau_ameliore, taille_menage) |>
+  arrange(desc(tx_alpha_femmes))
 ```
+
+Ces cinq variables sont les **vraies valeurs** EDS-MICS Cameroun 2018. C'est ce qu'on va cartographier dans toute la suite du jour.
 
 # Première session — Choroplèthe `tmap` basique {#sec-choro-base}
 
@@ -99,8 +173,8 @@ Trois lignes `tmap` pour une choroplèthe lisible : `tm_shape` charge la couche,
 #| label: choro-minimal
 setup_tmap_iford()
 
-tm_shape(adm1_pop) +
-  tm_polygons("densite") +
+tm_shape(adm1_indic) +
+  tm_polygons("tx_alpha_femmes") +
   tm_text("NAME_1", size = 0.6)
 ```
 
@@ -114,21 +188,21 @@ On ajoute classification Jenks, palette séquentielle, contours blancs, titres, 
 #| label: choro-publishable
 #| fig-width: 9
 #| fig-height: 7
-tm_shape(adm1_pop) +
+tm_shape(adm1_indic) +
   tm_polygons(
-    fill        = "densite",
+    fill        = "tx_alpha_femmes",
     fill.scale  = tm_scale_intervals(style = "jenks", n = 5,
                                      values = "brewer.yl_or_rd"),
-    fill.legend = tm_legend("Densité\n(hab/km²)"),
+    fill.legend = tm_legend("% femmes\nalphabétisées"),
     col         = "white",
     lwd         = 0.4
   ) +
   tm_text("NAME_1", size = 0.55, col = "grey20", fontface = "bold") +
   tm_compass(type = "arrow", position = c("right", "top"), size = 1.2) +
-  tm_scalebar(position = c("left", "bottom"), width = 0.25) +
-  tm_title("Densité de population par région — Cameroun 2019",
+  tm_scalebar(position = c("left", "bottom")) +
+  tm_title("Alphabétisation des femmes 15-49 ans par région — Cameroun 2018",
            position = c("left", "top")) +
-  tm_credits("Source : BUCREP (estim.), GADM v4.1 · IFORD × GDSG 2026",
+  tm_credits("Source : EDS-MICS Cameroun 2018 (DHS StatCompiler) · GADM v4.1 · IFORD × GDSG 2026",
              position = c("right", "bottom"), size = 0.5)
 ```
 
@@ -143,12 +217,12 @@ On produit quatre versions de la même choroplèthe avec quatre méthodes de cla
 ```{r}
 #| label: classif-utility
 carte_avec_style <- function(style_str, titre) {
-  tm_shape(adm1_pop) +
+  tm_shape(adm1_indic) +
     tm_polygons(
-      fill        = "densite",
+      fill        = "tx_alpha_femmes",
       fill.scale  = tm_scale_intervals(style = style_str, n = 5,
                                        values = "brewer.yl_or_rd"),
-      fill.legend = tm_legend("hab/km²"),
+      fill.legend = tm_legend("% femmes alpha."),
       col         = "white", lwd = 0.3
     ) +
     tm_title(titre, position = c("left", "top"), size = 0.9)
@@ -166,12 +240,12 @@ carte_avec_style <- function(style_str, titre) {
 c_equal   <- carte_avec_style("equal",    "Intervalles égaux")
 c_quant   <- carte_avec_style("quantile", "Quantiles")
 c_jenks   <- carte_avec_style("jenks",    "Jenks (Fisher)")
-c_manual  <- tm_shape(adm1_pop) +
+c_manual  <- tm_shape(adm1_indic) +
   tm_polygons(
-    fill        = "densite",
+    fill        = "tx_alpha_femmes",
     fill.scale  = tm_scale_intervals(breaks = c(0, 10, 50, 100, 200, 400),
                                      values = "brewer.yl_or_rd"),
-    fill.legend = tm_legend("hab/km²"),
+    fill.legend = tm_legend("% femmes alpha."),
     col         = "white", lwd = 0.3
   ) +
   tm_title("Manuel : 0 / 10 / 50 / 100 / 200 / 400",
@@ -180,7 +254,7 @@ c_manual  <- tm_shape(adm1_pop) +
 tmap_arrange(c_equal, c_quant, c_jenks, c_manual, ncol = 2)
 ```
 
-**Lecture critique en salle** : la version « intervalles égaux » est dominée par les valeurs extrêmes ; la version « manuel » utilise des seuils interprétables (densité < 10 = très faible, > 200 = forte urbanisation) ; Jenks est le meilleur compromis statistique mais ses bornes sont peu intuitives.
+**Lecture critique en salle** : la version « intervalles égaux » est dominée par les valeurs extrêmes ; la version « manuel » utilise des seuils interprétables (taux d'alphabétisation < 30 % = très faible, > 80 % = élevé) ; Jenks est le meilleur compromis statistique mais ses bornes sont peu intuitives.
 
 ## Palettes : tester viridis
 
@@ -190,22 +264,22 @@ tmap_arrange(c_equal, c_quant, c_jenks, c_manual, ncol = 2)
 #| label: palettes
 #| fig-width: 14
 #| fig-height: 6
-c_brewer <- tm_shape(adm1_pop) +
+c_brewer <- tm_shape(adm1_indic) +
   tm_polygons(
-    fill = "densite",
+    fill = "tx_alpha_femmes",
     fill.scale = tm_scale_intervals(style = "jenks", n = 5,
                                     values = "brewer.yl_or_rd"),
-    fill.legend = tm_legend("hab/km²"),
+    fill.legend = tm_legend("% femmes alpha."),
     col = "white", lwd = 0.3
   ) +
   tm_title("Palette ColorBrewer YlOrRd", position = c("left", "top"))
 
-c_viridis <- tm_shape(adm1_pop) +
+c_viridis <- tm_shape(adm1_indic) +
   tm_polygons(
-    fill = "densite",
+    fill = "tx_alpha_femmes",
     fill.scale = tm_scale_intervals(style = "jenks", n = 5,
                                     values = "viridis"),
-    fill.legend = tm_legend("hab/km²"),
+    fill.legend = tm_legend("% femmes alpha."),
     col = "white", lwd = 0.3
   ) +
   tm_title("Palette viridis", position = c("left", "top"))
@@ -213,44 +287,44 @@ c_viridis <- tm_shape(adm1_pop) +
 tmap_arrange(c_brewer, c_viridis, ncol = 2)
 ```
 
-# Troisième session — Multi-panel densité × urbanisation {#sec-multi-panel}
+# Troisième session — Multi-panel alphabétisation × électricité {#sec-multi-panel}
 
 > ⏱ **~45 minutes**.
 
 ## Une question, deux indicateurs
 
-Question pédagogique : « les régions denses sont-elles aussi les plus urbanisées ? ». Réponse par deux cartes côte à côte sur la même base administrative.
+Question pédagogique : « les régions avec la meilleure alphabétisation féminine sont-elles aussi celles qui ont le meilleur accès à l'électricité ? ». Réponse par deux cartes côte à côte sur la même base administrative.
 
 ```{r}
-#| label: densite-vs-urbain
+#| label: alpha-vs-elec
 #| fig-width: 14
 #| fig-height: 8
-c_densite <- tm_shape(adm1_pop) +
+c_alpha <- tm_shape(adm1_indic) +
   tm_polygons(
-    fill        = "densite",
+    fill        = "tx_alpha_femmes",
     fill.scale  = tm_scale_intervals(style = "jenks", n = 5,
                                      values = "brewer.yl_or_rd"),
-    fill.legend = tm_legend("Densité\n(hab/km²)"),
+    fill.legend = tm_legend("% femmes\nalphabétisées"),
     col = "white", lwd = 0.3
   ) +
   tm_text("NAME_1", size = 0.45, col = "grey20") +
-  tm_title("a. Densité de population", position = c("left", "top"))
+  tm_title("a. Alphabétisation femmes 15-49", position = c("left", "top"))
 
-c_urbain <- tm_shape(adm1_pop) +
+c_elec <- tm_shape(adm1_indic) +
   tm_polygons(
-    fill        = "pct_urbain",
+    fill        = "tx_electricite",
     fill.scale  = tm_scale_intervals(style = "jenks", n = 5,
                                      values = "brewer.blues"),
-    fill.legend = tm_legend("% urbain"),
+    fill.legend = tm_legend("% ménages\nélectrifiés"),
     col = "white", lwd = 0.3
   ) +
   tm_text("NAME_1", size = 0.45, col = "grey20") +
-  tm_title("b. Taux d'urbanisation", position = c("left", "top"))
+  tm_title("b. Accès à l'électricité", position = c("left", "top"))
 
-tmap_arrange(c_densite, c_urbain, ncol = 2)
+tmap_arrange(c_alpha, c_elec, ncol = 2)
 ```
 
-**Lecture critique** : on attend une corrélation entre densité et urbanisation (Littoral, Centre élevés des deux côtés). L'Adamaoua, à l'inverse, a une densité faible **et** une urbanisation moyenne — c'est une région où la population se concentre dans Ngaoundéré et autour, peu peuplée ailleurs. La carte raconte cette concentration.
+**Lecture critique** : on attend une **forte corrélation** entre alphabétisation des femmes et accès à l'électricité — les régions du sud (Littoral, Centre, Ouest) cumulent les deux avantages ; l'Extrême-Nord cumule les deux carences. Cette concordance n'est pas une coïncidence : ce sont les mêmes gradients de développement humain qui structurent les deux indicateurs. La cartographie permet de **donner à voir** ce que les tableaux statistiques disent froidement.
 
 # Quatrième session — Mode interactif Leaflet {#sec-view}
 
@@ -265,12 +339,12 @@ tmap_arrange(c_densite, c_urbain, ncol = 2)
 #| eval: false
 tmap_mode("view")
 
-tm_shape(adm1_pop) +
+tm_shape(adm1_indic) +
   tm_polygons(
-    fill = "densite",
+    fill = "tx_alpha_femmes",
     fill.scale = tm_scale_intervals(style = "jenks", n = 5,
                                     values = "brewer.yl_or_rd"),
-    fill.legend = tm_legend("Densité\n(hab/km²)"),
+    fill.legend = tm_legend("% femmes\nalphabétisées"),
     fill_alpha = 0.7
   )
 
@@ -291,17 +365,17 @@ Quand on a besoin d'intégrer la carte à un layout multi-panneaux comprenant de
 #| label: ggplot-version
 #| fig-width: 9
 #| fig-height: 7
-ggplot(adm1_pop) +
-  geom_sf(aes(fill = densite), color = "white", linewidth = 0.3) +
+ggplot(adm1_indic) +
+  geom_sf(aes(fill = tx_alpha_femmes), color = "white", linewidth = 0.3) +
   scale_fill_viridis_c(option = "B", trans = "sqrt",
-                       name = "Densité\n(hab/km²)") +
+                       name = "% femmes\nalphabétisées") +
   geom_sf_label(aes(label = NAME_1),
                 size = 2.3, color = "white", fontface = "bold",
                 label.padding = unit(0.1, "lines")) +
   labs(
-    title    = "Densité de population par région — Cameroun (estim. 2019)",
-    subtitle = "Projection : Lambert Cameroun (EPSG:3119)",
-    caption  = "Source : BUCREP (estim.), GADM v4.1 · IFORD × GDSG 2026"
+    title    = "Alphabétisation des femmes 15-49 ans — Cameroun 2018",
+    subtitle = "Projection Lambert Cameroun (EPSG:3119) · Échelle racine carrée",
+    caption  = "Source : EDS-MICS Cameroun 2018 (DHS StatCompiler), GADM v4.1 · IFORD × GDSG 2026"
   ) +
   theme_minimal() +
   theme(axis.text = element_blank(),
@@ -309,7 +383,7 @@ ggplot(adm1_pop) +
         panel.grid = element_blank())
 ```
 
-`trans = "sqrt"` étire l'échelle pour mieux différencier les régions de faible densité (qui se ressembleraient toutes en échelle linéaire).
+`trans = "sqrt"` étire l'échelle pour mieux différencier les régions de faible alphabétisation (qui se ressembleraient toutes en échelle linéaire alors qu'elles affichent des écarts politiquement significatifs).
 
 ## Avec `ggspatial` pour la flèche et l'échelle
 
@@ -320,8 +394,8 @@ ggplot(adm1_pop) +
 #| eval: false
 library(ggspatial)
 
-ggplot(adm1_pop) +
-  geom_sf(aes(fill = densite), color = "white") +
+ggplot(adm1_indic) +
+  geom_sf(aes(fill = tx_alpha_femmes), color = "white") +
   scale_fill_viridis_c(option = "B", trans = "sqrt") +
   annotation_north_arrow(location = "tr", style = north_arrow_minimal()) +
   annotation_scale(location = "bl") +
@@ -337,11 +411,11 @@ ggplot(adm1_pop) +
 ```{r}
 #| label: export-png
 #| eval: false
-out_dir <- here("pedagogie", "J03_cartographie_tmap_ggplot", "outputs")
+out_dir <- here("pedagogie", "J05_visualisation_cartographie", "outputs")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
-tmap_save(c_densite,
-          filename = file.path(out_dir, "densite_jenks.png"),
+tmap_save(c_alpha,
+          filename = file.path(out_dir, "alpha_femmes_jenks.png"),
           dpi = 300, width = 9, height = 7)
 ```
 
@@ -350,8 +424,8 @@ tmap_save(c_densite,
 ```{r}
 #| label: export-pdf
 #| eval: false
-tmap_save(c_densite,
-          filename = file.path(out_dir, "densite_jenks.pdf"),
+tmap_save(c_alpha,
+          filename = file.path(out_dir, "alpha_femmes_jenks.pdf"),
           width = 9, height = 7)
 ```
 
@@ -361,15 +435,16 @@ tmap_save(c_densite,
 #| label: export-html
 #| eval: false
 tmap_mode("view")
-carte_interactive <- tm_shape(adm1_pop) +
-  tm_polygons(fill = "densite",
+carte_interactive <- tm_shape(adm1_indic) +
+  tm_polygons(fill = "tx_alpha_femmes",
               fill.scale = tm_scale_intervals(style = "jenks", n = 5,
                                               values = "brewer.yl_or_rd"),
               fill_alpha = 0.7,
               popup.vars = c("Région" = "NAME_1",
-                             "Densité (hab/km²)" = "densite",
-                             "Population 2019" = "pop_2019"))
-tmap_save(carte_interactive, filename = file.path(out_dir, "densite_interactive.html"))
+                             "% femmes alphabétisées" = "tx_alpha_femmes",
+                             "% électricité" = "tx_electricite",
+                             "% eau améliorée" = "tx_eau_ameliore"))
+tmap_save(carte_interactive, filename = file.path(out_dir, "alpha_femmes_interactive.html"))
 tmap_mode("plot")
 ```
 
@@ -391,15 +466,14 @@ tmap_mode("plot")
 
 ## Devoir individuel (Q6 — 30 min)
 
-Énoncé dans `exercice.qmd` : produire **ta** carte de production sur **l'indicateur de ton choix** (parmi `pct_electricite`, `pct_urbain`, `taille_mng`), avec tous les éléments d'habillage obligatoires, exportée en PNG + PDF + HTML. Corrigé pédagogique dans `corrige.qmd`.
+Énoncé dans `exercice.qmd` : produire **ta** carte de production sur **l'indicateur de ton choix** (parmi `tx_alpha_femmes`, `tx_alpha_hommes`, `tx_electricite`, `tx_eau_ameliore`, `taille_menage` — tous issus de l'EDS-MICS Cameroun 2018 réel), avec tous les éléments d'habillage obligatoires, exportée en PNG + PDF + HTML. Corrigé pédagogique dans `corrige.qmd`.
 
 # Sources et licences
 
 | Donnée | Source | Licence |
 |---|---|---|
 | GADM v4.1 ADM1 Cameroun | <https://gadm.org/download_country.html> | Libre académique |
-| Estimations population régionale 2019 | BUCREP (ordres de grandeur) | À actualiser RGPH 4 |
-| Indicateurs sociaux | Simulés sur la base EDS-MICS 2018 | Pédagogique |
+| Indicateurs régionaux (alphabétisation, eau, électricité, taille ménage) | **EDS-MICS Cameroun 2018 via DHS StatCompiler** (API publique, agrégés par région) | DHS Program |
 
 Code distribué sous **CC-BY 4.0**.
 

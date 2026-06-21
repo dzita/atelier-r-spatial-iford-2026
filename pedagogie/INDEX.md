@@ -11,9 +11,9 @@ Navigation rapide entre les 10 jours de l'atelier **« Données spatiales, analy
 | Lundi 27 juillet 2026 | J1 | Introduction à R et à la pensée spatiale | [J01](J01_intro_R_pensee_spatiale/README.md) |
 | Mardi 28 juillet 2026 | J2 | Données vectorielles dans R (`sf`) | [J02](J02_sf_CRS_vecteurs/README.md) |
 | Mercredi 29 juillet 2026 | J3 | Données raster dans R (`terra`) | [J03](J03_donnees_raster_terra/README.md) |
-| Jeudi 30 juillet 2026 | J4 | Gestion des données pour l'analyse spatiale | _à venir_ |
-| Vendredi 31 juillet 2026 | J5 | Visualisation et cartographie | _à venir_ |
-| Samedi 1ᵉʳ août 2026 | J6 | Statistiques spatiales et analyse | _à venir_ |
+| Jeudi 30 juillet 2026 | J4 | Gestion des données pour l'analyse spatiale | [J04](J04_gestion_donnees_tidyverse/README.md) |
+| Vendredi 31 juillet 2026 | J5 | Visualisation et cartographie | [J05](J05_visualisation_cartographie/README.md) |
+| Samedi 1ᵉʳ août 2026 | J6 | Statistiques spatiales et analyse | [J06](J06_statistiques_spatiales/README.md) |
 | Lundi 3 août 2026 | J7 | Cartographie population haute résolution + bottom-up | _à venir_ |
 | Mardi 4 août 2026 | J8 | Télédétection et observation de la Terre | _à venir_ |
 | Mercredi 5 août 2026 | J9 | Sciences spatiales et sociales : projets inspirants | _à venir_ |
@@ -32,15 +32,15 @@ Légende : ✅ rédigé · 🚧 en cours · ⬜ à venir.
 | J1 | Intro R + pensée spatiale | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | J2 | sf et CRS | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | J3 | Raster terra | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| J4 | Gestion données tidyverse | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| J4 | Gestion données tidyverse (Saturnin) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | J5 | Visualisation cartographie | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| J6 | Stats spatiales (Moran, LISA, KDE) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| J6 | Stats spatiales Moran/LISA/KDE (Saturnin) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | J7 | Pop haute-rés + bottom-up | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | J8 | Télédétection (Sentinel, rgee) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | J9 | Spatial & social (Malaria Atlas, ACLED) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | J10 | Reproductibilité + clôture | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
-Mise à jour : 17 juin 2026 (J1, J2, J3, J5, J10 livrés selon programme officiel ; J4, J6, J7, J8, J9 à produire).
+Mise à jour : 17 juin 2026 (J1, J2, J3, J4, J5, J6, J10 livrés ; J7, J8, J9 à produire). Conception pédagogique J4 et J6 : Jean Saturnin Alogo Samba.
 
 ## Détail des thèmes officiels (synthèse du programme IFORD)
 

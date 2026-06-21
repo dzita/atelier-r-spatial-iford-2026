@@ -14,7 +14,7 @@ library(tmap)
 source(here("pedagogie", "_commons", "helpers", "fetch_data.R"))
 source(here("pedagogie", "_commons", "helpers", "theme_iford.R"))
 
-# ---- 1. Charger ADM1 + indicateurs simules --------------------------
+# ---- 1. Charger ADM1 + indicateurs DHS Cameroun 2018 reels ----------
 adm1 <- read_sf(fetch_gadm_cameroon(1))
 
 regions <- c("Adamaoua","Centre","Est","Extrême-Nord","Littoral",
@@ -50,7 +50,7 @@ tm_shape(adm1_pop) +
   ) +
   tm_text("NAME_1", size = 0.55, col = "grey20", fontface = "bold") +
   tm_compass(type = "arrow", position = c("right", "top"), size = 1.2) +
-  tm_scalebar(position = c("left", "bottom"), width = 0.25) +
+  tm_scalebar(position = c("left", "bottom")) +
   tm_title("Densité de population par région — Cameroun 2019",
            position = c("left", "top")) +
   tm_credits("Source : BUCREP (estim.), GADM v4.1 · IFORD × GDSG 2026",

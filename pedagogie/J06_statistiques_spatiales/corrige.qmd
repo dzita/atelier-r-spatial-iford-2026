@@ -1,0 +1,351 @@
+---
+title: "J6 — Corrigés (OSM Cameroun, données 100 % réelles)"
+subtitle: "Atelier IFORD × GDSG · Distribué J7 matin"
+lang: fr
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    toc-location: left
+    theme: cosmo
+execute:
+  echo: true
+  warning: false
+  message: false
+bibliography: ../_commons/helpers/citations.bib
+---
+
+# Avant le corrigé
+
+Si tu n'as pas tenté l'exercice : ferme ce fichier.
+
+# Setup commun (real data)
+
+Aucune variable simulée. Toutes les analyses statistiques portent sur la
+variable de **comptage agrégée** `n_facilites` par département ADM2,
+construite à partir des points OSM réels.
+
+```{r}
+#| label: setup
+library(sf)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(spdep)
+library(readr)
+library(tibble)
+
+source("../_commons/helpers/fetch_data.R")
+
+etabs <- read_csv(
+  "../_commons/data/cmr_sante/etablissements_sante_osm.csv",
+  show_col_types = FALSE
+)
+n <- nrow(etabs)
+
+adm2 <- read_sf(fetch_gadm_cameroon(2)) |>
+  st_transform(3119) |> st_make_valid()
+points_sf <- st_as_sf(etabs, coords = c("longitude","latitude"), crs = 4326) |>
+  st_transform(3119)
+
+# Helper : nombre de facilités par département pour un sous-ensemble
+n_par_dep <- function(points, adm2, var_name = "n_facilites") {
+  jointure <- points |>
+    st_join(adm2 |> select(GID_2, NAME_2, NAME_1), join = st_within) |>
+    st_drop_geometry() |>
+    filter(!is.na(GID_2)) |>
+    count(GID_2, name = var_name)
+  adm2 |>
+    left_join(jointure, by = "GID_2") |>
+    mutate(!!var_name := tidyr::replace_na(.data[[var_name]], 0L))
+}
+```
+
+# Q1 — Filtrer par catégorie
+
+```{r}
+#| label: q1
+# Comptages par catégorie
+table(etabs$categorie)
+
+# Fonction Ratio R sur points
+ratio_R <- function(df) {
+  cc <- cbind(df$longitude, df$latitude)
+  m <- nrow(df); if (m < 5) return(NA)
+  dn <- numeric(m)
+  for (i in seq_len(m)) {
+    d <- sqrt((cc[i,1] - cc[,1])^2 + (cc[i,2] - cc[,2])^2)
+    d[i] <- Inf
+    dn[i] <- min(d)
+  }
+  aire <- diff(range(df$longitude)) * diff(range(df$latitude))
+  mean(dn) / (0.5 / sqrt(m / aire))
+}
+
+# Ratio R par catégorie
+etabs |>
+  group_by(categorie) |>
+  group_modify(\(d, k) tibble(n = nrow(d), R = round(ratio_R(d), 3))) |>
+  arrange(R)
+```
+
+**Q1.c** : pharmacies et hôpitaux affichent typiquement R < 0.5 — tous deux
+fortement regroupés. Les pharmacies le sont **encore plus** (concentration
+urbaine), les hôpitaux suivent un maillage hiérarchique de district.
+
+# Q2 — Sensibilité du KDE au bandwidth
+
+```{r}
+#| label: q2
+#| fig-width: 14
+#| fig-height: 5
+faire_kde <- function(df, h) {
+  m <- nrow(df)
+  lon_seq <- seq(min(df$longitude)-0.5, max(df$longitude)+0.5, length.out = 80)
+  lat_seq <- seq(min(df$latitude)-0.5,  max(df$latitude)+0.5,  length.out = 80)
+  g <- expand.grid(lon = lon_seq, lat = lat_seq)
+  kde <- numeric(nrow(g))
+  for (i in seq_len(nrow(g))) {
+    d2 <- (g$lon[i] - df$longitude)^2 + (g$lat[i] - df$latitude)^2
+    kde[i] <- sum(exp(-d2 / (2*h^2)))
+  }
+  g$densite <- kde / (m * 2 * pi * h^2); g
+}
+
+h_scott <- 1.06 * sd(etabs$longitude) * n^(-1/5)
+
+library(patchwork)
+g_petit <- ggplot(faire_kde(etabs, h_scott/2)) +
+  geom_raster(aes(lon, lat, fill = densite), interpolate = TRUE) +
+  scale_fill_gradientn(colors = c("#FFFFF0","#FD8D3C","#800026")) +
+  labs(title = paste0("h_Scott / 2 = ", round(h_scott/2, 3))) +
+  theme_void() + theme(legend.position = "none")
+
+g_scott <- ggplot(faire_kde(etabs, h_scott)) +
+  geom_raster(aes(lon, lat, fill = densite), interpolate = TRUE) +
+  scale_fill_gradientn(colors = c("#FFFFF0","#FD8D3C","#800026")) +
+  labs(title = paste0("h_Scott = ", round(h_scott, 3))) +
+  theme_void() + theme(legend.position = "none")
+
+g_grand <- ggplot(faire_kde(etabs, h_scott*2)) +
+  geom_raster(aes(lon, lat, fill = densite), interpolate = TRUE) +
+  scale_fill_gradientn(colors = c("#FFFFF0","#FD8D3C","#800026")) +
+  labs(title = paste0("h_Scott × 2 = ", round(h_scott*2, 3))) +
+  theme_void() + theme(legend.position = "none")
+
+g_petit + g_scott + g_grand
+```
+
+**Q2.c** : pour un décideur on garde **h_Scott** (compromis statistique
+justifié). **Jamais h/2** : trop bruyant, fausse impression de précision
+sur des données OSM dont la couverture varie selon la qualité des
+contributions locales.
+
+# Q3 — Moran's I sur le comptage : toutes facilités vs hôpitaux seuls
+
+On compare deux variables de **comptage par département** : `n_facilites`
+(tous OSM) et `n_hopitaux` (sous-ensemble). La matrice de voisinage est
+la **contiguïté** entre départements.
+
+```{r}
+#| label: q3
+adm2_all  <- n_par_dep(points_sf,
+                       adm2, var_name = "n_facilites")
+adm2_hop  <- n_par_dep(points_sf |>
+                         filter(etabs$categorie == "Hopital"),
+                       adm2, var_name = "n_hopitaux")
+
+# Matrice de contiguïté
+nb_cont <- poly2nb(adm2_all, queen = TRUE)
+W_cont  <- nb2listw(nb_cont, style = "W", zero.policy = TRUE)
+
+I_global  <- moran.test(adm2_all$n_facilites, W_cont,
+                        zero.policy = TRUE)$estimate["Moran I statistic"]
+I_hop     <- moran.test(adm2_hop$n_hopitaux, W_cont,
+                        zero.policy = TRUE)$estimate["Moran I statistic"]
+
+tibble(
+  variable = c("n_facilites (toutes)", "n_hopitaux (hôpitaux seuls)"),
+  n_depart = c(nrow(adm2_all), nrow(adm2_hop)),
+  somme    = c(sum(adm2_all$n_facilites), sum(adm2_hop$n_hopitaux)),
+  I        = round(c(I_global, I_hop), 4)
+)
+```
+
+**Q3.c** : le Moran's I sur `n_hopitaux` est généralement **plus faible**
+en valeur absolue : les hôpitaux suivent un maillage administratif
+(au moins un par chef-lieu de district), donc moins de variance spatiale.
+Le signal positif fort sur `n_facilites` est porté par les pharmacies
+densément agglomérées dans Douala et Yaoundé.
+
+# Q4 — Effet du choix de voisinage (contiguïté vs k plus proches voisins)
+
+```{r}
+#| label: q4
+# Centroïdes des départements pour les knn
+centroides <- st_centroid(adm2_all) |>
+  st_coordinates()
+
+# Contiguïté queen + knn (k = 3, 5, 10)
+W_queen <- nb2listw(poly2nb(adm2_all, queen = TRUE),
+                    style = "W", zero.policy = TRUE)
+
+mk <- function(k) {
+  nb <- knn2nb(knearneigh(centroides, k = k))
+  nb2listw(nb, style = "W")
+}
+
+variantes <- list(
+  "Contiguïté queen" = W_queen,
+  "k = 3 voisins"    = mk(3),
+  "k = 5 voisins"    = mk(5),
+  "k = 10 voisins"   = mk(10)
+)
+
+purrr::imap_dfr(variantes, \(W, lab) {
+  m <- moran.test(adm2_all$n_facilites, W, zero.policy = TRUE)
+  tibble(voisinage = lab,
+         I = round(as.numeric(m$estimate[1]), 4),
+         p = round(m$p.value, 4))
+})
+```
+
+**Q4.c** : I varie avec le choix de voisinage (contiguïté ≠ knn ; I
+décroît généralement avec k croissant — plus on lisse, plus on dilue le
+signal). Le verdict de significativité (p < 0.05) reste stable ici grâce
+au nombre de départements (∼58 sur la grille ADM2 du Cameroun). **Leçon** :
+toujours documenter la matrice de poids dans une publication et tester la
+**sensibilité** à au moins deux schémas de voisinage.
+
+# Q5 — LISA et identification des déserts médicaux
+
+```{r}
+#| label: q5
+lisa <- localmoran(adm2_all$n_facilites, W_queen, zero.policy = TRUE)
+
+adm2_all$lisa_p <- lisa[, "Pr(z != E(Ii))"]
+z_v   <- as.numeric(scale(adm2_all$n_facilites))
+z_lag <- as.numeric(lag.listw(W_queen, z_v, zero.policy = TRUE))
+
+adm2_all$quadrant <- case_when(
+  z_v > 0 & z_lag > 0 & adm2_all$lisa_p < 0.05 ~ "HH – Cluster équipé",
+  z_v < 0 & z_lag < 0 & adm2_all$lisa_p < 0.05 ~ "LL – Désert médical",
+  z_v > 0 & z_lag < 0 & adm2_all$lisa_p < 0.05 ~ "HL – Ilot équipé",
+  z_v < 0 & z_lag > 0 & adm2_all$lisa_p < 0.05 ~ "LH – Carence locale",
+  TRUE                                          ~ "Non significatif"
+)
+
+# Liste des déserts médicaux confirmés
+adm2_all |>
+  st_drop_geometry() |>
+  filter(quadrant == "LL – Désert médical") |>
+  select(NAME_1, NAME_2, n_facilites) |>
+  arrange(n_facilites)
+```
+
+**Q5.c** : les départements concentrant les points froids LL sont
+typiquement dans **Extrême-Nord** (Logone-et-Chari, Mayo-Tsanaga),
+**Est** (Lom-et-Djerem, Boumba-et-Ngoko) et **Adamaoua** (Mbéré, Faro-et-Déo).
+Ces zones correspondent à des **déserts médicaux réels** documentés par le
+MINSANTÉ et OCHA. La concordance entre LISA et le terrain valide la
+méthodologie agrégée.
+
+# Q6 — Pipeline complet sur sous-catégorie (pharmacies)
+
+On reconstruit `n_pharmacies` par département puis on rejoue Moran + LISA.
+
+```{r}
+#| label: q6-pharm
+pharm_sf <- points_sf |>
+  st_as_sf() |>
+  filter(etabs$categorie == "Pharmacie")
+
+cat("Pharmacies OSM Cameroun :", nrow(pharm_sf), "\n")
+
+adm2_pharm <- n_par_dep(pharm_sf, adm2, var_name = "n_pharmacies")
+
+# Stats descriptives
+adm2_pharm |>
+  st_drop_geometry() |>
+  arrange(desc(n_pharmacies)) |>
+  select(NAME_1, NAME_2, n_pharmacies) |>
+  head(10)
+
+# Moran's I sur n_pharmacies (même matrice que Q3)
+nb_p <- poly2nb(adm2_pharm, queen = TRUE)
+W_p  <- nb2listw(nb_p, style = "W", zero.policy = TRUE)
+m_pharm <- moran.test(adm2_pharm$n_pharmacies, W_p, zero.policy = TRUE)
+
+cat("Moran's I (n_pharmacies par dep.) :",
+    round(as.numeric(m_pharm$estimate[1]), 4),
+    " | p =", round(m_pharm$p.value, 4), "\n")
+```
+
+```{r}
+#| label: q6-lisa-pharm
+#| fig-width: 9
+#| fig-height: 7
+lisa_p <- localmoran(adm2_pharm$n_pharmacies, W_p, zero.policy = TRUE)
+adm2_pharm$lisa_p <- lisa_p[, "Pr(z != E(Ii))"]
+z_v   <- as.numeric(scale(adm2_pharm$n_pharmacies))
+z_lag <- as.numeric(lag.listw(W_p, z_v, zero.policy = TRUE))
+
+adm2_pharm$quadrant <- case_when(
+  z_v > 0 & z_lag > 0 & adm2_pharm$lisa_p < 0.05 ~ "HH",
+  z_v < 0 & z_lag < 0 & adm2_pharm$lisa_p < 0.05 ~ "LL",
+  z_v > 0 & z_lag < 0 & adm2_pharm$lisa_p < 0.05 ~ "HL",
+  z_v < 0 & z_lag > 0 & adm2_pharm$lisa_p < 0.05 ~ "LH",
+  TRUE                                            ~ "NS"
+)
+
+ggplot(adm2_pharm) +
+  geom_sf(aes(fill = quadrant), color = "white", linewidth = 0.2) +
+  scale_fill_manual(values = c(HH="#C0392B", LL="#2980B9",
+                                HL="#E67E22", LH="#8E44AD", NS="#BDC3C7")) +
+  labs(title = "LISA — pharmacies OSM par département",
+       subtitle = "Comparaison avec Q5 : déserts pharmaceutiques ≠ déserts médicaux ?",
+       caption = "© OpenStreetMap (ODbL) · GADM v4.1") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+## Lecture pour le MINSANTÉ
+
+Les pharmacies sont massivement concentrées dans les grandes
+agglomérations urbaines (Douala, Yaoundé, Bafoussam, Garoua). Les
+**déserts pharmaceutiques** (LL sur `n_pharmacies`) couvrent une emprise
+plus large que les déserts médicaux toutes facilités confondues : les
+hôpitaux et centres de santé maillent davantage le territoire que les
+pharmacies privées.
+
+**Implication politique** : étendre les **dépôts pharmaceutiques** dans
+les centres de santé ruraux (politique de pharmacie communautaire),
+plutôt que de multiplier les pharmacies pleines en zones déjà denses.
+
+# Erreurs fréquentes
+
+| Erreur | Cause | Remède |
+|---|---|---|
+| `poly2nb` retourne des départements sans voisins | Iles, polygones isolés | `zero.policy = TRUE` partout dans `nb2listw`, `moran.test`, `localmoran` |
+| Carte LISA quasi vide | Tests trop stricts ou peu de variance | Vérifier `style = "W"` ; tester `style = "B"` (binaire) ; comparer avec p < 0.10 |
+| Coordonnées OSM aberrantes | Erreur de contribution | Filtrer `latitude > 1 & latitude < 14 & longitude > 8 & longitude < 17` (déjà fait dans le script de téléchargement) |
+| Jointure spatiale renvoie GID_2 = NA | Points hors emprise ADM2 (frontière, mer) | `filter(!is.na(GID_2))` avant le `count` |
+
+# Préparation pour J7
+
+Demain : **cartographie populations haute résolution + bottom-up**. Les
+statistiques spatiales de J6 (Moran, LISA, KDE) deviennent des
+**co-variables auxiliaires** pour les modèles bayésiens hiérarchiques
+bottom-up de J7 — la densité KDE des facilités de santé est un excellent
+prédicteur de la densité de population (cf. Darin & Leasure 2023).
+
+# Crédits
+
+Pipeline analytique : **Jean Saturnin Alogo Samba** (GDSG / IFORD).
+Bascule OSM + agrégation départementale : **Ramesesse Dzita**.
+Données : **OpenStreetMap contributors (ODbL)** · **GADM v4.1**.
+
+# Références
+
+@moran1950notes ; @anselin1995lisa ; @pebesma2018simple ; @darin2023.

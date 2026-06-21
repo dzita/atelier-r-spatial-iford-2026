@@ -453,5 +453,166 @@
     "title": "J3 — Données raster avec terra",
     "section": "9. Pour aller plus loin",
     "text": "9. Pour aller plus loin\nLa version complète du jour avec le vrai SRTM 30 m du Cameroun (∼80 Mo), exactextractr pour la précision aux bords, et le cas RGPH 4 « arrondissements en basse altitude » est dans demo.qmd. Le devoir individuel Q6 est dans exercice.qmd.\n← Retour à l’accueil"
+  },
+  {
+    "objectID": "J04_gestion_donnees_tidyverse/runtime.html",
+    "href": "J04_gestion_donnees_tidyverse/runtime.html",
+    "title": "J4 — Gestion des données pour l’analyse spatiale",
+    "section": "",
+    "text": "Mode d’emploi. Cliquez Run code dans chaque cellule. WebR charge dplyr, tidyr, readr, sf au premier appel (~20 s la première fois). Tout tourne dans votre navigateur — aucune installation locale.\nDonnées 100 % réelles : extraits CSV de l’EDS-MICS Cameroun 2018 (DHS Program), produits par le script pedagogie/_commons/data/dhs_cmr/00_extraire_dhs_pour_webr.R côté animateur à partir des microfichiers .DTA Stata officiels.\nNote technique : srvyr et haven ne sont pas (encore) portables sur WebR. On charge les CSV extraits directement et on illustre les verbes dplyr/jointures/agrégations non pondérées. La pédagogie complète sur plan de sondage stratifié + pondération (Module 4) est dans la version desktop demo.qmd.\nArchitecture modulaire : Jean Saturnin Alogo Samba (GDSG/IFORD). Bascule DHS réel + runtime : Ramesesse Dzita."
+  },
+  {
+    "objectID": "J04_gestion_donnees_tidyverse/runtime.html#charger-les-extraits-dhs-cameroun-2018",
+    "href": "J04_gestion_donnees_tidyverse/runtime.html#charger-les-extraits-dhs-cameroun-2018",
+    "title": "J4 — Gestion des données pour l’analyse spatiale",
+    "section": "1. Charger les extraits DHS Cameroun 2018",
+    "text": "1. Charger les extraits DHS Cameroun 2018\n\n\n\n\n\n\n\n\nAperçu des premières lignes de chaque table :"
+  },
+  {
+    "objectID": "J04_gestion_donnees_tidyverse/runtime.html#module-1-tidyverse-de-base",
+    "href": "J04_gestion_donnees_tidyverse/runtime.html#module-1-tidyverse-de-base",
+    "title": "J4 — Gestion des données pour l’analyse spatiale",
+    "section": "2. Module 1 — Tidyverse de base",
+    "text": "2. Module 1 — Tidyverse de base\nLe pipe |&gt; se lit « puis »\n\n\n\n\n\n\n\n\n\nselect + filter + count\n\n\n\n\n\n\n\n\n\n\nmutate + case_when\n\n\n\n\n\n\n\n\n\n\ngroup_by + summarise : agrégation\n\n\n\n\n\n\n\n\n\nÀ retenir. filter filtre les lignes, select choisit les colonnes, mutate crée une variable, group_by + summarise agrège, pivot_wider réorganise. Cinq verbes pour 80 % de l’analyse de données."
+  },
+  {
+    "objectID": "J04_gestion_donnees_tidyverse/runtime.html#module-2-jointures-hr-pr",
+    "href": "J04_gestion_donnees_tidyverse/runtime.html#module-2-jointures-hr-pr",
+    "title": "J4 — Gestion des données pour l’analyse spatiale",
+    "section": "3. Module 2 — Jointures HR ↔︎ PR",
+    "text": "3. Module 2 — Jointures HR ↔︎ PR\nLa double clé (cluster_id, menage_id)\n\nChaque personne PR référence un ménage HR via cette double clé. Ne jamais joindre sur menage_id seul (un même numéro de ménage existe dans plusieurs clusters).\n\n\n\n\n\n\n\n\n\nleft_join : enrichir PR avec les caractéristiques du ménage\n\n\n\n\n\n\n\n\nLe nombre de lignes doit être identique, et zéro NA sur les colonnes ajoutées (toutes les personnes ont un ménage parent valide).\n\nanti_join : règle d’or de diagnostic"
+  },
+  {
+    "objectID": "J04_gestion_donnees_tidyverse/runtime.html#module-5-indicateurs-par-région-version-non-pondérée",
+    "href": "J04_gestion_donnees_tidyverse/runtime.html#module-5-indicateurs-par-région-version-non-pondérée",
+    "title": "J4 — Gestion des données pour l’analyse spatiale",
+    "section": "4. Module 5 — Indicateurs par région (version non pondérée)",
+    "text": "4. Module 5 — Indicateurs par région (version non pondérée)\nLa pondération propre par plan de sondage stratifié est dans demo.qmd desktop avec srvyr. Ici, version brute pour illustrer le pipeline."
+  },
+  {
+    "objectID": "J04_gestion_donnees_tidyverse/runtime.html#module-6-joindre-à-gadm-adm1",
+    "href": "J04_gestion_donnees_tidyverse/runtime.html#module-6-joindre-à-gadm-adm1",
+    "title": "J4 — Gestion des données pour l’analyse spatiale",
+    "section": "5. Module 6 — Joindre à GADM ADM1",
+    "text": "5. Module 6 — Joindre à GADM ADM1\nCharger GADM et normaliser les noms de régions\n\n\n\n\n\n\n\n\nJointure"
+  },
+  {
+    "objectID": "J04_gestion_donnees_tidyverse/runtime.html#carte-choroplèthe-par-région",
+    "href": "J04_gestion_donnees_tidyverse/runtime.html#carte-choroplèthe-par-région",
+    "title": "J4 — Gestion des données pour l’analyse spatiale",
+    "section": "6. Carte choroplèthe par région",
+    "text": "6. Carte choroplèthe par région"
+  },
+  {
+    "objectID": "J04_gestion_donnees_tidyverse/runtime.html#pour-aller-plus-loin",
+    "href": "J04_gestion_donnees_tidyverse/runtime.html#pour-aller-plus-loin",
+    "title": "J4 — Gestion des données pour l’analyse spatiale",
+    "section": "7. Pour aller plus loin",
+    "text": "7. Pour aller plus loin\nLa version desktop demo.qmd ajoute :\n\n\nModule 3 complet : détection NA, conceptualisation MCAR/MAR/MNAR, trois stratégies de traitement, piège du NA structurel.\n\nModule 4 complet : srvyr pour le plan de sondage stratifié à deux degrés, calcul des intervalles de confiance, comparaison brut vs pondéré.\n\nIndicateurs individus : sortie de personnes_design avec poids HV005 et strate HV022.\n\nLecture des microfichiers .DTA complets (5 741 variables HR, 394 PR) via haven::read_dta et le helper fetch_dhs_recode_cmr_2018().\n\nLe devoir individuel Q6 est dans exercice.qmd.\n← Retour à l’accueil"
+  },
+  {
+    "objectID": "J05_visualisation_cartographie/runtime.html",
+    "href": "J05_visualisation_cartographie/runtime.html",
+    "title": "J5 — Visualisation et cartographie",
+    "section": "",
+    "text": "Mode d’emploi. Cliquez Run code dans chaque cellule pour exécuter. Modifiez le code, recliquez pour relancer. Tout tourne dans votre navigateur via WebR.\nNote importante : tmap n’est pas disponible sur WebR (trop de dépendances). Ce runtime utilise ggplot2 + geom_sf, qui produit des résultats équivalents en mode statique. La démo tmap complète est dans demo.qmd à exécuter sous RStudio.\nDonnées réelles : indicateurs EDS-MICS Cameroun 2018 agrégés par région, calculés localement depuis le microfichier DHS via srvyr (cf. pedagogie/_commons/data/dhs_cmr/00_telecharger_dhs_indicateurs.R). Aucune simulation."
+  },
+  {
+    "objectID": "J05_visualisation_cartographie/runtime.html#charger-gadm-indicateurs-dhs-réels",
+    "href": "J05_visualisation_cartographie/runtime.html#charger-gadm-indicateurs-dhs-réels",
+    "title": "J5 — Visualisation et cartographie",
+    "section": "1. Charger GADM + indicateurs DHS réels",
+    "text": "1. Charger GADM + indicateurs DHS réels"
+  },
+  {
+    "objectID": "J05_visualisation_cartographie/runtime.html#passer-en-format-wide-et-joindre-à-gadm",
+    "href": "J05_visualisation_cartographie/runtime.html#passer-en-format-wide-et-joindre-à-gadm",
+    "title": "J5 — Visualisation et cartographie",
+    "section": "2. Passer en format wide et joindre à GADM",
+    "text": "2. Passer en format wide et joindre à GADM"
+  },
+  {
+    "objectID": "J05_visualisation_cartographie/runtime.html#choroplèthe-minimale-ggplot2",
+    "href": "J05_visualisation_cartographie/runtime.html#choroplèthe-minimale-ggplot2",
+    "title": "J5 — Visualisation et cartographie",
+    "section": "3. Choroplèthe minimale ggplot2\n",
+    "text": "3. Choroplèthe minimale ggplot2"
+  },
+  {
+    "objectID": "J05_visualisation_cartographie/runtime.html#choroplèthe-publiable-avec-décorations",
+    "href": "J05_visualisation_cartographie/runtime.html#choroplèthe-publiable-avec-décorations",
+    "title": "J5 — Visualisation et cartographie",
+    "section": "4. Choroplèthe publiable avec décorations",
+    "text": "4. Choroplèthe publiable avec décorations"
+  },
+  {
+    "objectID": "J05_visualisation_cartographie/runtime.html#comparer-deux-indicateurs-avec-facet_wrap",
+    "href": "J05_visualisation_cartographie/runtime.html#comparer-deux-indicateurs-avec-facet_wrap",
+    "title": "J5 — Visualisation et cartographie",
+    "section": "5. Comparer deux indicateurs avec facet_wrap\n",
+    "text": "5. Comparer deux indicateurs avec facet_wrap\n\nAu lieu de tmap_arrange(), on utilise les facettes ggplot2 après avoir restructuré la table en format long avec tidyr::pivot_longer()."
+  },
+  {
+    "objectID": "J05_visualisation_cartographie/runtime.html#choix-de-palette-viridis-vs-colorbrewer",
+    "href": "J05_visualisation_cartographie/runtime.html#choix-de-palette-viridis-vs-colorbrewer",
+    "title": "J5 — Visualisation et cartographie",
+    "section": "6. Choix de palette : viridis vs ColorBrewer",
+    "text": "6. Choix de palette : viridis vs ColorBrewer"
+  },
+  {
+    "objectID": "J05_visualisation_cartographie/runtime.html#à-essayer",
+    "href": "J05_visualisation_cartographie/runtime.html#à-essayer",
+    "title": "J5 — Visualisation et cartographie",
+    "section": "7. À essayer",
+    "text": "7. À essayer\n\nModifie le code pour cartographier tx_eau_ameliore (accès eau améliorée) au lieu de tx_alpha_femmes. Change le titre, choisis une palette adaptée (séquentielle bleue). Relance la cellule."
+  },
+  {
+    "objectID": "J05_visualisation_cartographie/runtime.html#pour-aller-plus-loin",
+    "href": "J05_visualisation_cartographie/runtime.html#pour-aller-plus-loin",
+    "title": "J5 — Visualisation et cartographie",
+    "section": "8. Pour aller plus loin",
+    "text": "8. Pour aller plus loin\nLa version complète du jour avec tmap (modes plot/view, classifications Jenks/quantiles, compass, scalebar, multi-panel tmap_arrange, export PNG/PDF/HTML interactif, palette divergente sur les écarts à la moyenne nationale) est dans demo.qmd, à exécuter sous RStudio. Le devoir individuel Q6 est dans exercice.qmd.\n← Retour à l’accueil"
+  },
+  {
+    "objectID": "J10_workflows_reproductibles/runtime.html",
+    "href": "J10_workflows_reproductibles/runtime.html",
+    "title": "J10 — Reproductibilité et clôture",
+    "section": "",
+    "text": "J10 est différent. Pas de runtime WebR ici : la journée porte sur la mise en place de votre propre projet reproductible dans votre RStudio local, avec votre compte GitHub."
+  },
+  {
+    "objectID": "J10_workflows_reproductibles/runtime.html#plan-de-la-journée",
+    "href": "J10_workflows_reproductibles/runtime.html#plan-de-la-journée",
+    "title": "J10 — Reproductibilité et clôture",
+    "section": "Plan de la journée",
+    "text": "Plan de la journée\n\n\nBloc\nFormat\n\n\n\nPourquoi la reproductibilité\nSlides\n\n\nConstruire un rapport Quarto\ndemo + Q1\n\n\nVersioning avec Git\ndemo + Q2\n\n\nAutomatisation : fonction et boucle\ndemo + Q3\n\n\nPrésentations courtes des participants\nRestitutions\n\n\nSession clôture : FAIR + métadonnées + feuille route INS\nSlides\n\n\nCérémonie de remise des certificats\nCérémonie"
+  },
+  {
+    "objectID": "J10_workflows_reproductibles/runtime.html#boîte-à-outils-runtimes-des-journées-précédentes",
+    "href": "J10_workflows_reproductibles/runtime.html#boîte-à-outils-runtimes-des-journées-précédentes",
+    "title": "J10 — Reproductibilité et clôture",
+    "section": "Boîte à outils — runtimes des journées précédentes",
+    "text": "Boîte à outils — runtimes des journées précédentes\nPour consulter rapidement les runtimes WebR utiles à votre présentation courte :\n\nJ1 — Intro R + pensée spatiale\nJ2 — sf + CRS\nJ3 — Données raster avec terra\n\nJ5 — Visualisation et cartographie (à activer une fois renommé)\n\n\nLes autres jours (J4, J6, J7, J8, J9) ont chacun leur runtime accessible depuis le menu Modules de la navbar."
+  },
+  {
+    "objectID": "J10_workflows_reproductibles/runtime.html#référence-démo-reproductibilité-complète",
+    "href": "J10_workflows_reproductibles/runtime.html#référence-démo-reproductibilité-complète",
+    "title": "J10 — Reproductibilité et clôture",
+    "section": "Référence : démo reproductibilité complète",
+    "text": "Référence : démo reproductibilité complète\nLe fichier demo.qmd de J10 montre comment construire un projet R-spatial reproductible en 6 étapes : création projet RStudio, init Git, pipeline 4 scripts, rapport Quarto, fonction d’automatisation, snapshot renv. À ouvrir dans RStudio comme modèle."
+  },
+  {
+    "objectID": "J10_workflows_reproductibles/runtime.html#format-des-présentations-courtes-58-min",
+    "href": "J10_workflows_reproductibles/runtime.html#format-des-présentations-courtes-58-min",
+    "title": "J10 — Reproductibilité et clôture",
+    "section": "Format des présentations courtes (5–8 min)",
+    "text": "Format des présentations courtes (5–8 min)\nChaque participant (ou binôme) présente :\n\n\nUne chose produite pendant les 9 jours : une carte, une analyse, un script.\n\nCe qu’il a appris en la faisant.\n\nComment il compte la réutiliser dans son institution.\n\nL’objectif n’est pas la perfection technique — c’est le partage d’une compétence acquise."
+  },
+  {
+    "objectID": "J10_workflows_reproductibles/runtime.html#certificats",
+    "href": "J10_workflows_reproductibles/runtime.html#certificats",
+    "title": "J10 — Reproductibilité et clôture",
+    "section": "Certificats",
+    "text": "Certificats\nÀ l’issue des présentations, Pr Kuépié remet les certificats IFORD nominatifs. Photo de groupe pour la communication institutionnelle.\n← Retour à l’accueil"
   }
 ]

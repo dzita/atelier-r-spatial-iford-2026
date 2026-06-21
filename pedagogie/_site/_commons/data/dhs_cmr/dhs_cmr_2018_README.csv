@@ -1,0 +1,3 @@
+fichier,source,recode,jointure,licence,taille_ko,remarque
+dhs_cmr_2018_menages_extrait.csv,EDS-MICS Cameroun 2018 (DHS Program),HR (Household Recode),"Cle (cluster_id, menage_id)",DHS Program - usage formation IFORD/GDSG (https://dhsprogram.com/),1852,Extrait pedagogique : 24 variables sur 5741 originales
+dhs_cmr_2018_personnes_extrait.csv,EDS-MICS Cameroun 2018 (DHS Program),PR (Person Recode),"Cle (cluster_id, menage_id, ligne) ; rejoint HR sur (cluster_id, menage_id)",DHS Program - usage formation IFORD/GDSG (https://dhsprogram.com/),4263,Extrait pedagogique : 12 variables sur 394 originales

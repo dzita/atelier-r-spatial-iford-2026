@@ -46,31 +46,26 @@ tbl_cmr |>
   group_by(pop_classe) |>
   summarise(n = n(), pop_totale = sum(pop_2019))
 
-# ---- 3. Simulation enquête type EDS-MICS 2018 -----------------------
-set.seed(2026)
-n <- 11000
-hh_sim <- tibble(
-  id_menage   = sprintf("HH%05d", seq_len(n)),
-  region      = sample(regions, n, replace = TRUE, prob = pop_est / sum(pop_est)),
-  milieu      = sample(c("Urbain", "Rural"), n, replace = TRUE, prob = c(0.57, 0.43)),
-  taille_mng  = pmax(1, round(rpois(n, lambda = 5.1))),
-  quintile    = sample(1:5, n, replace = TRUE),
-  acces_eau   = sample(c("Améliorée", "Non améliorée"), n, replace = TRUE, prob = c(0.72, 0.28)),
-  electricite = sample(c("Oui", "Non"), n, replace = TRUE, prob = c(0.61, 0.39))
-)
-skim(hh_sim)
+# ---- 3. Charger les indicateurs DHS Cameroun 2018 (vraies données) --
+# CSV agrégé par région via rdhs::dhs_data() (DHS StatCompiler API).
+# Bootstrap : pedagogie/_commons/data/dhs_cmr/00_telecharger_dhs.R
+library(readr); library(tidyr)
+dhs <- read_csv(here("pedagogie", "_commons", "data", "dhs_cmr",
+                     "indicateurs_dhs_cmr_2018.csv"),
+                show_col_types = FALSE)
+dhs_wide <- dhs |>
+  select(region, indicateur, valeur) |>
+  pivot_wider(names_from = indicateur, values_from = valeur) |>
+  rename(tx_eau_ameliore  = WS_SRCE_H_IMP,
+         tx_electricite   = HC_ELEC_H_ELC,
+         tx_alpha_femmes  = ED_LITR_W_LIT,
+         tx_alpha_hommes  = ED_LITR_M_LIT,
+         taille_menage    = HC_HHSZ_H_AVG)
+skim(dhs_wide)
 
-# Indicateurs régionaux (NON pondérés, pédagogique uniquement)
-ind_region <- hh_sim |>
-  group_by(region) |>
-  summarise(
-    n_menages       = n(),
-    taille_moyenne  = mean(taille_mng),
-    pct_urbain      = mean(milieu == "Urbain") * 100,
-    pct_electricite = mean(electricite == "Oui") * 100,
-    pct_eau_amelio  = mean(acces_eau == "Améliorée") * 100
-  ) |>
-  arrange(desc(pct_electricite))
+ind_region <- dhs_wide |>
+  mutate(ecart_alpha_hf = tx_alpha_hommes - tx_alpha_femmes) |>
+  arrange(desc(tx_electricite))
 ind_region
 
 # ---- 4. Charger ADM Cameroun (GADM v4.1) ----------------------------

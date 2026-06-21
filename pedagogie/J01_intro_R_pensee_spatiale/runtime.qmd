@@ -73,34 +73,38 @@ tbl_cmr |>
   select(region, capitale, pop_2019)
 ```
 
-## 5. Un mini-microfichier d'enquête simulé
+## 5. Indicateurs DHS Cameroun 2018 (vraies données)
+
+On charge directement le CSV agrégé par région issu de l'API DHS StatCompiler (`rdhs::dhs_data`). Format long pivoté en wide.
 
 ```{webr}
-set.seed(2026)
-n <- 5000
-hh <- tibble(
-  region      = sample(regions, n, replace = TRUE, prob = pop_est / sum(pop_est)),
-  milieu      = sample(c("Urbain","Rural"), n, replace = TRUE, prob = c(0.57, 0.43)),
-  taille_mng  = pmax(1, round(rpois(n, lambda = 5.1))),
-  electricite = sample(c("Oui","Non"), n, replace = TRUE, prob = c(0.61, 0.39))
-)
-head(hh)
+library(tidyr)
+
+download.file("/_commons/data/dhs_cmr/indicateurs_dhs_cmr_2018.csv",
+              "dhs.csv", mode = "wb")
+dhs <- read.csv("dhs.csv")
+
+dhs_wide <- dhs |>
+  select(region, indicateur, valeur) |>
+  pivot_wider(names_from = indicateur, values_from = valeur) |>
+  rename(tx_eau_ameliore = WS_SRCE_H_IMP,
+         tx_electricite  = HC_ELEC_H_ELC,
+         tx_alpha_femmes = ED_LITR_W_LIT,
+         tx_alpha_hommes = ED_LITR_M_LIT,
+         taille_menage   = HC_HHSZ_H_AVG)
+dhs_wide
 ```
 
 ```{webr}
-hh |>
-  group_by(region) |>
-  summarise(
-    n               = n(),
-    taille_moyenne  = round(mean(taille_mng), 2),
-    pct_urbain      = round(mean(milieu == "Urbain") * 100, 1),
-    pct_electricite = round(mean(electricite == "Oui") * 100, 1)
-  ) |>
-  arrange(desc(pct_electricite))
+dhs_wide |>
+  mutate(ecart_alpha_hf = round(tx_alpha_hommes - tx_alpha_femmes, 1)) |>
+  arrange(desc(tx_electricite)) |>
+  select(region, tx_alpha_femmes, tx_electricite,
+         taille_menage, ecart_alpha_hf)
 ```
 
 ::: {.takeaway}
-**À retenir.** `filter` filtre les lignes, `select` choisit les colonnes, `mutate` crée une variable, `group_by + summarise` agrège. Quatre verbes pour 80 % de l'analyse de données.
+**À retenir.** `filter` filtre les lignes, `select` choisit les colonnes, `mutate` crée une variable, `group_by + summarise` agrège, `pivot_wider` réorganise. Cinq verbes pour 80 % de l'analyse de données. Les valeurs ci-dessus sont **les vraies estimations DHS 2018** déjà pondérées par le plan de sondage.
 :::
 
 ## 6. Première carte — vraies limites GADM Cameroun

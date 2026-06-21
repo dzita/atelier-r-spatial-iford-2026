@@ -28,7 +28,7 @@ bibliography: ../_commons/helpers/citations.bib
 
 Aujourd'hui on bascule des données vectorielles (J1, J2) vers les **données raster** — la grille régulière de pixels. On apprend `terra` (le moteur moderne, successeur de `raster`), on pratique les sept opérations fondamentales (`crop`, `mask`, `resample`, `aggregate`, `project`, `extract`, `global`), on découvre l'**algèbre raster** (calculs cellule par cellule), et on combine raster + vecteur pour produire des statistiques zonales par région ou arrondissement.
 
-Cas concret du jour : le **MNT SRTM 30 m du Cameroun**. À partir d'un fichier global, on découpe sur le Cameroun, on calcule l'élévation moyenne par région, et on identifie les zones de basse altitude (proxy pour le risque d'inondation).
+Cas concret du jour : le **MNT SRTM 30 arc-sec (~1 km) du Cameroun**, agrégé depuis le SRTM officiel NASA/USGS via le package `geodata`. On découpe sur la silhouette nationale, on calcule l'élévation moyenne par région, et on identifie les zones de basse altitude (proxy pour le risque d'inondation). Données 100 % réelles : aucun raster simulé.
 
 # Pré-requis {#sec-prereq}
 
@@ -57,32 +57,12 @@ source("../_commons/helpers/theme_iford.R")
 
 `terra::rast()` ouvre un raster. Important : elle **ne charge pas** les pixels en RAM, elle crée juste un pointeur vers le fichier sur disque. Le résultat (`SpatRaster`) connaît résolution, étendue, CRS et nombre de bandes immédiatement.
 
+Le SRTM Cameroun a été pré-téléchargé via le script `_commons/data/cmr_srtm/00_telecharger_srtm.R` (appelle `geodata::elevation_30s("CMR")`, crop sur l'emprise pays, masque sur GADM ADM0, écrit `srtm_cmr_30s.tif` ~3 Mo). Le helper `fetch_srtm_cameroon()` renvoie le chemin local.
+
 ```{r}
 #| label: load-srtm
-#| eval: false
-srtm_path <- here("datasets", "cameroun", "elevation", "CMR_SRTM_30m.tif")
+srtm_path <- fetch_srtm_cameroon()
 srtm <- rast(srtm_path)
-srtm
-```
-
-Pour rendre ce demo exécutable sans dépendre du fichier réel, on simule un raster d'élévation cohérent avec le Cameroun.
-
-```{r}
-#| label: simul-srtm
-set.seed(2026)
-srtm <- rast(
-  ncol = 200, nrow = 240,
-  xmin = 8.5, xmax = 16.5,
-  ymin = 1.5, ymax = 13.5,
-  crs = "EPSG:4326"
-)
-# Gradient nord-sud : plus haut au nord (plateau Adamaoua), plus bas au sud
-y_coords <- terra::yFromRow(srtm, 1:nrow(srtm))
-y_norm <- (y_coords - min(y_coords)) / (max(y_coords) - min(y_coords))
-elev_base <- matrix(rep(200 + 1200 * y_norm, each = ncol(srtm)),
-                    nrow = nrow(srtm), byrow = TRUE)
-values(srtm) <- as.vector(elev_base + rnorm(ncell(srtm), 0, 80))
-names(srtm) <- "elevation_m"
 srtm
 ```
 
@@ -105,7 +85,7 @@ ncell(srtm)      # nombre total de cellules
 
 ```{r}
 #| label: plot-rapide
-plot(srtm, main = "MNT simulé du Cameroun (élévation en m)")
+plot(srtm, main = "MNT SRTM 30 arc-sec du Cameroun (élévation en m)")
 ```
 
 ```{r}
@@ -115,8 +95,8 @@ ggplot(srtm_df) +
   geom_raster(aes(x = x, y = y, fill = elevation_m)) +
   scale_fill_viridis_c(option = "G", name = "Élévation (m)") +
   coord_fixed() +
-  labs(title = "MNT simulé du Cameroun",
-       subtitle = "Élévation moyenne 200 m (sud) → 1400 m (nord)") +
+  labs(title = "MNT SRTM 30 arc-sec du Cameroun",
+       subtitle = "Source : geodata::elevation_30s('CMR') · NASA/USGS SRTM") +
   theme_minimal()
 ```
 
@@ -281,7 +261,7 @@ ggplot(adm1_avec_elev) +
 
 ## Combinaison raster ↔ raster ↔ vecteur
 
-Identifier les arrondissements à fort risque d'inondation par croisement altitude × population (simulée ici).
+Identifier les arrondissements à fort risque d'inondation par croisement altitude × emprise administrative. La part de pixels < 500 m dans chaque arrondissement est calculée par `exact_extract`.
 
 ```{r}
 #| label: risque-inondation
@@ -328,7 +308,7 @@ Tidyverse appliqué à l'analyse spatiale :
 
 | Donnée | Source | Licence |
 |---|---|---|
-| SRTM 30 m | NASA / USGS | Libre |
+| SRTM 30 arc-sec (~1 km) Cameroun | NASA/USGS via `geodata::elevation_30s("CMR")` | Libre |
 | GADM v4.1 ADM0–3 | gadm.org | Académique |
 | WorldPop 100 m 2020 | Univ. Southampton | CC-BY 4.0 |
 

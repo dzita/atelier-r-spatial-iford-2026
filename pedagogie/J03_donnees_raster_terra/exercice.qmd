@@ -20,7 +20,7 @@ Q1 à Q5 en séance (5–10 min chacun). Q6 le soir (∼30 min). Solutions dans 
 
 > Référence démo : section « Lire et inspecter un raster ».
 
-À partir du `srtm` simulé (ou du vrai si tu l'as téléchargé) :
+À partir du `srtm` réel chargé par `fetch_srtm_cameroon()` :
 
 1. **a.** Quelle est sa résolution en degrés ? En mètres approximatifs (sachant que 1° de latitude ≈ 111 km) ?
 2. **b.** Combien de cellules le raster contient-il ? Combien restera-t-il après `crop` sur le Cameroun ?
@@ -72,7 +72,7 @@ Identifier les 20 arrondissements (ADM3) du Cameroun les plus bas en altitude et
 
 ## Étape 1 — Données
 
-1. Charger SRTM Cameroun (vrai si dispo, simulé sinon).
+1. Charger SRTM Cameroun via `fetch_srtm_cameroon()`.
 2. Charger GADM ADM3 (365 arrondissements).
 3. Optionnel : charger WorldPop 2020 si tu l'as.
 

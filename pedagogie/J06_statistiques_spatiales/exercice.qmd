@@ -1,0 +1,109 @@
+---
+title: "J6 — Exercices : statistiques spatiales sur OSM Cameroun"
+subtitle: "Atelier IFORD × GDSG · 1ᵉʳ août 2026"
+lang: fr
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    toc-location: left
+    theme: cosmo
+  pdf:
+    toc: true
+---
+
+# Mode d'emploi
+
+Q1 à Q5 en séance (5–10 min). Q6 le soir (∼30 min). Solutions dans `corrige.qmd`.
+
+Pipeline analytique conçu par Jean Saturnin Alogo Samba (GDSG/IFORD). Données : **facilités de santé OpenStreetMap du Cameroun** (real data).
+
+# Q1 — Filtrer par catégorie {#sec-q1}
+
+> Référence démo : section « Motifs ponctuels ».
+
+Sur le CSV `etablissements_sante_osm.csv` :
+
+1. **a.** Combien de **pharmacies** ? Combien d'**hôpitaux** ? Combien de **centres/cliniques** ?
+2. **b.** Calcule le ratio R **uniquement sur les pharmacies**. Sont-elles regroupées ?
+3. **c.** Compare au ratio R sur **les hôpitaux uniquement**. Le pattern est-il identique ?
+
+# Q2 — Sensibilité du KDE au bandwidth {#sec-q2}
+
+> Référence démo : section « KDE ».
+
+1. **a.** Calcule le KDE avec `h = h_scott / 2`. Quelle différence visuelle ?
+2. **b.** Calcule avec `h = h_scott * 2`. Que devient la carte ?
+3. **c.** Quel `h` recommanderais-tu pour communiquer à un décideur ? Pourquoi ?
+
+# Q3 — Moran's I sur les hôpitaux uniquement {#sec-q3}
+
+> Référence démo : section « Moran's I ».
+
+1. **a.** Filtre `etabs |> filter(categorie == "Hopital")`.
+2. **b.** Refais le pipeline (matrice `W`, `moran.test`) sur ce sous-ensemble.
+3. **c.** Le I obtenu est-il plus fort ou plus faible que sur l'ensemble des facilités ? Pourquoi ?
+
+# Q4 — Effet du choix de voisinage {#sec-q4}
+
+> Référence démo : section « Moran's I ».
+
+1. **a.** Calcule Moran's I avec **k = 3** voisins.
+2. **b.** Calcule avec **k = 10** voisins.
+3. **c.** Le verdict (significatif / pas significatif) change-t-il ? Quelle leçon en tirer pour la documentation méthodologique ?
+
+# Q5 — LISA et identification des déserts médicaux {#sec-q5}
+
+> Référence démo : section « LISA ».
+
+1. **a.** Sur l'ensemble des facilités, identifie les points **LL** (points froids significatifs).
+2. **b.** Joins ces points à `adm1` (GADM Cameroun) via une jointure spatiale (`st_join`). Quelles régions concentrent les points froids ?
+3. **c.** Compare à ta connaissance du terrain. Les zones identifiées correspondent-elles à des déserts médicaux **réels** (Logone-et-Chari, Mayo-Sava, Vallée du Mbam, etc.) ?
+
+# Q6 — Devoir : pipeline complet sur une sous-catégorie {#sec-q6}
+
+> ⏱ **~30 minutes**, à faire le soir.
+
+## Objectif
+
+Reproduire le pipeline complet J6 (motifs ponctuels → KDE → Moran → LISA) sur **une seule catégorie** de facilités, et discuter les différences observées avec l'ensemble.
+
+## Étape 1 — Choisir une sous-catégorie
+
+Choisis l'une des trois :
+
+- **Pharmacies uniquement** : pour étudier l'accès aux médicaments (concentré urbain).
+- **Hôpitaux uniquement** : pour étudier l'organisation hiérarchique du système.
+- **Centres / cliniques uniquement** : pour étudier le maillage de premier recours.
+
+## Étape 2 — Pipeline complet
+
+1. Filtre `etabs` sur la catégorie choisie.
+2. Calcule le ratio R, le KDE (bandwidth Scott), Moran's I global avec test.
+3. Calcule LISA et classe les facilités HH/LL/HL/LH.
+4. Produis une carte des points chauds + bilan par région (jointure spatiale ADM1).
+
+## Étape 3 — Comparaison avec l'ensemble
+
+5. Le ratio R est-il plus ou moins extrême ? Pourquoi ?
+6. Le Moran's I est-il plus fort ? Plus faible ?
+7. Les points LL (déserts) se trouvent-ils dans les **mêmes régions** que sur l'ensemble ?
+
+## Étape 4 — Lecture pour la décision publique
+
+8. Si tu étais responsable de la planification sectorielle (santé) au MINSANTÉ, **quelle priorité** déduirais-tu de ton analyse ?
+
+## Critères de réussite
+
+- ☐ Le pipeline tourne de bout en bout sur la sous-catégorie.
+- ☐ La p-valeur Moran est rapportée et interprétée.
+- ☐ La carte LISA distingue les 5 quadrants.
+- ☐ La comparaison avec l'ensemble est documentée en commentaire.
+
+## Bonus
+
+- Croiser avec la **population** par région (depuis BUCREP ou ECAM) et calculer un **ratio facilités/100 000 habitants** par région. Quelle région a la plus forte sous-couverture ?
+
+# Si tu bloques
+
+Le corrigé est dans `corrige.qmd`. Bonne pratique !

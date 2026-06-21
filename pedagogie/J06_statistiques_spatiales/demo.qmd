@@ -1,0 +1,409 @@
+---
+title: "J6 — Statistiques spatiales et analyse"
+subtitle: "Atelier IFORD × GDSG · Yaoundé, 1ᵉʳ août 2026"
+author: "Jean Saturnin Alogo Samba (pipeline analytique) · Ramesesse Dzita (intégration + bascule OSM)"
+date: "2026-08-01"
+lang: fr
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    number-sections: true
+    code-fold: false
+    code-tools: true
+    theme: cosmo
+    df-print: paged
+  pdf:
+    toc: true
+    number-sections: true
+execute:
+  echo: true
+  warning: false
+  message: false
+bibliography: ../_commons/helpers/citations.bib
+---
+
+# Objectifs et cas d'étude {#sec-objectifs}
+
+On bascule de la **description** (cartes thématiques de J5) à l'**analyse statistique spatiale**. Trois questions :
+
+1. Les **points** sont-ils regroupés, dispersés ou aléatoires ?
+2. Où se **concentrent** spatialement les phénomènes (densité par noyau) ?
+3. Les **comptages par zone administrative** se ressemblent-ils plus que le hasard ne le voudrait entre voisins (Moran's I, LISA) ?
+
+Cas d'étude **sur données réelles uniquement** : les **facilités de santé du Cameroun** extraites d'**OpenStreetMap** (hôpitaux, centres, cliniques, dispensaires, pharmacies). Pipeline analytique conçu par Saturnin ; bascule OSM par Ramesesse.
+
+Question opérationnelle : **où sont les déserts médicaux ?**
+
+::: {.callout-important title="Données 100 % réelles"}
+Aucune variable simulée dans ce jour. Les analyses statistiques portent sur :
+
+- Les **coordonnées GPS** OSM (motifs ponctuels, KDE).
+- Le **nombre de facilités par département ADM2** — variable de comptage calculée par agrégation spatiale sur les vraies données OSM. C'est la métrique de référence en planification sanitaire.
+:::
+
+# Pré-requis et téléchargement des données {#sec-prereq}
+
+```{r}
+#| label: setup
+library(sf)
+library(ggplot2)
+library(dplyr)
+library(spdep)
+library(readr)
+
+source("../_commons/helpers/fetch_data.R")
+```
+
+## Charger les facilités OSM et les polygones GADM
+
+```{r}
+#| label: load
+etabs <- read_csv(
+  "../_commons/data/cmr_sante/etablissements_sante_osm.csv",
+  show_col_types = FALSE
+)
+
+adm2 <- read_sf(fetch_gadm_cameroon(2))
+
+cat("Facilités OSM       :", nrow(etabs), "\n")
+cat("Départements ADM2   :", nrow(adm2), "\n")
+print(table(etabs$categorie))
+```
+
+::: {.callout-warning title="Limites OSM"}
+OpenStreetMap est une base contribuée. Couverture **très bonne** en zone urbaine (Douala, Yaoundé), **partielle** sur les dispensaires ruraux (Extrême-Nord, Est). Pour une analyse opérationnelle d'un INS, croiser avec **DHIS2 Cameroun** ou la base BUCREP de la santé. Pour la pédagogie statistique d'aujourd'hui, OSM est largement suffisant.
+:::
+
+# Démo 1 — Motifs ponctuels : ratio R {#sec-m1}
+
+> ⏱ **~45 minutes**.
+
+## Convertir en `sf` et carte de localisation
+
+```{r}
+#| label: m1-sf
+points_sf <- st_as_sf(etabs, coords = c("longitude", "latitude"), crs = 4326)
+n <- nrow(points_sf)
+```
+
+```{r}
+#| label: m1-carte
+#| fig-width: 9
+#| fig-height: 6
+ggplot(points_sf) +
+  geom_sf(aes(color = categorie), alpha = 0.7, size = 0.9) +
+  scale_color_manual(values = c(
+    "Hopital"          = "#C0392B",
+    "Centre/Clinique"  = "#2980B9",
+    "Pharmacie"        = "#27AE60",
+    "Autre"            = "#7F8C8D"
+  )) +
+  labs(title = "Facilités de santé du Cameroun (OpenStreetMap)",
+       subtitle = paste0(n, " points OSM extraits via Overpass"),
+       caption = "© OpenStreetMap contributors (ODbL) · IFORD × GDSG 2026") +
+  theme_minimal()
+```
+
+## Distance moyenne au plus proche voisin
+
+Pour chaque facilité, on cherche la facilité la plus proche et on retient la distance. La moyenne observée se compare à la **distance moyenne attendue sous distribution complètement aléatoire** (CSR) : `0.5 / sqrt(n / aire)`.
+
+```{r}
+#| label: m1-R
+coords <- cbind(etabs$longitude, etabs$latitude)
+
+nn1 <- knearneigh(coords, k = 1)
+nb1 <- knn2nb(nn1)
+dists_voisin <- unlist(nbdists(nb1, coords))
+
+D_obs    <- mean(dists_voisin)
+aire     <- diff(range(etabs$longitude)) * diff(range(etabs$latitude))
+D_attendu <- 0.5 / sqrt(n / aire)
+R         <- D_obs / D_attendu
+
+cat("D observé :", round(D_obs, 4), "degrés\n")
+cat("D attendu :", round(D_attendu, 4), "degrés\n")
+cat("Ratio R   :", round(R, 4), "\n")
+
+verdict <- case_when(
+  R < 0.85  ~ "REGROUPÉ (cluster)",
+  R > 1.15  ~ "DISPERSÉ (régulier)",
+  TRUE      ~ "ALÉATOIRE"
+)
+cat("Verdict   :", verdict, "\n")
+```
+
+# Démo 2 — Estimation de densité par noyau (KDE) {#sec-m2}
+
+> ⏱ **~45 minutes**.
+
+```{r}
+#| label: m2-h
+h_scott <- 1.06 * sd(etabs$longitude) * n^(-1/5)
+cat("Bandwidth Scott :", round(h_scott, 4),
+    "degrés ≈", round(h_scott * 111, 1), "km\n")
+```
+
+```{r}
+#| label: m2-kde
+n_grille <- 100
+lon_seq <- seq(min(etabs$longitude) - 0.5, max(etabs$longitude) + 0.5, length.out = n_grille)
+lat_seq <- seq(min(etabs$latitude)  - 0.5, max(etabs$latitude)  + 0.5, length.out = n_grille)
+grille  <- expand.grid(lon = lon_seq, lat = lat_seq)
+
+kde <- numeric(nrow(grille))
+for (i in seq_len(nrow(grille))) {
+  d2 <- (grille$lon[i] - etabs$longitude)^2 + (grille$lat[i] - etabs$latitude)^2
+  kde[i] <- sum(exp(-d2 / (2 * h_scott^2)))
+}
+grille$densite <- kde / (n * 2 * pi * h_scott^2)
+```
+
+```{r}
+#| label: m2-carte
+#| fig-width: 9
+#| fig-height: 6
+ggplot() +
+  geom_raster(data = grille, aes(x = lon, y = lat, fill = densite), interpolate = TRUE) +
+  scale_fill_gradientn(name = "Densité KDE",
+                       colors = c("#FFFFF0","#FFEDA0","#FD8D3C","#E31A1C","#800026")) +
+  geom_point(data = etabs, aes(x = longitude, y = latitude),
+             color = "white", size = 0.5, alpha = 0.7) +
+  labs(title = "Densité par noyau des facilités de santé OSM",
+       subtitle = paste0("Bandwidth Scott h = ",
+                         round(h_scott, 3), " degrés ≈ ", round(h_scott * 111, 0), " km"),
+       caption = "© OpenStreetMap contributors (ODbL) · IFORD × GDSG 2026") +
+  theme_minimal()
+```
+
+# Démo 3 — Agrégation par département {#sec-m3}
+
+> ⏱ **~30 minutes**.
+
+Pour les statistiques d'autocorrélation spatiale (Moran's I), on a besoin d'une **variable continue par unité géographique**. OSM ne fournit pas de consultations ou de personnel réel, donc on construit la variable la plus naturelle et la plus parlante : **le nombre de facilités par département ADM2**.
+
+```{r}
+#| label: m3-aggregate
+adm2_lambert <- adm2 |>
+  st_transform(3119) |>
+  st_make_valid()
+
+points_lambert <- points_sf |> st_transform(3119)
+
+# Jointure spatiale : à quel département appartient chaque facilité ?
+etabs_in_dep <- points_lambert |>
+  st_join(adm2_lambert |> select(GID_2, NAME_2, NAME_1), join = st_within)
+
+# Compter les facilités par département
+n_par_dep <- etabs_in_dep |>
+  st_drop_geometry() |>
+  filter(!is.na(GID_2)) |>
+  count(GID_2, NAME_2, NAME_1, name = "n_facilites")
+
+# Joindre les comptages à la couche ADM2
+adm2_avec_n <- adm2_lambert |>
+  left_join(n_par_dep |> select(GID_2, n_facilites), by = "GID_2") |>
+  mutate(
+    n_facilites = tidyr::replace_na(n_facilites, 0L),
+    superficie_km2 = as.numeric(st_area(geometry)) / 1e6,
+    densite_pour_100km2 = round(n_facilites / superficie_km2 * 100, 2)
+  )
+
+head(adm2_avec_n |> st_drop_geometry() |> arrange(desc(n_facilites)), 10)
+```
+
+```{r}
+#| label: m3-carte-comptages
+#| fig-width: 9
+#| fig-height: 6
+ggplot(adm2_avec_n) +
+  geom_sf(aes(fill = n_facilites), color = "white", linewidth = 0.2) +
+  scale_fill_viridis_c(option = "B", trans = "sqrt",
+                       name = "Nb facilités\nOSM") +
+  labs(title = "Nombre de facilités de santé OSM par département — Cameroun",
+       subtitle = "Variable de comptage agrégée sur les vraies données OSM",
+       caption = "© OpenStreetMap contributors (ODbL) · GADM v4.1") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+# Démo 4 — Moran's I global {#sec-m4}
+
+> ⏱ **~45 minutes**.
+
+## Définir le voisinage entre départements
+
+À ce niveau (polygones administratifs), le voisinage naturel est la **contiguïté** : deux départements sont voisins s'ils partagent une frontière. On utilise `poly2nb()` et la pondération `style = "W"`.
+
+```{r}
+#| label: m4-W
+adm2_sp <- adm2_avec_n |> filter(!st_is_empty(geometry))
+
+nb_cont <- poly2nb(adm2_sp, queen = TRUE)
+W <- nb2listw(nb_cont, style = "W", zero.policy = TRUE)
+
+summary(nb_cont)
+```
+
+## Test de Moran's I sur le nombre de facilités
+
+```{r}
+#| label: m4-test
+moran <- moran.test(adm2_sp$n_facilites, W, zero.policy = TRUE)
+moran
+```
+
+```{r}
+#| label: m4-interpret
+I_val <- as.numeric(moran$estimate["Moran I statistic"])
+p_val <- moran$p.value
+
+cat("Moran's I :", round(I_val, 4), "\n")
+cat("p-valeur  :", round(p_val, 4), "\n")
+cat("Conclusion :", ifelse(p_val < 0.05,
+       paste0("autocorrélation ",
+              ifelse(I_val > 0, "POSITIVE", "NÉGATIVE"),
+              " significative"),
+       "pas d'autocorrélation détectable"), "\n")
+```
+
+**Lecture attendue** : Moran's I positif et significatif. Les départements riches en facilités sont voisins entre eux (axe Douala–Yaoundé, plateaux de l'Ouest) ; les départements pauvres en facilités le sont aussi (Logone-et-Chari, Mayo-Sava, Lom-et-Djerem). C'est la **structuration territoriale** de l'offre de soins.
+
+## Diagramme de Moran
+
+```{r}
+#| label: m4-diagramme
+#| fig-width: 8
+#| fig-height: 6
+z_v   <- as.numeric(scale(adm2_sp$n_facilites))
+z_lag <- as.numeric(lag.listw(W, z_v, zero.policy = TRUE))
+
+quadrant <- case_when(
+  z_v > 0 & z_lag > 0 ~ "HH",
+  z_v < 0 & z_lag < 0 ~ "LL",
+  z_v > 0 & z_lag < 0 ~ "HL",
+  z_v < 0 & z_lag > 0 ~ "LH",
+  TRUE                ~ "Neutre"
+)
+
+ggplot(data.frame(z = z_v, lag = z_lag, q = quadrant),
+       aes(x = z, y = lag, color = q)) +
+  geom_smooth(method = "lm", se = FALSE, color = "black",
+              linewidth = 1, linetype = "dashed") +
+  geom_hline(yintercept = 0, color = "grey60") +
+  geom_vline(xintercept = 0, color = "grey60") +
+  geom_point(size = 2.5, alpha = 0.8) +
+  scale_color_manual(values = c(
+    "HH" = "#C0392B", "LL" = "#2980B9",
+    "HL" = "#E67E22", "LH" = "#8E44AD",
+    "Neutre" = "grey50"
+  )) +
+  annotate("text", x = max(z_v) * 0.55, y = max(z_lag) * 0.9,
+           label = paste0("Moran's I = ", round(I_val, 3),
+                          "\n(p = ", round(p_val, 4), ")"),
+           size = 4.5, fontface = "bold") +
+  labs(title = "Diagramme de Moran — Nombre de facilités OSM par département",
+       x = "Valeur du département (z)",
+       y = "Lag spatial (moyenne des voisins, z)") +
+  theme_minimal()
+```
+
+# Démo 5 — LISA local et carte des clusters {#sec-m5}
+
+> ⏱ **~45 minutes**.
+
+## Calculer le Moran local
+
+```{r}
+#| label: m5-lisa
+lisa <- localmoran(adm2_sp$n_facilites, W, zero.policy = TRUE)
+adm2_sp$lisa_I <- lisa[, "Ii"]
+adm2_sp$lisa_p <- lisa[, "Pr(z != E(Ii))"]
+```
+
+## Classifier en quadrants significatifs
+
+```{r}
+#| label: m5-quadrants
+adm2_sp$quadrant <- case_when(
+  z_v > 0 & z_lag > 0 & adm2_sp$lisa_p < 0.05 ~ "HH – Cluster équipé",
+  z_v < 0 & z_lag < 0 & adm2_sp$lisa_p < 0.05 ~ "LL – Désert médical",
+  z_v > 0 & z_lag < 0 & adm2_sp$lisa_p < 0.05 ~ "HL – Ilot équipé",
+  z_v < 0 & z_lag > 0 & adm2_sp$lisa_p < 0.05 ~ "LH – Carence locale",
+  TRUE                                          ~ "Non significatif"
+)
+
+table(adm2_sp$quadrant)
+```
+
+## Carte LISA des départements
+
+```{r}
+#| label: m5-carte
+#| fig-width: 9
+#| fig-height: 6
+ggplot(adm2_sp) +
+  geom_sf(aes(fill = quadrant), color = "white", linewidth = 0.2) +
+  scale_fill_manual(name = "Quadrant LISA", values = c(
+    "HH – Cluster équipé"  = "#C0392B",
+    "LL – Désert médical"  = "#2980B9",
+    "HL – Ilot équipé"     = "#E67E22",
+    "LH – Carence locale"  = "#8E44AD",
+    "Non significatif"     = "#BDC3C7"
+  )) +
+  labs(title = "Cartographie LISA — offre de soins OSM par département",
+       subtitle = "Rouge = clusters équipés | Bleu = déserts médicaux confirmés",
+       caption = "© OpenStreetMap contributors (ODbL) · GADM v4.1 · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+**Lecture pour la décision publique** :
+
+- **HH** : départements bien équipés et entourés de départements bien équipés (axe Wouri / Mfoundi / Hauts-Plateaux). Bonne couverture institutionnelle, priorité moindre pour de nouveaux équipements.
+- **LL** : **déserts médicaux statistiquement confirmés**. Départements à faible équipement entourés d'autres faiblement équipés. Cibles prioritaires pour les nouveaux centres de santé.
+- **HL** : un département bien équipé entouré de carencés — risque d'**engorgement** d'un centre qui sert seul une grande zone.
+- **LH** : trou local dans une zone riche — anomalie révélatrice (urbanisation rapide non suivie d'équipement ?).
+
+## Liste des départements LL pour transmission au MINSANTÉ
+
+```{r}
+#| label: m5-liste
+adm2_sp |>
+  st_drop_geometry() |>
+  filter(quadrant == "LL – Désert médical") |>
+  select(region = NAME_1, departement = NAME_2,
+         n_facilites, densite_pour_100km2) |>
+  arrange(n_facilites)
+```
+
+# Synthèse et devoir Q6 {#sec-wrap}
+
+## Ce qu'on a vu
+
+- **Ratio R** sur ∼800 facilités OSM réelles : verdict « regroupé » net (l'offre suit l'urbanisation).
+- **KDE** révèle les axes Yaoundé–Douala et les hauts plateaux comme zones de concentration.
+- **Comptage par département ADM2** → variable de réalité statistique (pas de simulation).
+- **Moran's I global + test** : structure spatiale significative de l'offre.
+- **LISA** identifie **nominativement** les départements **LL (déserts confirmés)** — c'est l'outil de **ciblage** pour le MINSANTÉ.
+
+## Devoir Q6
+
+Refaire le pipeline complet en filtrant **uniquement les pharmacies** (ou uniquement les hôpitaux) avant l'agrégation par département. Comparer la liste LL des pharmacies à la liste LL globale — sont-ce les mêmes départements ? Si non, qu'est-ce que cela révèle sur la **politique pharmaceutique** vs la **politique sanitaire hospitalière** ?
+
+# Crédits et licences
+
+| Composant | Origine | Licence |
+|---|---|---|
+| Pipeline analytique (R, KDE, Moran, LISA) | Jean Saturnin Alogo Samba (GDSG/IFORD) | CC-BY 4.0 |
+| Bascule sur OSM + agrégation départementale | Ramesesse Dzita | CC-BY 4.0 |
+| Données facilités de santé | OpenStreetMap contributors | **ODbL 1.0** — attribution obligatoire |
+| Polygones administratifs | GADM v4.1 | Libre académique |
+
+## Références méthodologiques
+
+@moran1950notes ; @anselin1995lisa ; @pebesma2018simple.

@@ -15,18 +15,10 @@ library(exactextractr)
 source(here("pedagogie", "_commons", "helpers", "fetch_data.R"))
 source(here("pedagogie", "_commons", "helpers", "theme_iford.R"))
 
-# ---- 1. Charger ou simuler le SRTM ---------------------------------
-# srtm_path <- here("datasets","cameroun","elevation","CMR_SRTM_30m.tif")
-# srtm <- rast(srtm_path)
-
-set.seed(2026)
-srtm <- rast(ncol = 200, nrow = 240,
-             xmin = 8.5, xmax = 16.5, ymin = 1.5, ymax = 13.5,
-             crs = "EPSG:4326")
-y_norm <- (terra::yFromRow(srtm, 1:nrow(srtm)) - 1.5) / 12
-values(srtm) <- as.vector(matrix(rep(200 + 1200 * y_norm, each = ncol(srtm)),
-                                 nrow = nrow(srtm), byrow = TRUE) +
-                          rnorm(ncell(srtm), 0, 80))
+# ---- 1. Charger le SRTM Cameroun (donnees reelles NASA/USGS) -------
+# Le .tif est produit par pedagogie/_commons/data/cmr_srtm/00_telecharger_srtm.R
+# (geodata::elevation_30s("CMR") + crop + mask, ~3 Mo).
+srtm <- rast(fetch_srtm_cameroon())
 names(srtm) <- "elevation_m"
 
 # Inspection

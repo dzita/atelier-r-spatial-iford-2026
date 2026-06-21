@@ -1,0 +1,272 @@
+---
+title: "J6 — Statistiques spatiales sur OSM Cameroun"
+subtitle: "Code R exécutable dans le navigateur"
+engine: knitr
+---
+
+::: {.iford-callout}
+**Mode d'emploi.** Cliquez **Run code** dans chaque cellule. Données réelles : facilités de santé OSM du Cameroun + polygones GADM ADM2 (départements).
+
+**Pipeline analytique** : Jean Saturnin Alogo Samba (GDSG/IFORD). **Bascule OSM + runtime** : Ramesesse Dzita.
+
+**Note technique** : `spdep` n'est pas portable sur WebR. On code Moran's I à la main + test par permutation Monte Carlo. La version `spdep` complète est dans `demo.qmd`.
+
+**Données 100 % réelles** : aucune variable simulée. Variable d'analyse = **nombre de facilités OSM par département ADM2** (compté par agrégation spatiale).
+:::
+
+## 1. Charger facilités OSM + départements GADM
+
+```{webr}
+#| autorun: true
+library(sf)
+library(ggplot2)
+library(dplyr)
+
+download.file("/_commons/data/cmr_sante/etablissements_sante_osm.csv",
+              "etabs.csv", mode = "wb")
+download.file("/_commons/data/gadm41_CMR_2.json", "adm2.json", mode = "wb")
+
+etabs <- read.csv("etabs.csv")
+adm2  <- read_sf("adm2.json")
+n <- nrow(etabs)
+
+cat("Facilités OSM   :", n, "\n")
+cat("Départements    :", nrow(adm2), "\n")
+print(table(etabs$categorie))
+```
+
+## 2. Carte de localisation par catégorie
+
+```{webr}
+points_sf <- st_as_sf(etabs, coords = c("longitude","latitude"), crs = 4326)
+
+ggplot(points_sf) +
+  geom_sf(aes(color = categorie), alpha = 0.7, size = 0.8) +
+  scale_color_manual(values = c(
+    "Hopital"          = "#C0392B",
+    "Centre/Clinique"  = "#2980B9",
+    "Pharmacie"        = "#27AE60",
+    "Autre"            = "#7F8C8D"
+  )) +
+  labs(title = "Facilités de santé OSM — Cameroun",
+       caption = "© OpenStreetMap contributors (ODbL)") +
+  theme_minimal()
+```
+
+## 3. Ratio R — motifs ponctuels (sur les points)
+
+```{webr}
+coords <- cbind(etabs$longitude, etabs$latitude)
+
+dist_nn <- numeric(n)
+for (i in seq_len(n)) {
+  d <- sqrt((coords[i,1] - coords[,1])^2 + (coords[i,2] - coords[,2])^2)
+  d[i] <- Inf
+  dist_nn[i] <- min(d)
+}
+
+D_obs <- mean(dist_nn)
+aire  <- diff(range(etabs$longitude)) * diff(range(etabs$latitude))
+D_att <- 0.5 / sqrt(n / aire)
+R     <- D_obs / D_att
+
+cat("D observé :", round(D_obs, 5), "\n")
+cat("D attendu :", round(D_att, 5), "\n")
+cat("Ratio R   :", round(R, 4), "\n")
+cat("Verdict   :", ifelse(R < 0.85, "REGROUPÉ",
+                   ifelse(R > 1.15, "DISPERSÉ", "ALÉATOIRE")), "\n")
+```
+
+## 4. KDE — densité par noyau (sur les points)
+
+```{webr}
+h_scott <- 1.06 * sd(etabs$longitude) * n^(-1/5)
+
+n_grille <- 80
+lon_seq <- seq(min(etabs$longitude) - 0.5, max(etabs$longitude) + 0.5, length.out = n_grille)
+lat_seq <- seq(min(etabs$latitude)  - 0.5, max(etabs$latitude)  + 0.5, length.out = n_grille)
+grille  <- expand.grid(lon = lon_seq, lat = lat_seq)
+
+kde <- numeric(nrow(grille))
+for (i in seq_len(nrow(grille))) {
+  d2 <- (grille$lon[i] - etabs$longitude)^2 + (grille$lat[i] - etabs$latitude)^2
+  kde[i] <- sum(exp(-d2 / (2 * h_scott^2)))
+}
+grille$densite <- kde / (n * 2 * pi * h_scott^2)
+
+ggplot() +
+  geom_raster(data = grille, aes(lon, lat, fill = densite), interpolate = TRUE) +
+  scale_fill_gradientn(name = "Densité KDE",
+                       colors = c("#FFFFF0","#FFEDA0","#FD8D3C","#E31A1C","#800026")) +
+  geom_point(data = etabs, aes(longitude, latitude),
+             color = "white", size = 0.4, alpha = 0.6) +
+  labs(title = "KDE des facilités de santé OSM",
+       subtitle = paste0("Bandwidth Scott h = ", round(h_scott, 3),
+                         " ≈ ", round(h_scott * 111, 0), " km")) +
+  theme_minimal()
+```
+
+## 5. Agrégation par département ADM2 (jointure spatiale)
+
+C'est ici qu'on construit la **variable réelle** d'analyse statistique : `n_facilites` par département.
+
+```{webr}
+library(tidyr)
+
+# Jointure spatiale : à quel département appartient chaque facilité ?
+etabs_in_dep <- points_sf |>
+  st_join(adm2 |> select(GID_2, NAME_2, NAME_1), join = st_within)
+
+n_par_dep <- etabs_in_dep |>
+  st_drop_geometry() |>
+  filter(!is.na(GID_2)) |>
+  count(GID_2, name = "n_facilites")
+
+adm2_n <- adm2 |>
+  left_join(n_par_dep, by = "GID_2") |>
+  mutate(n_facilites = tidyr::replace_na(n_facilites, 0L))
+
+# Top 10 départements les plus équipés
+adm2_n |>
+  st_drop_geometry() |>
+  arrange(desc(n_facilites)) |>
+  select(NAME_1, NAME_2, n_facilites) |>
+  head(10)
+```
+
+## 6. Choroplèthe du comptage par département
+
+```{webr}
+ggplot(adm2_n) +
+  geom_sf(aes(fill = n_facilites), color = "white", linewidth = 0.15) +
+  scale_fill_viridis_c(option = "B", trans = "sqrt",
+                       name = "Nb facilités\nOSM") +
+  labs(title = "Nombre de facilités OSM par département — Cameroun",
+       subtitle = "Variable de comptage agrégée sur les vraies données OSM",
+       caption = "© OpenStreetMap (ODbL) · GADM v4.1") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+## 7. Moran's I global manuel (sur le comptage par département)
+
+Matrice de voisinage entre départements = **contiguïté** (deux départements voisins s'ils partagent une frontière). On la calcule à la main avec `st_touches()`.
+
+```{webr}
+# Matrice de contiguïté binaire entre départements
+adm2_n_lambert <- adm2_n |>
+  st_transform(3119) |>
+  st_make_valid() |>
+  filter(!st_is_empty(geometry))
+
+m <- nrow(adm2_n_lambert)
+touches <- st_touches(adm2_n_lambert)
+
+W <- matrix(0, m, m)
+for (i in seq_len(m)) {
+  v <- touches[[i]]
+  if (length(v) > 0) W[i, v] <- 1 / length(v)  # normalisation ligne
+}
+
+# Moran's I
+x  <- adm2_n_lambert$n_facilites
+xc <- x - mean(x)
+S0 <- sum(W)
+num <- sum(W * outer(xc, xc))
+den <- sum(xc^2)
+I_moran <- (m / S0) * (num / den)
+
+cat("Nombre de départements :", m, "\n")
+cat("Moran's I (contiguïté) :", round(I_moran, 4), "\n")
+cat("Lecture : I > 0 = clusters voisins similaires | I < 0 = damier | I = 0 = aléatoire\n")
+```
+
+## 8. Test de significativité par permutation
+
+```{webr}
+n_perm <- 499
+I_perm <- numeric(n_perm)
+for (p in seq_len(n_perm)) {
+  x_perm <- sample(x)
+  xc_p <- x_perm - mean(x_perm)
+  I_perm[p] <- (m / S0) * (sum(W * outer(xc_p, xc_p)) / sum(xc_p^2))
+}
+
+p_value <- (sum(I_perm >= I_moran) + 1) / (n_perm + 1)
+
+cat("I observé      :", round(I_moran, 4), "\n")
+cat("Moyenne perm   :", round(mean(I_perm), 4), "\n")
+cat("p-valeur (499) :", round(p_value, 4), "\n")
+cat("Verdict        :",
+    ifelse(p_value < 0.05, "AUTOCORRÉLATION SIGNIFICATIVE",
+                           "Pas de structure détectable"), "\n")
+```
+
+## 9. LISA local par département
+
+```{webr}
+z_v   <- as.numeric(scale(x))
+z_lag <- as.numeric(W %*% z_v)
+I_local <- z_v * z_lag
+
+# Test local par permutation simplifié
+n_perm_loc <- 99
+p_local <- numeric(m)
+for (i in seq_len(m)) {
+  autres <- setdiff(seq_len(m), i)
+  Ip <- numeric(n_perm_loc)
+  for (p in seq_len(n_perm_loc)) {
+    zf <- z_v
+    zf[autres] <- sample(z_v[autres])
+    lag_i <- sum(W[i, ] * zf)
+    Ip[p] <- z_v[i] * lag_i
+  }
+  p_local[i] <- (sum(abs(Ip) >= abs(I_local[i])) + 1) / (n_perm_loc + 1)
+}
+
+adm2_n_lambert$quadrant <- ifelse(
+  z_v > 0 & z_lag > 0 & p_local < 0.05, "HH – Cluster équipé",
+  ifelse(z_v < 0 & z_lag < 0 & p_local < 0.05, "LL – Désert médical",
+  ifelse(z_v > 0 & z_lag < 0 & p_local < 0.05, "HL – Ilot équipé",
+  ifelse(z_v < 0 & z_lag > 0 & p_local < 0.05, "LH – Carence locale",
+                                                "Non significatif"))))
+
+print(table(adm2_n_lambert$quadrant))
+```
+
+## 10. Carte LISA des départements
+
+```{webr}
+ggplot(adm2_n_lambert) +
+  geom_sf(aes(fill = quadrant), color = "white", linewidth = 0.2) +
+  scale_fill_manual(name = "Quadrant LISA", values = c(
+    "HH – Cluster équipé"  = "#C0392B",
+    "LL – Désert médical"  = "#2980B9",
+    "HL – Ilot équipé"     = "#E67E22",
+    "LH – Carence locale"  = "#8E44AD",
+    "Non significatif"     = "#BDC3C7"
+  )) +
+  labs(title = "LISA — offre de soins OSM par département",
+       subtitle = "Rouge = clusters équipés | Bleu = déserts médicaux confirmés",
+       caption = "© OSM (ODbL) · GADM v4.1") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+## 11. Liste des déserts médicaux pour transmission
+
+```{webr}
+adm2_n_lambert |>
+  st_drop_geometry() |>
+  filter(quadrant == "LL – Désert médical") |>
+  select(NAME_1, NAME_2, n_facilites) |>
+  arrange(n_facilites)
+```
+
+## 12. Pour aller plus loin
+
+La version desktop `demo.qmd` utilise **`spdep`** avec les tests asymptotiques officiels. Elle inclut le diagramme de Moran et permet d'éprouver des matrices de poids alternatives (k plus proches voisins, distance fixe). Le devoir Q6 (`exercice.qmd`) propose de refaire le pipeline sur une sous-catégorie de facilités (pharmacies, hôpitaux).
+
+[← Retour à l'accueil](../INDEX.md)

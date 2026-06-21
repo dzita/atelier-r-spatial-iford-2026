@@ -34,11 +34,15 @@ website:
             text: "J2 · Données vectorielles sf"
           - href: J03_donnees_raster_terra/runtime.qmd
             text: "J3 · Données raster terra"
+          - href: J04_gestion_donnees_tidyverse/runtime.qmd
+            text: "J4 · Gestion des données (tidyverse)"
           - href: J05_visualisation_cartographie/runtime.qmd
             text: "J5 · Visualisation et cartographie"
+          - href: J06_statistiques_spatiales/runtime.qmd
+            text: "J6 · Statistiques spatiales (Moran, LISA, KDE)"
           - href: J10_workflows_reproductibles/runtime.qmd
             text: "J10 · Reproductibilité + clôture"
-          # J4, J6, J7, J8, J9 seront ajoutes ici au fur et a mesure de leur redaction.
+          # J7, J8, J9 seront ajoutes ici au fur et a mesure de leur redaction.
           # Ne pas re-activer une entree tant que le runtime.qmd correspondant
           # n'existe pas, sinon Quarto cassera la preview.
 

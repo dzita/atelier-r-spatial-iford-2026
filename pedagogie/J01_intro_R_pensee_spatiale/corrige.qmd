@@ -137,74 +137,69 @@ R refuse de calculer une moyenne sur un caractère, mais au lieu de planter, il 
 
 **Piège à éviter :** distinguer **Warning** (R continue) et **Error** (R s'arrête). Ignorer un warning peut faire passer un bug en production.
 
-# Q3 — Agréger l'enquête simulée
+# Q3 — Lire et résumer les indicateurs DHS Cameroun 2018
 
-## Reconstruire `hh_sim`
+## Charger le CSV DHS réel
 
 ```{r}
 #| label: q3-setup
-set.seed(2026)
-n <- 11000
-hh_sim <- tibble(
-  id_menage   = sprintf("HH%05d", seq_len(n)),
-  region      = sample(regions, n, replace = TRUE,
-                       prob = pop_est / sum(pop_est)),
-  milieu      = sample(c("Urbain", "Rural"), n, replace = TRUE, prob = c(0.57, 0.43)),
-  taille_mng  = pmax(1, round(rpois(n, lambda = 5.1))),
-  quintile    = sample(1:5, n, replace = TRUE),
-  acces_eau   = sample(c("Améliorée", "Non améliorée"), n, replace = TRUE,
-                       prob = c(0.72, 0.28)),
-  electricite = sample(c("Oui", "Non"), n, replace = TRUE,
-                       prob = c(0.61, 0.39))
-)
+library(readr); library(tidyr)
+dhs <- read_csv("../_commons/data/dhs_cmr/indicateurs_dhs_cmr_2018.csv",
+                show_col_types = FALSE)
+dhs_wide <- dhs |>
+  select(region, indicateur, valeur) |>
+  pivot_wider(names_from = indicateur, values_from = valeur) |>
+  rename(tx_eau_ameliore  = WS_SRCE_H_IMP,
+         tx_electricite   = HC_ELEC_H_ELC,
+         tx_alpha_femmes  = ED_LITR_W_LIT,
+         tx_alpha_hommes  = ED_LITR_M_LIT,
+         taille_menage    = HC_HHSZ_H_AVG)
+dhs_wide
 ```
 
-## Q3.a — Électrification par quintile
+## Q3.a — Classement de l'électrification par région
 
-`group_by(quintile)` partitionne par quintile de richesse, `mean(electricite == "Oui") * 100` calcule la proportion en pourcentage. Comme la simulation est aléatoire **sans** vraie corrélation entre quintile et électricité (on a tiré indépendamment), les 5 quintiles devraient afficher des taux très proches autour de 61 % — c'est le signal qu'une simulation indépendante ne reproduit **pas** les corrélations réelles du terrain.
+`arrange(desc(tx_electricite))` ordonne les régions de la plus électrifiée à la moins électrifiée. C'est le réflexe primaire pour ouvrir une exploration : on situe les extrêmes avant de chercher des explications.
 
 ```{r}
 #| label: q3a
-hh_sim |>
-  group_by(quintile) |>
-  summarise(
-    n_menages       = n(),
-    pct_electricite = mean(electricite == "Oui") * 100
-  ) |>
-  arrange(quintile)
+dhs_wide |>
+  select(region, tx_electricite) |>
+  arrange(desc(tx_electricite))
 ```
 
-**Lecture critique :** dans une vraie EDS-MICS, on observerait un gradient net (10 % au Q1 → 95 % au Q5). L'absence de gradient ici **rappelle** que nos données sont simulées sans corrélation — utile pour la pédagogie de R, pas pour conclure quoi que ce soit sur le terrain.
+**Lecture critique :** Littoral et Centre (Douala/Yaoundé) sortent en tête avec ≈ 90 %, Extrême-Nord et Est en queue avec < 25 %. Le gradient est de l'ordre de 4× — un signal de la fracture infrastructurelle nord/sud que tous les programmes RGPH 4 et ECAM 4 documentent.
 
-## Q3.b — Croisé `quintile × milieu`
+## Q3.b — Croisement deux indicateurs avec `mutate` + `case_when`
 
-On groupe par **deux** variables : `summarise` produit alors une ligne par combinaison `(quintile, milieu)`. Avec 5 quintiles × 2 milieux = 10 lignes.
+On crée une typologie à 4 classes en croisant `tx_alpha_femmes` (axe humain) et `tx_eau_ameliore` (axe infrastructure).
 
 ```{r}
 #| label: q3b
-hh_sim |>
-  group_by(quintile, milieu) |>
-  summarise(
-    n_menages       = n(),
-    pct_electricite = mean(electricite == "Oui") * 100,
-    .groups = "drop"
-  ) |>
-  arrange(quintile, milieu)
+dhs_wide |>
+  mutate(typologie = case_when(
+    tx_alpha_femmes >= 70 & tx_eau_ameliore >= 75 ~ "Haut humain + haut infra",
+    tx_alpha_femmes >= 70 & tx_eau_ameliore <  75 ~ "Haut humain + bas infra",
+    tx_alpha_femmes <  70 & tx_eau_ameliore >= 75 ~ "Bas humain + haut infra",
+    TRUE                                          ~ "Bas humain + bas infra"
+  )) |>
+  arrange(typologie) |>
+  select(region, tx_alpha_femmes, tx_eau_ameliore, typologie)
 ```
 
-**Piège à éviter :** `summarise` laisse par défaut un groupement résiduel sur la première variable, ce qui peut perturber les calculs suivants. L'argument `.groups = "drop"` retire explicitement tous les groupements — bonne pratique systématique.
+**Piège à éviter :** `case_when` évalue les conditions **dans l'ordre** ; la première qui matche gagne. Toujours ordonner du plus spécifique au plus général, et terminer par un `TRUE` qui capture le reliquat.
 
-## Q3.c — Taille de ménage par quintile
+## Q3.c — Écart hommes-femmes en alphabétisation
 
 ```{r}
 #| label: q3c
-hh_sim |>
-  group_by(quintile) |>
-  summarise(taille_moyenne = mean(taille_mng)) |>
-  arrange(desc(taille_moyenne))
+dhs_wide |>
+  mutate(ecart_alpha_hf = tx_alpha_hommes - tx_alpha_femmes) |>
+  arrange(desc(ecart_alpha_hf)) |>
+  select(region, tx_alpha_femmes, tx_alpha_hommes, ecart_alpha_hf)
 ```
 
-Là encore, comme la `taille_mng` a été tirée d'une Poisson **commune** à tous les quintiles (`lambda = 5.1`), les moyennes seront toutes proches de 5.1. Sur une vraie EDS-MICS le Q1 affiche typiquement des ménages plus grands (~6.5) que le Q5 (~4.5), ce qui n'apparaît pas ici.
+**Lecture critique :** l'écart H/F est typiquement > 25 points dans Extrême-Nord, Nord, Adamaoua (régions septentrionales où la scolarisation des filles a historiquement été freinée par des facteurs sociaux et religieux), contre < 8 points dans Littoral et Centre. Ces données DHS 2018 (réelles) confirment ce qu'observent les programmes de l'UNFPA et de l'UNICEF Cameroun.
 
 # Q4 — Manipuler un objet `sf`
 

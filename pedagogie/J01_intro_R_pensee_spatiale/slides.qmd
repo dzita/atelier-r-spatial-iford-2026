@@ -655,7 +655,7 @@ Ces quatre sites couvrent **les principales typologies camerounaises** : urbain,
 **À pratiquer (démo + exercices)**
 
 - Créer un projet RStudio + `here`
-- Manipuler un microfichier simulé EDS-MICS
+- Manipuler les indicateurs DHS Cameroun 2018 réels (StatCompiler)
 - Charger GADM v4.1 Cameroun
 - Reprojeter UTM 32 N
 - Calculer une superficie en km²

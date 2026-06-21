@@ -37,11 +37,14 @@
 - `leaflet` — cartes interactives (via `tmap_mode("view")`)
 - `scales` — formatage des étiquettes
 
-## Données mobilisées
+## Données mobilisées (100 % réelles)
 
-- ADM1, ADM2 du Cameroun (Lambert 3119) — exportés J2 dans `CMR_admin_lambert.gpkg`
-- Estimations BUCREP de population régionale 2019 (table construite en J1)
-- Indicateurs sociaux simulés (taux d'électrification, accès eau améliorée, taille moyenne ménage) — simulés à partir des proportions EDS-MICS 2018
+| Élément | Description |
+|---|---|
+| `gadm41_CMR_1.json` | Polygones GADM v4.1 des 10 régions du Cameroun. |
+| `indicateurs_dhs_cmr_2018.csv` | 5 indicateurs EDS-MICS Cameroun 2018 (DHS Program) calculés localement depuis le microfichier HR + IR + MR via `srvyr` (plan de sondage stratifié à deux degrés). Format long, 50 lignes (10 régions × 5 indicateurs). Indicateurs : eau améliorée (JMP), électricité, taille ménage, alphabétisation femmes 15-49, alphabétisation hommes 15-59. |
+
+**Pipeline de production** : `pedagogie/_commons/data/dhs_cmr/00_telecharger_dhs_indicateurs.R` (à exécuter UNE seule fois sur la machine de l'animateur). Aucune simulation : les valeurs sont calculées depuis le microfichier DHS Cameroun 2018, avec le même plan de sondage que les calculs officiels ICF.
 
 ## Pré-requis
 

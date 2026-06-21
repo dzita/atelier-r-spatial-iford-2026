@@ -34,14 +34,8 @@ library(exactextractr)
 source("../_commons/helpers/fetch_data.R")
 source("../_commons/helpers/theme_iford.R")
 
-set.seed(2026)
-srtm <- rast(ncol = 200, nrow = 240,
-             xmin = 8.5, xmax = 16.5, ymin = 1.5, ymax = 13.5,
-             crs = "EPSG:4326")
-y_norm <- (terra::yFromRow(srtm, 1:nrow(srtm)) - 1.5) / 12
-values(srtm) <- as.vector(matrix(rep(200 + 1200 * y_norm, each = ncol(srtm)),
-                                 nrow = nrow(srtm), byrow = TRUE) +
-                          rnorm(ncell(srtm), 0, 80))
+# MNT SRTM Cameroun 30 arc-sec — donnees reelles NASA/USGS via geodata
+srtm <- rast(fetch_srtm_cameroon())
 names(srtm) <- "elevation_m"
 
 adm0 <- read_sf(fetch_gadm_cameroon(0))
@@ -60,9 +54,9 @@ c(resolution_deg = res(srtm)[1],
   nb_bandes = nlyr(srtm))
 ```
 
-**Q1.a** : résolution 0.04° ≈ 4.4 km. Beaucoup plus grossière que le vrai SRTM 30 m (qui serait à 0.00028°).
+**Q1.a** : résolution 30 arc-sec ≈ 0.00833° ≈ 1 km. C'est l'agrégation pédagogique du vrai SRTM (résolution native 30 m = 1 arc-sec, soit ~30× plus fin). On a fait le compromis taille fichier (~3 Mo vs ~80 Mo) ↔ résolution.
 
-**Q1.b** : 48 000 cellules globales → après crop sur le Cameroun ∼ 11 000–14 000 cellules selon l'orientation.
+**Q1.b** : ~920 000 cellules sur l'emprise CMR ; les NA hors silhouette s'éliminent au `mask`.
 
 **Q1.c** : SRTM = 1 bande (élévation). Sentinel-2 = 13 bandes (chacune une longueur d'onde spectrale différente : bleu, vert, rouge, NIR, SWIR, etc.). Multi-bande quand la donnée a plusieurs dimensions par pixel.
 
@@ -128,7 +122,7 @@ adm2_avec_elev |>
   head(5)
 ```
 
-**Q4.c** : sur le simulé, le département gagnant ADM2 est généralement dans la région Adamaoua ou Nord (gradient nord). Cohérent avec ce qu'on a vu sur ADM1. Sur le vrai SRTM, c'est confirmé : les départements du Mbéré et de la Vina (Adamaoua) sont les plus élevés.
+**Q4.c** : sur le vrai SRTM, les départements les plus élevés sont typiquement Mbéré et Vina (Adamaoua), Mayo-Banyo et Faro-et-Déo (plateaux nord du Centre-Ouest), Bamboutos (massifs de l'Ouest). Le résultat est cohérent avec la carte ADM1 où Adamaoua, Ouest et Nord-Ouest dominent.
 
 # Q5 — Aggregate et resample
 
@@ -223,7 +217,7 @@ Pour un modèle sérieux : il faudrait combiner SRTM + climatologie + bâti + so
 | `aggregate` plante avec une erreur mémoire | Raster trop gros pour la RAM | Augmenter `terraOptions(memfrac = 0.7)` ou découper d'abord par `crop` |
 | `resample(bilinear)` produit des classes fractionnaires | Donnée catégorielle traitée comme continue | Utiliser `method = "near"` pour les rasters catégoriels |
 | `exact_extract` n'est pas trouvé | Package non installé | `install.packages("exactextractr")` |
-| Élévations négatives sur le simulé | Le `rnorm(sd = 80)` peut produire des valeurs négatives | Sur la vraie donnée SRTM, les océans sont à 0 et les altitudes vraies sont positives |
+| Valeurs aberrantes près des frontières maritimes | Le crop GADM ne couvre pas parfaitement le littoral / lac Tchad | Vérifier avec `summary(values(srtm))` puis filtrer si nécessaire avec `srtm[srtm < 0] <- NA` |
 
 # Préparation pour J4
 

@@ -38,10 +38,17 @@ suppressPackageStartupMessages({
   library(readr)
 })
 
-# Helper fetch_dhs_recode_cmr_2018()
-source(file.path("pedagogie", "_commons", "helpers", "fetch_data.R"))
+# Resolution de chemins independante du working directory (PowerShell
+# Rscript depuis la racine OU RStudio source() depuis n'importe ou).
+.PROJECT_ROOT <- rprojroot::find_root(
+  rprojroot::has_file("atelier-r-spatial-iford-2026.Rproj")
+)
 
-dir_out <- file.path("pedagogie", "_commons", "data", "dhs_cmr")
+source(file.path(.PROJECT_ROOT, "pedagogie", "_commons", "helpers",
+                 "fetch_data.R"))
+
+dir_out <- file.path(.PROJECT_ROOT, "pedagogie", "_commons", "data",
+                     "dhs_cmr")
 dir.create(dir_out, showWarnings = FALSE, recursive = TRUE)
 
 # ----------------------------------------------------------------------
