@@ -52,9 +52,18 @@ renv/sandbox/
 *.qix
 
 # ---- Données sensibles (DHS Program — licence interdit redistribution)
+# Bloquer le pack DHS brut où qu'il soit, quel que soit le dossier
+**/CM_2018_DHS/
 **/DHS_MICS/CM*FL*
-**/DHS_MICS/*.DTA
-**/DHS_MICS/*.SAV
+*.DTA
+*.SAV
+*.rar
+# Mais AUTORISER explicitement les CSV extraits pédagogiques
+# (produits par 00_extraire_dhs_pour_webr.R, ~quelques Mo seulement)
+!pedagogie/_commons/data/dhs_cmr/
+!pedagogie/_commons/data/dhs_cmr/**
+!pedagogie/_commons/data/dhs_cmr/*.csv
+!pedagogie/_commons/data/dhs_cmr/*.R
 
 # ---- Sorties générées ------------------------------------------------
 _outputs/

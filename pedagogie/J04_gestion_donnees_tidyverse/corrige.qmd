@@ -1,0 +1,443 @@
+---
+title: "J4 — Corrigés (DHS Cameroun 2018 réel)"
+subtitle: "Atelier IFORD × GDSG · Distribué J5 matin"
+lang: fr
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    toc-location: left
+    theme: cosmo
+execute:
+  echo: true
+  warning: false
+  message: false
+bibliography: ../_commons/helpers/citations.bib
+---
+
+# Avant le corrigé
+
+Si tu n'as pas tenté l'exercice : ferme ce fichier.
+
+# Setup commun
+
+```{r}
+#| label: setup
+library(dplyr)
+library(tidyr)
+library(readr)
+library(srvyr)
+library(ggplot2)
+library(sf)
+
+source("../_commons/helpers/fetch_data.R")
+
+data_dir <- "../_commons/data/dhs_cmr"
+menages   <- read_csv(file.path(data_dir, "dhs_cmr_2018_menages_extrait.csv"),
+                     show_col_types = FALSE)
+personnes <- read_csv(file.path(data_dir, "dhs_cmr_2018_personnes_extrait.csv"),
+                     show_col_types = FALSE)
+```
+
+# Q1 — Tidyverse appliqué
+
+## Q1.a — Ménages dirigés par une femme dans l'Ouest
+
+```{r}
+#| label: q1a
+menages |>
+  filter(sexe_chef == "female", region == "west") |>
+  nrow()
+```
+
+`filter()` combine deux conditions par virgule (équivalent ET logique). Le filtrage est très sélectif (femme + une région unique), on attend quelques centaines de lignes.
+
+## Q1.b — Taille moyenne des ménages ruraux par région
+
+```{r}
+#| label: q1b
+menages |>
+  filter(milieu == "rural") |>
+  group_by(region) |>
+  summarise(taille_moy = round(mean(taille_menage), 2),
+            n = n(),
+            .groups = "drop") |>
+  arrange(desc(taille_moy))
+```
+
+Le pattern classique : `filter` → `group_by` → `summarise`. Les régions septentrionales (`far-north`, `north`) affichent typiquement les tailles moyennes les plus élevées (~7 personnes), cohérent avec une fécondité plus élevée et la corésidence intergénérationnelle.
+
+## Q1.c — Tableau wide régions × quintiles
+
+```{r}
+#| label: q1c
+menages |>
+  count(region, quintile) |>
+  pivot_wider(names_from = quintile, values_from = n, values_fill = 0)
+```
+
+`count()` est un raccourci pour `group_by() |> summarise(n = n())`. `pivot_wider()` transforme la table longue (3 colonnes : région, quintile, n) en table large (1 colonne par quintile). `values_fill = 0` remplace les NA structurels (combinaisons sans aucun ménage) par 0.
+
+# Q2 — Jointures HR ↔ PR + diagnostic
+
+## Q2.a — Diagnostic `anti_join`
+
+```{r}
+#| label: q2a
+personnes_orph <- personnes |>
+  anti_join(menages, by = c("cluster_id", "menage_id")) |>
+  nrow()
+cat("Personnes orphelines :", personnes_orph, "\n")
+```
+
+Sur un microfichier DHS officiel propre, on attend **zéro** orphelin : tout membre PR doit avoir un ménage HR parent. Si > 0, c'est un bug d'extraction ou un fichier corrompu.
+
+## Q2.b — `left_join` propre sur la double clé
+
+```{r}
+#| label: q2b
+personnes_enrichies <- personnes |>
+  left_join(
+    menages |> select(cluster_id, menage_id, region, milieu, electricite, quintile),
+    by = c("cluster_id", "menage_id")
+  )
+
+# NA résiduels sur les colonnes ajoutées
+c(personnes        = nrow(personnes),
+  apres_join       = nrow(personnes_enrichies),
+  na_sur_electricite = sum(is.na(personnes_enrichies$electricite)))
+```
+
+Le `left_join` préserve la gauche (`personnes`) → le nombre de lignes ne doit pas changer. La colonne `electricite` ne doit avoir aucun NA (toutes les personnes ont un ménage parent avec une caractéristique électricité renseignée).
+
+## Q2.c — Le piège classique : joindre sur `menage_id` seul
+
+```{r}
+#| label: q2c
+# DANGER : sans cluster_id, on duplique massivement
+piege <- personnes |>
+  head(100) |>  # échantillon pour ne pas exploser la mémoire
+  left_join(
+    menages |> select(menage_id, electricite),
+    by = "menage_id",
+    relationship = "many-to-many"
+  )
+
+c(personnes_echantillon = 100,
+  lignes_obtenues       = nrow(piege),
+  duplication_ratio     = round(nrow(piege) / 100, 1))
+```
+
+Pourquoi le désastre : le `menage_id` n'est unique **que dans un cluster**. Sans `cluster_id`, le menage_id 117 du cluster 1 matche aussi le menage_id 117 du cluster 2, du cluster 3, etc. → explosion combinatoire. Sur l'échantillon entier, le résultat dépasserait largement la RAM disponible. **La double clé `(cluster_id, menage_id)` est obligatoire**.
+
+# Q3 — Diagnostic et traitement des NA
+
+## Q3.a — Résumé des NA
+
+```{r}
+#| label: q3a
+resume_na <- menages |>
+  summarise(across(everything(), ~ sum(is.na(.)))) |>
+  pivot_longer(everything(), names_to = "variable", values_to = "n_na") |>
+  filter(n_na > 0) |>
+  mutate(pct_na = round(n_na / nrow(menages) * 100, 2)) |>
+  arrange(desc(n_na))
+resume_na
+```
+
+Les microfichiers DHS sont **fortement nettoyés** par ICF avant publication : la plupart des variables n'ont aucun NA. Les rares NA résiduels concernent typiquement les variables auto-déclarées (âge du chef, score richesse) où certains répondants ont refusé ou n'ont pas su répondre.
+
+## Q3.b — Imputation médiane par groupe
+
+```{r}
+#| label: q3b
+menages <- menages |>
+  mutate(age_chef_num = as.numeric(age_chef)) |>
+  group_by(region, milieu) |>
+  mutate(
+    age_chef_imp = if_else(
+      is.na(age_chef_num),
+      as.numeric(round(median(age_chef_num, na.rm = TRUE))),
+      age_chef_num
+    )
+  ) |>
+  ungroup()
+
+c(original_NA = sum(is.na(menages$age_chef)),
+  imp_NA      = sum(is.na(menages$age_chef_imp)))
+```
+
+Conversion explicite en numeric pour éviter le piège `dplyr::if_else` strict sur les types (cf. note Module 3 du `demo.qmd`).
+
+## Q3.c — Comparaison avant/après imputation
+
+```{r}
+#| label: q3c
+avant <- menages |>
+  summarise(moy_age = round(mean(age_chef, na.rm = TRUE), 2)) |>
+  pull(moy_age)
+
+apres <- menages |>
+  summarise(moy_age = round(mean(age_chef_imp, na.rm = TRUE), 2)) |>
+  pull(moy_age)
+
+c(avant_imputation = avant, apres_imputation = apres,
+  difference = round(apres - avant, 2))
+```
+
+L'écart est généralement très faible (< 0.5 an) parce que (a) il y a peu de NA et (b) l'imputation par médiane de groupe respecte la distribution locale. C'est cohérent avec un mécanisme **MCAR ou MAR léger** — pas de structure systématique cachée.
+
+# Q4 — Indicateur ODD pondéré : taux d'accès à l'électricité
+
+## Q4.a — Déclaration du design `srvyr`
+
+```{r}
+#| label: q4a
+dhs_design <- menages |>
+  mutate(poids = poids_menage / 1e6) |>
+  as_survey_design(
+    ids     = cluster_id,
+    strata  = strate,
+    weights = poids,
+    nest    = TRUE
+  )
+dhs_design
+```
+
+`nest = TRUE` indique que les PSU (clusters) sont **emboîtées** dans les strates — c'est le cas par construction DHS (chaque cluster appartient à une seule strate région × milieu). Sans `nest = TRUE`, le calcul de variance peut être biaisé.
+
+## Q4.b — Taux national pondéré + intervalle de confiance
+
+```{r}
+#| label: q4b
+nat_pond <- dhs_design |>
+  summarise(
+    tx_elec = round(survey_mean(electricite == "yes", vartype = "ci") * 100, 1)
+  )
+nat_pond
+```
+
+`survey_mean(..., vartype = "ci")` retourne trois colonnes : la valeur, la borne basse et la borne haute de l'IC à 95 %. L'IC est typiquement de l'ordre de ±1 point au niveau national avec ~12 000 ménages.
+
+## Q4.c — Désagrégation par quintile
+
+```{r}
+#| label: q4c
+par_quintile <- dhs_design |>
+  group_by(quintile) |>
+  summarise(
+    tx_elec = round(survey_mean(electricite == "yes") * 100, 1)
+  ) |>
+  select(-ends_with("_se"))
+par_quintile
+```
+
+Le gradient quintile est **monotone et très marqué** : `poorest` autour de 5-10 %, `richest` autour de 95-99 %. C'est le résultat le plus prévisible des EDS-MICS Cameroun — la richesse explique l'accès à l'électricité plus que toute autre variable.
+
+# Q5 — Table d'indicateurs par région
+
+## Q5.a — Construction de la table
+
+```{r}
+#| label: q5a
+# Définition JMP : eau améliorée
+eau_amelio_mods <- c("piped to dwelling", "piped to yard/plot",
+                     "public tap/standpipe", "tube well or borehole",
+                     "protected well", "protected spring", "bottled water")
+
+indic_eau_region <- dhs_design |>
+  mutate(eau_amelio_bin = source_eau %in% eau_amelio_mods) |>
+  group_by(region) |>
+  summarise(
+    n_menages       = unweighted(n()),
+    pct_eau_amelio  = round(survey_mean(eau_amelio_bin, vartype = "ci") * 100, 1)
+  )
+indic_eau_region
+```
+
+## Q5.b — Régions au-dessus ou en-dessous de la moyenne nationale
+
+```{r}
+#| label: q5b
+moyenne_nat <- dhs_design |>
+  mutate(eau_amelio_bin = source_eau %in% eau_amelio_mods) |>
+  summarise(moy = survey_mean(eau_amelio_bin) * 100) |>
+  pull(moy)
+
+indic_eau_region |>
+  mutate(
+    position = case_when(
+      pct_eau_amelio_low > moyenne_nat ~ "strictement au-dessus",
+      pct_eau_amelio_upp < moyenne_nat ~ "strictement en-dessous",
+      TRUE                              ~ "chevauche la moyenne"
+    )
+  ) |>
+  count(position)
+```
+
+Lecture : les régions « strictement au-dessus » ou « en-dessous » sont celles dont l'IC à 95 % ne contient pas la moyenne nationale. C'est plus rigoureux que de comparer la simple valeur centrale.
+
+## Q5.c — Export
+
+```{r}
+#| label: q5c
+#| eval: false
+dir.create("outputs", showWarnings = FALSE, recursive = TRUE)
+write_csv(indic_eau_region, "outputs/indicateurs_region_q5.csv")
+```
+
+# Q6 — Devoir : pipeline complet enrichi
+
+Solution intégrée (sans la rédaction R complète — voir le script `R/04_devoir_complet.R` à constituer).
+
+## Indicateurs cœur + 2 supplémentaires (exemple)
+
+```{r}
+#| label: q6-pipeline
+# Choix : indicateur 1 = pct_chef_femme, indicateur 2 = pct_alpha_femmes_25plus
+indic_menages <- dhs_design |>
+  group_by(region) |>
+  summarise(
+    n_menages         = unweighted(n()),
+    pct_electricite   = round(survey_mean(electricite == "yes") * 100, 1),
+    pct_chef_femme    = round(survey_mean(sexe_chef == "female") * 100, 1)
+  ) |>
+  select(-ends_with("_se"))
+
+# Indicateur sur personnes : alphabétisation femmes 25+ (pondéré)
+personnes_design <- personnes |>
+  left_join(menages |> select(cluster_id, menage_id, strate, poids_menage, region),
+            by = c("cluster_id", "menage_id")) |>
+  filter(!is.na(strate)) |>
+  mutate(
+    poids = poids_menage / 1e6,
+    alpha_bin = case_when(
+      niveau_educ == "no education, preschool" ~ 0L,
+      !is.na(niveau_educ)                       ~ 1L,
+      TRUE                                       ~ NA_integer_
+    )
+  ) |>
+  as_survey_design(ids = cluster_id, strata = strate, weights = poids, nest = TRUE)
+
+indic_femmes <- personnes_design |>
+  filter(age >= 25, !is.na(alpha_bin), sexe == "female") |>
+  group_by(region) |>
+  summarise(pct_alpha_femmes_25plus = round(survey_mean(alpha_bin) * 100, 1)) |>
+  select(-ends_with("_se"))
+
+indicateurs_region <- indic_menages |>
+  left_join(indic_femmes, by = "region")
+
+indicateurs_region
+```
+
+## Jointure GADM ADM1
+
+```{r}
+#| label: q6-gadm
+adm1 <- read_sf(fetch_gadm_cameroon(1))
+
+norm <- function(x) {
+  x |> iconv(from = "UTF-8", to = "ASCII//TRANSLIT") |> tolower() |>
+       gsub("[^a-z0-9]", "", x = _)
+}
+dict <- c(northwest = "nordouest", southwest = "sudouest",
+          farnorth  = "extremenord", north = "nord", south = "sud",
+          east = "est", west = "ouest", centre = "centre",
+          littoral = "littoral", adamawa = "adamaoua", adamaoua = "adamaoua")
+normalize_region <- function(x) {
+  v <- norm(x); ifelse(v %in% names(dict), dict[v], v)
+}
+
+adm1$region_key                 <- normalize_region(adm1$NAME_1)
+indicateurs_region$region_key   <- normalize_region(indicateurs_region$region)
+
+adm1_indic <- adm1 |>
+  left_join(indicateurs_region, by = "region_key")
+
+# Vérification : 0 NA après jointure
+sum(is.na(adm1_indic$pct_electricite))
+```
+
+## Export CSV + GeoPackage
+
+```{r}
+#| label: q6-export
+#| eval: false
+dir.create("outputs", showWarnings = FALSE, recursive = TRUE)
+write_csv(indicateurs_region, "outputs/indicateurs_region_v2.csv")
+write_sf(adm1_indic, "outputs/cmr_adm1_indicateurs_dhs2018.gpkg",
+         delete_dsn = TRUE)
+```
+
+## Discussion en commentaire (à inclure dans le script)
+
+- **Choix indicateur 1 (`pct_chef_femme`)** : indicateur de structure familiale et de vulnérabilité économique des ménages monoparentaux. Cible ODD 5 (égalité femmes-hommes) et programmes UNFPA Cameroun.
+- **Choix indicateur 2 (`pct_alpha_femmes_25plus`)** : indicateur d'éducation des adultes femmes, ODD 4. Particulièrement structurant pour comprendre les déterminants de la fécondité (J7 bottom-up) et de la santé infantile (J9).
+- **Écart brut vs pondéré** : l'écart est plus marqué sur les régions du Nord (Extrême-Nord notamment) parce que le plan de sondage DHS suréchantillonne ces zones pour avoir une précision suffisante. Sans pondération, on surestime leur poids dans la moyenne nationale.
+
+# Q7 — Confronter aux indicateurs DHS StatCompiler (bonus)
+
+## Q7.a — Charger et pivoter
+
+```{r}
+#| label: q7a
+#| eval: false
+dhs_pub <- read_csv("../_commons/data/dhs_cmr/indicateurs_dhs_cmr_2018.csv",
+                   show_col_types = FALSE)
+dhs_wide <- dhs_pub |>
+  select(region, indicateur, valeur) |>
+  pivot_wider(names_from = indicateur, values_from = valeur)
+dhs_wide
+```
+
+## Q7.b — Côte à côte ton calcul vs StatCompiler
+
+```{r}
+#| label: q7b
+#| eval: false
+# Le tx_electricite que TU as calculé
+mon_tx <- indic_menages |> select(region, pct_electricite)
+
+# StatCompiler publié
+dhs_pub_tx <- dhs_wide |>
+  select(region, tx_elec_pub = HC_ELEC_H_ELC)
+
+# Normaliser pour joindre
+mon_tx$region_key      <- normalize_region(mon_tx$region)
+dhs_pub_tx$region_key  <- normalize_region(dhs_pub_tx$region)
+
+compar <- mon_tx |>
+  inner_join(dhs_pub_tx, by = "region_key") |>
+  mutate(ecart_pts = round(pct_electricite - tx_elec_pub, 1))
+compar |> arrange(desc(abs(ecart_pts)))
+```
+
+## Q7.c, Q7.d — Lecture
+
+L'écart attendu sur une bascule production-ready est **< 1 point** pour chaque région. Si l'écart dépasse 2-3 points, vérifier :
+
+1. `nest = TRUE` dans `as_survey_design` (si non, la variance est mal calculée et il peut y avoir un léger biais sur certains agrégats).
+2. La définition de `strate` (faut-il utiliser HV022 ou la concaténation `region × milieu` ?).
+3. Le filtre population (HV103 = "yes" pour les visiteurs ayant dormi la nuit ; certains calculs DHS excluent les visiteurs).
+
+L'ordre des régions (de la plus à la moins électrifiée) doit être **identique** entre ton calcul et StatCompiler. Si ce n'est pas le cas, c'est plutôt un signe de bug que de différence de définition.
+
+# Synthèse pédagogique
+
+| Module | Concept clé | Verbe / fonction |
+|---|---|---|
+| 1 | Pipe + 5 verbes dplyr | `\|>`, `select`, `filter`, `mutate`, `group_by`, `summarise` |
+| 2 | Jointures hiérarchiques DHS | `left_join(by = c("cluster_id","menage_id"))`, `anti_join` |
+| 3 | Détection + traitement NA | `summarise(across(...))`, `if_else` strict types, `mode_stat` |
+| 4 | Plan de sondage stratifié | `srvyr::as_survey_design(nest = TRUE)`, `survey_mean(vartype="ci")` |
+| 5 | Table d'indicateurs régionaux | `group_by(region) |> summarise(...)` avec design |
+| 6 | Jointure spatiale | `normalize_region` + `left_join(by = "region_key")` |
+
+# Préparation pour J5
+
+La table `indicateurs_region.csv` exportée devient l'entrée de J5 (cartographie `tmap` v4 + `ggplot2 + geom_sf`). Les variables `pct_electricite`, `pct_alpha_femmes_25plus`, `pct_chef_femme`, etc. seront cartographiées avec des classifications (Jenks, quantile) et des palettes adaptées (séquentielle pour les taux positifs, divergente pour les écarts).
+
+# Références
+
+@wickham2014tidy ; @lumley2010survey ; @freedman2024srvyr ; @ins_eds_mics_2018 ; @bucrep_rgph4.

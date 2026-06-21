@@ -1,0 +1,487 @@
+---
+title: "J4 — Gestion des données pour l'analyse spatiale"
+subtitle: "Atelier IFORD × GDSG · Yaoundé · 30 juillet 2026"
+author: "Jean Saturnin Alogo Samba · Ramesesse Dzita · Geospatial Data Science Group"
+date: "2026-07-30"
+engine: knitr
+format:
+  revealjs:
+    theme:
+      - default
+      - ../_commons/styles/slides_revealjs.scss
+    slide-number: c/t
+    transition: fade
+    progress: true
+    chalkboard: true
+    footer: "IFORD × GDSG 2026 — J4 · Gestion des données"
+    incremental: false
+    code-fold: false
+    code-line-numbers: false
+execute:
+  echo: false
+  warning: false
+  message: false
+bibliography: ../_commons/helpers/citations.bib
+---
+
+# Partie 0 — Reprise J3 et plan J4 {data-state="section-break"}
+
+## Ce qu'on a vu hier (J3)
+
+::: {.columns}
+::: {.column width="50%"}
+**Raster avec `terra`**
+
+- Concepts : résolution, étendue, CRS, bandes
+- Lecture / inspection d'un SpatRaster
+- `crop`, `mask`, `aggregate`, `resample`
+:::
+::: {.column width="50%"}
+**Combinaison vecteur × raster**
+
+- Algèbre raster (`+`, `<`, `ifel`)
+- Extraction zonale par polygones
+- `exactextractr::exact_extract` pour la précision
+:::
+:::
+
+## Aujourd'hui : retour au tabulaire, vers la spatialisation
+
+J1 à J3 ont posé les outils **spatiaux**. J4 marque un retour au cœur du métier démographique : **manipuler le microfichier EDS-MICS Cameroun 2018**, calculer des indicateurs pondérés selon le plan de sondage, et les agréger au niveau régional avant de les croiser avec les couches géographiques de J5.
+
+**Nouveauté méthodologique** : on travaille sur les **vraies microdonnées DHS** (et non plus sur une simulation). C'est plus exigeant techniquement (haven, srvyr, normalisation des noms) mais c'est la pratique de production des INS africaines.
+
+## Six modules — architecture Saturnin
+
+| Module | Concept | Temps |
+|---|---|---|
+| M1 | Rappel Tidyverse (pipe, dplyr, pivot) | 1 h |
+| M2 | Jointures HR ↔ PR (5 verbes + 3 pièges) | 1 h |
+| M3 | Valeurs manquantes : MCAR / MAR / MNAR | 1 h 15 |
+| M4 | Plan de sondage + `srvyr` (Lumley 2010) | 45 min |
+| M5 | Table d'indicateurs par région ADM1 | 45 min |
+| M6 | Jointure spatiale GADM ADM1 | 30 min |
+
+Architecture pédagogique : Jean Saturnin Alogo Samba (GDSG/IFORD).
+Bascule sur DHS 2018 réel : Ramesesse Dzita.
+
+# Partie 1 — Le jeu de données EDS-MICS 2018 {data-state="section-break"}
+
+## L'EDS-MICS Cameroun 2018 en chiffres
+
+::: {.columns}
+::: {.column width="60%"}
+- **Réalisée** : janvier-août 2018
+- **Maître d'œuvre** : BUCREP + INS + MINSANTÉ + ICF
+- **Couverture** : 10 régions, urbain + rural
+- **Plan** : stratifié à deux degrés
+  - Strates : région × milieu (20 strates)
+  - PSU : grappes tirées avec probabilité proportionnelle à la taille
+  - Ménages : tirage aléatoire dans chaque PSU
+- **Échantillon** : ~14 000 ménages / ~70 000 personnes
+:::
+::: {.column width="40%"}
+**Pourquoi DHS pour J4 ?**
+
+- Standard mondial reproductible
+- Microfichier riche (5 741 vars HR)
+- Documentation rigoureuse (Guide to DHS Statistics)
+- Comparable INS africaines
+- Pratique de la « vraie » donnée
+:::
+:::
+
+## Huit recodes, deux structurants pour J4
+
+| Recode | Code | Lignes | Contenu |
+|---|---|---|---|
+| Household | **HR** | ~14k ménages | Composition, équipements, index richesse |
+| Person | **PR** | ~70k personnes | Membres ménage : âge, sexe, éducation |
+| Individual | IR | ~14k femmes 15-49 | Fertilité, santé maternelle |
+| Men | MR | ~9k hommes 15-59 | Santé masculine |
+| Kids | KR | ~10k enfants < 5 | Nutrition, vaccinations |
+| Birth | BR | ~50k naissances | Historique des naissances |
+| Couple | CR | ~6k couples | Décisions ménage |
+| Fieldworker | FW | équipe enq. | Métadonnées terrain |
+
+On utilise **HR** et **PR** aujourd'hui. IR/KR pour J9 (sciences sociales).
+
+## Local vs en ligne : deux modes de travail
+
+::: {.columns}
+::: {.column width="50%"}
+**Desktop animateur**
+
+```r
+library(haven)
+hr <- read_dta(
+  fetch_dhs_recode_cmr_2018("HR"))
+names(hr) <- toupper(names(hr))
+```
+
+→ accès aux **5 741 variables** HR
+
+→ projection en salle
+
+→ R + RStudio + token DHS
+:::
+::: {.column width="50%"}
+**Runtime WebR navigateur**
+
+```r
+download.file(
+  "/_commons/data/dhs_cmr/dhs_cmr_2018_menages_extrait.csv",
+  "menages.csv", mode = "wb")
+menages <- read_csv("menages.csv")
+```
+
+→ **24 variables** clés extraites
+
+→ utilisable sans installer R
+
+→ pas de srvyr / haven (non portables)
+:::
+:::
+
+# Partie 2 — Module 1 : Tidyverse rappel {data-state="section-break"}
+
+## Le pipe `|>` se lit « puis »
+
+Lecture orale naturelle dans l'ordre du traitement.
+
+```r
+menages |>
+  filter(milieu == "urban") |>
+  group_by(region) |>
+  summarise(n = n()) |>
+  arrange(desc(n))
+```
+
+vs version imbriquée illisible :
+
+```r
+arrange(summarise(group_by(filter(menages, milieu == "urban"), region),
+                  n = n()),
+        desc(n))
+```
+
+## Cinq verbes pour 80 % de l'analyse
+
+| Verbe | Action | Exemple sur DHS |
+|---|---|---|
+| `filter()` | choisir lignes | `filter(electricite == "yes")` |
+| `select()` | choisir colonnes | `select(region, milieu, electricite)` |
+| `mutate()` | créer / modifier | `mutate(poids = poids_menage / 1e6)` |
+| `arrange()` | trier | `arrange(desc(pct_electricite))` |
+| `group_by + summarise` | agréger | `group_by(region) |> summarise(n = n())` |
+
+## `pivot_*` : long ↔ large
+
+```r
+# Long → Large
+menages |>
+  count(region, quintile) |>
+  pivot_wider(names_from = quintile,
+              values_from = n,
+              values_fill = 0)
+
+# Large → Long (utile pour ggplot facets)
+indicateurs_region |>
+  pivot_longer(starts_with("pct_"),
+               names_to = "indicateur",
+               values_to = "taux")
+```
+
+# Partie 3 — Module 2 : Jointures HR ↔ PR {data-state="section-break"}
+
+## La double clé `(cluster_id, menage_id)`
+
+::: {.callout-warning title="Piège DHS classique"}
+Le `menage_id` n'est **unique que dans un cluster**. Joindre sur `menage_id` seul produit une explosion combinatoire.
+
+**Bonne pratique** : toujours `by = c("cluster_id", "menage_id")`.
+:::
+
+## Les cinq verbes de jointure
+
+| Verbe | Garde | Cas d'usage DHS |
+|---|---|---|
+| `left_join` | toute la gauche | Enrichir PR avec caractéristiques ménage |
+| `inner_join` | intersection | Sous-population dont HR + PR connus |
+| `full_join` | union | Diagnostic des incohérences HR/PR |
+| `semi_join` | gauche présente à droite | Filtrer PR par caractéristique HR |
+| `anti_join` | gauche **absente** de droite | **Règle d'or : diagnostic préalable** |
+
+## La règle d'or
+
+::: {.callout-important title="`anti_join` AVANT `left_join`"}
+**Toujours** quantifier les non-appariés avant une jointure importante.
+
+```r
+n_orphelins <- personnes |>
+  anti_join(menages, by = c("cluster_id", "menage_id")) |>
+  nrow()
+```
+
+Sinon : exclusions silencieuses qui faussent tous les indicateurs.
+:::
+
+## Trois pièges récurrents
+
+1. **Oubli de la double clé** → duplication massive (cf. slide précédente).
+2. **Types incompatibles** (character vs integer) → 0 ligne jointe sans erreur.
+3. **Doublons à droite** → explosion combinatoire silencieuse.
+
+Réflexe systématique : `count(cluster_id, menage_id) |> filter(n > 1) |> nrow()` doit toujours retourner 0 sur la table de droite avant la jointure.
+
+# Partie 4 — Module 3 : Valeurs manquantes {data-state="section-break"}
+
+## MCAR / MAR / MNAR — la classification de Rubin
+
+::: {.columns}
+::: {.column width="33%"}
+**MCAR**
+
+*Missing Completely At Random*
+
+Manquance **indépendante** de tout.
+
+→ Suppression OK.
+:::
+::: {.column width="33%"}
+**MAR**
+
+*Missing At Random*
+
+Manquance dépend de **variables observées**.
+
+→ Imputation conditionnelle.
+:::
+::: {.column width="33%"}
+**MNAR**
+
+*Missing Not At Random*
+
+Manquance dépend de la **valeur manquante** elle-même.
+
+→ Modèles spécifiques.
+:::
+:::
+
+## Sur DHS : les NA sont rares mais informatifs
+
+Le microfichier DHS est **fortement nettoyé** par ICF avant publication. Les NA résiduels concernent surtout :
+
+- `age_chef` (HV220) : refus ou « don't know »
+- `score_richesse` (HV271) : non calculable pour certains ménages
+- Variables auto-déclarées (revenu, dépenses) : non standardisées
+
+→ Détection systématique avec `summarise(across(everything(), ~ sum(is.na(.))))`.
+
+## Quatre stratégies de traitement
+
+| Stratégie | Quand | Risque |
+|---|---|---|
+| `drop_na` | < 5 % MCAR | Perte de puissance |
+| Médiane par groupe | MAR, variable continue | Sous-estime la variance |
+| Mode par groupe | MAR, variable catégorielle | Idem |
+| Imputation multiple (`mice`) | MAR/MNAR, production | Lourd à mettre en œuvre |
+
+::: {.callout-tip}
+Pour J4, on couvre les trois premières. `mice` à voir en J9 (sciences sociales).
+:::
+
+## Le piège `dplyr::if_else` strict sur les types
+
+```r
+# PLANTE : if_else compare integer vs numeric
+mutate(age_imp = if_else(is.na(age),
+                         as.integer(median(age, na.rm=TRUE)),
+                         age))
+
+# OK : conversion explicite pour aligner les types
+mutate(age_num = as.numeric(age),
+       age_imp = if_else(is.na(age_num),
+                         as.numeric(median(age_num, na.rm=TRUE)),
+                         age_num))
+```
+
+`dplyr::if_else` est **strict** sur les types (contrairement à `base::ifelse` qui coerce silencieusement).
+
+# Partie 5 — Module 4 : Plan de sondage et pondération {data-state="section-break"}
+
+## Pourquoi `mean()` ne suffit pas
+
+EDS-MICS = **plan stratifié à deux degrés**. Les régions septentrionales sont **suréchantillonnées** (pour avoir assez de précision dans ces zones moins peuplées).
+
+Sans pondération : on **surestime** leur poids dans les moyennes nationales → biais.
+
+Sans plan de sondage : on **sous-estime** la variance → IC trop étroits → fausse précision.
+
+## `srvyr` : le tidyverse des enquêtes
+
+```r
+library(srvyr)
+
+dhs_design <- menages |>
+  mutate(poids = poids_menage / 1e6) |>
+  as_survey_design(
+    ids     = cluster_id,
+    strata  = strate,
+    weights = poids,
+    nest    = TRUE
+  )
+```
+
+Une fois le design déclaré, **les mêmes verbes dplyr** (group_by, summarise) fonctionnent avec `survey_mean()` à la place de `mean()`.
+
+## Intervalles de confiance gratuits
+
+```r
+dhs_design |>
+  group_by(region) |>
+  summarise(
+    tx_elec = survey_mean(electricite == "yes",
+                          vartype = "ci") * 100
+  )
+```
+
+Retourne **trois colonnes** : valeur centrale, borne basse, borne haute (IC 95 % par défaut). Indispensable pour décider si deux régions diffèrent **significativement**.
+
+## Référence méthodologique
+
+[@lumley2010survey] *Complex Surveys: A Guide to Analysis Using R*, Wiley.
+
+→ Le package `survey` est l'implémentation R historique de Lumley.
+
+→ `srvyr` [@freedman2024srvyr] enveloppe `survey` dans une grammaire tidyverse.
+
+→ Tous les calculs DHS officiels (StatCompiler, rapports finaux) utilisent ce plan de sondage.
+
+# Partie 6 — Module 5 : Indicateurs par région {data-state="section-break"}
+
+## Du microfichier à la table régionale
+
+```r
+indic_menages <- dhs_design |>
+  group_by(region) |>
+  summarise(
+    n_menages       = unweighted(n()),
+    pct_electricite = round(survey_mean(electricite == "yes") * 100, 1),
+    pct_tv          = round(survey_mean(television == "yes") * 100, 1),
+    pct_chef_femme  = round(survey_mean(sexe_chef == "female") * 100, 1)
+  ) |>
+  select(-ends_with("_se"))
+```
+
+10 lignes (1 par région) prêtes pour la cartographie de J5.
+
+## Indicateurs individus : design séparé
+
+Pour les indicateurs sur **personnes** (alphabétisation, scolarisation), on :
+
+1. Joint d'abord les variables de plan de sondage HR → PR.
+2. Déclare un **deuxième design** sur la table PR enrichie.
+3. Filtre la population cible (`age >= 25` pour l'alphabétisation des adultes).
+4. Agrège par région.
+
+Ce pattern est standard quand on a une enquête à plusieurs niveaux d'unités (ménages, individus, événements de naissance...).
+
+# Partie 7 — Module 6 : Jointure spatiale GADM {data-state="section-break"}
+
+## Le problème de nommage
+
+| Source | Format |
+|---|---|
+| DHS | `"far-north"`, `"centre"`, `"adamawa"` (minuscules anglais, tirets) |
+| GADM | `"Far North"`, `"Centre"`, `"Adamaoua"` (majuscules, mixte EN/FR) |
+
+→ Jointure naïve = **0 ligne appariée**. Il faut **normaliser**.
+
+## Fonction de normalisation
+
+```r
+norm <- function(x) {
+  x |> iconv(from = "UTF-8", to = "ASCII//TRANSLIT") |>
+       tolower() |>
+       gsub("[^a-z0-9]", "", x = _)
+}
+
+dict <- c(northwest = "nordouest", southwest = "sudouest",
+          farnorth  = "extremenord", north = "nord", south = "sud",
+          east = "est", west = "ouest", centre = "centre",
+          littoral = "littoral", adamawa = "adamaoua")
+
+normalize_region <- function(x) {
+  v <- norm(x); ifelse(v %in% names(dict), dict[v], v)
+}
+```
+
+Pattern réutilisable pour J5 (DHS) et tout autre jeu avec noms région hétérogènes.
+
+## Jointure finale
+
+```r
+adm1$region_key                <- normalize_region(adm1$NAME_1)
+indicateurs_region$region_key  <- normalize_region(indicateurs_region$region)
+
+adm1_indic <- adm1 |>
+  left_join(indicateurs_region, by = "region_key")
+```
+
+**Vérification post-jointure** : `sum(is.na(adm1_indic$pct_electricite))` doit être 0.
+
+# Partie 8 — Synthèse et devoir {data-state="section-break"}
+
+## Ce qu'on a vu
+
+- **M1** : 5 verbes dplyr + pivot
+- **M2** : 5 jointures + double clé DHS `(cluster_id, menage_id)`
+- **M3** : MCAR/MAR/MNAR + 4 stratégies + piège `if_else` typé
+- **M4** : `srvyr::as_survey_design(nest = TRUE)` + IC gratuits
+- **M5** : table d'indicateurs régionaux pondérés (entrée de J5)
+- **M6** : normalisation noms régions + jointure spatiale GADM
+
+## Devoir individuel Q6
+
+Pipeline complet J4 enrichi de **2 indicateurs supplémentaires** au choix :
+
+- Export `outputs/indicateurs_region_v2.csv`
+- Export `outputs/cmr_adm1_indicateurs_dhs2018.gpkg`
+- Discussion des choix méthodologiques en commentaire
+
+Énoncé complet dans `exercice.qmd` (Q6).
+
+Bonus Q7 (recommandé) : confronter tes calculs aux indicateurs DHS StatCompiler publiés.
+
+## Demain (J5) — Visualisation et cartographie
+
+La table `indicateurs_region.csv` devient l'entrée des choroplèthes `tmap` v4 :
+
+- Classifications (Jenks, quantile, équidistante)
+- Palettes adaptées (séquentielle, divergente, qualitative)
+- Décoration de carte (titre, légende, flèche, échelle, crédits)
+- Export PNG / PDF / HTML interactif
+
+# Partie 9 — Crédits et sources {data-state="section-break"}
+
+## Architecture et bascule
+
+- **Architecture pédagogique modulaire (6 modules)** : Jean Saturnin Alogo Samba (GDSG/IFORD)
+- **Bascule sur DHS Cameroun 2018 réel + intégration convention atelier** : Ramesesse Dzita (GDSG/IFORD)
+
+## Données
+
+- **EDS-MICS Cameroun 2018** : BUCREP / INS / MINSANTÉ / ICF International (DHS Program / USAID)
+- **GADM v4.1 ADM1** : gadm.org (libre académique)
+- **Extraits CSV pédagogiques** : produits par `00_extraire_dhs_pour_webr.R` à partir des `.DTA` officiels
+
+## Licences
+
+- **Code et matériel pédagogique** : CC-BY 4.0 au nom du GDSG / IFORD
+- **Microfichiers DHS bruts** : licence DHS Program — redistribution interdite (cf. `.gitignore`)
+- **Extraits CSV** : usage formation IFORD/GDSG
+
+## Références méthodologiques
+
+@wickham2014tidy ; @lumley2010survey ; @freedman2024srvyr ; @ins_eds_mics_2018 ; @bucrep_rgph4.

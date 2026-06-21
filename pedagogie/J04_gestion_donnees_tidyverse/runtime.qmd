@@ -1,0 +1,270 @@
+---
+title: "J4 — Gestion des données pour l'analyse spatiale"
+subtitle: "Code R exécutable dans le navigateur"
+engine: knitr
+---
+
+::: {.iford-callout}
+**Mode d'emploi.** Cliquez **Run code** dans chaque cellule. WebR charge `dplyr`, `tidyr`, `readr`, `sf` au premier appel (~20 s la première fois). Tout tourne dans votre navigateur — aucune installation locale.
+
+**Données 100 % réelles** : extraits CSV de l'EDS-MICS Cameroun 2018 (DHS Program), produits par le script `pedagogie/_commons/data/dhs_cmr/00_extraire_dhs_pour_webr.R` côté animateur à partir des microfichiers `.DTA` Stata officiels.
+
+**Note technique** : `srvyr` et `haven` ne sont pas (encore) portables sur WebR. On charge les CSV extraits directement et on illustre les verbes dplyr/jointures/agrégations **non pondérées**. La pédagogie complète sur plan de sondage stratifié + pondération (Module 4) est dans la version desktop `demo.qmd`.
+
+**Architecture modulaire** : Jean Saturnin Alogo Samba (GDSG/IFORD). **Bascule DHS réel + runtime** : Ramesesse Dzita.
+:::
+
+## 1. Charger les extraits DHS Cameroun 2018
+
+```{webr}
+#| autorun: true
+library(dplyr)
+library(tidyr)
+library(readr)
+
+# HR : Household Recode (~11 700 ménages × 24 vars pédagogiques)
+download.file("/_commons/data/dhs_cmr/dhs_cmr_2018_menages_extrait.csv",
+              "menages.csv", mode = "wb")
+menages <- read_csv("menages.csv", show_col_types = FALSE)
+
+# PR : Person Recode (~60 700 personnes × 12 vars pédagogiques)
+download.file("/_commons/data/dhs_cmr/dhs_cmr_2018_personnes_extrait.csv",
+              "personnes.csv", mode = "wb")
+personnes <- read_csv("personnes.csv", show_col_types = FALSE)
+
+c(menages = nrow(menages), personnes = nrow(personnes))
+```
+
+Aperçu des premières lignes de chaque table :
+
+```{webr}
+cat("--- HR (ménages) ---\n")
+glimpse(menages)
+cat("\n--- PR (personnes) ---\n")
+glimpse(personnes)
+```
+
+## 2. Module 1 — Tidyverse de base
+
+### Le pipe `|>` se lit « puis »
+
+```{webr}
+# Compter les ménages urbains en lecture orale naturelle
+menages |>
+  filter(milieu == "urban") |>
+  nrow()
+```
+
+### `select` + `filter` + `count`
+
+```{webr}
+# Combien de ménages par région et milieu ?
+menages |>
+  count(region, milieu) |>
+  pivot_wider(names_from = milieu, values_from = n, values_fill = 0)
+```
+
+### `mutate` + `case_when`
+
+```{webr}
+# Catégoriser la taille du ménage
+menages |>
+  mutate(
+    taille_cat = case_when(
+      taille_menage <= 3 ~ "Petit (1-3)",
+      taille_menage <= 6 ~ "Moyen (4-6)",
+      taille_menage <= 9 ~ "Grand (7-9)",
+      TRUE               ~ "Très grand (10+)"
+    )
+  ) |>
+  count(taille_cat)
+```
+
+### `group_by + summarise` : agrégation
+
+```{webr}
+# Taux d'équipements par région (non pondéré)
+menages |>
+  group_by(region) |>
+  summarise(
+    n_menages       = n(),
+    taille_moy      = round(mean(taille_menage), 2),
+    pct_urbain      = round(mean(milieu == "urban") * 100, 1),
+    pct_electricite = round(mean(electricite == "yes") * 100, 1),
+    pct_tv          = round(mean(television == "yes") * 100, 1),
+    .groups = "drop"
+  ) |>
+  arrange(desc(pct_electricite))
+```
+
+::: {.takeaway}
+**À retenir.** `filter` filtre les lignes, `select` choisit les colonnes, `mutate` crée une variable, `group_by + summarise` agrège, `pivot_wider` réorganise. Cinq verbes pour 80 % de l'analyse de données.
+:::
+
+## 3. Module 2 — Jointures HR ↔ PR
+
+### La double clé `(cluster_id, menage_id)`
+
+Chaque personne PR référence un ménage HR via cette double clé. Ne jamais joindre sur `menage_id` seul (un même numéro de ménage existe dans plusieurs clusters).
+
+```{webr}
+# Vérification : la clé est-elle unique ?
+menages |>
+  count(cluster_id, menage_id) |>
+  filter(n > 1) |>
+  nrow()
+```
+
+### `left_join` : enrichir PR avec les caractéristiques du ménage
+
+```{webr}
+personnes_enrichies <- personnes |>
+  left_join(
+    menages |> select(cluster_id, menage_id,
+                      milieu, region, electricite, quintile),
+    by = c("cluster_id", "menage_id")
+  )
+
+c(personnes       = nrow(personnes),
+  enrichies       = nrow(personnes_enrichies),
+  na_sur_milieu   = sum(is.na(personnes_enrichies$milieu)))
+```
+
+Le nombre de lignes doit être identique, et zéro NA sur les colonnes ajoutées (toutes les personnes ont un ménage parent valide).
+
+### `anti_join` : règle d'or de diagnostic
+
+```{webr}
+# Personnes orphelines (sans ménage HR parent) ?
+personnes |>
+  anti_join(menages, by = c("cluster_id", "menage_id")) |>
+  nrow()
+```
+
+## 4. Module 5 — Indicateurs par région (version non pondérée)
+
+La pondération propre par plan de sondage stratifié est dans `demo.qmd` desktop avec `srvyr`. Ici, version brute pour illustrer le pipeline.
+
+```{webr}
+# Indicateurs ménages par région
+indic_menages <- menages |>
+  group_by(region) |>
+  summarise(
+    n_menages        = n(),
+    taille_moy       = round(mean(taille_menage), 2),
+    pct_urbain       = round(mean(milieu == "urban") * 100, 1),
+    pct_electricite  = round(mean(electricite == "yes") * 100, 1),
+    pct_tv           = round(mean(television == "yes") * 100, 1),
+    pct_chef_femme   = round(mean(sexe_chef == "female") * 100, 1),
+    .groups = "drop"
+  )
+
+# Indicateur alphabétisation (proxy : a au moins suivi le primaire)
+indic_alpha <- personnes_enrichies |>
+  filter(age >= 25, !is.na(niveau_educ)) |>
+  mutate(alpha = niveau_educ != "no education, preschool") |>
+  group_by(region) |>
+  summarise(
+    pct_alpha_25plus = round(mean(alpha) * 100, 1),
+    .groups = "drop"
+  )
+
+# Fusion
+indicateurs_region <- indic_menages |>
+  left_join(indic_alpha, by = "region")
+
+indicateurs_region
+```
+
+## 5. Module 6 — Joindre à GADM ADM1
+
+### Charger GADM et normaliser les noms de régions
+
+```{webr}
+#| autorun: true
+library(sf)
+library(ggplot2)
+
+download.file("/_commons/data/gadm41_CMR_1.json", "adm1.json", mode = "wb")
+adm1 <- read_sf("adm1.json")
+
+# Normaliser les noms (DHS: "far-north", GADM: "Far North" — incompatibles)
+norm <- function(x) {
+  x |>
+    iconv(from = "UTF-8", to = "ASCII//TRANSLIT") |>
+    tolower() |>
+    gsub("[^a-z0-9]", "", x = _)
+}
+
+dict <- c(
+  northwest = "nordouest",
+  southwest = "sudouest",
+  farnorth  = "extremenord",
+  north     = "nord",
+  south     = "sud",
+  east      = "est",
+  west      = "ouest",
+  centre    = "centre",
+  littoral  = "littoral",
+  adamawa   = "adamaoua",
+  adamaoua  = "adamaoua"
+)
+
+normalize_region <- function(x) {
+  v <- norm(x)
+  ifelse(v %in% names(dict), dict[v], v)
+}
+
+adm1$region_key                <- normalize_region(adm1$NAME_1)
+indicateurs_region$region_key  <- normalize_region(indicateurs_region$region)
+
+# Aperçu des correspondances
+data.frame(adm1 = sort(unique(adm1$region_key)),
+           dhs  = sort(unique(indicateurs_region$region_key)))
+```
+
+### Jointure
+
+```{webr}
+adm1_indic <- adm1 |>
+  left_join(
+    indicateurs_region |>
+      select(region_key, n_menages, pct_electricite,
+             pct_urbain, pct_tv, pct_chef_femme, pct_alpha_25plus),
+    by = "region_key"
+  )
+
+# Vérifier l'absence de NA après jointure
+adm1_indic |>
+  st_drop_geometry() |>
+  select(NAME_1, n_menages, pct_electricite, pct_alpha_25plus)
+```
+
+## 6. Carte choroplèthe par région
+
+```{webr}
+ggplot(adm1_indic) +
+  geom_sf(aes(fill = pct_electricite), color = "white", linewidth = 0.3) +
+  scale_fill_viridis_c(option = "D", name = "% ménages\nélectrifiés") +
+  geom_sf_label(aes(label = NAME_1), size = 2.3,
+                color = "white", fontface = "bold") +
+  labs(title = "Accès à l'électricité par région — Cameroun 2018",
+       subtitle = "EDS-MICS Cameroun 2018 (DHS Program), version non pondérée",
+       caption = "Sources : DHS Program · GADM v4.1 · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+## 7. Pour aller plus loin
+
+La version desktop `demo.qmd` ajoute :
+
+- **Module 3 complet** : détection NA, conceptualisation MCAR/MAR/MNAR, trois stratégies de traitement, piège du NA structurel.
+- **Module 4 complet** : `srvyr` pour le plan de sondage stratifié à deux degrés, calcul des intervalles de confiance, comparaison brut vs pondéré.
+- **Indicateurs individus** : sortie de `personnes_design` avec poids HV005 et strate HV022.
+- **Lecture des microfichiers `.DTA` complets** (5 741 variables HR, 394 PR) via `haven::read_dta` et le helper `fetch_dhs_recode_cmr_2018()`.
+
+Le devoir individuel Q6 est dans `exercice.qmd`.
+
+[← Retour à l'accueil](../INDEX.md)

@@ -1,0 +1,800 @@
+---
+title: "J4 — Gestion des données pour l'analyse spatiale"
+subtitle: "Atelier IFORD × GDSG · Yaoundé, 30 juillet 2026"
+author: "Jean Saturnin Alogo Samba (conception modulaire) · Ramesesse Dzita (intégration DHS réel)"
+date: "2026-07-30"
+lang: fr
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    number-sections: true
+    code-fold: false
+    code-tools: true
+    theme: cosmo
+    df-print: paged
+  pdf:
+    toc: true
+    number-sections: true
+execute:
+  echo: true
+  warning: false
+  message: false
+bibliography: ../_commons/helpers/citations.bib
+---
+
+# Objectifs et structure {#sec-objectifs}
+
+Quatrième jour : **retour au cœur du métier** démographique. On manipule un vrai microfichier d'enquête nationale — l'**EDS-MICS Cameroun 2018** (Enquête Démographique et de Santé / Multiple Indicator Cluster Survey, communément appelée *DHS Cameroun 2018*) — on le nettoie, on calcule des indicateurs pondérés selon le plan de sondage, et on les agrège au niveau régional pour préparer la cartographie de J5.
+
+Le matériel suit la **structure modulaire** conçue par Saturnin pour cet atelier — six modules qui s'enchaînent du pipe `dplyr` jusqu'à la table d'indicateurs par région ADM1, prête à être jointe à GADM. La nouveauté méthodologique par rapport au cadrage initial : on travaille sur le **vrai microfichier DHS** plutôt que sur une simulation, ce qui permet de pratiquer les conventions et formats réels qu'un statisticien camerounais rencontre en production.
+
+À la fin du jour, chaque participant doit pouvoir produire le pipeline complet : du `.DTA` Stata brut à une table `indicateurs_region.csv` exploitable par J5.
+
+# Jeu de données du jour {#sec-data}
+
+L'EDS-MICS Cameroun 2018 a été réalisée par le BUCREP avec l'appui de l'INS, du MINSANTÉ et de l'ICF International (programme DHS de USAID), entre janvier et août 2018. C'est l'enquête démographique nationale la plus récente disponible publiquement avant le RGPH 4. Elle couvre les 10 régions et fournit les standards d'indicateurs sur la fécondité, la mortalité infantile, la santé maternelle, l'alimentation, le VIH, et les conditions de vie des ménages.
+
+Le pack DHS Program contient huit recodes (sous-fichiers thématiques au format Stata `.DTA`). On utilise aujourd'hui les **deux structurants** :
+
+| Recode | Code DHS | Lignes | Description | Variable d'identifiant |
+|---|---|---|---|---|
+| Household Recode | HR | ~14 000 ménages | Une ligne par ménage : composition, conditions de vie, équipements, index richesse, plan de sondage | `(cluster_id, menage_id)` |
+| Person Recode | PR | ~70 000 personnes | Une ligne par membre de ménage : âge, sexe, éducation, scolarisation | `(cluster_id, menage_id, ligne)` |
+
+Pour le runtime WebR (cellules exécutables dans le navigateur), `haven` ne charge pas efficacement les `.DTA` complets (5 741 variables HR, 394 variables PR), et la licence DHS limite la redistribution des microfichiers bruts. On a donc préparé en amont **deux extraits CSV** avec les ~25 variables pédagogiquement essentielles, produits par le script `pedagogie/_commons/data/dhs_cmr/00_extraire_dhs_pour_webr.R`. Ce sont eux qu'on charge ici — sur la machine de l'animateur, on peut aussi pointer directement sur les `.DTA` originaux via le helper `fetch_dhs_recode_cmr_2018()`.
+
+```{r}
+#| label: setup
+library(dplyr)
+library(tidyr)
+library(readr)
+library(ggplot2)
+
+# Chemins relatifs depuis le .qmd
+source("../_commons/helpers/fetch_data.R")
+
+# CSV pédagogiques produits par 00_extraire_dhs_pour_webr.R
+data_dir <- "../_commons/data/dhs_cmr"
+
+menages <- read_csv(
+  file.path(data_dir, "dhs_cmr_2018_menages_extrait.csv"),
+  show_col_types = FALSE
+)
+
+personnes <- read_csv(
+  file.path(data_dir, "dhs_cmr_2018_personnes_extrait.csv"),
+  show_col_types = FALSE
+)
+
+c(menages = nrow(menages), personnes = nrow(personnes))
+```
+
+`menages` (HR — Household Recode) compte ~11 700 ménages enquêtés avec succès. `personnes` (PR — Person Recode) compte ~60 700 personnes interrogées comme membres habituels ou visiteurs ayant dormi dans le ménage la nuit précédant l'enquête.
+
+::: {.callout-tip title="Variante desktop animateur"}
+Si tu veux travailler directement sur les microfichiers `.DTA` complets (toutes les 5 741 variables HR par exemple, pour explorer un indicateur non-extrait), remplace les `read_csv` ci-dessus par :
+
+```r
+library(haven)
+menages_full <- read_dta(fetch_dhs_recode_cmr_2018("HR"))
+names(menages_full) <- toupper(names(menages_full))  # certains releases sont en lowercase
+```
+:::
+
+# Module 1 — Rappel Tidyverse {#sec-m1}
+
+> ⏱ **~1 heure**. Pipe, verbes `dplyr`, pivot.
+
+## Le pipe `|>` se lit « puis »
+
+Le bloc suivant compte les ménages urbains. Sans pipe, il faut lire **de l'intérieur vers l'extérieur** — difficile. Avec pipe, on lit **dans l'ordre naturel** des opérations. Les deux retournent exactement le même résultat.
+
+```{r}
+#| label: m1-pipe
+# Sans pipe — ordre d'écriture inverse de l'ordre d'exécution
+sans_pipe <- nrow(filter(select(menages, milieu, region), milieu == "urban"))
+
+# Avec pipe — lecture orale : « prendre menages, puis sélectionner, puis filtrer, puis compter »
+avec_pipe <- menages |>
+  select(milieu, region) |>
+  filter(milieu == "urban") |>
+  nrow()
+
+c(sans_pipe = sans_pipe, avec_pipe = avec_pipe)
+```
+
+Note : les modalités de `milieu` sont en anglais (`urban` / `rural`) parce que `haven::as_factor()` a convertit les labels Stata d'origine — c'est le format natif EDS-MICS. Les démographes africains qui travaillent avec les `.DTA` DHS rencontrent toujours ces labels anglais. On les traduira plus loin pour la cartographie (J5).
+
+## `select` : choisir les colonnes
+
+`select()` garde uniquement les colonnes nommées. La syntaxe `starts_with("...")` est très utile sur les enquêtes qui ont souvent des dizaines de variables avec un préfixe commun (sur le `.DTA` complet : `hv2*` pour les équipements, `hv1*` pour la santé, etc.).
+
+```{r}
+#| label: m1-select
+# Sélection nommée
+menages |>
+  select(cluster_id, menage_id, region, milieu, taille_menage) |>
+  head(3)
+
+# Sélection par motif : tous les équipements (radio, television, refrigerateur, velo, moto, voiture)
+menages |>
+  select(menage_id, radio, television, refrigerateur, velo, moto, voiture) |>
+  head(3)
+```
+
+## `filter` : choisir les lignes
+
+`filter()` conserve les lignes qui vérifient une condition. La virgule entre deux conditions est un **ET logique** ; le `|` est un **OU logique** ; `%in%` teste l'appartenance à un vecteur.
+
+```{r}
+#| label: m1-filter
+# Comptages simples par milieu
+cat("Urbains :", nrow(menages |> filter(milieu == "urban")), "\n")
+cat("Ruraux  :", nrow(menages |> filter(milieu == "rural")), "\n")
+
+# Combinaison ET : ménages urbains du Centre ou du Littoral
+menages |>
+  filter(milieu == "urban", region %in% c("centre", "littoral")) |>
+  nrow()
+```
+
+::: {.callout-warning title="Réflexe NA"}
+`is.na(x)` retourne `TRUE` pour les valeurs manquantes. **Filtrer les NA avant tout calcul d'indicateur** est un réflexe à automatiser : `filter(!is.na(electricite))`.
+:::
+
+## `mutate` + `case_when` : créer une variable conditionnelle
+
+`mutate()` ajoute ou modifie une colonne. `case_when()` est l'équivalent lisible d'un `IF / ELSE IF / ELSE`. Les conditions sont évaluées **dans l'ordre** : la première qui matche gagne.
+
+```{r}
+#| label: m1-mutate
+menages <- menages |>
+  mutate(
+    taille_cat = case_when(
+      taille_menage <= 3 ~ "Petit (1-3)",
+      taille_menage <= 6 ~ "Moyen (4-6)",
+      taille_menage <= 9 ~ "Grand (7-9)",
+      TRUE               ~ "Très grand (10+)"
+    ),
+    # Coercion explicite : "yes"/"no" devient 1/0 pour les calculs de moyenne
+    chef_femme_bin = as.integer(sexe_chef == "female"),
+    electricite_bin = as.integer(electricite == "yes")
+  )
+
+menages |> count(taille_cat)
+menages |>
+  summarise(pct_chef_femme = round(mean(chef_femme_bin) * 100, 1),
+            pct_electricite = round(mean(electricite_bin) * 100, 1))
+```
+
+## `group_by + summarise` : agrégation
+
+C'est le cœur de l'analyse. `group_by()` partitionne le tibble par modalité ; `summarise()` réduit chaque groupe à une ligne avec les fonctions d'agrégation. `.groups = "drop"` désactive le groupement résiduel à la sortie (bonne pratique systématique).
+
+```{r}
+#| label: m1-summarise
+menages |>
+  group_by(region) |>
+  summarise(
+    n_menages       = n(),
+    taille_moyenne  = round(mean(taille_menage, na.rm = TRUE), 2),
+    pct_urbain      = round(mean(milieu == "urban") * 100, 1),
+    pct_electricite = round(mean(electricite == "yes") * 100, 1),
+    .groups = "drop"
+  ) |>
+  arrange(desc(pct_electricite))
+```
+
+Lecture : sans surprise, Centre (Yaoundé) et Littoral (Douala) sortent en tête de l'électrification (>80 %), Extrême-Nord et Est ferment la marche (<25 %). Le gradient nord/sud est de l'ordre de 4×. Ce résultat est **non-pondéré** — voir Module 4 pour l'application correcte des poids d'enquête.
+
+## `weighted.mean()` : indicateur pondéré (introduction rapide)
+
+`mean()` est presque toujours faux sur une enquête par sondage stratifié. Il faut `weighted.mean(x, poids, na.rm = TRUE)`. L'écart entre brut et pondéré peut atteindre plusieurs points de pourcentage selon la sur/sous-représentation des strates dans l'échantillon. Le poids ménage DHS est stocké en entier × 10^6 : on divise donc par `1e6` avant usage.
+
+```{r}
+#| label: m1-weighted
+menages |>
+  mutate(poids = poids_menage / 1e6) |>
+  group_by(region) |>
+  summarise(
+    tx_eau_brut = round(mean(electricite == "yes") * 100, 1),
+    tx_eau_pond = round(weighted.mean(electricite == "yes", poids) * 100, 1),
+    ecart_pts   = round(tx_eau_pond - tx_eau_brut, 2),
+    .groups = "drop"
+  ) |>
+  arrange(desc(abs(ecart_pts)))
+```
+
+L'écart est faible ici (~1 point) parce que la sur-pondération régionale de l'EDS-MICS est limitée. Mais on traitera la pondération **proprement avec le plan de sondage complet** au Module 4, pas en hack `weighted.mean`.
+
+## `tidyr::pivot_*` : format long ↔ format large
+
+Les données arrivent souvent en format **large** (une ligne par unité, une colonne par variable). `ggplot2` et beaucoup d'opérations comparatives préfèrent le format **long** (une ligne par observation). `pivot_longer()` et `pivot_wider()` font le pont.
+
+```{r}
+#| label: m1-pivot
+# Wide : régions en lignes, milieux en colonnes
+tab_large <- menages |>
+  group_by(region, milieu) |>
+  summarise(n = n(), .groups = "drop") |>
+  pivot_wider(names_from = milieu, values_from = n, values_fill = 0)
+tab_large
+
+# Long : pour ggplot facets
+menages |>
+  group_by(region) |>
+  summarise(
+    tx_elec = mean(electricite == "yes"),
+    tx_tv   = mean(television == "yes"),
+    tx_velo = mean(velo == "yes"),
+    .groups = "drop"
+  ) |>
+  pivot_longer(starts_with("tx_"), names_to = "indicateur", values_to = "taux") |>
+  head(9)
+```
+
+# Module 2 — Jointures HR ↔ PR {#sec-m2}
+
+> ⏱ **~1 heure**. Cinq verbes, trois pièges, une règle d'or.
+
+## Le sens de la jointure DHS
+
+La structure du DHS est **hiérarchique** : chaque ligne de PR (personne) référence un ménage parent via `(cluster_id, menage_id)`. Cette double clé est obligatoire — un même `menage_id` peut apparaître dans plusieurs clusters différents, donc on **ne joint jamais sur le seul `menage_id`**.
+
+```{r}
+#| label: m2-cles
+# Vérifier l'unicité de la clé HR
+menages |>
+  count(cluster_id, menage_id) |>
+  filter(n > 1) |>
+  nrow()
+
+# Vérifier l'unicité de la clé PR (cluster_id, menage_id, ligne)
+personnes |>
+  count(cluster_id, menage_id, ligne) |>
+  filter(n > 1) |>
+  nrow()
+```
+
+Zéro dans les deux cas : nos clés sont propres.
+
+## `left_join` : ajouter à PR les caractéristiques du ménage
+
+`left_join()` est le verbe par défaut : on garde **toutes** les lignes de gauche (les personnes), on rajoute les colonnes de droite (caractéristiques du ménage) quand la clé matche.
+
+```{r}
+#| label: m2-left
+# Joindre les caractéristiques ménage à chaque personne
+personnes_enrichies <- personnes |>
+  left_join(
+    menages |> select(cluster_id, menage_id, milieu, region,
+                      taille_menage, electricite, quintile),
+    by = c("cluster_id", "menage_id")
+  )
+
+c(personnes        = nrow(personnes),
+  enrichies        = nrow(personnes_enrichies),
+  na_sur_milieu    = sum(is.na(personnes_enrichies$milieu)))
+```
+
+Le nombre de lignes ne doit **pas changer** (left_join préserve la gauche). Le nombre de NA sur `milieu` doit être **zéro** : tous les individus PR doivent avoir un ménage parent dans HR.
+
+## La règle d'or : `anti_join` AVANT `left_join`
+
+Avant toute jointure importante, **quantifier les non-appariés**. C'est le réflexe qui évite les exclusions silencieuses.
+
+```{r}
+#| label: m2-anti
+# Y a-t-il des personnes orphelines (PR sans HR parent) ?
+personnes_orphelines <- personnes |>
+  anti_join(menages, by = c("cluster_id", "menage_id")) |>
+  nrow()
+
+if (personnes_orphelines == 0) {
+  message("✓ Toutes les personnes ont un ménage parent dans HR.")
+} else {
+  warning(personnes_orphelines, " personnes sans ménage HR — à investiguer.")
+}
+```
+
+## `inner_join` : intersection
+
+Conserve uniquement les lignes appariées **des deux côtés**. À utiliser avec prudence parce qu'il **exclut silencieusement** les non-matches. Utile par exemple pour étudier un sous-ensemble dont les caractéristiques ménage sont connues.
+
+```{r}
+#| label: m2-inner
+# Ménages avec au moins un enfant <5 ans (calculé depuis PR)
+menages_avec_enfant <- personnes |>
+  filter(age < 5) |>
+  distinct(cluster_id, menage_id) |>
+  inner_join(menages |> select(cluster_id, menage_id, region, milieu),
+             by = c("cluster_id", "menage_id"))
+
+c(total_menages         = nrow(menages),
+  menages_avec_enfant   = nrow(menages_avec_enfant),
+  pct                   = round(nrow(menages_avec_enfant)/nrow(menages)*100, 1))
+```
+
+## `full_join` : union
+
+Utile pour identifier les clusters dont certains ménages n'ont aucune personne renseignée (rare en DHS, mais c'est l'outil de diagnostic).
+
+```{r}
+#| label: m2-full
+# Compter les personnes par ménage et joindre à HR (full pour voir les deux côtés)
+n_personnes <- personnes |>
+  count(cluster_id, menage_id, name = "n_personnes_pr")
+
+verif <- menages |>
+  select(cluster_id, menage_id, taille_menage) |>
+  full_join(n_personnes, by = c("cluster_id", "menage_id"))
+
+# Cohérence : taille_menage déclarée vs nombre réel d'individus PR
+verif |>
+  mutate(coherent = taille_menage == n_personnes_pr) |>
+  summarise(pct_coherent = round(mean(coherent, na.rm = TRUE) * 100, 1),
+            n_HR_sans_PR = sum(is.na(n_personnes_pr)),
+            n_PR_sans_HR = sum(is.na(taille_menage)))
+```
+
+L'écart `taille_menage` (déclarée) vs `n_personnes_pr` (comptée) peut exister parce que PR inclut résidents habituels + visiteurs ayant dormi la nuit précédente, alors que `HV009` (taille_menage) compte les résidents habituels uniquement. À documenter dans toute analyse.
+
+## Trois pièges récurrents en jointure DHS
+
+```{r}
+#| label: m2-pieges
+# Piège 1 : oublier que cluster_id est une partie de la clé
+faux_join_n <- personnes |>
+  left_join(menages |> select(menage_id, milieu),
+            by = "menage_id",
+            relationship = "many-to-many") |>
+  nrow()
+vrai_join_n <- nrow(personnes_enrichies)
+c(faux_n = faux_join_n, vrai_n = vrai_join_n,
+  duplication_ratio = round(faux_join_n / vrai_join_n, 1))
+# Avec la fausse clé, chaque personne est dupliquée des dizaines de fois !
+
+# Piège 2 : types incompatibles (character vs integer)
+menages_str <- menages |> mutate(menage_id = as.character(menage_id))
+# Solution : harmoniser AVANT la jointure (mutate explicite)
+
+# Piège 3 : doublons à droite -> explosion des lignes
+# Diagnostic systématique
+menages |> count(cluster_id, menage_id) |> filter(n > 1) |> nrow()
+```
+
+# Module 3 — Valeurs manquantes {#sec-m3}
+
+> ⏱ **~1h15**. Détection, conceptualisation MCAR/MAR/MNAR, traitement.
+
+## Détection systématique
+
+Synthèse en une chaîne `dplyr` : `summarise(across(everything(), ~ sum(is.na(.))))` + `pivot_longer` + filtre.
+
+```{r}
+#| label: m3-detection
+resume_na <- menages |>
+  summarise(across(everything(), ~ sum(is.na(.)))) |>
+  pivot_longer(everything(), names_to = "variable", values_to = "n_na") |>
+  filter(n_na > 0) |>
+  mutate(pct_na = round(n_na / nrow(menages) * 100, 2)) |>
+  arrange(desc(n_na))
+
+resume_na
+```
+
+Les variables avec NA sur HR sont peu nombreuses dans notre extrait — c'est une caractéristique des microfichiers DHS qui sont **fortement nettoyés** par ICF avant publication. La plupart des NA résiduels concernent des refus ou des « don't know » documentés.
+
+## Conceptualisation : MCAR, MAR, MNAR
+
+Les trois mécanismes de manquance définissent la stratégie d'imputation :
+
+- **MCAR** *Missing Completely At Random* : la probabilité d'être manquant ne dépend ni de la valeur elle-même ni d'aucune autre variable observée. Cas rare. Si MCAR, on peut **supprimer** sans biais.
+- **MAR** *Missing At Random* : la probabilité d'être manquant dépend de variables observées (par ex. plus de NA chez les femmes en milieu rural sur l'âge du conjoint). On peut **imputer** en conditionnant sur ces variables.
+- **MNAR** *Missing Not At Random* : la probabilité de manquance dépend de la valeur manquante elle-même (ex. les non-électrifiés mentent sur leurs équipements). Plus difficile, nécessite des modèles spécifiques (Heckman, MI sous hypothèses).
+
+Sur le DHS, la plupart des NA résiduels sont MAR (corrélés à l'âge ou au milieu). Saturnin avait conçu une démonstration injectant des NA contrôlés pour rendre les trois mécanismes visuellement distinguables — on garde cette pédagogie pour le module spécifique « manipulation des NA » de J9 (sciences sociales).
+
+## Localiser pour distinguer MCAR / MAR
+
+Si les NA sont **concentrés dans certaines régions ou milieux**, c'est un signal **MAR**. Exemple sur `age_chef` (variable parmi celles qui ont quelques NA résiduels) :
+
+```{r}
+#| label: m3-localiser
+menages |>
+  group_by(region, milieu) |>
+  summarise(
+    n            = n(),
+    pct_na_age   = round(mean(is.na(age_chef)) * 100, 2),
+    .groups = "drop"
+  ) |>
+  arrange(desc(pct_na_age)) |>
+  head(10)
+```
+
+## Visualisation avec `naniar` (recommandé)
+
+`naniar` est le package de référence pour explorer les NA visuellement. À lancer en salle pour discussion.
+
+```{r}
+#| label: m3-naniar
+#| eval: false
+library(naniar)
+
+miss_var_summary(menages)
+vis_miss(menages)
+gg_miss_var(menages, facet = region)
+```
+
+## Stratégie 1 — Suppression
+
+Acceptable pour **< 5 % MCAR**. On crée toujours une copie nettoyée plutôt que d'écraser.
+
+```{r}
+#| label: m3-drop
+menages_age_ok <- menages |> drop_na(age_chef)
+c(avant = nrow(menages), apres = nrow(menages_age_ok),
+  perte_pct = round((nrow(menages) - nrow(menages_age_ok)) / nrow(menages) * 100, 2))
+```
+
+## Stratégie 2 — Imputation par la médiane de groupe (MAR)
+
+Pour `age_chef`, on impute par la **médiane du couple `region × milieu`**. Important : créer une nouvelle colonne `age_chef_imp` pour garder une trace de l'original.
+
+```{r}
+#| label: m3-impute
+# Note pédagogique : dplyr::if_else() est strict sur les types
+# (contrairement à base::ifelse()). On passe age_chef en numeric explicitement
+# et on utilise la même classe pour la valeur imputée.
+menages <- menages |>
+  mutate(age_chef_num = as.numeric(age_chef)) |>
+  group_by(region, milieu) |>
+  mutate(
+    age_chef_imp = if_else(
+      is.na(age_chef_num),
+      as.numeric(round(median(age_chef_num, na.rm = TRUE))),
+      age_chef_num
+    )
+  ) |>
+  ungroup()
+
+c(original_NA = sum(is.na(menages$age_chef)),
+  impute_NA   = sum(is.na(menages$age_chef_imp)))
+```
+
+## Stratégie 3 — Imputation par le mode (variable catégorielle)
+
+Pour une variable catégorielle, on impute par la **modalité la plus fréquente** dans le groupe. R n'a pas de `mode()` natif — on en construit un.
+
+```{r}
+#| label: m3-mode
+mode_stat <- function(x) {
+  x <- x[!is.na(x)]
+  if (length(x) == 0) return(NA_character_)
+  names(sort(table(x), decreasing = TRUE))[1]
+}
+
+# Exemple sur `type_toilette` (catégorielle, qui peut avoir des NA)
+# On garantit que les deux branches de if_else sont character pour éviter
+# les erreurs de type vues dans m3-impute.
+menages <- menages |>
+  mutate(type_toilette_chr = as.character(type_toilette)) |>
+  group_by(region, milieu) |>
+  mutate(
+    type_toilette_imp = if_else(
+      is.na(type_toilette_chr),
+      mode_stat(type_toilette_chr),
+      type_toilette_chr
+    )
+  ) |>
+  ungroup()
+
+c(orig = sum(is.na(menages$type_toilette)),
+  imp  = sum(is.na(menages$type_toilette_imp)))
+```
+
+## Le NA structurel : un piège différent
+
+Sur `personnes`, `annees_ecole` peut être 0 (jamais scolarisé) ou NA (information non renseignée), et `scolarise` est défini seulement pour les 5-24 ans (la question ne s'applique pas aux adultes ni aux enfants <5 ans). Un `mean(annees_ecole, na.rm = TRUE)` sans filtrer la population cible donne un résultat **gonflé artificiellement**.
+
+```{r}
+#| label: m3-structurel
+moyenne_brute <- mean(personnes$annees_ecole, na.rm = TRUE)
+
+# Calcul correct : population adulte 25+ ans (éducation terminée)
+moyenne_adultes <- personnes |>
+  filter(age >= 25, !is.na(annees_ecole)) |>
+  summarise(m = mean(annees_ecole)) |>
+  pull(m)
+
+tibble(
+  methode  = c("BRUTE (tous âges)", "CORRECT (25+ ans)"),
+  annees   = round(c(moyenne_brute, moyenne_adultes), 2)
+)
+```
+
+La différence (~2 ans) illustre pourquoi la **définition de la population cible** précède toute analyse.
+
+# Module 4 — Enquêtes ménages : plan de sondage et pondérations {#sec-m4}
+
+> ⏱ **~45 minutes**.
+
+## Pourquoi `mean()` ne suffit pas sur une enquête
+
+L'EDS-MICS Cameroun 2018 utilise un **plan de sondage stratifié à deux degrés** : (1) tirage aléatoire de grappes (PSU = `cluster_id`) dans chaque strate (région × milieu) avec une probabilité proportionnelle à la taille ; (2) tirage aléatoire de ménages dans chaque grappe. Les poids `poids_menage` (= HV005/1e6) corrigent les sur- et sous-représentations, et les strates `strate` (= HV022) servent au calcul de la variance.
+
+Sans ces corrections, on biaise les estimations et on sous-estime la variance des estimateurs (intervalles de confiance trop étroits).
+
+## Le package `srvyr` : tidyverse pour les enquêtes
+
+`srvyr` est le wrapper tidyverse du package `survey`. Il déclare un objet « design » qui transporte le plan de sondage, puis on enchaîne les verbes tidyverse comme d'habitude.
+
+```{r}
+#| label: m4-srvyr
+library(srvyr)
+
+# Déclaration du design : PSU + strate + poids
+dhs_design <- menages |>
+  mutate(poids = poids_menage / 1e6) |>
+  as_survey_design(
+    ids     = cluster_id,   # PSU
+    strata  = strate,
+    weights = poids,
+    nest    = TRUE          # PSU emboîtées dans strates
+  )
+
+dhs_design
+```
+
+## Comparer brut vs pondéré
+
+```{r}
+#| label: m4-compare
+# Brut
+brut <- menages |>
+  group_by(region) |>
+  summarise(
+    tx_elec  = round(mean(electricite == "yes") * 100, 1),
+    .groups = "drop"
+  )
+
+# Pondéré (avec srvyr) — l'intervalle de confiance vient gratuitement
+pondere <- dhs_design |>
+  group_by(region) |>
+  summarise(
+    tx_elec    = round(survey_mean(electricite == "yes", vartype = "ci") * 100, 1)
+  )
+
+inner_join(brut, pondere, by = "region", suffix = c("_brut", "_pond")) |>
+  arrange(desc(tx_elec_brut))
+```
+
+Les valeurs pondérées sont accompagnées de `tx_elec_low` / `tx_elec_upp` (IC à 95 %). Pour la cartographie de J5, c'est `tx_elec` (la valeur centrale pondérée) qu'on va publier.
+
+# Module 5 — Construire la table d'indicateurs par région {#sec-m5}
+
+> ⏱ **~45 minutes**. La sortie de J4 = l'entrée de J5.
+
+## Indicateurs ménages : équipements, conditions de vie
+
+```{r}
+#| label: m5-menages
+indic_menages <- dhs_design |>
+  group_by(region) |>
+  summarise(
+    n_menages        = unweighted(n()),
+    taille_moy       = round(survey_mean(taille_menage, na.rm = TRUE), 2),
+    pct_urbain       = round(survey_mean(milieu == "urban") * 100, 1),
+    pct_electricite  = round(survey_mean(electricite == "yes") * 100, 1),
+    pct_tv           = round(survey_mean(television == "yes") * 100, 1),
+    pct_radio        = round(survey_mean(radio == "yes") * 100, 1),
+    pct_chef_femme   = round(survey_mean(sexe_chef == "female") * 100, 1)
+  ) |>
+  # On garde la valeur centrale, on jette les colonnes _se
+  select(-ends_with("_se"))
+
+indic_menages
+```
+
+## Indicateurs individus : alphabétisation, scolarisation
+
+Pour les indicateurs individus, on construit un **design séparé** parce que la population cible est les personnes (pas les ménages) et le poids reste celui du ménage (HV005 partagé entre membres).
+
+```{r}
+#| label: m5-individus
+# On attache TOUT (poids + strate + région) depuis HR à chaque personne PR
+# AVANT de créer le design. Ainsi group_by(region) marche directement.
+personnes_design <- personnes |>
+  left_join(
+    menages |> select(cluster_id, menage_id, strate, poids_menage, region),
+    by = c("cluster_id", "menage_id")
+  ) |>
+  mutate(
+    poids = poids_menage / 1e6,
+    # Indicateur binaire : a au moins suivi le primaire
+    alpha_bin = case_when(
+      niveau_educ == "no education, preschool" ~ 0L,
+      !is.na(niveau_educ)                       ~ 1L,
+      TRUE                                       ~ NA_integer_
+    )
+  ) |>
+  filter(!is.na(strate)) |>
+  as_survey_design(
+    ids     = cluster_id,
+    strata  = strate,
+    weights = poids,
+    nest    = TRUE
+  )
+
+# Indicateur alphabétisation pondéré par région
+indic_individus <- personnes_design |>
+  filter(age >= 25, !is.na(alpha_bin)) |>
+  group_by(region) |>
+  summarise(
+    pct_alpha_25plus = round(survey_mean(alpha_bin) * 100, 1)
+  ) |>
+  # survey_mean ajoute une colonne _se ; on garde la valeur centrale
+  select(-ends_with("_se"))
+
+indic_individus
+```
+
+Note : ici on a directement `group_by(region)` parce qu'on a attaché la région à chaque personne **avant** de créer le design. C'est l'approche standard en production avec `srvyr`.
+
+## Fusion des deux jeux d'indicateurs
+
+```{r}
+#| label: m5-fusion
+indicateurs_region <- indic_menages |>
+  left_join(indic_individus, by = "region")
+
+indicateurs_region
+```
+
+## Export pour J5
+
+```{r}
+#| label: m5-export
+#| eval: false
+out_dir <- here::here("pedagogie", "J04_gestion_donnees_tidyverse", "outputs")
+dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+write_csv(indicateurs_region, file.path(out_dir, "indicateurs_region_dhs2018.csv"))
+```
+
+# Module 6 — Joindre à GADM pour la spatialisation {#sec-m6}
+
+> ⏱ **~30 minutes**. Le pont avec J5.
+
+## Le défi : harmoniser les noms de régions DHS vs GADM
+
+GADM utilise des noms français/anglais hétérogènes (`Centre`, `Far North`, `Adamaoua`...), DHS Cameroun 2018 utilise des codes minuscules anglais (`centre`, `far-north`, `adamawa`...). Pas de jointure naïve possible — il faut **normaliser** les deux côtés et passer par un dictionnaire.
+
+```{r}
+#| label: m6-normaliser
+library(sf)
+adm1 <- read_sf(fetch_gadm_cameroon(1))
+
+# Fonction de normalisation (lowercase, sans accent, sans tiret/espace)
+norm <- function(x) {
+  x |>
+    iconv(from = "UTF-8", to = "ASCII//TRANSLIT") |>
+    tolower() |>
+    gsub("[^a-z0-9]", "", x = _)
+}
+
+# Dictionnaire de correspondance (regroupe les variantes EN/FR)
+dict <- c(
+  northwest    = "nordouest",
+  southwest    = "sudouest",
+  farnorth     = "extremenord",
+  north        = "nord",
+  south        = "sud",
+  east         = "est",
+  west         = "ouest",
+  centre       = "centre",
+  littoral     = "littoral",
+  adamawa      = "adamaoua",
+  adamaoua     = "adamaoua"
+)
+
+normalize_region <- function(x) {
+  v <- norm(x)
+  ifelse(v %in% names(dict), dict[v], v)
+}
+
+# Tester sur les deux jeux
+unique(adm1$NAME_1) |> sort()
+unique(indicateurs_region$region) |> sort()
+
+# Clés normalisées
+adm1$region_key                <- normalize_region(adm1$NAME_1)
+indicateurs_region$region_key  <- normalize_region(indicateurs_region$region)
+
+sort(unique(adm1$region_key))
+sort(unique(indicateurs_region$region_key))
+```
+
+## Jointure spatiale
+
+```{r}
+#| label: m6-join
+adm1_indic <- adm1 |>
+  left_join(
+    indicateurs_region |>
+      select(region_key, n_menages, taille_moy, pct_urbain,
+             pct_electricite, pct_tv, pct_chef_femme, pct_alpha_25plus),
+    by = "region_key"
+  )
+
+# Vérifier qu'aucun polygone n'a perdu son indicateur
+sum(is.na(adm1_indic$pct_electricite))
+
+# Aperçu
+adm1_indic |>
+  st_drop_geometry() |>
+  select(NAME_1, n_menages, pct_electricite, pct_alpha_25plus) |>
+  arrange(desc(pct_electricite))
+```
+
+Si la jointure est complète (0 NA), on est prêt pour J5. Sinon, vérifier le dictionnaire `dict` au cas où une région DHS n'aurait pas son équivalent GADM.
+
+## Aperçu cartographique rapide
+
+`tmap` arrive en force au J5. Ici juste un aperçu `ggplot2 + geom_sf` pour valider visuellement la jointure.
+
+```{r}
+#| label: m6-carte
+#| fig-width: 9
+#| fig-height: 7
+ggplot(adm1_indic) +
+  geom_sf(aes(fill = pct_electricite), color = "white", linewidth = 0.3) +
+  scale_fill_viridis_c(option = "D", name = "% ménages\nélectrifiés") +
+  geom_sf_label(aes(label = NAME_1), size = 2.3,
+                color = "white", fontface = "bold") +
+  labs(title = "Accès à l'électricité par région — Cameroun 2018",
+       subtitle = "EDS-MICS Cameroun 2018 (DHS Program), pondéré par plan de sondage",
+       caption = "Sources : DHS Program · GADM v4.1 · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+# Synthèse et devoir Q6 {#sec-wrap}
+
+## Ce qu'on a vu
+
+- Module 1 — Pipe, cinq verbes, pivot, premier passage en pondéré simple.
+- Module 2 — Cinq jointures HR ↔ PR + la double clé `(cluster_id, menage_id)` + la règle d'or `anti_join` avant.
+- Module 3 — MCAR / MAR / MNAR conceptuels + détection + trois stratégies de traitement + le piège du NA structurel.
+- Module 4 — Plan de sondage stratifié à deux degrés + `srvyr` pour les pondérations + intervalles de confiance gratuits.
+- Module 5 — Construction d'une table d'indicateurs par région à partir de HR et PR.
+- Module 6 — Harmonisation des noms de régions DHS/GADM + jointure spatiale + premier aperçu cartographique.
+
+## Devoir individuel Q6
+
+Énoncé dans `exercice.qmd` : produire la table `indicateurs_region_v2.csv` enrichie de **deux indicateurs supplémentaires** au choix, calculés proprement avec `srvyr` et joints à GADM ADM1.
+
+## Demain (J5) — Visualisation et cartographie
+
+La table `indicateurs_region.csv` devient l'entrée des choroplèthes `tmap` v4 et `ggplot2 + geom_sf` de J5 — continuité directe.
+
+# Sources et licences {#sec-sources}
+
+| Donnée | Source | Licence |
+|---|---|---|
+| EDS-MICS Cameroun 2018 (microfichiers HR, PR, IR, MR, KR, BR, CR, FW) | BUCREP/INS/MINSANTÉ + DHS Program (ICF) | DHS Program — usage formation IFORD/GDSG, redistribution interdite |
+| GADM v4.1 ADM1 Cameroun | <https://gadm.org/download_country.html> | Libre académique |
+| Extraits CSV pédagogiques | Produits par `00_extraire_dhs_pour_webr.R` à partir des `.DTA` ci-dessus | Idem licence DHS |
+
+Code distribué sous **CC-BY 4.0**.
+
+## Crédits
+
+Architecture pédagogique modulaire (six modules) : **Jean Saturnin Alogo Samba** (Statistician, IT & GIS, GDSG / IFORD).
+Bascule sur DHS Cameroun 2018 réel + intégration convention atelier : **Ramesesse Dzita** (Junior Demographer-Statistician, IT Specialist, GDSG).
+
+## Références
+
+@wickham2014tidy ; @ins_eds_mics_2018 ; @bucrep_rgph4 ; @lumley2010survey.

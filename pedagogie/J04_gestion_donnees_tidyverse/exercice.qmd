@@ -1,0 +1,163 @@
+---
+title: "J4 — Exercices : gestion des données (DHS Cameroun 2018 réel)"
+subtitle: "Atelier IFORD × GDSG · 30 juillet 2026"
+lang: fr
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    toc-location: left
+    theme: cosmo
+  pdf:
+    toc: true
+---
+
+# Mode d'emploi
+
+Q1 à Q5 = micro-exercices en séance (5–10 min). Q6 = devoir individuel du soir (∼30 min). Solutions dans `corrige.qmd`, à n'ouvrir qu'**après** ta tentative.
+
+Architecture pédagogique modulaire : Jean Saturnin Alogo Samba (GDSG/IFORD).
+Bascule sur DHS Cameroun 2018 réel : Ramesesse Dzita (GDSG/IFORD).
+
+# Setup commun
+
+Les exercices supposent que tu as déjà chargé les deux tables (cf. setup de `demo.qmd`) :
+
+```r
+library(dplyr); library(tidyr); library(readr); library(srvyr); library(haven)
+source("../_commons/helpers/fetch_data.R")
+
+# Option A — desktop, microfichiers .DTA complets
+menages   <- haven::read_dta(fetch_dhs_recode_cmr_2018("HR"))
+personnes <- haven::read_dta(fetch_dhs_recode_cmr_2018("PR"))
+names(menages)   <- toupper(names(menages))
+names(personnes) <- toupper(names(personnes))
+
+# Option B — extraits CSV produits par 00_extraire_dhs_pour_webr.R
+data_dir <- "../_commons/data/dhs_cmr"
+menages   <- read_csv(file.path(data_dir, "dhs_cmr_2018_menages_extrait.csv"))
+personnes <- read_csv(file.path(data_dir, "dhs_cmr_2018_personnes_extrait.csv"))
+```
+
+Les questions ci-dessous supposent l'**option B** (CSV extraits, noms français : `region`, `milieu`, `electricite`, etc.). Si tu utilises l'option A, adapte les noms (`HV024`, `HV025`, `HV206`, ...).
+
+# Q1 — Tidyverse appliqué {#sec-q1}
+
+> Référence démo : Module 1.
+
+À partir de `menages` :
+
+1. **a.** Combien de ménages dirigés par une **femme** dans la région du **west** ? (Indice : `sexe_chef == "female"`, `region == "west"`.)
+2. **b.** Quelle est la **taille moyenne** des ménages **ruraux** par région, triée par ordre décroissant ?
+3. **c.** Produis un tableau **wide** (régions en lignes, quintiles en colonnes) avec `pivot_wider` à partir d'un `count(region, quintile)`.
+
+# Q2 — Jointures HR ↔ PR + diagnostic {#sec-q2}
+
+> Référence démo : Module 2.
+
+1. **a.** Lance `anti_join(personnes, menages, by = c("cluster_id","menage_id"))`. Combien de personnes orphelines ?
+2. **b.** Joindre les caractéristiques `(region, milieu, electricite, quintile)` du ménage à chaque personne via `left_join` sur la double clé. Combien de NA résiduels sur la colonne `electricite` après jointure ? (Réponse attendue : 0.)
+3. **c.** Crée volontairement le piège classique : `left_join(personnes, menages, by = "menage_id")` **sans** `cluster_id`. Combien de lignes obtient-on ? Pourquoi est-ce un désastre ?
+
+# Q3 — Diagnostic et traitement des NA {#sec-q3}
+
+> Référence démo : Module 3.
+
+1. **a.** Produis un résumé des NA sur `menages` (variables avec `n_na > 0`, % de NA). Pour quelles variables le DHS publie-t-il des microdonnées particulièrement « nettoyées » (peu ou pas de NA) ?
+2. **b.** Sur la variable `age_chef`, impute les NA par la **médiane du couple `region × milieu`**. Crée une nouvelle colonne `age_chef_imp` (jamais écraser l'originale). Combien de NA résiduels après imputation ?
+3. **c.** Compare l'âge moyen national des chefs de ménage **avant** et **après** imputation. La différence est-elle ≤ 0.5 an ? Si oui, qu'est-ce que ça suggère sur le mécanisme MCAR/MAR de ces NA résiduels ?
+
+# Q4 — Indicateur ODD pondéré : taux d'accès à l'électricité {#sec-q4}
+
+> Référence démo : Module 4.
+
+1. **a.** Déclare le design `srvyr` à partir de `menages` (`ids = cluster_id, strata = strate, weights = poids_menage/1e6, nest = TRUE`).
+2. **b.** Calcule le taux d'accès à l'électricité national **pondéré** avec intervalle de confiance à 95 % (utilise `survey_mean(electricite == "yes", vartype = "ci")`).
+3. **c.** Désagrège par **quintile** (`poorest, poorer, middle, richer, richest`). Le gradient est-il monotone ? Quel est l'écart Q1 (`poorest`) vs Q5 (`richest`) ?
+
+# Q5 — Table d'indicateurs par région {#sec-q5}
+
+> Référence démo : Module 5.
+
+À partir du design `dhs_design` créé en Q4 :
+
+1. **a.** Construis une table `indic_eau_region` avec : `n_menages`, `pct_eau_amelio` (pondéré), `pct_eau_amelio_low` et `_upp` (intervalle 95 %). On considère « eau améliorée » si `source_eau` ∈ `{"piped to dwelling", "piped to yard/plot", "public tap/standpipe", "tube well or borehole", "protected well", "protected spring", "bottled water"}` selon la définition OMS/UNICEF du JMP.
+2. **b.** Quelles régions ont un intervalle de confiance **qui chevauche** la moyenne nationale ? Combien sont **strictement supérieures** ? Strictement inférieures ?
+3. **c.** Exporte la table dans `outputs/indicateurs_region_q5.csv`.
+
+# Q6 — Devoir : pipeline complet J4 enrichi {#sec-q6}
+
+> ⏱ **~30 minutes**, à faire le soir.
+
+## Objectif
+
+Reproduire le pipeline complet J4 (Modules 1 → 6) et l'enrichir de **deux indicateurs supplémentaires** au choix, exportés en CSV + joints à GADM ADM1.
+
+## Étape 1 — Préparation
+
+Crée un script `R/04_devoir_complet.R` qui :
+
+1. Charge `menages` et `personnes` (via `.DTA` desktop ou CSV extraits).
+2. Produit un diagnostic NA complet (table résumée avec `summarise(across(everything(), ~ sum(is.na(.))))`).
+3. Impute `age_chef` par la médiane `région × milieu` si NA résiduels.
+
+## Étape 2 — Plan de sondage et indicateurs principaux
+
+4. Déclare le design `dhs_design` complet (PSU + strate + poids HV005/1e6).
+5. Calcule par région les **trois indicateurs cœur** : `pct_electricite`, `pct_eau_amelio`, `pct_alpha_25plus` (sur PR avec design séparé).
+
+## Étape 3 — Deux indicateurs supplémentaires au choix
+
+6. **Au choix 1** parmi : `pct_chef_femme`, `pct_tv`, `pct_radio`, `pct_voiture`, `pct_velo`, `pct_moto`, `pct_refrigerateur`, taille moyenne ménage, ou un index composite d'équipement.
+7. **Au choix 2** parmi : taux d'alphabétisation **femmes seules** (filtre `sexe == "female", age >= 25`), taux d'alphabétisation **hommes seuls**, ratio H/F en alphabétisation, taux de chefs de ménage **moins de 30 ans**, ou un indicateur de ton choix.
+
+## Étape 4 — Jointure spatiale GADM
+
+8. Charge `adm1 <- read_sf(fetch_gadm_cameroon(1))`.
+9. Normalise les noms régions DHS vs GADM (fonction `normalize_region` du Module 6).
+10. Joint la table indicateurs à `adm1` avec `left_join(by = "region_key")`.
+11. Vérifie qu'aucun polygone n'a perdu sa donnée (`sum(is.na(adm1_indic$pct_electricite))` = 0).
+
+## Étape 5 — Export
+
+12. Exporte la table sans géométrie en `outputs/indicateurs_region_v2.csv`.
+13. Exporte la couche jointe en `outputs/cmr_adm1_indicateurs_dhs2018.gpkg` (format GeoPackage, conserve la projection).
+
+## Étape 6 — Discussion en commentaire dans le script
+
+14. Pourquoi as-tu choisi tes deux indicateurs supplémentaires ? À quel ODD / politique publique camerounaise se rattachent-ils ?
+15. Quelle région présente le plus grand **écart entre l'estimation brute (non pondérée) et l'estimation pondérée** sur ton indicateur 1 ? Que t'apprend cet écart sur la structure d'échantillonnage ?
+
+## Critères de réussite
+
+- ☐ Le pipeline tourne de bout en bout sans erreur.
+- ☐ Le CSV exporté contient `region`, `region_key`, et au moins 5 colonnes d'indicateurs pondérés.
+- ☐ Le GeoPackage exporté est ouvrable dans QGIS et chacun des 10 polygones régionaux a ses indicateurs.
+- ☐ Le taux d'électrification national pondéré est dans la fourchette 60–70 % (les valeurs DHS officielles le confirment).
+- ☐ Les choix méthodologiques sont commentés en français dans le script.
+
+## Bonus
+
+- Produire une **carte choroplèthe** de ton indicateur 1 avec `ggplot2 + geom_sf` ou `tmap` (anticipe J5).
+- Identifier les **trois régions** où le **taux d'électrification** et le **taux d'alphabétisation** sont simultanément dans le quintile inférieur (intersection).
+
+# Q7 — Confronter ton pipeline aux indicateurs DHS StatCompiler {#sec-q7}
+
+> ⏱ **~20 minutes**, optionnel mais formateur — bascule entre microdonnées et indicateurs agrégés publiés.
+
+À partir du CSV `pedagogie/_commons/data/dhs_cmr/indicateurs_dhs_cmr_2018.csv` (généré par `00_telecharger_dhs_indicateurs.R` via l'API DHS StatCompiler) :
+
+1. **a.** Charger le CSV et le passer en format **wide** avec `pivot_wider(names_from = indicateur, values_from = valeur)`.
+2. **b.** Pour chaque région, calculer côte à côte le taux d'électrification que **tu** as obtenu avec `srvyr` sur les microdonnées HR (Module 4) et celui publié par StatCompiler (`HC_ELEC_H_ELC`). L'écart doit être < 1 point — sinon vérifier `nest = TRUE` ou la définition des strates.
+3. **c.** Quelle région a le **plus grand écart** entre ton calcul et StatCompiler ? Est-ce une erreur (bug de pondération) ou une différence de définition (filtre population, période de référence) ?
+4. **d.** Quel ordre des régions (de la plus à la moins électrifiée) obtiens-tu vs StatCompiler ? Identique ? Si non, lesquelles bougent ?
+
+Si l'ordre est préservé et l'écart < 1 point, ton pipeline est **production-ready** au sens DHS. Si pas : compare strate par strate avec `dhs_design |> group_by(strate) |> summarise(...)` pour identifier la zone du désaccord.
+
+# Si tu bloques
+
+- Relis le module correspondant dans `demo.qmd`.
+- Le corrigé est dans `corrige.qmd`, à n'ouvrir qu'**après** ta tentative.
+- Le rapport final EDS-MICS Cameroun 2018 (PDF dans `pedagogie/datasets/cameroun/CM_2018_DHS/rapport finalEds2018.pdf`) donne les valeurs officielles pour comparaison.
+
+Bonne pratique !

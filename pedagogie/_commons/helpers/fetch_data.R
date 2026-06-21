@@ -210,6 +210,97 @@ fetch_dhs_clusters_cmr_2018 <- function() {
 }
 
 # ---------------------------------------------------------------------
+# DHS Cameroun 2018 - microfichiers Stata complets (recode HR/PR/IR/MR/KR/BR/CR/FW)
+# Source officielle : https://dhsprogram.com/data/dataset/Cameroon_Standard-DHS_2018.cfm
+# Format            : Stata .DTA (7 fichiers, total ~300-500 Mo)
+# Licence           : DHS Program - usage formation interne IFORD/GDSG
+# Emplacement reception : pedagogie/datasets/cameroun/CM_2018_DHS/
+#
+# Recode codes :
+#   HR = Household Recode      (1 ligne par menage)
+#   PR = Person Recode         (1 ligne par membre de menage)
+#   IR = Individual Recode     (femmes 15-49, fertility/health)
+#   MR = Men Recode            (hommes 15-59)
+#   KR = Kids Recode           (enfants <5 ans, nutrition/vaccin)
+#   BR = Birth Recode          (historique naissances)
+#   CR = Couple Recode         (couples co-residant)
+#   FW = Fieldworker data
+#
+# Usage :
+#   hr_path  <- fetch_dhs_recode_cmr_2018("HR")
+#   menages  <- haven::read_dta(hr_path)
+# ---------------------------------------------------------------------
+fetch_dhs_recode_cmr_2018 <- function(recode = c("HR","PR","IR","MR","KR","BR","CR","FW")) {
+  recode <- match.arg(toupper(recode),
+                      c("HR","PR","IR","MR","KR","BR","CR","FW"))
+  rel_path <- file.path("CM_2018_DHS",
+                        sprintf("CM%s71DT", recode),
+                        sprintf("CM%s71FL.DTA", recode))
+  # On tente 2 emplacements pour rester souple : celui mis par l'animateur
+  # (pedagogie/datasets/cameroun/) ET l'emplacement canonique (datasets/cameroun/dhs_mics/).
+  candidates <- c(
+    file.path(.PROJECT_ROOT, "pedagogie", "datasets", "cameroun", rel_path),
+    file.path(.PROJECT_ROOT, "datasets", "cameroun", "dhs_mics", rel_path)
+  )
+  for (p in candidates) {
+    if (file.exists(p) && file.size(p) >= .MIN_VALID_BYTES) {
+      return(normalizePath(p, mustWork = TRUE))
+    }
+  }
+  stop(sprintf(
+    paste0(
+      "\n=================================================================\n",
+      " DHS Cameroun 2018 - recode %s introuvable.\n",
+      "=================================================================\n",
+      " Telecharger le pack CM_2018_DHS depuis :\n",
+      "   https://dhsprogram.com/data/dataset/Cameroon_Standard-DHS_2018.cfm\n",
+      " Extraire dans :\n",
+      "   pedagogie/datasets/cameroun/CM_2018_DHS/\n",
+      " Le sous-dossier attendu est :\n",
+      "   pedagogie/datasets/cameroun/CM_2018_DHS/CM%s71DT/CM%s71FL.DTA\n",
+      "=================================================================\n"
+    ),
+    recode, recode, recode
+  ), call. = FALSE)
+}
+
+# ---------------------------------------------------------------------
+# SRTM Cameroun 30 arc-sec (~1 km) - tuile pays preparee
+# Source officielle : geodata::elevation_30s("CMR") qui agrège SRTM officiel
+# Format            : GeoTIFF ~3 Mo (apres crop sur emprise CMR)
+# Licence           : NASA / USGS - libre
+# Dossier reception : datasets/cameroun/elevation/
+#
+# Pipeline de bootstrap : pedagogie/_commons/data/cmr_srtm/00_telecharger_srtm.R
+# (a executer UNE SEULE FOIS sur la machine de l'animateur, commit du tif).
+# Le runtime WebR consomme directement le .tif via download.file sur Pages.
+# ---------------------------------------------------------------------
+fetch_srtm_cameroon <- function() {
+  local <- file.path(.DATASETS_ROOT, "cameroun", "elevation",
+                     "CMR_srtm_30s.tif")
+  # Fallback : tif embarque dans pedagogie/_commons/data/cmr_srtm/
+  fallback <- file.path(.PROJECT_ROOT, "pedagogie", "_commons",
+                        "data", "cmr_srtm", "srtm_cmr_30s.tif")
+  if (file.exists(local) && file.size(local) >= .MIN_VALID_BYTES) {
+    return(local)
+  }
+  if (file.exists(fallback) && file.size(fallback) >= .MIN_VALID_BYTES) {
+    return(fallback)
+  }
+  require_local_file(
+    local_path  = local,
+    url         = "https://geodata.ucdavis.edu/geodata/elevation/wc2.1_30s/wc2.1_30s_elev.tif",
+    description = "MNT SRTM Cameroun 30 arc-sec (~1 km)",
+    note        = paste0(
+      "Pour generer le fichier automatiquement :\n",
+      "  source('pedagogie/_commons/data/cmr_srtm/00_telecharger_srtm.R')\n",
+      "Le script appelle geodata::elevation_30s('CMR') et crop sur l'emprise CMR.\n",
+      "Le tif produit (~3 Mo) doit etre commit dans le repo pour le runtime WebR."
+    )
+  )
+}
+
+# ---------------------------------------------------------------------
 # Sites pilotes RGPH4 (Bamenda 1, Fongo Tongo, Buea, Mora)
 # Reconstitues par filtrage de GADM ADM3.
 # ---------------------------------------------------------------------
