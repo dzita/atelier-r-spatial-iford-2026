@@ -22,9 +22,9 @@ library(sf)
 library(ggplot2)
 library(dplyr)
 
-download.file("/_commons/data/cmr_sante/etablissements_sante_osm.csv",
+download.file("../_commons/data/cmr_sante/etablissements_sante_osm.csv",
               "etabs.csv", mode = "wb")
-download.file("/_commons/data/gadm41_CMR_2.json", "adm2.json", mode = "wb")
+download.file("../_commons/data/gadm41_CMR_2.json", "adm2.json", mode = "wb")
 
 etabs <- read.csv("etabs.csv")
 adm2  <- read_sf("adm2.json")
