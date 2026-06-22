@@ -1,0 +1,685 @@
+---
+title: "J8 — Télédétection et observation de la Terre"
+subtitle: "GHSL Built-Up + EMSR772 Yagoua — IFORD × GDSG · 5 août 2026"
+author: "Edith Darin (conception complète) · Ramesesse Dzita (intégration IFORD)"
+date: "2026-08-05"
+lang: fr
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    number-sections: true
+    code-fold: false
+    code-tools: true
+    theme: cosmo
+    df-print: paged
+execute:
+  echo: true
+  warning: false
+  message: false
+bibliography: ../_commons/helpers/citations.bib
+---
+
+# Objectifs et plan {#sec-objectifs}
+
+Huitième jour : on **mobilise des données satellite ouvertes** pour deux usages typiques de la statistique publique camerounaise — (i) **mesurer l'expansion bâtie** d'un pays (GHSL 2015 vs 2025) et (ii) **estimer la population exposée à une catastrophe** (inondations Yagoua octobre 2024, EMSR772). Les deux cas illustrent le pont entre télédétection moderne et décision publique.
+
+Le matériel suit l'**architecture en deux scripts** conçue par Edith Darin (Senior Researcher, ex-WorldPop/Oxford, GDSG/IFORD) : Partie I `teledetection.R` (GHSL Built-Up, 7 sections) et Partie II `inondations.R` (EMSR772 + Open Buildings, 6 exercices). On préserve fidèlement ses choix méthodologiques en ajoutant la convention IFORD « expliquer chaque commande avant son exécution ».
+
+# Setup commun {#sec-setup}
+
+```{r}
+#| label: setup
+library(sf)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(readr)
+library(terra)
+library(tmap)
+library(exactextractr)
+library(scales)
+library(tibble)
+
+source("../_commons/helpers/fetch_data.R")
+```
+
+# Partie I — GHSL Built-Up Cameroun 2015 vs 2025 {#sec-ghsl}
+
+## Helpers : charger une mosaïque GHSL + préparer le raster {#sec-ghsl-helpers}
+
+Le pattern d'Edith encapsule la décompression de tuiles ZIP + mosaïque dans une fonction réutilisable. `charger_ghsl(annee)` retourne un SpatRaster prêt à l'emploi.
+
+```{r}
+#| label: ghsl-helpers
+ghsl_dir <- fetch_ghs_built_dir()
+
+charger_ghsl <- function(annee, data_dir = ghsl_dir) {
+  archives <- list.files(
+    data_dir,
+    pattern = paste0("^GHS_BUILT_S_E", annee, ".*\\.zip$"),
+    full.names = TRUE
+  )
+  rasters <- lapply(archives, function(zip_path) {
+    tmp_dir <- tempfile("ghsl_"); dir.create(tmp_dir)
+    unzip(zip_path, exdir = tmp_dir)
+    tif_path <- list.files(tmp_dir, pattern = "\\.tif$",
+                           full.names = TRUE, recursive = TRUE)[1]
+    rast(tif_path)
+  })
+  do.call(mosaic, rasters)
+}
+
+preparer_raster <- function(raster, pays) {
+  pays_vect <- vect(st_transform(pays, crs(raster)))
+  mask(crop(raster, pays_vect), pays_vect)
+}
+
+resumer_bati <- function(polygones, raster, annee, id_col, nom_col) {
+  pol_m <- st_transform(polygones, crs(raster))
+  bati_km2 <- exact_extract(raster, pol_m, "sum") / 1e6
+  surface_km2 <- as.numeric(st_area(pol_m)) / 1e6
+  pol_m |>
+    mutate(annee = annee, surface_km2 = surface_km2, bati_km2 = bati_km2,
+           part_batie_pct = 100 * bati_km2 / surface_km2) |>
+    select(all_of(c(id_col, nom_col)),
+           annee, surface_km2, bati_km2, part_batie_pct)
+}
+```
+
+## Section 0 — Inspection des données {#sec-s0}
+
+`gadm41_CMR.gpkg` réutilisé de J7. Les tuiles GHSL sont en projection mondiale equal-area `ESRI:54009` — toujours reprojeter GADM dans le CRS du raster avant l'extraction zonale.
+
+```{r}
+#| label: s0-load
+#| cache: true
+cmr0 <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_0", quiet = TRUE)
+cmr1 <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_1", quiet = TRUE)
+cmr2 <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_2", quiet = TRUE)
+
+bati_2015 <- charger_ghsl(2015)
+bati_2025 <- charger_ghsl(2025)
+bati_2015_cmr <- preparer_raster(bati_2015, cmr0)
+bati_2025_cmr <- preparer_raster(bati_2025, cmr0)
+
+cat("CRS GADM   :", st_crs(cmr1)$input, "\n")
+cat("CRS GHSL   :", crs(bati_2025_cmr, describe = TRUE)$name, "\n")
+cat("Bati 2015  : "); print(bati_2015_cmr)
+cat("Bati 2025  : "); print(bati_2025_cmr)
+```
+
+::: {.callout-tip title="Point formateur (Edith)"}
+La couverture GHSL est en projection mondiale equal-area `ESRI:54009`. On reprojette **toujours** les limites administratives dans le CRS du raster avant toute extraction zonale.
+:::
+
+## Section 1 — Indicateurs nationaux {#sec-s1}
+
+```{r}
+#| label: s1-national
+#| cache: true
+cmr0_m <- st_transform(cmr0, crs(bati_2025_cmr))
+surface_cmr0_km2 <- as.numeric(st_area(cmr0_m)) / 1e6
+
+national <- bind_rows(
+  tibble(annee = 2015,
+         bati_km2 = exact_extract(bati_2015_cmr, cmr0_m, "sum") / 1e6),
+  tibble(annee = 2025,
+         bati_km2 = exact_extract(bati_2025_cmr, cmr0_m, "sum") / 1e6)
+) |>
+  mutate(part_batie_pct = 100 * bati_km2 / surface_cmr0_km2)
+
+changement_national <- national |>
+  pivot_wider(names_from = annee, values_from = c(bati_km2, part_batie_pct)) |>
+  mutate(
+    gain_bati_km2        = bati_km2_2025 - bati_km2_2015,
+    croissance_pct       = 100 * gain_bati_km2 / bati_km2_2015,
+    delta_part_batie_pct = part_batie_pct_2025 - part_batie_pct_2015
+  )
+
+national
+changement_national
+```
+
+::: {.callout-tip title="Point formateur"}
+Les valeurs GHSL sont des **surfaces de bâti par cellule de 100 m**. Le passage en km² (division par 1e6) facilite la lecture et la comparaison entre territoires.
+:::
+
+## Section 2 — Indicateurs régionaux (ADM1) {#sec-s2}
+
+```{r}
+#| label: s2-regions
+#| cache: true
+regions_2015 <- resumer_bati(cmr1, bati_2015_cmr, 2015, "GID_1", "NAME_1")
+regions_2025 <- resumer_bati(cmr1, bati_2025_cmr, 2025, "GID_1", "NAME_1")
+
+regions_chg <- regions_2015 |>
+  st_drop_geometry() |>
+  select(GID_1, NAME_1,
+         bati_km2_2015 = bati_km2,
+         part_batie_pct_2015 = part_batie_pct) |>
+  left_join(
+    regions_2025 |>
+      st_drop_geometry() |>
+      select(GID_1,
+             bati_km2_2025 = bati_km2,
+             part_batie_pct_2025 = part_batie_pct),
+    by = "GID_1"
+  ) |>
+  mutate(
+    gain_bati_km2 = bati_km2_2025 - bati_km2_2015,
+    croissance_pct = if_else(bati_km2_2015 > 0,
+                             100 * gain_bati_km2 / bati_km2_2015,
+                             NA_real_),
+    delta_part_batie_pct = part_batie_pct_2025 - part_batie_pct_2015,
+    part_nationale_2025_pct = 100 * bati_km2_2025 / sum(bati_km2_2025)
+  ) |>
+  arrange(desc(gain_bati_km2))
+
+regions_chg
+```
+
+::: {.callout-warning title="Question 1 (Edith)"}
+Quelles **3 régions** ont gagné le plus de bâti en km² ? Sont-ce les mêmes que les **3 régions** avec la plus forte croissance relative en % ? Pourquoi ?
+:::
+
+## Section 3 — Visualisations principales {#sec-s3}
+
+### Carte de la part bâtie 2025
+
+```{r}
+#| label: s3-part-2025
+#| fig-width: 8
+#| fig-height: 6
+ggplot(regions_2025) +
+  geom_sf(aes(fill = part_batie_pct), colour = "white", linewidth = 0.2) +
+  scale_fill_viridis_c(option = "magma") +
+  labs(title = "Part de surface bâtie GHSL en 2025",
+       subtitle = "Niveau administratif 1 (régions)",
+       fill = "% bâti") +
+  theme_minimal()
+```
+
+### Carte des gains 2015–2025
+
+Palette **divergente** centrée autour des changements faibles : permet de distinguer les régions qui se densifient vs celles qui stagnent.
+
+```{r}
+#| label: s3-gain
+#| fig-width: 8
+#| fig-height: 6
+ggplot(regions_2025 |> left_join(regions_chg, by = c("GID_1", "NAME_1"))) +
+  geom_sf(aes(fill = gain_bati_km2), colour = "white", linewidth = 0.2) +
+  scale_fill_gradient2(low = "#2166AC", mid = "white", high = "#B2182B") +
+  labs(title = "Gain de surface bâtie entre 2015 et 2025",
+       subtitle = "Différence en km² sur les régions du Cameroun",
+       fill = "Gain km²") +
+  theme_minimal()
+```
+
+### Nuage de points 2015 vs 2025
+
+La diagonale `y = x` matérialise la stagnation : tout point **au-dessus** a gagné du bâti.
+
+```{r}
+#| label: s3-nuage
+#| fig-width: 8
+#| fig-height: 6
+ggplot(regions_chg, aes(x = bati_km2_2015, y = bati_km2_2025, label = NAME_1)) +
+  geom_point(size = 2.5, colour = "#2C7FB8") +
+  geom_abline(slope = 1, intercept = 0, linetype = 2, colour = "grey40") +
+  geom_text(vjust = -0.6, size = 3) +
+  labs(title = "Bâti régional 2015 vs 2025",
+       subtitle = "Les points au-dessus de la diagonale ont gagné du bâti",
+       x = "Bâti 2015 (km²)", y = "Bâti 2025 (km²)") +
+  theme_minimal()
+```
+
+## Section 4 — Typologie de croissance {#sec-s4}
+
+`case_when` construit 4 profils selon le croisement (gain absolu × densité 2025), en utilisant la **médiane** comme seuil.
+
+```{r}
+#| label: s4-typo
+#| fig-width: 8
+#| fig-height: 6
+regions_typo <- regions_chg |>
+  mutate(
+    profil = case_when(
+      gain_bati_km2 >= median(gain_bati_km2) &
+        part_batie_pct_2025 >= median(part_batie_pct_2025) ~ "Croissance forte et tissu dense",
+      gain_bati_km2 >= median(gain_bati_km2) ~ "Croissance forte",
+      part_batie_pct_2025 >= median(part_batie_pct_2025) ~ "Tissu dense",
+      TRUE ~ "Croissance modérée"
+    )
+  )
+
+ggplot(regions_2025 |> left_join(regions_typo, by = c("GID_1", "NAME_1"))) +
+  geom_sf(aes(fill = profil), colour = "white", linewidth = 0.2) +
+  scale_fill_manual(values = c(
+    "Croissance forte et tissu dense" = "#B2182B",
+    "Croissance forte"                = "#FD8D3C",
+    "Tissu dense"                     = "#2C7FB8",
+    "Croissance modérée"              = "#FEE8C8"
+  )) +
+  labs(title = "Typologie pédagogique de la croissance bâtie",
+       fill = "Profil") +
+  theme_minimal()
+```
+
+::: {.callout-tip title="Point formateur"}
+On peut demander aux participants de changer les **seuils** (quartiles au lieu de médiane) ou les **poids** pour voir comment évolue la typologie. C'est un excellent exercice de discussion méthodologique.
+:::
+
+## Section 5 — Zoom ADM2 (départements) {#sec-s5}
+
+```{r}
+#| label: s5-departements
+#| cache: true
+departements_2015 <- resumer_bati(cmr2, bati_2015_cmr, 2015, "GID_2", "NAME_2")
+departements_2025 <- resumer_bati(cmr2, bati_2025_cmr, 2025, "GID_2", "NAME_2")
+
+departements_chg <- departements_2015 |>
+  st_drop_geometry() |>
+  select(GID_2, NAME_2,
+         bati_km2_2015 = bati_km2,
+         part_batie_pct_2015 = part_batie_pct) |>
+  left_join(
+    departements_2025 |>
+      st_drop_geometry() |>
+      select(GID_2,
+             bati_km2_2025 = bati_km2,
+             part_batie_pct_2025 = part_batie_pct),
+    by = "GID_2"
+  ) |>
+  mutate(
+    gain_bati_km2  = bati_km2_2025 - bati_km2_2015,
+    croissance_pct = if_else(bati_km2_2015 > 0,
+                             100 * gain_bati_km2 / bati_km2_2015,
+                             NA_real_)
+  ) |>
+  arrange(desc(gain_bati_km2))
+
+departements_chg |> slice_head(n = 10)
+```
+
+```{r}
+#| label: s5-carte-dept
+#| fig-width: 9
+#| fig-height: 7
+ggplot(departements_2025 |>
+         left_join(departements_chg, by = c("GID_2", "NAME_2"))) +
+  geom_sf(aes(fill = gain_bati_km2), colour = "white", linewidth = 0.12) +
+  scale_fill_gradient2(low = "#2166AC", mid = "white", high = "#B2182B") +
+  labs(title = "Gain de bâti 2015-2025 au niveau ADM2",
+       subtitle = "Zoom utile pour la discussion locale",
+       fill = "Gain km²") +
+  theme_minimal()
+```
+
+## Section 6 — Exports {#sec-s6}
+
+```{r}
+#| label: s6-exports
+#| eval: false
+out_dir <- "outputs"
+dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+
+write_csv(regions_chg,      file.path(out_dir, "jour08_regions_bati_2015_2025.csv"))
+write_csv(regions_typo,     file.path(out_dir, "jour08_regions_typologie_bati.csv"))
+write_csv(departements_chg, file.path(out_dir, "jour08_departements_bati_2015_2025.csv"))
+
+st_write(regions_2025 |> left_join(regions_chg, by = c("GID_1", "NAME_1")),
+         file.path(out_dir, "jour08_regions_bati_2015_2025.gpkg"),
+         delete_dsn = TRUE)
+```
+
+# Partie II — Inondations EMSR772 + Open Buildings {#sec-emsr772}
+
+## Contexte — Activation Copernicus EMSR772
+
+L'**activation EMSR772** (GLIDE FL-2024-000162-CMR) couvre les inondations massives de la région de Yagoua au Cameroun en octobre 2024. Trois zones d'action (AOI01 = Yagoua centre, AOI02 et AOI03).
+
+Voir [https://mapping.emergency.copernicus.eu/activations/EMSR772](https://mapping.emergency.copernicus.eu/activations/EMSR772) pour le rapport complet.
+
+## Exercice 1 — Explorer les données EMSR772 (AOI01) {#sec-ex1-emsr}
+
+```{r}
+#| label: ex1-load-aoi01
+emsr_dir <- fetch_emsr772_dir()
+emsr_dir_01 <- file.path(emsr_dir, "EMSR772_AOI01_DEL_PRODUCT_v2")
+
+# Les shapefiles EMSR772 contiennent parfois des géométries invalides
+# (vertices dupliqués sur les bords). st_make_valid() les répare.
+aoi01 <- st_read(
+  file.path(emsr_dir_01,
+            "EMSR772_AOI01_DEL_PRODUCT_areaOfInterestA_v1.shp"),
+  quiet = TRUE
+) |> st_make_valid()
+
+flood01 <- st_read(
+  file.path(emsr_dir_01,
+            "EMSR772_AOI01_DEL_PRODUCT_floodDepthA_v2.shp"),
+  quiet = TRUE
+) |> st_make_valid()
+
+cat("=== Zone d'intérêt AOI01 ===\n")
+cat("CRS         :", st_crs(aoi01)$input, "\n")
+cat("Surface AOI :", round(as.numeric(st_area(aoi01)) / 1e6, 1), "km²\n")
+
+cat("\n=== Profondeurs d'inondation AOI01 ===\n")
+print(flood01 |> st_drop_geometry() |> select(obj_desc, value, det_method))
+cat("Surface inondée totale :",
+    round(sum(as.numeric(st_area(flood01))) / 1e6, 2), "km²\n")
+
+cat("\nClasses de profondeur :\n")
+print(table(flood01$value))
+```
+
+::: {.callout-tip title="Point formateur"}
+La colonne `value` contient des **tranches de profondeur** (« 0.50 - 1.00 », etc.) en mètres. Chaque ligne est un polygone représentant une zone d'une certaine profondeur. L'union de tous ces polygones donne l'emprise totale inondée.
+:::
+
+## Exercice 2 — Charger Open Buildings {#sec-ex2-ob}
+
+Google Open Buildings distribue les empreintes de bâtiments en CSV.GZ par tuile S2. `read_csv` lit directement les fichiers compressés. Le seuil `confidence >= 0.7` élimine les détections incertaines.
+
+```{r}
+#| label: ex2-ob-load
+ob_dir <- fetch_open_buildings_dir()
+ob_fichiers <- list.files(ob_dir, pattern = "\\.csv\\.gz$", full.names = TRUE)
+
+cat("Fichiers Open Buildings :", length(ob_fichiers), "\n")
+
+batiments_raw <- lapply(ob_fichiers, function(f) {
+  read_csv(f, show_col_types = FALSE)
+}) |> bind_rows()
+
+cat("Total bâtiments bruts :", format(nrow(batiments_raw), big.mark = " "), "\n")
+cat("Colonnes :", paste(names(batiments_raw), collapse = ", "), "\n")
+
+# Répartition par niveau de confiance
+batiments_raw |>
+  mutate(conf_classe = cut(confidence, c(0, 0.5, 0.7, 1),
+                           labels = c("<0.5", "0.5-0.7", ">=0.7"),
+                           include.lowest = TRUE)) |>
+  count(conf_classe) |>
+  mutate(pct = round(100 * n / sum(n), 1))
+
+# Conversion en sf + filtre confidence
+batiments <- st_as_sf(batiments_raw,
+                     coords = c("longitude", "latitude"), crs = 4326)
+batiments_ok <- batiments |> filter(confidence >= 0.7)
+cat("Bâtiments avec confidence >= 0.7 :",
+    format(nrow(batiments_ok), big.mark = " "), "\n")
+```
+
+::: {.callout-tip title="Point formateur"}
+Le seuil **0.7** est un bon compromis. Pour une analyse humanitaire sensible, monter à 0.75 ou 0.8 pour réduire les faux positifs. **Documenter toujours** le seuil retenu dans le rapport final.
+:::
+
+## Exercice 3 — Bâtiments dans la zone AOI01 {#sec-ex3-bat-aoi}
+
+`st_filter(x, y)` garde les éléments de `x` qui intersectent `y` (par défaut prédicat `st_intersects`, qui inclut les contains, overlaps, touches).
+
+```{r}
+#| label: ex3-bat-aoi
+if (st_crs(batiments_ok) != st_crs(aoi01)) {
+  batiments_ok <- st_transform(batiments_ok, st_crs(aoi01))
+}
+
+batiments_aoi01 <- st_filter(batiments_ok, aoi01)
+cat("Bâtiments dans AOI01 :",
+    format(nrow(batiments_aoi01), big.mark = " "), "\n")
+```
+
+## Exercice 4 — Estimation de la population {#sec-ex4-pop}
+
+```{r}
+#| label: ex4-pop
+pers_par_batiment <- 5
+pop_aoi01 <- nrow(batiments_aoi01) * pers_par_batiment
+
+cat("Population estimée dans AOI01 :",
+    format(pop_aoi01, big.mark = " "), "personnes\n")
+cat("  (hypothèse :", pers_par_batiment, "personnes par bâtiment)\n")
+```
+
+::: {.callout-tip title="Point formateur"}
+Ce taux de **5 pers./bâtiment** est une hypothèse à calibrer. Pour le nord Cameroun, les données RGPH 2005 ou les estimations WorldPop permettent de mieux l'ajuster. **Alternative** : extraire la population WorldPop directement sur l'`areaOfInterest` via `exact_extract(worldpop_2024, aoi01, "sum")` — plus rigoureux.
+:::
+
+## Exercice 5 — Bâtiments et population touchés {#sec-ex5-inondes}
+
+```{r}
+#| label: ex5-inondes
+batiments_inondes <- st_filter(batiments_aoi01, flood01)
+
+cat("Bâtiments touchés par les inondations :",
+    format(nrow(batiments_inondes), big.mark = " "), "\n")
+cat("Part des bâtiments touchés :",
+    round(100 * nrow(batiments_inondes) / nrow(batiments_aoi01), 1), "%\n")
+
+pop_inondee <- nrow(batiments_inondes) * pers_par_batiment
+cat("Population estimée touchée :",
+    format(pop_inondee, big.mark = " "), "personnes\n")
+
+bilan_aoi01 <- tibble(
+  zone                  = "AOI01",
+  nb_batiments_aoi      = nrow(batiments_aoi01),
+  nb_batiments_inondes  = nrow(batiments_inondes),
+  pct_batiments_inondes = round(100 * nrow(batiments_inondes) /
+                                nrow(batiments_aoi01), 1),
+  pop_estimee_aoi       = pop_aoi01,
+  pop_inondee           = pop_inondee
+)
+bilan_aoi01
+```
+
+### Ventilation par classe de profondeur
+
+```{r}
+#| label: ex5-ventilation
+batiments_inondes_depth <- st_join(batiments_inondes, flood01["value"])
+
+batiments_inondes_depth |>
+  st_drop_geometry() |>
+  count(value) |>
+  arrange(value) |>
+  mutate(pop_estimee = n * pers_par_batiment)
+```
+
+::: {.callout-warning title="Question 2 (Edith)"}
+Combien de bâtiments sont dans la **tranche de profondeur la plus élevée** (> 4 m) ? Quelle part en pourcentage du total touché ? Que faire pour cette population dans une **réponse humanitaire d'urgence** ?
+:::
+
+## Exercice 6 — Fonction réutilisable + reproduction AOI02/AOI03 {#sec-ex6-fonction}
+
+```{r}
+#| label: ex6-fonction
+# Recherche par PATTERN de zone (AOI01/AOI02/AOI03) avec recursive = TRUE.
+# Robuste aux structures de ZIP differentes : AOI01 est dans un sous-dossier,
+# AOI02 et AOI03 se decompressent directement a la racine de EMSR772_products/.
+analyser_inondation <- function(emsr_root, zone_pattern, batiments_sf,
+                                pers_par_bat = 5) {
+  shp_aoi <- list.files(
+    emsr_root,
+    pattern = paste0(zone_pattern, ".*areaOfInterestA.*\\.shp$"),
+    full.names = TRUE, recursive = TRUE
+  )[1]
+  shp_flood <- list.files(
+    emsr_root,
+    pattern = paste0(zone_pattern, ".*floodDepthA.*\\.shp$"),
+    full.names = TRUE, recursive = TRUE
+  )[1]
+
+  if (is.na(shp_aoi) || is.na(shp_flood)) {
+    stop("Shapefiles ", zone_pattern, " introuvables dans : ", emsr_root,
+         " - verifier la decompression.")
+  }
+
+  # st_make_valid() repare les vertices dupliques des shapefiles EMSR772
+  aoi   <- st_read(shp_aoi,   quiet = TRUE) |> st_make_valid()
+  flood <- st_read(shp_flood, quiet = TRUE) |> st_make_valid()
+
+  if (st_crs(batiments_sf) != st_crs(aoi)) {
+    batiments_sf <- st_transform(batiments_sf, st_crs(aoi))
+  }
+  bat_aoi     <- st_filter(batiments_sf, aoi)
+  bat_inondes <- st_filter(bat_aoi, flood)
+  tibble(
+    zone                  = zone_pattern,
+    nb_batiments_aoi      = nrow(bat_aoi),
+    nb_batiments_inondes  = nrow(bat_inondes),
+    pct_batiments_inondes = if (nrow(bat_aoi) > 0)
+                              round(100 * nrow(bat_inondes) /
+                                    nrow(bat_aoi), 1)
+                            else NA_real_,
+    pop_estimee_aoi       = nrow(bat_aoi)     * pers_par_bat,
+    pop_inondee           = nrow(bat_inondes) * pers_par_bat
+  )
+}
+```
+
+### Décompresser AOI02 et AOI03 + appliquer la fonction
+
+Les ZIP AOI02 et AOI03 sont décompressés idempotemment : si le dossier extrait existe déjà, le `unzip` reécrit sans erreur.
+
+```{r}
+#| label: ex6-aoi02-aoi03
+# Decompresser les ZIP AOI02 et AOI03 a la racine de EMSR772_products/
+# (idempotent : on regarde si les .shp correspondants existent deja)
+for (zone in c("AOI02", "AOI03")) {
+  zip_path <- file.path(emsr_dir,
+                        sprintf("EMSR772_%s_DEL_PRODUCT_v1.zip", zone))
+  shp_existe <- length(list.files(emsr_dir,
+                                  pattern = sprintf("%s.*floodDepthA.*\\.shp$", zone),
+                                  recursive = TRUE)) > 0
+  if (!shp_existe && file.exists(zip_path)) {
+    message("[J8] Decompression ", zone, "...")
+    unzip(zip_path, exdir = emsr_dir)
+  }
+}
+
+# Appliquer la fonction aux trois zones via pattern AOI<n>
+bilan_aoi02 <- analyser_inondation(emsr_dir, "AOI02", batiments_ok)
+bilan_aoi03 <- analyser_inondation(emsr_dir, "AOI03", batiments_ok)
+
+bilan_total <- bind_rows(bilan_aoi01, bilan_aoi02, bilan_aoi03)
+bilan_total
+```
+
+### Graphiques de synthèse (bilan total des 3 AOI)
+
+```{r}
+#| label: ex6-graph-batiments
+#| fig-width: 8
+#| fig-height: 5
+ggplot(bilan_total, aes(x = zone)) +
+  geom_col(aes(y = nb_batiments_aoi),     fill = "#AEC6CF", alpha = 0.9) +
+  geom_col(aes(y = nb_batiments_inondes), fill = "#C23B22") +
+  scale_y_continuous(labels = comma) +
+  labs(title    = "Bâtiments exposés aux inondations EMSR772 — Yagoua 2024",
+       subtitle = "Bleu : total AOI | Rouge : touchés par les inondations",
+       x = "Zone AOI", y = "Nombre de bâtiments") +
+  theme_minimal()
+```
+
+```{r}
+#| label: ex6-graph-pct
+#| fig-width: 7
+#| fig-height: 5
+ggplot(bilan_total, aes(x = zone, y = pct_batiments_inondes)) +
+  geom_col(fill = "#C23B22") +
+  geom_text(aes(label = paste0(pct_batiments_inondes, "%")),
+            vjust = -0.4, size = 4) +
+  ylim(0, max(bilan_total$pct_batiments_inondes) * 1.15) +
+  labs(title = "Part des bâtiments touchés par les inondations",
+       x = "Zone AOI", y = "% de bâtiments inondés") +
+  theme_minimal()
+```
+
+```{r}
+#| label: ex6-graph-pop
+#| fig-width: 8
+#| fig-height: 5
+ggplot(bilan_total |>
+         select(zone, pop_estimee_aoi, pop_inondee) |>
+         pivot_longer(-zone, names_to = "indicateur",
+                      values_to = "population"),
+       aes(x = zone, y = population, fill = indicateur)) +
+  geom_col(position = "dodge") +
+  scale_fill_manual(
+    values = c(pop_estimee_aoi = "#AEC6CF", pop_inondee = "#C23B22"),
+    labels = c(pop_estimee_aoi = "Population totale (estimée)",
+               pop_inondee     = "Population touchée (estimée)")
+  ) +
+  scale_y_continuous(labels = comma) +
+  labs(title = "Population estimée et touchée par zone — EMSR772",
+       x = "Zone AOI", y = "Personnes", fill = NULL) +
+  theme_minimal()
+```
+
+### Export du bilan total
+
+```{r}
+#| label: ex6-export
+out_dir <- "outputs"
+dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+write_csv(bilan_total,
+          file.path(out_dir, "jour08_bilan_inondations_emsr772.csv"))
+```
+
+::: {.callout-tip title="Principe DRY (Don't Repeat Yourself)"}
+La fonction `analyser_inondation()` illustre le principe DRY : **une seule définition, trois applications**. Si on découvre un bug ou veut changer le seuil de confiance, on modifie la fonction une fois — pas trois.
+:::
+
+# Synthèse {#sec-synth}
+
+## Ce qu'on a vu
+
+**Partie I — GHSL Built-Up** :
+
+- Helpers `charger_ghsl()`, `preparer_raster()`, `resumer_bati()`.
+- Section 0-1 : inspection + indicateurs nationaux (gain national, croissance %).
+- Section 2-3 : indicateurs régionaux + cartes (part bâtie, gain, nuage).
+- Section 4 : typologie de croissance via `case_when` + médiane.
+- Section 5-6 : zoom ADM2 départements + exports GPKG/CSV.
+
+**Partie II — Inondations EMSR772 + Open Buildings** :
+
+- Ex 1 : exploration couches EMS (AOI, floodDepth).
+- Ex 2 : chargement Open Buildings + filtre `confidence >= 0.7`.
+- Ex 3 : filtrage spatial bâtiments dans la zone AOI01.
+- Ex 4 : estimation population (5 pers./bât.).
+- Ex 5 : bâtiments et population touchés par les inondations.
+- Ex 6 : fonction réutilisable + reproduction AOI02/AOI03.
+
+## Demain (J9) — Applications spatiales sciences sociales
+
+J9 prolonge J8 avec **ACLED** (événements de conflit géoréférencés) et **ERA5** (température réanalyse climatique) — deux APIs scientifiques pour les sciences sociales spatiales au Cameroun.
+
+# Sources et crédits {#sec-sources}
+
+## Crédits
+
+**Conception pédagogique complète** des 12 exercices, des slides théoriques, des choix méthodologiques et des datasets : **Edith Darin** (Senior Researcher, ex-WorldPop/Université d'Oxford, GDSG/IFORD).
+
+**Intégration convention atelier IFORD + crédits sur le matériel** : **Ramesesse Dzita** (Junior Demographer-Statistician, IT Specialist, GDSG/IFORD).
+
+## Données
+
+| Donnée | Source | Licence |
+|---|---|---|
+| GHSL Built-Up Surface R2023A | JRC — Commission européenne | CC-BY 4.0 |
+| Copernicus EMSR772 | Copernicus Emergency Management Service | Open Data |
+| Google Open Buildings | Google Research | CC-BY 4.0 |
+| WorldPop CN 2024 | Univ. Southampton | CC-BY 4.0 |
+| GADM v4.1 Cameroun | <https://gadm.org> | Académique libre |
+
+Code distribué sous **CC-BY 4.0** au nom du GDSG/IFORD.
+
+## Références
+
+@schiavina2023ghsl ; @hijmans2024terra ; @pebesma2018simple.

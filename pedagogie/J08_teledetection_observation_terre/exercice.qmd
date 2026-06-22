@@ -1,0 +1,177 @@
+---
+title: "J8 — Exercices : télédétection et inondations EMSR772"
+subtitle: "GHSL Built-Up + Open Buildings · Atelier IFORD × GDSG · 5 août 2026"
+lang: fr
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    toc-location: left
+    theme: cosmo
+  pdf:
+    toc: true
+---
+
+# Mode d'emploi
+
+Les 12 exercices d'Edith Darin (GDSG/IFORD) sont à suivre **dans l'ordre** : la **Partie I** (GHSL bâti 2015-2025, 6 sections) construit la base d'analyse régionale ; la **Partie II** (EMSR772 Yagoua + Open Buildings, 6 exercices) applique le même type d'extraction zonale au cas concret des inondations.
+
+Solutions complètes dans `corrige.qmd` — à n'ouvrir qu'**après** ta tentative.
+
+Conception pédagogique complète : Edith Darin. Intégration convention atelier IFORD : Ramesesse Dzita.
+
+# Setup commun
+
+```r
+library(sf); library(dplyr); library(tidyr); library(ggplot2); library(readr)
+library(terra); library(tmap); library(exactextractr); library(scales); library(tibble)
+
+source("../_commons/helpers/fetch_data.R")
+```
+
+# Partie I — GHSL Built-Up
+
+## Q1 — Inspection des données {#sec-q1}
+
+> Référence démo : Section 0.
+
+1. **a.** Charge les couches ADM_ADM_0, ADM_ADM_1, ADM_ADM_2 du GeoPackage GADM. Combien de polygones par couche ?
+2. **b.** Charge la mosaïque GHSL Built-Up pour 2025 (8 tuiles ZIP). Quelle est sa résolution en mètres ? Quel CRS ?
+3. **c.** Pourquoi est-il **obligatoire** de reprojeter GADM dans le CRS du raster GHSL avant l'extraction zonale ? (indice : ESRI:54009 vs EPSG:4326)
+
+## Q2 — Indicateurs nationaux {#sec-q2}
+
+> Référence démo : Section 1.
+
+1. **a.** Calcule la **surface bâtie totale** du Cameroun en 2015 et 2025 (en km²) via `exact_extract(raster, cmr0_m, "sum") / 1e6`.
+2. **b.** Calcule le **gain national** (km²) entre 2015 et 2025 et la **croissance relative** en %.
+3. **c.** La surface bâtie nationale dépasse-t-elle 1 % de la superficie totale du Cameroun (~475 000 km²) ? Que dit cette comparaison sur le degré d'artificialisation ?
+
+## Q3 — Indicateurs régionaux ADM1 {#sec-q3}
+
+> Référence démo : Section 2.
+
+À partir de la fonction `resumer_bati(cmr1, raster, annee, "GID_1", "NAME_1")` :
+
+1. **a.** Calcule `regions_2015` et `regions_2025`. Quelles 3 régions ont la **plus grande surface bâtie** en 2025 ?
+2. **b.** Construis le tableau `regions_chg` avec gain et croissance. Quelles 3 régions ont le **plus fort gain absolu** (km²) ?
+3. **c.** Quelles 3 régions ont la **plus forte croissance relative** (%) ? Pourquoi ces deux classements diffèrent ?
+
+## Q4 — Visualisations cartographiques {#sec-q4}
+
+> Référence démo : Section 3.
+
+1. **a.** Produis la carte de la **part bâtie 2025** (palette magma). Le Littoral et le Centre dominent-ils visuellement ?
+2. **b.** Produis la carte du **gain 2015–2025** (palette divergente bleu-rouge). Où sont les zones de réchauffement (gains positifs forts) ?
+3. **c.** Produis le **nuage de points** 2015 vs 2025 avec diagonale `y = x`. Quelle région est la plus éloignée de la diagonale (en valeur absolue) ?
+
+## Q5 — Typologie de croissance {#sec-q5}
+
+> Référence démo : Section 4.
+
+1. **a.** Crée une typologie à 4 profils via `case_when` avec **médiane** comme seuil sur `gain_bati_km2` et `part_batie_pct_2025`.
+2. **b.** Combien de régions par profil ? La répartition est-elle équilibrée ?
+3. **c.** Refais la même typologie avec les **quartiles** (au lieu de la médiane) — comment la carte change-t-elle ?
+
+## Q6 — Zoom ADM2 + Exports {#sec-q6}
+
+> Référence démo : Sections 5 et 6.
+
+1. **a.** Calcule `departements_chg` (gain par département ADM2). Quels sont les **10 départements** avec le plus fort gain ?
+2. **b.** Cartographier le gain ADM2 sur l'ensemble du Cameroun. Quelles zones se démarquent (Wouri, Mfoundi, Mezam, etc.) ?
+3. **c.** Exporte `regions_chg`, `regions_typo` et `departements_chg` en CSV. Vérifie que les colonnes sont bien typées (numeric et character).
+
+# Partie II — Inondations EMSR772
+
+## Q7 — Explorer les couches Copernicus EMS {#sec-q7}
+
+> Référence démo : Exercice 1.
+
+À partir du dossier `EMSR772_AOI01_DEL_PRODUCT_v2/` :
+
+1. **a.** Charge `areaOfInterestA_v1.shp` et `floodDepthA_v2.shp`. Quelle est la surface de la zone AOI (en km²) ?
+2. **b.** Quelle est la **surface totale inondée** (somme de tous les polygones flood) ?
+3. **c.** Combien de classes différentes dans la colonne `value` ? Lis le tableau pour identifier les **tranches de profondeur** (« 0.50 - 1.00 », « 1.00 - 2.00 »…).
+
+::: {.callout-warning}
+**Note** : les shapefiles EMS contiennent parfois des géométries invalides (vertices dupliqués). Si `st_area` plante avec `wk_handle.wk_wkb`, applique `st_make_valid()` après `st_read`.
+:::
+
+## Q8 — Charger Open Buildings {#sec-q8}
+
+> Référence démo : Exercice 2.
+
+1. **a.** Liste les 5 fichiers `.csv.gz` dans `Open Buildings/`. `read_csv` lit directement les compressés. Combien de bâtiments au total (toutes tuiles confondues) ?
+2. **b.** Affiche la **distribution de la colonne `confidence`** par tranches [0, 0.5], [0.5, 0.7], [0.7, 1]. Quelle proportion est en haute confiance ?
+3. **c.** Convertis en `sf` (CRS 4326) et filtre `confidence >= 0.7`. Combien de bâtiments retenus ?
+
+## Q9 — Bâtiments dans la zone de référence AOI01 {#sec-q9}
+
+> Référence démo : Exercice 3.
+
+1. **a.** Reprojette `batiments_ok` dans le CRS d'`aoi01`. Pourquoi cette étape est obligatoire pour le filtrage spatial `st_filter` ?
+2. **b.** Filtre les bâtiments contenus dans AOI01 avec `st_filter(batiments_ok, aoi01)`. Combien obtient-on ?
+3. **c.** Affiche la carte interactive avec `tmap_mode("view")` + fond satellite `Esri.WorldImagery`. Observes-tu la concentration des bâtiments dans le centre-ville de Yagoua ?
+
+## Q10 — Estimation de la population {#sec-q10}
+
+> Référence démo : Exercice 4.
+
+1. **a.** Calcule `pop_aoi01 = nb_batiments × 5` (hypothèse : 5 pers./bât.). À combien estimes-tu la population de AOI01 ?
+2. **b.** Compare avec la **population WorldPop** 2024 extraite par `exact_extract(worldpop_2024, aoi01, "sum")`. Les chiffres sont-ils cohérents ?
+3. **c.** Justifie le **taux d'occupation** de 5 pers./bât. dans le contexte rural nord-camerounais. Quels facteurs amèneraient à le modifier (urbain dense vs habitations dispersées) ?
+
+## Q11 — Bâtiments et population touchés par les inondations {#sec-q11}
+
+> Référence démo : Exercice 5.
+
+1. **a.** `batiments_inondes <- st_filter(batiments_aoi01, flood01)`. Combien de bâtiments touchés ?
+2. **b.** Calcule la **part en %** des bâtiments AOI01 touchés. La **population estimée** touchée (`× 5`). Cohérence avec le rapport Copernicus officiel (~8 300 personnes) ?
+3. **c.** Ventile les bâtiments touchés **par classe de profondeur** via `st_join(batiments_inondes, flood01["value"])`. Combien dans la tranche **> 4 m** (potentiellement effondrement structurel) ?
+
+## Q12 — Fonction réutilisable + reproduction sur AOI02 / AOI03 {#sec-q12}
+
+> Référence démo : Exercice 6.
+
+1. **a.** Écris la fonction `analyser_inondation(emsr_root, zone_pattern, batiments_sf)` qui prend un pattern (`"AOI01"`, `"AOI02"`, `"AOI03"`) et retourne le bilan. Important : utiliser `recursive = TRUE` dans `list.files` pour gérer les structures de ZIP différentes.
+2. **b.** Décompresser les ZIP AOI02 et AOI03 (idempotent : vérifier si `.shp` existe déjà avant de re-extraire).
+3. **c.** Applique la fonction sur AOI02 et AOI03. Combine avec `bilan_aoi01` dans un `bilan_total`. Quelle AOI a le plus de bâtiments inondés en proportion ?
+4. **d.** Produis les 3 graphiques de synthèse : barres bâtiments totaux / touchés, part en %, population estimée vs touchée par AOI.
+
+# Q-final — Devoir de synthèse {#sec-qfinal}
+
+> ⏱ **~30 minutes**, à rédiger en commentaire dans un script R `R/jour08_synthese.R`.
+
+Réponds aux **5 questions de débrief** avec le ton d'un statisticien INS qui présente la méthode à un décideur (MINHDU pour le bâti, MINEPDED pour l'environnement, MINAS pour l'urgence humanitaire) :
+
+1. **GHSL Built-Up : usages pour la statistique publique** : citer 3 cas concrets camerounais où l'indicateur de croissance bâtie 2015-2025 éclaire une décision (extension PDU à Douala/Yaoundé, RGPH 4 pré-cartographie des zones bâties, programme de viabilisation urbaine MINHDU).
+
+2. **Limites GHSL** : (i) confusion bâti / sol nu en zone sahélienne ; (ii) effet de la couverture nuageuse sur les images sources ; (iii) le produit mesure la **surface bâtie**, pas le **nombre de bâtiments** ni la **population résidente**. Donne un exemple où chacune induit en erreur.
+
+3. **EMSR772 + Open Buildings : valeur opérationnelle** : pourquoi croiser une **délimitation Copernicus** (en moins de 24 h après l'événement) avec un **inventaire Google Open Buildings** (couverture mondiale, gratuit) accélère drastiquement la réponse humanitaire ? Comparer avec la chaîne classique (recensement BUCREP + enquête terrain).
+
+4. **Hypothèse 5 pers./bât.** : (i) pourquoi est-ce une approximation ; (ii) comment la calibrer avec WorldPop (`exact_extract` sur l'AOI) ; (iii) quel intervalle de confiance proposer dans un rapport humanitaire ?
+
+5. **Reproductibilité institutionnelle** : si l'INS Cameroun voulait industrialiser ce pipeline (GHSL annuel + EMS dès activation + Open Buildings actualisé), quels (i) outils, (ii) compétences, (iii) infrastructures cloud seraient nécessaires ? Coût estimatif annuel ?
+
+## Critères de réussite
+
+- ☐ Le pipeline GHSL Section 0-6 tourne de bout en bout sans erreur.
+- ☐ Le pipeline EMSR772 Ex 1-6 produit `bilan_total` sur 3 AOI.
+- ☐ Au moins 4 cartes exportées en PNG (dpi ≥ 180).
+- ☐ Le CSV `jour08_bilan_inondations_emsr772.csv` est complet.
+- ☐ Les choix méthodologiques sont explicités en français dans le script.
+
+## Bonus
+
+- **Croiser GHSL + EMSR772** : calculer la surface bâtie GHSL 2025 à l'intérieur de chacune des 3 AOI inondées, comparer aux Open Buildings (rapport pixels GHSL / nombre bâtiments OB).
+- **Tendance temporelle** : refaire l'analyse régionale avec GHSL **2020** (intermédiaire) pour voir si la croissance 2015-2020 vs 2020-2025 s'accélère.
+
+# Si tu bloques
+
+- Relis le module correspondant dans `demo.qmd`.
+- Le corrigé est dans `corrige.qmd`, à n'ouvrir qu'**après** ta tentative.
+- Pour les bugs `wk_handle.wk_wkb` (géométries invalides), `st_make_valid()` est la solution standard.
+- Pour les bugs de chemins ZIP (AOI02/AOI03 décompressés différemment d'AOI01), utiliser `list.files(..., recursive = TRUE)`.
+
+Bonne pratique !

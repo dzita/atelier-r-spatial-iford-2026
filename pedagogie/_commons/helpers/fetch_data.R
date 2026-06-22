@@ -301,6 +301,88 @@ fetch_srtm_cameroon <- function() {
 }
 
 # =====================================================================
+# JOUR 8 - Teledetection et observation de la Terre (materiel Edith Darin)
+# =====================================================================
+# GHSL Built-Up (2015 vs 2025) + EMSR772 Yagoua + Open Buildings + WorldPop 2024.
+
+.J08_CANDIDATES_DIRS <- function() {
+  c(
+    file.path(.PROJECT_ROOT, "pedagogie", "datasets", "cameroun",
+              "jour_08_teledetection"),
+    "C:/Users/PROLOG/Downloads/jour_08_teledetection_observation_terre/data",
+    "C:/Dev/GitHub/jour_08_teledetection_observation_terre/data"
+  )
+}
+
+.J08_resolve <- function(filename, description) {
+  for (d in .J08_CANDIDATES_DIRS()) {
+    p <- file.path(d, filename)
+    if (file.exists(p) && file.size(p) >= .MIN_VALID_BYTES) {
+      return(normalizePath(p, mustWork = TRUE))
+    }
+  }
+  stop(sprintf(
+    paste0("\n========================================================\n",
+           " %s introuvable.\n",
+           "========================================================\n",
+           " Fichier attendu : %s\n",
+           " Source : Edith Darin (jour_08_*/data)\n",
+           " A placer dans l'un des dossiers suivants :\n",
+           "   %s\n",
+           "========================================================\n"),
+    description, filename,
+    paste(.J08_CANDIDATES_DIRS(), collapse = "\n   ")
+  ), call. = FALSE)
+}
+
+# WorldPop constrained 2024 100m R2025A (utilise pour estimer la pop exposee)
+fetch_worldpop_2024_cmr <- function() {
+  .J08_resolve("cmr_pop_2024_CN_100m_R2025A_v1.tif",
+               "WorldPop constrained 100m 2024 (CMR)")
+}
+
+# Dossier des tuiles GHSL Built-Up Surface (ZIP Mollweide)
+# Contient 15 tuiles : 8 pour 2025 + 7 pour 2015, couverture Cameroun.
+fetch_ghs_built_dir <- function() {
+  for (d in .J08_CANDIDATES_DIRS()) {
+    p <- file.path(d, "GHS-BUILT")
+    if (dir.exists(p) && length(list.files(p, pattern = "\\.zip$")) > 0) {
+      return(normalizePath(p, mustWork = TRUE))
+    }
+  }
+  stop("Dossier GHS-BUILT/ avec tuiles ZIP introuvable. ",
+       "Verifier pedagogie/datasets/cameroun/jour_08_teledetection/GHS-BUILT/",
+       call. = FALSE)
+}
+
+# Dossier des produits Copernicus EMS pour EMSR772 (Yagoua 2024)
+# Contient 3 AOI (AOI01, AOI02, AOI03) avec shapefiles + GeoTIFF flood depth.
+fetch_emsr772_dir <- function() {
+  for (d in .J08_CANDIDATES_DIRS()) {
+    p <- file.path(d, "EMSR772_products")
+    if (dir.exists(p)) {
+      return(normalizePath(p, mustWork = TRUE))
+    }
+  }
+  stop("Dossier EMSR772_products/ introuvable. ",
+       "Verifier pedagogie/datasets/cameroun/jour_08_teledetection/EMSR772_products/",
+       call. = FALSE)
+}
+
+# Dossier des CSV.GZ Open Buildings (Google, tuiles S2)
+fetch_open_buildings_dir <- function() {
+  for (d in .J08_CANDIDATES_DIRS()) {
+    p <- file.path(d, "Open Buildings")
+    if (dir.exists(p) && length(list.files(p, pattern = "\\.gz$")) > 0) {
+      return(normalizePath(p, mustWork = TRUE))
+    }
+  }
+  stop("Dossier 'Open Buildings/' introuvable. ",
+       "Verifier pedagogie/datasets/cameroun/jour_08_teledetection/Open Buildings/",
+       call. = FALSE)
+}
+
+# =====================================================================
 # JOUR 9 - Applications spatiales sciences sociales (materiel Edith Darin)
 # =====================================================================
 # Donnees : ACLED (conflits) + ERA5 (temperature) + GADM (reutilise J7).

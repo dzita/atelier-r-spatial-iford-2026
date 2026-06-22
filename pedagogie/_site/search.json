@@ -789,5 +789,82 @@
     "title": "J7 — Cartographie de la population à haute résolution",
     "section": "11. Pour aller plus loin",
     "text": "11. Pour aller plus loin\nLa version desktop demo.qmd ajoute (à exécuter sous RStudio) :\n\n\nExercice 5 : zone personnalisée dessinée à la main avec mapedit::editMap() (interactif, non portable WebR).\n\nExercice 5b : comparaison de 5 villes (Douala, Yaoundé, Bafoussam, Bamenda, Garoua) via lapply + bind_rows.\n\nExercice 7 : distribution par âge entre 2 régions (pivot_longer + geom_col) — réalisable ici aussi sur pop_adm1.\n\nExercice 8 : pipeline complet GHSL (7 tuiles ZIP Mollweide → sprc → mosaic → project vers WGS84 → mask Cameroun → comparaison WorldPop vs GHSL). Lourd à exécuter (~1 min), non portable WebR.\n\nCarte interactive Leaflet via tmap_mode(\"view\") avec fond satellite Esri.\n\nLe devoir individuel (14 questions Edith + Q-final 5 questions de synthèse pour décideur) est dans exercice.qmd.\n← Retour à l’accueil"
+  },
+  {
+    "objectID": "J08_teledetection_observation_terre/runtime.html",
+    "href": "J08_teledetection_observation_terre/runtime.html",
+    "title": "J8 — Télédétection et observation de la Terre",
+    "section": "",
+    "text": "Mode d’emploi. Cliquez Run code dans chaque cellule. WebR charge sf, dplyr, ggplot2 au premier appel (~25 s la première fois). Tout tourne dans votre navigateur — aucune installation locale.\nLimitation technique : le runtime WebR ne couvre que la Partie II EMSR772 (Yagoua AOI01) avec un échantillon Open Buildings. Le pipeline GHSL Built-Up (Partie I) nécessite la décompression de 15 tuiles ZIP et la mosaïque terra — trop lourd pour le navigateur. Voir demo.qmd desktop pour l’expérience complète sur Cameroun entier.\nDonnées 100 % réelles : extraits Copernicus EMSR772 AOI01 (Yagoua) + échantillon Open Buildings restreint à la zone. Aucune simulation.\nConception pédagogique : Edith Darin (GDSG/IFORD). Intégration runtime : Ramesesse Dzita."
+  },
+  {
+    "objectID": "J08_teledetection_observation_terre/runtime.html#charger-les-couches-copernicus-ems-aoi01-yagoua",
+    "href": "J08_teledetection_observation_terre/runtime.html#charger-les-couches-copernicus-ems-aoi01-yagoua",
+    "title": "J8 — Télédétection et observation de la Terre",
+    "section": "1. Charger les couches Copernicus EMS AOI01 (Yagoua)",
+    "text": "1. Charger les couches Copernicus EMS AOI01 (Yagoua)"
+  },
+  {
+    "objectID": "J08_teledetection_observation_terre/runtime.html#visualiser-zone-et-inondation",
+    "href": "J08_teledetection_observation_terre/runtime.html#visualiser-zone-et-inondation",
+    "title": "J8 — Télédétection et observation de la Terre",
+    "section": "2. Visualiser zone et inondation",
+    "text": "2. Visualiser zone et inondation"
+  },
+  {
+    "objectID": "J08_teledetection_observation_terre/runtime.html#charger-lextrait-de-bâtiments-open-buildings",
+    "href": "J08_teledetection_observation_terre/runtime.html#charger-lextrait-de-bâtiments-open-buildings",
+    "title": "J8 — Télédétection et observation de la Terre",
+    "section": "3. Charger l’extrait de bâtiments Open Buildings",
+    "text": "3. Charger l’extrait de bâtiments Open Buildings\nL’extrait Open Buildings restreint à la zone Yagoua (~5 000-15 000 bâtiments) est pré-filtré sur confidence &gt;= 0.7."
+  },
+  {
+    "objectID": "J08_teledetection_observation_terre/runtime.html#bâtiments-dans-la-zone-aoi01",
+    "href": "J08_teledetection_observation_terre/runtime.html#bâtiments-dans-la-zone-aoi01",
+    "title": "J8 — Télédétection et observation de la Terre",
+    "section": "4. Bâtiments dans la zone AOI01",
+    "text": "4. Bâtiments dans la zone AOI01"
+  },
+  {
+    "objectID": "J08_teledetection_observation_terre/runtime.html#estimation-de-la-population-dans-aoi01",
+    "href": "J08_teledetection_observation_terre/runtime.html#estimation-de-la-population-dans-aoi01",
+    "title": "J8 — Télédétection et observation de la Terre",
+    "section": "5. Estimation de la population dans AOI01",
+    "text": "5. Estimation de la population dans AOI01"
+  },
+  {
+    "objectID": "J08_teledetection_observation_terre/runtime.html#bâtiments-et-population-touchés-par-linondation",
+    "href": "J08_teledetection_observation_terre/runtime.html#bâtiments-et-population-touchés-par-linondation",
+    "title": "J8 — Télédétection et observation de la Terre",
+    "section": "6. Bâtiments et population touchés par l’inondation",
+    "text": "6. Bâtiments et population touchés par l’inondation\nst_filter(batiments_aoi01, flood01) garde les bâtiments dont la géométrie intersecte au moins un polygone d’inondation."
+  },
+  {
+    "objectID": "J08_teledetection_observation_terre/runtime.html#carte-combinée-bâtiments-inondation",
+    "href": "J08_teledetection_observation_terre/runtime.html#carte-combinée-bâtiments-inondation",
+    "title": "J8 — Télédétection et observation de la Terre",
+    "section": "7. Carte combinée — bâtiments + inondation",
+    "text": "7. Carte combinée — bâtiments + inondation"
+  },
+  {
+    "objectID": "J08_teledetection_observation_terre/runtime.html#ventilation-par-classe-de-profondeur",
+    "href": "J08_teledetection_observation_terre/runtime.html#ventilation-par-classe-de-profondeur",
+    "title": "J8 — Télédétection et observation de la Terre",
+    "section": "8. Ventilation par classe de profondeur",
+    "text": "8. Ventilation par classe de profondeur"
+  },
+  {
+    "objectID": "J08_teledetection_observation_terre/runtime.html#à-essayer",
+    "href": "J08_teledetection_observation_terre/runtime.html#à-essayer",
+    "title": "J8 — Télédétection et observation de la Terre",
+    "section": "9. À essayer",
+    "text": "9. À essayer\n\nModifie l’hypothèse pers_par_batiment &lt;- 5 en 7 (rural traditionnel) puis 3 (urbain moderne). Compare l’écart de la population touchée — c’est l’illustration de la sensibilité au paramètre d’hypothèse.\nTu peux aussi filtrer les bâtiments avant l’analyse (par exemple ne garder que ceux avec area_in_meters &gt; 50 pour les habitations principales)."
+  },
+  {
+    "objectID": "J08_teledetection_observation_terre/runtime.html#pour-aller-plus-loin",
+    "href": "J08_teledetection_observation_terre/runtime.html#pour-aller-plus-loin",
+    "title": "J8 — Télédétection et observation de la Terre",
+    "section": "10. Pour aller plus loin",
+    "text": "10. Pour aller plus loin\nLa version desktop demo.qmd ajoute (à exécuter sous RStudio) :\n\n\nPartie I GHSL Built-Up : mosaïque 8 tuiles 2025 + 7 tuiles 2015, indicateurs nationaux + régionaux + départementaux, typologie de croissance, cartes choroplèthes (part bâtie, gain, croissance relative).\n\nAOI02 et AOI03 : reproduction de l’analyse exposition sur les 2 autres zones Copernicus de l’activation EMSR772 + graphiques de synthèse 3 AOI.\n\nCartes tmap avec mode interactif (view) sur fond satellite Esri.WorldImagery.\n\nBonus : croiser GHSL bâti × EMS inondation × WorldPop pour validation triangulaire.\n\nLe devoir individuel (12 questions Edith + Q-final 5 questions de synthèse pour décideur) est dans exercice.qmd.\n← Retour à l’accueil"
   }
 ]

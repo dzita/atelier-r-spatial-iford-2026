@@ -1,0 +1,176 @@
+---
+title: "J8 — Télédétection et observation de la Terre"
+subtitle: "Code R exécutable dans le navigateur — Yagoua EMSR772"
+engine: knitr
+---
+
+::: {.iford-callout}
+**Mode d'emploi.** Cliquez **Run code** dans chaque cellule. WebR charge `sf`, `dplyr`, `ggplot2` au premier appel (~25 s la première fois). Tout tourne dans votre navigateur — aucune installation locale.
+
+**Limitation technique** : le runtime WebR ne couvre que la **Partie II EMSR772 (Yagoua AOI01)** avec un échantillon Open Buildings. Le pipeline GHSL Built-Up (Partie I) nécessite la décompression de 15 tuiles ZIP et la mosaïque `terra` — trop lourd pour le navigateur. Voir `demo.qmd` desktop pour l'expérience complète sur Cameroun entier.
+
+**Données 100 % réelles** : extraits Copernicus EMSR772 AOI01 (Yagoua) + échantillon Open Buildings restreint à la zone. Aucune simulation.
+
+**Conception pédagogique** : Edith Darin (GDSG/IFORD). **Intégration runtime** : Ramesesse Dzita.
+:::
+
+## 1. Charger les couches Copernicus EMS AOI01 (Yagoua)
+
+```{webr}
+#| autorun: true
+library(sf)
+library(dplyr)
+library(ggplot2)
+library(scales)
+
+# Charger le polygone AOI01 (zone d'intérêt Yagoua)
+download.file("../_commons/data/jour_08_extraits/aoi01_yagoua.geojson",
+              "aoi01.geojson", mode = "wb")
+# Charger les polygones d'inondation
+download.file("../_commons/data/jour_08_extraits/flood01_yagoua.geojson",
+              "flood01.geojson", mode = "wb")
+
+aoi01   <- read_sf("aoi01.geojson")   |> st_make_valid()
+flood01 <- read_sf("flood01.geojson") |> st_make_valid()
+
+cat("AOI01 (Yagoua) :\n")
+cat("  Surface AOI    :", round(as.numeric(st_area(aoi01)) / 1e6, 1), "km²\n")
+cat("  Surface inondée :",
+    round(sum(as.numeric(st_area(flood01))) / 1e6, 2), "km²\n")
+cat("\nClasses de profondeur :\n")
+print(table(flood01$value))
+```
+
+## 2. Visualiser zone et inondation
+
+```{webr}
+ggplot() +
+  geom_sf(data = aoi01, fill = "lightblue", alpha = 0.3,
+          colour = "steelblue", linewidth = 1) +
+  geom_sf(data = flood01, aes(fill = value),
+          colour = NA, alpha = 0.85) +
+  scale_fill_brewer(palette = "YlOrRd", name = "Profondeur (m)") +
+  labs(title    = "EMSR772 AOI01 — Yagoua, profondeurs d'inondation",
+       subtitle = "Source : Copernicus Emergency Management Service") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+## 3. Charger l'extrait de bâtiments Open Buildings
+
+L'extrait Open Buildings restreint à la zone Yagoua (~5 000-15 000 bâtiments) est pré-filtré sur `confidence >= 0.7`.
+
+```{webr}
+#| autorun: true
+download.file("../_commons/data/jour_08_extraits/batiments_yagoua.geojson",
+              "batiments.geojson", mode = "wb")
+
+batiments <- read_sf("batiments.geojson")
+cat("Bâtiments dans la zone (confidence >= 0.7) :",
+    format(nrow(batiments), big.mark = " "), "\n")
+```
+
+## 4. Bâtiments dans la zone AOI01
+
+```{webr}
+# Reprojeter au CRS d'aoi01 si nécessaire
+if (st_crs(batiments) != st_crs(aoi01)) {
+  batiments <- st_transform(batiments, st_crs(aoi01))
+}
+
+batiments_aoi01 <- st_filter(batiments, aoi01)
+cat("Bâtiments dans AOI01 :",
+    format(nrow(batiments_aoi01), big.mark = " "), "\n")
+```
+
+## 5. Estimation de la population dans AOI01
+
+```{webr}
+pers_par_batiment <- 5
+pop_aoi01 <- nrow(batiments_aoi01) * pers_par_batiment
+
+cat("Population estimée dans AOI01 :",
+    format(pop_aoi01, big.mark = " "), "personnes\n")
+cat("  (hypothèse : 5 personnes par bâtiment, calibrée DHS 2018)\n")
+```
+
+## 6. Bâtiments et population touchés par l'inondation
+
+`st_filter(batiments_aoi01, flood01)` garde les bâtiments dont la géométrie intersecte au moins un polygone d'inondation.
+
+```{webr}
+batiments_inondes <- st_filter(batiments_aoi01, flood01)
+pop_inondee <- nrow(batiments_inondes) * pers_par_batiment
+
+bilan <- data.frame(
+  indicateur = c("Bâtiments AOI01", "Bâtiments inondés",
+                 "% bâtiments touchés",
+                 "Population AOI01 (5 pers/bât)",
+                 "Population touchée (5 pers/bât)"),
+  valeur = c(
+    nrow(batiments_aoi01),
+    nrow(batiments_inondes),
+    round(100 * nrow(batiments_inondes) / nrow(batiments_aoi01), 1),
+    pop_aoi01,
+    pop_inondee
+  )
+)
+bilan
+```
+
+## 7. Carte combinée — bâtiments + inondation
+
+```{webr}
+ggplot() +
+  geom_sf(data = aoi01, fill = NA, colour = "steelblue", linewidth = 1) +
+  geom_sf(data = flood01, aes(fill = value),
+          colour = NA, alpha = 0.6) +
+  geom_sf(data = batiments_aoi01, colour = "grey40",
+          size = 0.3, alpha = 0.5) +
+  geom_sf(data = batiments_inondes, colour = "red",
+          size = 0.4, alpha = 0.8) +
+  scale_fill_brewer(palette = "YlOrRd", name = "Profondeur (m)") +
+  labs(title    = "Yagoua AOI01 — Bâtiments exposés aux inondations",
+       subtitle = paste("Rouge :", format(nrow(batiments_inondes), big.mark = " "),
+                        "bâtiments touchés sur",
+                        format(nrow(batiments_aoi01), big.mark = " "), "total"),
+       caption  = "Sources : Copernicus EMSR772 · Google Open Buildings") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+## 8. Ventilation par classe de profondeur
+
+```{webr}
+batiments_inondes_depth <- st_join(batiments_inondes, flood01["value"])
+
+batiments_inondes_depth |>
+  st_drop_geometry() |>
+  count(value, name = "nb_batiments") |>
+  arrange(value) |>
+  mutate(pop_estimee = nb_batiments * pers_par_batiment,
+         pct = round(100 * nb_batiments / sum(nb_batiments), 1))
+```
+
+## 9. À essayer
+
+::: {.iford-callout}
+Modifie l'hypothèse `pers_par_batiment <- 5` en `7` (rural traditionnel) puis `3` (urbain moderne). Compare l'écart de la population touchée — c'est l'illustration de la **sensibilité au paramètre d'hypothèse**.
+
+Tu peux aussi filtrer les bâtiments avant l'analyse (par exemple ne garder que ceux avec `area_in_meters > 50` pour les habitations principales).
+:::
+
+## 10. Pour aller plus loin
+
+La version desktop `demo.qmd` ajoute (à exécuter sous RStudio) :
+
+- **Partie I GHSL Built-Up** : mosaïque 8 tuiles 2025 + 7 tuiles 2015, indicateurs nationaux + régionaux + départementaux, typologie de croissance, cartes choroplèthes (part bâtie, gain, croissance relative).
+- **AOI02 et AOI03** : reproduction de l'analyse exposition sur les 2 autres zones Copernicus de l'activation EMSR772 + graphiques de synthèse 3 AOI.
+- **Cartes `tmap`** avec mode interactif (`view`) sur fond satellite Esri.WorldImagery.
+- **Bonus** : croiser GHSL bâti × EMS inondation × WorldPop pour validation triangulaire.
+
+Le devoir individuel (12 questions Edith + Q-final 5 questions de synthèse pour décideur) est dans `exercice.qmd`.
+
+[← Retour à l'accueil](../INDEX.md)

@@ -1,0 +1,187 @@
+---
+title: "J8 — Corrigés (télédétection + EMSR772 Yagoua)"
+subtitle: "Atelier IFORD × GDSG · Distribué J9 matin"
+lang: fr
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    toc-location: left
+    theme: cosmo
+execute:
+  echo: true
+  eval: false
+  warning: false
+  message: false
+bibliography: ../_commons/helpers/citations.bib
+---
+
+# Avant le corrigé
+
+Si tu n'as pas tenté les exercices : ferme ce fichier.
+
+Conception pédagogique complète : Edith Darin (GDSG/IFORD). Intégration convention IFORD : Ramesesse Dzita.
+
+> **Note** : tous les blocs sont en `eval: false` pour éviter de re-exécuter le pipeline complet (long : ~3-5 min de mosaïque GHSL + traitements). Pour exécuter, ouvrir dans RStudio et lancer manuellement les blocs nécessaires.
+
+# Q1 — Inspection
+
+```{r}
+#| label: q1
+library(sf); library(terra)
+source("../_commons/helpers/fetch_data.R")
+
+cmr0 <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_0", quiet = TRUE)
+cmr1 <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_1", quiet = TRUE)
+cmr2 <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_2", quiet = TRUE)
+cat("ADM0:", nrow(cmr0), "| ADM1:", nrow(cmr1), "| ADM2:", nrow(cmr2), "\n")
+```
+
+**Réponses** :
+- **a.** ADM0 : 1 polygone (Cameroun). ADM1 : 10 régions. ADM2 : 58 départements.
+- **b.** GHSL Built-Up R2023A 100m est en projection **Mollweide** (`ESRI:54009`), résolution **100 m exactement** (coordonnées en mètres). GADM est en WGS84 (degrés lat/lon).
+- **c.** Sans reprojection, le `crop` se fait dans des systèmes de coordonnées différents (m vs degrés) → emprise aberrante, soit polygone vide, soit raster entier. La règle : **toujours reprojeter le polygone dans le CRS du raster** avant `crop/mask/exact_extract`.
+
+# Q2 — Indicateurs nationaux
+
+**Réponses attendues** :
+- **a.** Surface bâtie Cameroun 2015 ≈ 1 800-2 200 km², 2025 ≈ 2 400-3 000 km² (ordres de grandeur).
+- **b.** Gain national ≈ 500-800 km², croissance relative ≈ **+25 à +35 %** en 10 ans.
+- **c.** Surface bâtie / surface totale ≈ **0,5 à 0,7 %** — le Cameroun reste très **peu artificialisé** au niveau national, mais avec des **fortes concentrations urbaines** (Littoral, Centre) qui ne se voient pas à cette échelle agrégée.
+
+# Q3 — Indicateurs régionaux ADM1
+
+**Réponses** :
+- **a.** Top 3 surface bâtie 2025 : **Littoral** (Douala), **Centre** (Yaoundé), **Ouest** (Bafoussam, Bandjoun, plateaux densément peuplés).
+- **b.** Top 3 gain absolu (km²) : Littoral, Centre, Ouest typiquement (mêmes que en a — les zones déjà urbaines continuent à s'urbaniser).
+- **c.** Top 3 croissance relative (%) : peut différer — souvent **Adamaoua, Est, Sud** (régions partant de très bas, donc % élevés sur petits volumes). Une nouvelle zone industrielle ou minière peut faire +200 % en 10 ans.
+
+**Clé pédagogique** : gain absolu (km²) ≠ croissance relative (%). Présenter les deux, pas l'un ou l'autre.
+
+# Q4 — Visualisations
+
+**Réponses** :
+- **a.** Carte magma : Littoral, Centre, Ouest dominent en rouge/jaune (part bâtie élevée). Nord-Est et Est en bleu sombre.
+- **b.** Carte divergente gain : zones en rouge = gain fort (côte de Douala, périphérie Yaoundé, axes Bafoussam-Bandjoun). Zones blanches/bleues = stagnation.
+- **c.** Sur le nuage 2015 vs 2025, **Littoral** est le point le plus éloigné de la diagonale en valeur absolue (gain le plus élevé). Visualisation utile pour identifier les outliers.
+
+# Q5 — Typologie
+
+**Réponses** :
+- **a-b.** Avec médiane, on attend typiquement 2-3 régions par profil sur 10 (10/4 = 2.5 par profil). Répartition relativement équilibrée par construction.
+- **c.** Avec quartiles, la classe « Croissance forte ET tissu dense » devient plus rare (uniquement Q4×Q4), la classe « Croissance modérée » devient plus large. Discussion : seuils plus exigeants = profils plus contrastés mais moins équilibrés.
+
+# Q6 — ADM2 + Exports
+
+**Réponses** :
+- **a.** Top 10 départements gain : **Wouri** (Douala), **Mfoundi** (Yaoundé), **Mezam** (Bamenda), **Mifi** (Bafoussam), **Bénoué** (Garoua), **Diamaré** (Maroua), **Fako** (Buea/Limbé), **Vina** (Ngaoundéré), **Mvila** (Ebolowa), **Boyo** ou autres selon le release GHSL.
+- **b.** Zones lumineuses sur la carte ADM2 = chefs-lieux régionaux. Cohérent avec l'urbanisation polarisée du Cameroun.
+- **c.** Les CSV doivent avoir `NAME_1`/`NAME_2` en character, le reste en numeric. Vérifier avec `glimpse(regions_chg)`.
+
+# Q7 — EMS AOI01
+
+```{r}
+#| label: q7
+aoi01 <- st_read("...areaOfInterestA_v1.shp", quiet = TRUE) |> st_make_valid()
+flood01 <- st_read("...floodDepthA_v2.shp", quiet = TRUE) |> st_make_valid()
+cat("AOI01 surface :", round(as.numeric(st_area(aoi01)) / 1e6, 1), "km²\n")
+cat("Surface inondée :", round(sum(as.numeric(st_area(flood01))) / 1e6, 2), "km²\n")
+table(flood01$value)
+```
+
+**Réponses** :
+- **a.** AOI01 (Yagoua) ≈ **240-280 km²** (zone autour de la ville).
+- **b.** Surface totale inondée ≈ **22-30 km²** dans AOI01 (cohérent avec les 22 987 ha du rapport Copernicus officiel = 230 km² Y compris AOI02/AOI03).
+- **c.** Typiquement **5 classes** de profondeur : « < 0.50 », « 0.50 - 1.00 », « 1.00 - 2.00 », « 2.00 - 4.00 », « > 4.00 » (mètres). La distribution est généralement décroissante (peu de zones très profondes).
+
+# Q8 — Open Buildings
+
+**Réponses** :
+- **a.** Total bâtiments bruts : **100 000 à 500 000** selon la couverture des 5 tuiles S2 retenues par Edith.
+- **b.** Répartition typique : ~30-40 % < 0.5 (incertain), ~20-30 % entre 0.5 et 0.7, ~30-40 % >= 0.7 (haute confiance).
+- **c.** Bâtiments retenus après filtre `confidence >= 0.7` : ~50 000 à 200 000.
+
+# Q9 — Bâtiments dans AOI01
+
+**Réponses** :
+- **a.** Reprojection obligatoire car AOI01 est en CRS local (UTM zone 33N ou EPSG:32633 selon Copernicus) et Open Buildings est en WGS84 (4326). Sans reprojection, `st_filter` matche sur des coordonnées incompatibles → 0 résultat.
+- **b.** Après `st_filter`, on attend **3 000 à 8 000** bâtiments dans AOI01 (Yagoua centre).
+- **c.** Concentration centrale visible sur Yagoua + plus quelques villages le long du Logone.
+
+# Q10 — Estimation population
+
+**Réponses** :
+- **a.** `pop_aoi01 = nb_batiments × 5`. Si nb_batiments = 5 000, on a 25 000 personnes. Si nb_batiments = 3 000, on a 15 000.
+- **b.** Comparaison avec WorldPop `exact_extract(worldpop_2024, aoi01, "sum")` ≈ 30 000-50 000 personnes selon le département (Mayo-Danay département). Cohérent à l'ordre de grandeur près.
+- **c.** Taux 5 pers./bât. : moyenne typique au Cameroun (taille ménage DHS 2018 ≈ 5.5 personnes). Modifier à la hausse en milieu rural (8-10 pers./concession) ou à la baisse en urbain dense moderne (3-4 pers./logement).
+
+# Q11 — Bâtiments touchés
+
+**Réponses** :
+- **a.** Bâtiments touchés ≈ **5 à 15 %** des bâtiments AOI01 (la zone inondée est plus petite que l'AOI totale).
+- **b.** Population estimée touchée ≈ 1 500-3 000 personnes (cohérent avec ~8 300 du rapport officiel **pour les 3 AOI combinés**, donc ~2 800 / AOI moyenne).
+- **c.** Bâtiments dans la tranche > 4 m : généralement **très peu** (< 10), zones de risque maximal (effondrement structurel possible). À prioriser dans l'évacuation.
+
+# Q12 — Fonction réutilisable + AOI02 + AOI03
+
+```{r}
+#| label: q12-fonction
+analyser_inondation <- function(emsr_root, zone_pattern, batiments_sf, pers_par_bat = 5) {
+  shp_aoi <- list.files(emsr_root,
+    pattern = paste0(zone_pattern, ".*areaOfInterestA.*\\.shp$"),
+    full.names = TRUE, recursive = TRUE)[1]
+  shp_flood <- list.files(emsr_root,
+    pattern = paste0(zone_pattern, ".*floodDepthA.*\\.shp$"),
+    full.names = TRUE, recursive = TRUE)[1]
+  aoi   <- st_read(shp_aoi,   quiet = TRUE) |> st_make_valid()
+  flood <- st_read(shp_flood, quiet = TRUE) |> st_make_valid()
+  if (st_crs(batiments_sf) != st_crs(aoi)) {
+    batiments_sf <- st_transform(batiments_sf, st_crs(aoi))
+  }
+  bat_aoi     <- st_filter(batiments_sf, aoi)
+  bat_inondes <- st_filter(bat_aoi, flood)
+  tibble::tibble(zone = zone_pattern,
+                 nb_batiments_aoi      = nrow(bat_aoi),
+                 nb_batiments_inondes  = nrow(bat_inondes),
+                 pct_batiments_inondes = round(100 * nrow(bat_inondes) /
+                                               nrow(bat_aoi), 1),
+                 pop_estimee_aoi       = nrow(bat_aoi)     * pers_par_bat,
+                 pop_inondee           = nrow(bat_inondes) * pers_par_bat)
+}
+```
+
+**Réponses** :
+- **a.** Pattern de zone + `recursive = TRUE` = fonction robuste aux différences de structure de ZIP.
+- **b.** Décompression idempotente : vérifier `.shp` existant avant `unzip`.
+- **c.** AOI02 et AOI03 typiquement avec **part inondée différente** d'AOI01 — AOI02 peut être plus rurale (plus de bâtiments sur surface plus grande), AOI03 peut être plus concentrée. Variabilité spatiale du désastre.
+- **d.** Les 3 graphiques montrent **clairement la hiérarchie** des zones touchées.
+
+# Q-final — Synthèse pour décideur
+
+## 1. GHSL pour la statistique publique camerounaise
+
+(i) **Extension PDU Douala/Yaoundé** : carte de gain 2015-2025 identifie les zones à régulariser (lotissements informels, axes routiers). (ii) **RGPH 4 pré-cartographie** : GHSL permet d'identifier les zones de bâti récent où les denombreurs doivent ajouter des SE (sections d'énumération). (iii) **Programme viabilisation MINHDU** : prioriser les départements avec gain élevé mais part bâtie encore faible (zones d'expansion en cours).
+
+## 2. Limites GHSL
+
+(i) **Confusion bâti / sol nu** dans le Sahel (Extrême-Nord) : les terrains agricoles secs peuvent être classés en bâti. (ii) **Couverture nuageuse** au Sud forestier en saison des pluies : les tuiles GHSL utilisent les rares fenêtres claires, perte d'information. (iii) **Surface ≠ Bâtiments ≠ Population** : un hangar industriel de 5000 m² compte autant qu'une concession résidentielle.
+
+## 3. EMSR772 + Open Buildings : valeur opérationnelle
+
+Chaîne classique : recensement (5-10 ans) + enquête terrain post-désastre (2-4 semaines) = trop lent pour la phase d'urgence. EMS + Open Buildings : délimitation flood en **24 h** + inventaire bâtiments **immédiat** = première estimation chiffrée disponible avant l'arrivée des équipes terrain. Cas Yagoua 2024 : ~8 300 personnes estimées affectées par EMS, validation terrain ultérieure ≈ 8 000-10 000.
+
+## 4. Hypothèse 5 pers./bât.
+
+(i) Approximation : (a) ne distingue pas résidentiel/non-résidentiel, (b) suppose une seule famille par bâtiment (Yagoua : concessions multiples), (c) ignore les bâtiments vides. (ii) Calibrage WorldPop : `exact_extract(wp_2024, aoi01, "sum") / nrow(batiments_aoi01)` → vrai taux par bâtiment estimé. (iii) IC : présenter [3.5, 6.5] pers./bât. (±30 %) ou faire l'analyse avec plusieurs valeurs (sensitivity analysis).
+
+## 5. Reproductibilité institutionnelle INS Cameroun
+
+(i) **Outils** : R + tidyverse + sf/terra + Quarto pour rapports. RStudio Server ou Posit Cloud Team pour collaboration. (ii) **Compétences** : 2-3 statisticiens spatiaux niveau R/GIS avancé, 1 référent connexion API (CDS, ACLED). Formation continue 5j/an. (iii) **Infrastructure cloud** : serveur 32 Go RAM (mosaïque GHSL nationale), stockage 500 Go (datasets accumulés), accès internet stable. Coût estimatif annuel : licences gratuites, infrastructure ~5 000 €/an (cloud VPS européen) + 2 ETP statisticiens spatiaux ~80 000 €/an.
+
+# Référence du débrief Edith
+
+> *« La télédétection complète les enquêtes et recensements — pas un remplacement. Elle ne remplace pas la validation locale. Les métadonnées d'image sont aussi importantes que la carte. Croiser bâtiments × zones inondées donne une première estimation de l'exposition ; la calibrer avec des données de population locales. »*
+
+# Références
+
+@schiavina2023ghsl ; @hijmans2024terra ; @pebesma2018simple.

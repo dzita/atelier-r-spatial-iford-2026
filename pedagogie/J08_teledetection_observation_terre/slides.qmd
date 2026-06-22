@@ -1,0 +1,299 @@
+---
+title: "J8 — Télédétection et observation de la Terre"
+subtitle: "Données satellite pour la statistique publique"
+author: "Edith Darin (conception) · Ramesesse Dzita (intégration IFORD) · GDSG"
+date: "2026-08-05"
+engine: knitr
+format:
+  revealjs:
+    theme:
+      - default
+      - ../_commons/styles/slides_revealjs.scss
+    slide-number: c/t
+    transition: fade
+    progress: true
+    chalkboard: true
+    footer: "IFORD × GDSG 2026 — J8 · Télédétection"
+    incremental: false
+    code-fold: false
+    code-line-numbers: false
+execute:
+  echo: false
+  warning: false
+  message: false
+bibliography: ../_commons/helpers/citations.bib
+---
+
+# Partie 0 — Plan de la journée {data-state="section-break"}
+
+## Objectifs
+
+- Comprendre les bases des **images satellite** (pixel, bande, résolution, revisite).
+- Identifier les principales données ouvertes : **Sentinel, Landsat, MODIS, SRTM, GHSL, Copernicus EMS**.
+- Lire un indicateur **bâti GHSL** et sa variation temporelle (2015 vs 2025).
+- Mesurer une **croissance bâtie** pédagogique.
+- Croiser **Copernicus EMSR772 + Open Buildings** pour estimer l'exposition aux inondations de Yagoua 2024.
+- Discuter **validation et limites** pour usage statistique officiel.
+
+## Programme 6 heures
+
+| Moment | Contenu |
+|---|---|
+| **Matin 1** | Pixels, bandes, résolutions et revisite |
+| **Matin 2** | Sentinel, Landsat, MODIS, SRTM, GHSL, Copernicus EMS, Open Buildings |
+| **Après-midi 1** | **Partie I — GHSL** : bâti Cameroun 2015–2025 |
+| **Après-midi 2** | **Partie II — EMSR772** : inondations Yagoua + Open Buildings |
+
+# Partie 1 — Concepts {data-state="section-break"}
+
+## Lire une image satellite
+
+- **Résolution spatiale** : taille du pixel au sol (10 m Sentinel-2, 30 m Landsat, 250-1000 m MODIS).
+- **Résolution spectrale** : bandes observées (bleu, vert, rouge, NIR, SWIR…).
+- **Résolution temporelle** : fréquence de revisite (5 j Sentinel-2, 16 j Landsat, 1 j MODIS).
+- **Prétraitements** : nuages, ombres, calibration radiométrique, mosaïques.
+
+## Données ouvertes utiles
+
+| Source | Résolution | Usage typique |
+|---|---|---|
+| **Sentinel-2** | 10–20 m optique | Suivi urbain / agricole |
+| **Landsat** | 30 m | Série historique depuis 1970s |
+| **MODIS** | 250–1000 m | Forte fréquence temporelle |
+| **SRTM** | 30 m | Altitude et pentes (cf. J3) |
+| **GHSL** | 100 m | Bâti et population, villes |
+| **Copernicus EMS** | vecteur + raster | Urgences (inondations, feux) |
+
+# Partie 2 — GHSL Built-Up {data-state="section-break"}
+
+## GHSL : référence et téléchargement
+
+Le jeu de données utilisé pour l'atelier est **GHSL Built-Up Surface**, disponible sur le portail officiel JRC :
+
+<https://human-settlement.emergency.copernicus.eu/dataDownload.php>
+
+Repères :
+
+- **GHSL** = Global Human Settlement Layer.
+- Le produit **Built-Up Surface** représente la surface bâtie sur une grille de **100 m**.
+- Données distribuées par **tuiles ZIP** à dézipper localement.
+- Plusieurs tuiles peuvent être nécessaires pour couvrir un pays entier (15 tuiles pour le Cameroun en 2015 + 2025).
+- Les rasters sont en **projection mondiale equal-area** (`ESRI:54009`) ; on reprojette donc les limites administratives avant l'extraction.
+
+## Workflow GHSL — 5 étapes
+
+1. **Ouvrir** la page de téléchargement GHSL.
+2. **Choisir** le produit `Built-Up Surface` et l'année souhaitée.
+3. **Télécharger** les tuiles couvrant le Cameroun (~10-50 Mo chacune, format ZIP).
+4. **Dézipper** les archives dans le dossier `data/GHS-BUILT/`.
+5. **Lancer le script R** pour mosaïquer, rogner et calculer les indicateurs.
+
+```r
+charger_ghsl <- function(annee, data_dir) {
+  archives <- list.files(data_dir,
+    pattern = paste0("^GHS_BUILT_S_E", annee, ".*\\.zip$"),
+    full.names = TRUE)
+  rasters <- lapply(archives, function(zip_path) {
+    tmp_dir <- tempfile("ghsl_"); dir.create(tmp_dir)
+    unzip(zip_path, exdir = tmp_dir)
+    rast(list.files(tmp_dir, pattern = "\\.tif$",
+                    full.names = TRUE, recursive = TRUE)[1])
+  })
+  do.call(mosaic, rasters)
+}
+```
+
+## NDVI — rappel théorique
+
+$$\text{NDVI} = \frac{\text{NIR} - \text{Rouge}}{\text{NIR} + \text{Rouge}}$$
+
+Interprétation :
+
+- **Proche de 1** : végétation dense.
+- **Proche de 0** : sols nus, bâti, végétation faible.
+- **Négatif** : eau, ombre.
+
+Dans l'atelier J8, l'analyse pratique repose sur le **bâti GHSL** et les limites administratives. NDVI gardé ici comme rappel pour les discussions de télédétection plus générales.
+
+## Applications pour statistiques nationales
+
+- **Expansion urbaine** et artificialisation du territoire.
+- **Cartographie agricole** et suivi des cultures (NDVI, NDWI).
+- **Risques d'inondation** et exposition (cf. Partie II EMSR772).
+- **Accessibilité physique** des localités.
+- **Mise à jour des bases de sondage** (BUCREP, INS).
+
+# Partie 3 — Atelier R GHSL {data-state="section-break"}
+
+## Atelier R — Partie I
+
+Fichiers utilisés :
+
+- `data/gadm41_CMR.gpkg` (couches ADM_ADM_0/1/2)
+- `data/GHS_BUILT_S_E2015_GLOBE_R2023A_54009_100_V1_0_*.zip` (7 tuiles)
+- `data/GHS_BUILT_S_E2025_GLOBE_R2023A_54009_100_V1_0_*.zip` (8 tuiles)
+
+Tâches :
+
+1. Lire les limites administratives du Cameroun.
+2. Charger et mosaïquer les tuiles GHSL **2015 et 2025**.
+3. Reprojeter, rogner et masquer le raster sur le Cameroun.
+4. Calculer le **bâti total** et la **part bâtie** par région.
+5. Comparer spatialement 2015 et 2025.
+6. Identifier les régions et départements en **plus forte croissance**.
+7. Construire une **typologie simple** de la croissance bâtie.
+
+## Visualisations attendues
+
+- Une carte de la **part bâtie 2025**.
+- Une carte des **gains 2015–2025**.
+- Un **nuage de points** 2015 vs 2025 par région.
+- Trois messages d'**interprétation**.
+
+## Validation — bonnes pratiques
+
+- Comparer avec **images haute résolution** (Sentinel-2 RGB, Esri imagery).
+- Vérifier un échantillon **terrain** ou photo-interprété.
+- Documenter **dates d'acquisition** et **couverture nuageuse**.
+- Éviter de publier une classification **sans matrice d'erreur**.
+
+## Limites GHSL
+
+- Les **nuages** peuvent masquer des zones entières.
+- Les classes bâti / sol nu sont parfois **confondues**.
+- Les **changements administratifs** compliquent les comparaisons temporelles.
+- Une **tendance observée** doit être reliée à une **question statistique précise**.
+
+## Discussion institutionnelle
+
+Questions à poser aux participants :
+
+- Quelle **unité** pourrait produire ces indicateurs (INS, BUCREP, MINEPAT, MINHDU…) ?
+- Quelle **fréquence** est réaliste pour la mise à jour officielle ?
+- Quels **partenariats** sont nécessaires (Copernicus, WorldPop) ?
+- Quels **contrôles qualité** imposer avant diffusion ?
+
+# Partie 4 — Copernicus EMS + Inondations Yagoua {data-state="section-break"}
+
+## Copernicus Emergency Management Service
+
+Copernicus EMS produit en **quelques heures** des cartes de zones sinistrées à partir d'images satellite, sans nécessiter d'accès terrain.
+
+**Produits types par activation** :
+
+- `areaOfInterest` : zone cartographiée par EMS.
+- `floodDepth` : polygones avec **classe de profondeur en mètres**.
+- `observedEvent` : emprise globale de l'événement.
+- `imageFootprint` : étendue de l'image utilisée.
+
+Accès libre sur : <https://mapping.emergency.copernicus.eu/>
+
+## Activation EMSR772 — Yagoua, Cameroun 2024
+
+- **GLIDE** : FL-2024-000162-CMR
+- **Zone** : nord Cameroun, région de Yagoua, bassin du Logone
+- **Trois zones d'action** (AOI01, AOI02, AOI03)
+- Colonne `value` dans `floodDepthA_v2.shp` : tranches de profondeur (ex. « 0.50 - 1.00 » en mètres)
+
+**Bilan humain** (UNICEF/DG ECHO) :
+
+- 30 morts
+- 155 000 déplacés
+- 365 000 affectés
+- 56 084 maisons et 82 500 ha de cultures détruits
+- 262 écoles endommagées
+
+## Google Open Buildings
+
+Base mondiale d'**empreintes de bâtiments** détectées par imagerie satellite :
+
+- Distribué par tuile S2 en fichiers **CSV.GZ**.
+- Colonnes : `latitude`, `longitude`, `area_in_meters`, `confidence`.
+- La colonne `confidence` indique la probabilité que l'objet soit un bâtiment.
+- Seuil recommandé pour l'analyse : **`confidence >= 0.7`**.
+
+Accès libre sur : <https://sites.research.google/open-buildings/>
+
+## Atelier R — Partie II
+
+Fichiers utilisés :
+
+- `data/EMSR772_products/EMSR772_AOI01_DEL_PRODUCT_v2/` (shapefiles + GeoTIFF)
+- `data/EMSR772_products/EMSR772_AOI02_DEL_PRODUCT_v1.zip` (à dézipper)
+- `data/EMSR772_products/EMSR772_AOI03_DEL_PRODUCT_v1.zip` (à dézipper)
+- `data/Open Buildings/*.csv.gz` (5 fichiers)
+
+Tâches :
+
+1. Charger et explorer les couches EMS (`areaOfInterest`, `floodDepth`).
+2. Charger et filtrer les bâtiments Open Buildings (seuil `confidence >= 0.7`).
+3. Compter les bâtiments dans la zone de référence (AOI01).
+4. Estimer la **population** (bâtiments × taux d'occupation).
+5. Compter les bâtiments et la **population touchés** par les inondations.
+6. Encapsuler en **fonction** et reproduire pour AOI02 et AOI03.
+
+## Fonction réutilisable — principe DRY
+
+```r
+analyser_inondation <- function(emsr_dir, batiments_sf, pers_par_bat = 5) {
+  aoi   <- st_read(list.files(emsr_dir, pattern = "areaOfInterestA.*\\.shp$",
+                              full.names = TRUE)[1], quiet = TRUE)
+  flood <- st_read(list.files(emsr_dir, pattern = "floodDepthA.*\\.shp$",
+                              full.names = TRUE)[1], quiet = TRUE)
+  zone_id <- sub(".*_(AOI\\d+)_.*", "\\1", basename(...))
+  if (st_crs(batiments_sf) != st_crs(aoi)) {
+    batiments_sf <- st_transform(batiments_sf, st_crs(aoi))
+  }
+  bat_aoi     <- st_filter(batiments_sf, aoi)
+  bat_inondes <- st_filter(bat_aoi, flood)
+  tibble(zone = zone_id, nb_aoi = nrow(bat_aoi),
+         nb_inondes = nrow(bat_inondes),
+         pct = round(100 * nrow(bat_inondes) / nrow(bat_aoi), 1))
+}
+```
+
+Une définition, trois applications (AOI01, AOI02, AOI03).
+
+# Partie 5 — Synthèse {data-state="section-break"}
+
+## Messages clés
+
+- La télédétection **complète** les enquêtes et recensements — pas un remplacement.
+- Elle **ne remplace pas** la validation locale.
+- Les **métadonnées d'image** sont aussi importantes que la carte.
+- Les indicateurs doivent être **simples, répétables et explicables**.
+- Copernicus EMS permet une **réponse humanitaire rapide** sans accès terrain.
+- Croiser bâtiments × zones inondées donne une **première estimation** de l'exposition à calibrer avec des données locales.
+
+## Limites EMSR772 + Open Buildings
+
+- Les **bâtiments construits après la date d'image** ne sont pas visibles.
+- Le **taux d'occupation** (5 pers./bât.) est une hypothèse à calibrer.
+- Le **seuil `confidence`** influe sur le nombre de bâtiments — documenter.
+- Open Buildings est **moins fiable** sur les bâtiments traditionnels en terre / paille (densité urbaine seulement).
+- EMSR772 capture l'inondation à un **instant** — pas la dynamique temporelle complète.
+
+## Demain (J9) — Applications spatiales sciences sociales
+
+J9 prolonge J8 avec **ACLED** (événements de conflit) et **ERA5** (température réanalyse climatique) — deux APIs scientifiques, deux datasets complémentaires pour les sciences sociales spatiales au Cameroun.
+
+# Crédits {data-state="section-break"}
+
+## Conception et intégration
+
+- **Conception pédagogique complète** : Edith Darin (Senior Researcher, ex-WorldPop/Oxford, GDSG/IFORD)
+- **Intégration convention atelier IFORD** : Ramesesse Dzita (Junior Demographer-Statistician, IT Specialist, GDSG/IFORD)
+
+## Sources des données
+
+- **GHSL Built-Up Surface** — JRC — <https://human-settlement.emergency.copernicus.eu/>
+- **Copernicus EMSR772** — Copernicus EMS — <https://mapping.emergency.copernicus.eu/activations/EMSR772>
+- **Google Open Buildings** — <https://sites.research.google/open-buildings/>
+- **WorldPop** — Univ. Southampton — <https://hub.worldpop.org/>
+- **GADM v4.1** — <https://gadm.org/>
+
+Code et matériel pédagogique : **CC-BY 4.0** au nom du GDSG/IFORD.
+
+## Références méthodologiques
+
+@schiavina2023ghsl ; @hijmans2024terra ; @pebesma2018simple.
