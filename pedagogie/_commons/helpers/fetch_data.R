@@ -300,6 +300,143 @@ fetch_srtm_cameroon <- function() {
   )
 }
 
+# =====================================================================
+# JOUR 9 - Applications spatiales sciences sociales (materiel Edith Darin)
+# =====================================================================
+# Donnees : ACLED (conflits) + ERA5 (temperature) + GADM (reutilise J7).
+
+.J09_CANDIDATES_DIRS <- function() {
+  c(
+    file.path(.PROJECT_ROOT, "pedagogie", "datasets", "cameroun",
+              "jour_09_acled_era5"),
+    "C:/Dev/GitHub/jour_09_applications_spatiales_sciences_sociales/data"
+  )
+}
+
+.J09_resolve <- function(filename, description) {
+  for (d in .J09_CANDIDATES_DIRS()) {
+    p <- file.path(d, filename)
+    if (file.exists(p) && file.size(p) >= .MIN_VALID_BYTES) {
+      return(normalizePath(p, mustWork = TRUE))
+    }
+  }
+  stop(sprintf(
+    paste0("\n========================================================\n",
+           " %s introuvable.\n",
+           "========================================================\n",
+           " Fichier attendu : %s\n",
+           " Source : Edith Darin (jour_09_*/data sur Drive)\n",
+           " A placer dans l'un des dossiers suivants :\n",
+           "   %s\n",
+           "========================================================\n"),
+    description, filename,
+    paste(.J09_CANDIDATES_DIRS(), collapse = "\n   ")
+  ), call. = FALSE)
+}
+
+# ACLED Cameroun (export ACLED Explorer ou rdhs::acled_api()).
+# Le nom peut etre "ACLED Data.csv" (avec espace) ou "ACLED_Data.csv".
+fetch_acled_cmr <- function() {
+  for (d in .J09_CANDIDATES_DIRS()) {
+    for (name in c("ACLED_Data.csv", "ACLED Data.csv", "acled_cmr.csv")) {
+      p <- file.path(d, name)
+      if (file.exists(p) && file.size(p) >= .MIN_VALID_BYTES) {
+        return(normalizePath(p, mustWork = TRUE))
+      }
+    }
+  }
+  stop(.J09_resolve("ACLED_Data.csv",
+                    "ACLED Cameroun (export Explorer ou API acledR)"),
+       call. = FALSE)
+}
+
+# ERA5 - temperature 2m mensuelle Cameroun (NetCDF, ~quelques Mo)
+# A telecharger via ecmwfr depuis Copernicus CDS (token requis).
+fetch_era5_t2m_cmr <- function() {
+  .J09_resolve("era5_t2m_mensuel_cameroun.nc",
+               "ERA5 temperature 2m mensuelle Cameroun (NetCDF)")
+}
+
+# =====================================================================
+# JOUR 7 - Population a haute resolution (materiel Edith Darin)
+# =====================================================================
+# Toutes ces fonctions resolvent vers pedagogie/datasets/cameroun/
+# jour_07_population/ OU vers le dossier source externe d'Edith :
+# C:/Dev/GitHub/jour_07_cartographie_population_haute_resolution/data/
+# pour eviter la duplication des gros rasters.
+
+.J07_CANDIDATES_DIRS <- function() {
+  c(
+    file.path(.PROJECT_ROOT, "pedagogie", "datasets", "cameroun",
+              "jour_07_population"),
+    "C:/Dev/GitHub/jour_07_cartographie_population_haute_resolution/data",
+    file.path(.PROJECT_ROOT, "datasets", "cameroun", "population_grids",
+              "jour_07")
+  )
+}
+
+.J07_resolve <- function(filename, description) {
+  for (d in .J07_CANDIDATES_DIRS()) {
+    p <- file.path(d, filename)
+    if (file.exists(p) && file.size(p) >= .MIN_VALID_BYTES) {
+      return(normalizePath(p, mustWork = TRUE))
+    }
+  }
+  stop(sprintf(
+    paste0("\n========================================================\n",
+           " %s introuvable.\n",
+           "========================================================\n",
+           " Fichier attendu : %s\n",
+           " Source : Edith Darin (workshop_material/jour_07/data sur Drive)\n",
+           " A placer dans l'un des dossiers suivants :\n",
+           "   %s\n",
+           "========================================================\n"),
+    description, filename,
+    paste(.J07_CANDIDATES_DIRS(), collapse = "\n   ")
+  ), call. = FALSE)
+}
+
+# WorldPop constrained 100m R2025A v1 - annees 2015, 2025, 2030
+fetch_worldpop_constrained_cmr <- function(year = c(2015, 2025, 2030)) {
+  year <- match.arg(as.character(year), c("2015", "2025", "2030"))
+  .J07_resolve(
+    sprintf("cmr_pop_%s_CN_100m_R2025A_v1.tif", year),
+    sprintf("WorldPop constrained 100m %s (CMR)", year)
+  )
+}
+
+# GADM v4.1 du Cameroun en GeoPackage unifie (couches ADM_ADM_0/1/2)
+fetch_gadm_cmr_gpkg <- function() {
+  .J07_resolve("gadm41_CMR.gpkg",
+               "GADM v4.1 Cameroun (GeoPackage unifie ADM_0/1/2)")
+}
+
+# Population administrative par region (COD-PS / OCHA, 2025)
+fetch_admpop_adm1_cmr_2025 <- function() {
+  .J07_resolve("cmr_admpop_adm1_2025.csv",
+               "Population admin par region (COD-PS Cameroun 2025)")
+}
+
+# DATA_ECOLE.zip (Edith - bonus pedagogique)
+fetch_data_ecole_cmr <- function() {
+  .J07_resolve("DATA_ECOLE.zip",
+               "Dataset bonus DATA_ECOLE (Edith Darin)")
+}
+
+# Dossier des tuiles GHS-POP (ZIP Mollweide, JRC R2023A)
+# Retourne le dossier, pas un fichier (car 7 tuiles)
+fetch_ghspop_tuiles_dir <- function() {
+  for (d in .J07_CANDIDATES_DIRS()) {
+    p <- file.path(d, "GHS-POP")
+    if (dir.exists(p) && length(list.files(p, pattern = "\\.zip$")) > 0) {
+      return(normalizePath(p, mustWork = TRUE))
+    }
+  }
+  stop("Dossier GHS-POP/ avec tuiles ZIP introuvable. ",
+       "Verifier pedagogie/datasets/cameroun/jour_07_population/GHS-POP/",
+       call. = FALSE)
+}
+
 # ---------------------------------------------------------------------
 # Sites pilotes RGPH4 (Bamenda 1, Fongo Tongo, Buea, Mora)
 # Reconstitues par filtrage de GADM ADM3.

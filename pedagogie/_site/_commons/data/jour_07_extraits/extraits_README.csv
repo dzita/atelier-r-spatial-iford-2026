@@ -1,0 +1,7 @@
+fichier,source,usage
+admpop_adm1_2025.csv,Edith Darin (workshop_material/jour_07/data) - extraits Mfoundi,Runtime WebR J7 (chargement via download.file relatif)
+gadm41_CMR_adm1.geojson,Edith Darin (workshop_material/jour_07/data) - extraits Mfoundi,Runtime WebR J7 (chargement via download.file relatif)
+gadm41_CMR_adm2_mfoundi.geojson,Edith Darin (workshop_material/jour_07/data) - extraits Mfoundi,Runtime WebR J7 (chargement via download.file relatif)
+pop_2015_mfoundi.tif,Edith Darin (workshop_material/jour_07/data) - extraits Mfoundi,Runtime WebR J7 (chargement via download.file relatif)
+pop_2025_mfoundi.tif,Edith Darin (workshop_material/jour_07/data) - extraits Mfoundi,Runtime WebR J7 (chargement via download.file relatif)
+pop_2030_mfoundi.tif,Edith Darin (workshop_material/jour_07/data) - extraits Mfoundi,Runtime WebR J7 (chargement via download.file relatif)

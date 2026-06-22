@@ -1,0 +1,215 @@
+---
+title: "J7 — Exercices : cartographie de la population à haute résolution"
+subtitle: "Atelier IFORD × GDSG · 4 août 2026"
+lang: fr
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    toc-location: left
+    theme: cosmo
+  pdf:
+    toc: true
+---
+
+# Mode d'emploi
+
+Les 9 exercices d'Edith Darin (GDSG/IFORD) sont à suivre **dans l'ordre** : ils s'enchaînent et chaque exercice réutilise les objets construits aux exercices précédents. Q1 à Q5 + Q5b en séance (~3 h le matin), Q6, 7, 8 + 14 questions de réflexion en autonomie l'après-midi.
+
+Les 14 questions encadrées sont à discuter en plénière (Q1 à Q9) ou à rédiger en commentaire dans ton script (Q9b à Q14). Solutions complètes dans `corrige.qmd` — à n'ouvrir qu'**après** ta tentative.
+
+Conception pédagogique complète : Edith Darin. Intégration convention atelier IFORD : Ramesesse Dzita.
+
+# Setup commun
+
+```r
+library(sf); library(dplyr); library(ggplot2); library(tidyr); library(readr)
+library(terra); library(tmap); library(exactextractr); library(scales)
+library(tibble)
+
+source("../_commons/helpers/fetch_data.R")
+
+# Chargement des datasets Edith
+pop_adm1 <- read_csv(fetch_admpop_adm1_cmr_2025(), show_col_types = FALSE)
+cmr1     <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_1", quiet = TRUE)
+cmr2     <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_2", quiet = TRUE)
+cmr0     <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_0", quiet = TRUE)
+```
+
+# Q1 — Diagnostic de jointure {#sec-q1}
+
+> Référence démo : Exercice 0.
+
+1. **a.** Affiche les colonnes du CSV `pop_adm1`. **Quelle colonne contient la population totale ?** (entre `T_TL`, `F_TL`, `M_TL`)
+2. **b.** Compare les noms de régions GADM (`cmr1$NAME_1`) et CSV (`pop_adm1$ADM1_EN`, `pop_adm1$ADM1_FR`) via `setdiff`. **Avec quelle clé y a-t-il 0 non-correspondance** ?
+3. **c.** Réalise la jointure avec `left_join` et la bonne clé. Compte le nombre de NA dans la colonne de population après jointure. Si > 0, qu'est-ce que ça veut dire ?
+
+# Q2 — Lecture critique du choroplèthe {#sec-q2}
+
+> Référence démo : Exercice 0.
+
+Une fois la carte de population totale par région produite (`ggplot + geom_sf + aes(fill = T_TL)`) :
+
+1. **a.** **Quelle région a la population la plus élevée ? La plus faible ?** Donne les valeurs en habitants.
+2. **b.** L'Extrême-Nord et le Centre ont des populations comparables (environ 4 millions chacune), pourtant leurs choroplèthes diffèrent. **Pourquoi ?** (indice : compare les surfaces)
+3. **c.** Pourquoi un **choroplèthe de population totale peut être trompeur** pour comparer des régions de tailles très différentes ? Quel indicateur dérivé corrige ce biais (voir Exercice 6) ?
+
+# Q3 — Palette divergente : ratio F/H {#sec-q3}
+
+> Référence démo : Exercice 0b.
+
+Sur la carte du ratio F/H par région :
+
+1. **a.** **Que signifie un ratio > 1 ?** Et un ratio < 1 ?
+2. **b.** **Dans quelles régions le déséquilibre est-il le plus marqué** ? Donne les 2 régions extrêmes.
+3. **c.** Quelles explications démographiques peuvent justifier ces écarts (migrations internes, structure agricole, conflits, etc.) ?
+
+# Q4 — Part de la population jeune {#sec-q4}
+
+> Référence démo : Exercice 0c.
+
+Sur la carte de la part des 0-14 ans :
+
+1. **a.** **Quelles régions ont la plus forte proportion de jeunes ?** Top 3.
+2. **b.** Y a-t-il une **corrélation avec la population totale** de la région ? (indice : croise mentalement avec la carte Q2)
+3. **c.** Implications pour les **politiques de scolarisation** : quels investissements cibler en priorité ?
+
+# Q5 — Anatomie d'un raster WorldPop {#sec-q5}
+
+> Référence démo : Exercice 1.
+
+Après chargement de `pop_2025 <- rast(fetch_worldpop_constrained_cmr(2025))` :
+
+1. **a.** **Quelle est la résolution en degrés** ? À combien de mètres cela correspond-il à l'équateur ?
+2. **b.** Combien de cellules au total ? Affiche aussi le CRS — c'est quoi ?
+3. **c.** **Que représente la valeur d'une cellule ?** (pas le pourcentage, pas une densité — la quantité exacte)
+
+# Q6 — Lire la grille interactivement {#sec-q6}
+
+> Référence démo : Exercice 1.
+
+En mode `tmap_mode("view")` sur `pop_2025` :
+
+1. **a.** **Quelles zones montrent la plus forte concentration** de population ? Zoom sur Yaoundé et Douala — quelles valeurs maximales par cellule observe-tu ?
+2. **b.** Identifie une **zone vide** (forêt, montagne, marais) et note sa valeur typique. Que ça veut dire ?
+3. **c.** Bascule entre `tmap_mode("view")` et `tmap_mode("plot")`. Quand préférer chaque mode dans le quotidien d'un statisticien à l'INS ?
+
+# Q7 — Extraction d'effectif à Yaoundé en 2025 {#sec-q7}
+
+> Référence démo : Exercice 2.
+
+Avec le département du Mfoundi extrait via `cmr2 |> filter(NAME_2 == "Mfoundi")` :
+
+1. **a.** Reprojette le polygone dans le CRS du raster avec `vect(st_transform(yaounde, crs(pop_2025)))`. Pourquoi cette étape est-elle obligatoire ?
+2. **b.** Enchaîne `crop` + `mask` + `global("sum")`. **Quel est l'effectif total estimé** pour Mfoundi en 2025 ?
+3. **c.** Sur fond satellite (`tm_basemap("Esri.WorldImagery")`), les fortes valeurs WorldPop coïncident-elles avec les zones de bâti dense ? Identifie au moins **une zone où il y a un écart** (sous-estimation ou sur-estimation visuelle).
+
+# Q8 — Autonomie : reproduire sur 2015 {#sec-q8}
+
+> Référence démo : Exercice 3.
+
+Reproduis l'exercice 2 sur l'année 2015 :
+
+1. **a.** Charge `pop_2015 <- rast(fetch_worldpop_constrained_cmr(2015))`.
+2. **b.** Extrais l'effectif Mfoundi 2015 avec le même pipeline.
+3. **c.** **La carte 2015 ressemble-t-elle à celle de 2025** ? Quels changements observes-tu visuellement ? (zones nouvellement bâties, densification du centre, étalement urbain…)
+
+# Q9 — Confronter WorldPop et CSV officiel {#sec-q9}
+
+> Référence démo : Exercice 4.
+
+1. **a.** Agrège `pop_2025` par région avec `exact_extract(pop_2025, st_transform(cmr1, crs(pop_2025)), "sum")`. Construis un tibble avec les totaux WorldPop par région.
+2. **b.** Compare `sum(regions_pop$pop_worldpop_2025)` avec `sum(pop_adm1$T_TL)`. **Quel est l'écart en %** ?
+3. **c.** **WorldPop constrained est-il contraint par les chiffres officiels ?** Si oui, comment expliquer l'écart résiduel ? (indice : année de référence du recensement, version du modèle, méthode de pondération)
+4. **d.** Produis une carte côte-à-côte 2015 vs 2025 avec **breaks communs** (`quantile(c(values(r1), values(r2)), seq(0,1,length.out=8), na.rm=TRUE)`). Pourquoi cette précaution est-elle essentielle ?
+
+# Q9b — Projection 2030 et limites {#sec-q9b}
+
+> Référence démo : Exercice 4b.
+
+1. **a.** Extrais l'effectif Mfoundi en 2030. Construis un tableau `tibble(annee = c(2015, 2025, 2030), population = ...)`.
+2. **b.** **La croissance entre 2025 et 2030 est-elle du même ordre que 2015-2025** ?
+3. **c.** **Sur quelles hypothèses repose une projection WorldPop pour 2030** ? (indice : SSP, fécondité, migration)
+4. **d.** Dans quel cas une projection peut-elle **diverger fortement de la réalité** ? Cite un cas camerounais récent.
+
+# Q10 — Zone personnalisée (devoir individuel) {#sec-q10}
+
+> Référence démo : Exercice 5. Nécessite session R interactive.
+
+1. **a.** Dessine **ta propre zone** sur l'imagerie satellite avec `mapedit::editMap()` : un quartier, ton campus, un marché, un corridor routier, une zone rurale.
+2. **b.** Extrais sa population avec le pipeline crop+mask+global.
+3. **c.** **Compare ton effectif** avec celui d'un(e) voisin(e) qui a dessiné la même zone. Obtiens-tu le même résultat ? Pourquoi peut-il y avoir des différences ?
+4. **d.** Quelle information supplémentaire serait nécessaire pour **valider cet effectif** ?
+
+# Q11 — Comparer plusieurs villes {#sec-q11}
+
+> Référence démo : Exercice 5b.
+
+Avec le tableau `pop_villes` (Douala, Yaoundé, Bafoussam, Bamenda, Garoua) :
+
+1. **a.** **Quelle ville a la plus forte croissance relative** entre 2015 et 2025 ?
+2. **b.** Compare Douala et Yaoundé : **laquelle a la plus forte population absolue** ?
+3. **c.** **Ajoute une autre ville de ton choix** au vecteur `villes_dept` (indice : tu peux choisir Maroua → Diamaré, Buea → Fako, Ngaoundéré → Vina, Ebolowa → Mvila…). Refais tourner le pipeline.
+
+# Q12 — Densité : pourquoi log ? {#sec-q12}
+
+> Référence démo : Exercice 6.
+
+1. **a.** Calcule `densite_hab_km2 = T_TL / surface_km2` par région. Affiche le min et le max — quel est le facteur de variation ?
+2. **b.** **Pourquoi une échelle logarithmique est-elle nécessaire** ici ? (que se passe-t-il avec une échelle linéaire ?)
+3. **c.** **Quelle différence entre la carte de population totale (Q2) et cette carte de densité** ?
+4. **d.** Laquelle est plus adaptée pour **comparer des régions de tailles différentes** ? Donne un exemple d'usage où l'une est préférable à l'autre.
+
+# Q13 — Structure par âge {#sec-q13}
+
+> Référence démo : Exercice 7.
+
+Avec le tableau `pop_age` pivoté sur deux régions au choix :
+
+1. **a.** **Choisis deux régions à comparer** (différentes de Centre/Adamawa du démo). Justifie ton choix.
+2. **b.** Quelle région a une **population plus jeune** ?
+3. **c.** WorldPop ne différencie pas les âges au niveau de la cellule. **Comment pallier cette limite** dans une analyse de la population scolarisable (par exemple cibler les enfants de 6-11 ans pour le primaire) ?
+
+# Q14 — WorldPop vs GHSL — méthodologie {#sec-q14}
+
+> Référence démo : Exercice 8. Nécessite la mosaïque GHSL préalable.
+
+Sur le tableau `regions_comparaison` (écart WorldPop vs GHSL par région) :
+
+1. **a.** **Dans quelles régions l'écart est-il le plus grand** ? Top 3.
+2. **b.** **L'écart est-il systématiquement dans le même sens** (GHSL > WorldPop ou l'inverse) ? Si non, où change-t-il de signe ?
+3. **c.** Dans quel cas **préférer GHSL à WorldPop** pour une analyse démographique ?
+4. **d.** **Pourquoi WorldPop constrained est-il plus proche du CSV officiel** que GHS-POP ?
+
+# Q-final — Devoir de synthèse {#sec-qfinal}
+
+> ⏱ **~30 minutes**, à rédiger en commentaire dans un script R `R/jour07_synthese.R` ou dans un Quarto `synthese_jour07.qmd`.
+
+Réponds aux 5 questions de débrief avec le ton d'un statisticien INS qui présente la méthode à un décideur politique :
+
+1. **Quelle différence fondamentale entre un choroplèthe administratif et une grille de population** ? Donne un cas où chacun est plus approprié.
+2. **Pourquoi les totaux WorldPop diffèrent-ils des chiffres du recensement** ? Cite au moins 3 raisons.
+3. **Dans quel cas préférer WorldPop à GHS-POP** ? Et inversement ?
+4. **Quelles précautions** avant de publier un effectif tiré d'une grille (référence Q10 sur la sensibilité au contour) ?
+5. **Comment exploiter les groupes d'âge du CSV** pour cibler une intervention (santé, scolarisation, planification familiale) ? Donne un exemple chiffré camerounais.
+
+## Critères de réussite
+
+- ☐ Toutes les valeurs numériques sont cohérentes avec les ordres de grandeur officiels (Yaoundé 2025 entre 1,5 et 2 M ; Douala entre 2,5 et 3 M ; total Cameroun ~28 M).
+- ☐ Les choix méthodologiques sont **explicités** (pourquoi quantile, pourquoi log, pourquoi divergente).
+- ☐ Les **questions critiques** d'Edith sont traitées avec un argument et un chiffre.
+- ☐ Au moins une carte est **exportée en PNG** (`ggsave` ou `tmap_save`) avec dpi ≥ 180.
+- ☐ Une trace écrite (commentaires) accompagne les choix.
+
+## Bonus
+
+- Refais l'Exercice 4 sur la **part de la croissance qui passe par les chefs-lieux** (Wouri pour le Littoral, Mfoundi pour le Centre, etc.) plutôt que par les régions entières.
+- Croise l'évolution 2015-2025 avec les chiffres officiels du BUCREP (ECAM, Anbus) si tu y as accès.
+
+# Si tu bloques
+
+- Relis le module correspondant dans `demo.qmd`.
+- Le corrigé est dans `corrige.qmd`, à n'ouvrir qu'**après** ta tentative.
+- Le script `demo.R` reproduit le pipeline complet d'Edith en condensé — utile comme antisèche structurelle, mais essaie d'abord avec ta logique.
+
+Bonne pratique !

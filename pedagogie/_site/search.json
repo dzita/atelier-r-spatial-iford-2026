@@ -705,5 +705,89 @@
     "title": "J6 — Statistiques spatiales sur OSM Cameroun",
     "section": "12. Pour aller plus loin",
     "text": "12. Pour aller plus loin\nLa version desktop demo.qmd utilise spdep avec les tests asymptotiques officiels. Elle inclut le diagramme de Moran et permet d’éprouver des matrices de poids alternatives (k plus proches voisins, distance fixe). Le devoir Q6 (exercice.qmd) propose de refaire le pipeline sur une sous-catégorie de facilités (pharmacies, hôpitaux).\n← Retour à l’accueil"
+  },
+  {
+    "objectID": "J07_population_haute_resolution/runtime.html",
+    "href": "J07_population_haute_resolution/runtime.html",
+    "title": "J7 — Cartographie de la population à haute résolution",
+    "section": "",
+    "text": "Mode d’emploi. Cliquez Run code dans chaque cellule. WebR charge sf et terra au premier appel (~25 s la première fois). Tout tourne dans votre navigateur — aucune installation locale.\nNote technique : tmap mode view, mapedit et exactextractr ne sont pas portables sur WebR. Le runtime utilise ggplot2 + geom_sf et tidyterra::geom_spatraster (ou directement terra::plot). Pour l’expérience complète (mosaïque GHSL, dessin de zone interactive avec mapedit, agrégation exactextractr, comparaison WorldPop vs GHSL), voir la version desktop dans demo.qmd (à exécuter sous RStudio).\nDonnées 100 % réelles : extraits WorldPop constrained R2025A pour le département du Mfoundi (Yaoundé), produits par le script pedagogie/_commons/data/jour_07_extraits/00_extraire_pop_pour_webr.R côté animateur à partir des microdonnées d’Edith Darin (Drive workshop_material/jour_07). Aucun raster simulé.\nConception pédagogique : Edith Darin (GDSG/IFORD). Intégration runtime : Ramesesse Dzita."
+  },
+  {
+    "objectID": "J07_population_haute_resolution/runtime.html#charger-le-csv-admin-pop-et-la-couche-adm1",
+    "href": "J07_population_haute_resolution/runtime.html#charger-le-csv-admin-pop-et-la-couche-adm1",
+    "title": "J7 — Cartographie de la population à haute résolution",
+    "section": "1. Charger le CSV admin-pop et la couche ADM1",
+    "text": "1. Charger le CSV admin-pop et la couche ADM1"
+  },
+  {
+    "objectID": "J07_population_haute_resolution/runtime.html#choroplèthe-de-la-population-totale-par-région-exercice-0",
+    "href": "J07_population_haute_resolution/runtime.html#choroplèthe-de-la-population-totale-par-région-exercice-0",
+    "title": "J7 — Cartographie de la population à haute résolution",
+    "section": "2. Choroplèthe de la population totale par région (Exercice 0)",
+    "text": "2. Choroplèthe de la population totale par région (Exercice 0)\nGADM utilise les noms français pour le Cameroun → clé ADM1_FR. La jointure doit retourner 0 NA si toutes les régions matchent."
+  },
+  {
+    "objectID": "J07_population_haute_resolution/runtime.html#variable-dérivée-ratio-fh-exercice-0b",
+    "href": "J07_population_haute_resolution/runtime.html#variable-dérivée-ratio-fh-exercice-0b",
+    "title": "J7 — Cartographie de la population à haute résolution",
+    "section": "3. Variable dérivée : ratio F/H (Exercice 0b)",
+    "text": "3. Variable dérivée : ratio F/H (Exercice 0b)\nmutate(ratio_fm = F_TL / M_TL) crée une nouvelle colonne. La palette divergente scale_fill_gradient2(midpoint = 1) centre sur l’équilibre démographique."
+  },
+  {
+    "objectID": "J07_population_haute_resolution/runtime.html#part-de-la-population-jeune-exercice-0c",
+    "href": "J07_population_haute_resolution/runtime.html#part-de-la-population-jeune-exercice-0c",
+    "title": "J7 — Cartographie de la population à haute résolution",
+    "section": "4. Part de la population jeune (Exercice 0c)",
+    "text": "4. Part de la population jeune (Exercice 0c)"
+  },
+  {
+    "objectID": "J07_population_haute_resolution/runtime.html#charger-un-raster-worldpop-extrait-mfoundi",
+    "href": "J07_population_haute_resolution/runtime.html#charger-un-raster-worldpop-extrait-mfoundi",
+    "title": "J7 — Cartographie de la population à haute résolution",
+    "section": "5. Charger un raster WorldPop (extrait Mfoundi)",
+    "text": "5. Charger un raster WorldPop (extrait Mfoundi)\nLes TIF WorldPop complets pèsent ~25 Mo chacun — trop lourd pour WebR. On charge un extrait sur le département du Mfoundi (Yaoundé), recadré et compressé à ~1 Mo."
+  },
+  {
+    "objectID": "J07_population_haute_resolution/runtime.html#visualiser-la-grille-mfoundi-2025-exercice-12",
+    "href": "J07_population_haute_resolution/runtime.html#visualiser-la-grille-mfoundi-2025-exercice-12",
+    "title": "J7 — Cartographie de la population à haute résolution",
+    "section": "6. Visualiser la grille Mfoundi 2025 (Exercice 1+2)",
+    "text": "6. Visualiser la grille Mfoundi 2025 (Exercice 1+2)\nterra::plot est rapide et léger sur WebR."
+  },
+  {
+    "objectID": "J07_population_haute_resolution/runtime.html#calculer-leffectif-total-exercice-2",
+    "href": "J07_population_haute_resolution/runtime.html#calculer-leffectif-total-exercice-2",
+    "title": "J7 — Cartographie de la population à haute résolution",
+    "section": "7. Calculer l’effectif total (Exercice 2)",
+    "text": "7. Calculer l’effectif total (Exercice 2)"
+  },
+  {
+    "objectID": "J07_population_haute_resolution/runtime.html#trajectoire-2015-2030-exercice-4b",
+    "href": "J07_population_haute_resolution/runtime.html#trajectoire-2015-2030-exercice-4b",
+    "title": "J7 — Cartographie de la population à haute résolution",
+    "section": "8. Trajectoire 2015-2030 (Exercice 4b)",
+    "text": "8. Trajectoire 2015-2030 (Exercice 4b)"
+  },
+  {
+    "objectID": "J07_population_haute_resolution/runtime.html#carte-des-3-époques-côte-à-côte",
+    "href": "J07_population_haute_resolution/runtime.html#carte-des-3-époques-côte-à-côte",
+    "title": "J7 — Cartographie de la population à haute résolution",
+    "section": "9. Carte des 3 époques côte-à-côte",
+    "text": "9. Carte des 3 époques côte-à-côte\nAvec terra::plot sur les trois rasters avec une plage de valeurs commune pour rendre la comparaison visuelle juste."
+  },
+  {
+    "objectID": "J07_population_haute_resolution/runtime.html#densité-par-région-avec-échelle-log-exercice-6",
+    "href": "J07_population_haute_resolution/runtime.html#densité-par-région-avec-échelle-log-exercice-6",
+    "title": "J7 — Cartographie de la population à haute résolution",
+    "section": "10. Densité par région avec échelle log (Exercice 6)",
+    "text": "10. Densité par région avec échelle log (Exercice 6)"
+  },
+  {
+    "objectID": "J07_population_haute_resolution/runtime.html#pour-aller-plus-loin",
+    "href": "J07_population_haute_resolution/runtime.html#pour-aller-plus-loin",
+    "title": "J7 — Cartographie de la population à haute résolution",
+    "section": "11. Pour aller plus loin",
+    "text": "11. Pour aller plus loin\nLa version desktop demo.qmd ajoute (à exécuter sous RStudio) :\n\n\nExercice 5 : zone personnalisée dessinée à la main avec mapedit::editMap() (interactif, non portable WebR).\n\nExercice 5b : comparaison de 5 villes (Douala, Yaoundé, Bafoussam, Bamenda, Garoua) via lapply + bind_rows.\n\nExercice 7 : distribution par âge entre 2 régions (pivot_longer + geom_col) — réalisable ici aussi sur pop_adm1.\n\nExercice 8 : pipeline complet GHSL (7 tuiles ZIP Mollweide → sprc → mosaic → project vers WGS84 → mask Cameroun → comparaison WorldPop vs GHSL). Lourd à exécuter (~1 min), non portable WebR.\n\nCarte interactive Leaflet via tmap_mode(\"view\") avec fond satellite Esri.\n\nLe devoir individuel (14 questions Edith + Q-final 5 questions de synthèse pour décideur) est dans exercice.qmd.\n← Retour à l’accueil"
   }
 ]

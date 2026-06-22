@@ -1,0 +1,799 @@
+---
+title: "J7 — Cartographie de la population à haute résolution"
+subtitle: "Atelier IFORD × GDSG · Yaoundé · 4 août 2026"
+author: "Edith Darin (conception complète) · Ramesesse Dzita (intégration IFORD)"
+date: "2026-08-04"
+lang: fr
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    number-sections: true
+    code-fold: false
+    code-tools: true
+    theme: cosmo
+    df-print: paged
+  pdf:
+    toc: true
+    number-sections: true
+execute:
+  echo: true
+  warning: false
+  message: false
+bibliography: ../_commons/helpers/citations.bib
+---
+
+# Objectifs et plan {#sec-objectifs}
+
+Septième jour : on bascule de l'**agrégat administratif** (le ménage, la région, le département vus jusqu'à J6) vers la **cartographie carroyée** — chaque cellule de 100 m × 100 m porte une estimation de population. Cette résolution change tout : on peut cibler un quartier, un campus, un corridor routier, une zone informelle. On apprend à manipuler trois produits mondiaux (WorldPop, GHSL, données administratives COD-PS), à les comparer méthodologiquement, et à extraire la population de n'importe quelle zone d'intérêt.
+
+Le matériel suit l'**architecture en 9 exercices** conçue par Edith Darin (Senior Researcher, ex-WorldPop/Oxford, GDSG/IFORD). On préserve fidèlement ses choix méthodologiques et son progression pédagogique, en ajoutant la convention IFORD « expliquer chaque commande avant son exécution ».
+
+# Setup commun {#sec-setup}
+
+On charge les packages du jour et le helper IFORD qui résout les chemins vers les datasets (WorldPop, GADM, COD-PS) sans avoir à se soucier du `working directory`.
+
+```{r}
+#| label: setup
+library(sf)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(readr)
+library(terra)
+library(tmap)
+library(exactextractr)
+library(scales)
+library(tibble)
+# `mapedit` et `leaflet` sont charges plus loin dans l'Exercice 5 uniquement
+# (session R interactive obligatoire, bloc en eval: false dans le rendu HTML).
+
+source("../_commons/helpers/fetch_data.R")
+```
+
+Les helpers `fetch_*()` du J7 pointent vers `pedagogie/datasets/cameroun/jour_07_population/` (les TIF lourds sont exclus du repo via `.gitignore` mais restent en local pour la démo).
+
+# Exercice 0 — Choroplèthe de la population administrative {#sec-ex0}
+
+> **Objectif** : joindre la table `cmr_admpop_adm1_2025.csv` (population OCHA COD-PS) aux limites GADM et produire un choroplèthe de la population totale.
+
+## Charger les deux jeux
+
+`read_csv` lit la table tabulaire. `st_read` lit une couche spécifique d'un GeoPackage (un fichier GPKG peut contenir plusieurs couches — ici `ADM_ADM_1`, `ADM_ADM_2`, `ADM_ADM_0`).
+
+```{r}
+#| label: ex0-load
+pop_adm1 <- read_csv(fetch_admpop_adm1_cmr_2025(), show_col_types = FALSE)
+cmr1     <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_1", quiet = TRUE)
+
+cat("CSV :", nrow(pop_adm1), "lignes,", ncol(pop_adm1), "colonnes\n")
+cat("GADM ADM1 :", nrow(cmr1), "régions / CRS :", st_crs(cmr1)$input, "\n")
+```
+
+## Diagnostic de jointure : comparer les clés
+
+`setdiff(x, y)` retourne les éléments de `x` absents de `y`. C'est notre arme pour quantifier les non-correspondances **avant** la jointure. GADM stocke parfois les noms en français, parfois en anglais — il faut tester les deux clés.
+
+```{r}
+#| label: ex0-cles
+cat("Non-correspondances ADM1_EN :",
+    paste(setdiff(cmr1$NAME_1, pop_adm1$ADM1_EN), collapse = ", "), "\n")
+cat("Non-correspondances ADM1_FR :",
+    paste(setdiff(cmr1$NAME_1, pop_adm1$ADM1_FR), collapse = ", "), "\n")
+```
+
+::: {.callout-tip title="Point formateur (Edith)"}
+GADM utilise souvent les noms français pour le Cameroun → `ADM1_FR`. Toujours afficher les deux séries de noms avant de choisir la clé. `T_TL` = total, `F_TL` = femmes, `M_TL` = hommes ; le CSV contient aussi `T_00_04`...`T_80Plus` pour la pyramide des âges.
+:::
+
+## Jointure et vérification
+
+```{r}
+#| label: ex0-join
+cmr1_pop <- cmr1 |>
+  left_join(pop_adm1 |> select(ADM1_FR, T_TL, F_TL, M_TL),
+            by = c("NAME_1" = "ADM1_FR"))
+
+cat("Régions sans match (NA dans T_TL) :", sum(is.na(cmr1_pop$T_TL)), "\n")
+```
+
+Si zéro NA : jointure complète, on peut cartographier en confiance.
+
+## Choroplèthe
+
+`geom_sf` rend les polygones ; `aes(fill = T_TL)` mappe la couleur sur la population totale. `scale_fill_viridis_c(option = "plasma")` applique une palette continue (jaune → magenta) lisible et perceptuellement uniforme. `labels = comma` formate les milliers (`1,234,567`).
+
+```{r}
+#| label: ex0-carte
+#| fig-width: 8
+#| fig-height: 7
+ggplot(cmr1_pop) +
+  geom_sf(aes(fill = T_TL), colour = "white", linewidth = 0.3) +
+  scale_fill_viridis_c(option = "plasma", labels = comma) +
+  labs(title    = "Population par région au Cameroun, 2025",
+       subtitle = "Source : OCHA COD-PS Cameroun (cmr_admpop_adm1_2025)",
+       fill     = "Population") +
+  theme_minimal()
+```
+
+::: {.callout-warning title="Question 2 (Edith)"}
+Quelle région a la population la plus élevée ? La plus faible ? Pourquoi un choroplèthe peut-il être **trompeur** pour comparer des régions de tailles très différentes ?
+:::
+
+# Exercice 0b — Ratio femmes/hommes {#sec-ex0b}
+
+> **Objectif** : calculer et cartographier le ratio F/H par région. Introduire la notion de **variable dérivée** et la palette divergente.
+
+`mutate(ratio_fm = F_TL / M_TL)` crée une nouvelle colonne. `scale_fill_gradient2(midpoint = 1)` centre la palette sur 1 : les valeurs > 1 (plus de femmes) virent au rouge, < 1 (plus d'hommes) au bleu. C'est l'usage canonique des **palettes divergentes**.
+
+```{r}
+#| label: ex0b-ratio
+#| fig-width: 8
+#| fig-height: 7
+cmr1_pop <- cmr1_pop |> mutate(ratio_fm = F_TL / M_TL)
+
+ggplot(cmr1_pop) +
+  geom_sf(aes(fill = ratio_fm), colour = "white", linewidth = 0.3) +
+  scale_fill_gradient2(
+    low      = "#2166AC",
+    mid      = "white",
+    high     = "#B2182B",
+    midpoint = 1,
+    labels   = number_format(accuracy = 0.01)
+  ) +
+  labs(title = "Ratio femmes / hommes par région, Cameroun 2025",
+       fill  = "F/H") +
+  theme_minimal()
+```
+
+::: {.callout-warning title="Question 3 (Edith)"}
+Que signifie un ratio > 1 ? < 1 ? Dans quelles régions le déséquilibre est-il le plus marqué ? Quelles explications (migrations vers les villes, régions agricoles…) ?
+:::
+
+# Exercice 0c — Part de la population jeune {#sec-ex0c}
+
+> **Objectif** : calculer la part des 0-14 ans dans la population totale via agrégation de colonnes d'âge.
+
+La table COD-PS contient une **pyramide des âges** : `T_00_04`, `T_05_09`, `T_10_14`, … On somme les 3 premières classes pour obtenir les < 15 ans, puis on rapporte au total `T_TL` pour avoir la part en pourcentage.
+
+```{r}
+#| label: ex0c-jeunes
+#| fig-width: 8
+#| fig-height: 7
+cmr1_pop <- cmr1_pop |>
+  left_join(
+    pop_adm1 |>
+      mutate(jeunes_0_14     = T_00_04 + T_05_09 + T_10_14,
+             part_jeunes_pct = 100 * jeunes_0_14 / T_TL) |>
+      select(ADM1_FR, jeunes_0_14, part_jeunes_pct),
+    by = c("NAME_1" = "ADM1_FR")
+  )
+
+ggplot(cmr1_pop) +
+  geom_sf(aes(fill = part_jeunes_pct), colour = "white", linewidth = 0.3) +
+  scale_fill_viridis_c(option = "magma") +
+  labs(title    = "Part de la population de moins de 15 ans",
+       subtitle = "Cameroun, 2025",
+       fill     = "% 0-14 ans") +
+  theme_minimal()
+```
+
+::: {.callout-warning title="Question 4 (Edith)"}
+Quelles régions ont la plus forte proportion de jeunes ? Y a-t-il une corrélation avec la population totale de la région ?
+:::
+
+# Exercice 1 — Grille WorldPop 2025 avec tmap {#sec-ex1}
+
+> **Objectif** : charger le raster WorldPop 2025 et l'explorer de façon interactive.
+
+`rast()` ouvre le GeoTIFF sans charger les pixels en RAM (pointeur sur disque). `print(raster)` affiche les métadonnées : dimensions, CRS, étendue, résolution.
+
+```{r}
+#| label: ex1-load
+pop_2025 <- rast(fetch_worldpop_constrained_cmr(2025))
+print(pop_2025)
+cat("Résolution (degrés) :", res(pop_2025), "\n")
+cat("Nombre de cellules :", ncell(pop_2025), "\n")
+cat("CRS :", crs(pop_2025, describe = TRUE)$name, "\n")
+```
+
+::: {.callout-note title="Question 5 (Edith)"}
+Quelle est la résolution en degrés ? À combien de mètres cela correspond-il à l'équateur ? Que représente la valeur d'une cellule ?
+:::
+
+## Visualisation interactive
+
+`tmap_mode("view")` bascule en Leaflet : zoom, clic sur les cellules pour lire la valeur. `tm_scale_intervals(n = 7, style = "quantile")` découpe en 7 classes égales en effectif (la palette `brewer.yl_or_rd` est séquentielle jaune→rouge, adaptée pour une variable positive).
+
+```{r}
+#| label: ex1-view
+#| eval: false
+tmap_mode("view")
+
+tm_shape(pop_2025) +
+  tm_raster(
+    col.scale  = tm_scale_intervals(n = 7, style = "quantile",
+                                    values = "brewer.yl_or_rd"),
+    col.legend = tm_legend(title = "Population (hab/cellule)"),
+    col_alpha  = 0.8
+  ) +
+  tm_shape(cmr1) +
+  tm_borders(col = "grey30", lwd = 0.5)
+```
+
+::: {.callout-warning title="Question 6 (Edith)"}
+Quelles zones montrent la plus forte concentration de population ? À quoi ressemble la grille autour de Yaoundé et Douala ?
+:::
+
+## Mode statique pour export
+
+```{r}
+#| label: ex1-static
+#| fig-width: 8
+#| fig-height: 6
+tmap_mode("plot")
+
+tm_shape(pop_2025) +
+  tm_raster(
+    col.scale  = tm_scale_intervals(n = 7, style = "quantile",
+                                    values = "brewer.yl_or_rd"),
+    col.legend = tm_legend(title = "Population (hab/cellule)")
+  ) +
+  tm_shape(cmr1) +
+  tm_borders(col = "grey40", lwd = 0.5) +
+  tm_title("Population carroyée WorldPop 2025 — Cameroun")
+```
+
+# Exercice 2 — Population à Yaoundé en 2025 {#sec-ex2}
+
+> **Objectif** : localiser Yaoundé dans ADM2, recadrer le raster sur le département du Mfoundi et calculer la population estimée.
+
+## Filtrer le département du Mfoundi
+
+Yaoundé est dans le **département du Mfoundi**, région Centre. `filter(NAME_2 == "Mfoundi")` extrait le polygone correspondant depuis ADM2.
+
+```{r}
+#| label: ex2-mfoundi
+cmr2    <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_2", quiet = TRUE)
+yaounde <- cmr2 |> filter(NAME_2 == "Mfoundi")
+cat("Mfoundi (Yaoundé) :", as.numeric(st_area(yaounde)) / 1e6, "km²\n")
+```
+
+## Crop + mask + global
+
+Trois étapes systématiques pour extraire un effectif :
+
+1. **Reprojeter** le polygone dans le CRS du raster (sinon erreur). `vect()` convertit un objet `sf` en `SpatVector` (le format de `terra`).
+2. `crop(raster, polygone)` réduit le raster à l'emprise rectangulaire du polygone (gain mémoire).
+3. `mask(raster, polygone)` met `NA` hors du polygone précis.
+4. `global(raster, "sum", na.rm = TRUE)` somme toutes les cellules non-NA.
+
+```{r}
+#| label: ex2-extract
+yaounde_v        <- vect(st_transform(yaounde, crs(pop_2025)))
+pop_2025_yde     <- mask(crop(pop_2025, yaounde_v), yaounde_v)
+pop_yaounde_2025 <- global(pop_2025_yde, "sum", na.rm = TRUE)$sum
+
+cat("Population estimée à Yaoundé (Mfoundi) en 2025 :",
+    format(round(pop_yaounde_2025), big.mark = " "), "habitants\n")
+```
+
+## Carte avec superposition satellite
+
+`tm_basemap(c("Esri.WorldImagery", "OpenStreetMap"))` ajoute un sélecteur de fond de carte dans le Viewer. Permet de basculer entre satellite (voir le bâti réel) et OSM (voir les voies et noms) — superposer WorldPop dessus révèle les concordances et écarts.
+
+```{r}
+#| label: ex2-carte-satellite
+#| eval: false
+tmap_mode("view")
+
+tm_basemap(c("Esri.WorldImagery", "OpenStreetMap")) +
+  tm_shape(pop_2025_yde) +
+  tm_raster(
+    col.scale  = tm_scale_intervals(n = 7, style = "quantile",
+                                    values = "brewer.yl_or_rd"),
+    col.legend = tm_legend(title = "Population (hab/cellule)"),
+    col_alpha  = 0.6
+  ) +
+  tm_shape(yaounde) +
+  tm_borders(col = "white", lwd = 2) +
+  tm_title("WorldPop 2025 sur imagerie satellite — Yaoundé")
+```
+
+::: {.callout-tip title="Point formateur (Edith)"}
+Observations à commenter avec les étudiants : (i) les fortes valeurs WorldPop coïncident avec les zones de bâti dense ; (ii) les zones périurbaines récentes ou informelles peuvent être sous-estimées ; (iii) la végétation (forêt, parcs, berges) a des valeurs proches de zéro ; (iv) la résolution de 100 m lisse les variations infra-bloc.
+:::
+
+::: {.callout-warning title="Question 7 (Edith)"}
+La population semble-t-elle uniformément distribuée dans le département ? Les fortes valeurs WorldPop coïncident-elles avec les zones de bâti dense visibles sur le satellite ?
+:::
+
+# Exercice 3 — Population à Yaoundé en 2015 (autonomie) {#sec-ex3}
+
+> **Objectif** : reproduire l'exercice 2 sur l'année 2015. Structure identique — c'est l'occasion d'insister sur la **réutilisation de code**.
+
+```{r}
+#| label: ex3-2015
+pop_2015         <- rast(fetch_worldpop_constrained_cmr(2015))
+yaounde_v_2015   <- vect(st_transform(yaounde, crs(pop_2015)))
+pop_2015_yde     <- mask(crop(pop_2015, yaounde_v_2015), yaounde_v_2015)
+pop_yaounde_2015 <- global(pop_2015_yde, "sum", na.rm = TRUE)$sum
+
+cat("Population estimée à Yaoundé en 2015 :",
+    format(round(pop_yaounde_2015), big.mark = " "), "habitants\n")
+```
+
+::: {.callout-warning title="Question 8 (Edith)"}
+La carte 2015 ressemble-t-elle à celle de 2025 ? Quels changements observez-vous visuellement (zones nouvellement bâties, densification du centre, étalement urbain) ?
+:::
+
+# Exercice 4 — Comparaison 2015-2025 + agrégation par région {#sec-ex4}
+
+> **Objectif** : comparer les effectifs Yaoundé 2015 vs 2025 puis agréger la grille WorldPop par région.
+
+## Comparaison directe Yaoundé
+
+```{r}
+#| label: ex4-yde
+cat("2015 :", format(round(pop_yaounde_2015), big.mark = " "), "habitants\n")
+cat("2025 :", format(round(pop_yaounde_2025), big.mark = " "), "habitants\n")
+cat("Croissance :",
+    round(100 * (pop_yaounde_2025 - pop_yaounde_2015) / pop_yaounde_2015, 1),
+    "%\n")
+```
+
+## Agrégation par région avec `exactextractr`
+
+`exact_extract(raster, polygones, "sum")` est **5 à 10× plus rapide** que `terra::extract` sur des gros rasters, parce qu'il exploite la fraction de chaque pixel qui tombe dans le polygone (précision aux bords + parallélisation interne).
+
+```{r}
+#| label: ex4-extract
+pop_2025_par_region <- exact_extract(pop_2025,
+                                     st_transform(cmr1, crs(pop_2025)), "sum")
+pop_2015_par_region <- exact_extract(pop_2015,
+                                     st_transform(cmr1, crs(pop_2015)), "sum")
+
+regions_pop <- cmr1 |>
+  st_drop_geometry() |>
+  select(NAME_1) |>
+  mutate(pop_worldpop_2015 = round(pop_2015_par_region),
+         pop_worldpop_2025 = round(pop_2025_par_region),
+         variation         = pop_worldpop_2025 - pop_worldpop_2015,
+         croissance_pct    = round(100 * variation / pop_worldpop_2015, 1)) |>
+  arrange(desc(pop_worldpop_2025))
+
+regions_pop
+```
+
+## Confronter WorldPop au CSV officiel
+
+```{r}
+#| label: ex4-totaux
+cat("Total WorldPop 2025  :", format(sum(regions_pop$pop_worldpop_2025), big.mark = " "), "\n")
+cat("Total officiel CSV   :", format(sum(pop_adm1$T_TL), big.mark = " "), "\n")
+cat("Écart relatif        :",
+    round(100 * (sum(regions_pop$pop_worldpop_2025) - sum(pop_adm1$T_TL)) /
+          sum(pop_adm1$T_TL), 2), "%\n")
+```
+
+::: {.callout-warning title="Question 9 (Edith)"}
+Quel est l'écart en % entre le total WorldPop 2025 et le total officiel du CSV ? Comment l'expliquer ? WorldPop est-il contraint par les chiffres officiels ?
+:::
+
+## Carte côte-à-côte avec breaks communs
+
+**Règle d'or** : pour comparer 2 cartes raster temporelles, il faut des **classes communes**, sinon le biais visuel est garanti. On calcule les quantiles **sur la concaténation des deux rasters**.
+
+```{r}
+#| label: ex4-arrange
+#| fig-width: 12
+#| fig-height: 5
+cmr0          <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_0", quiet = TRUE)
+cmr0_v_2025   <- vect(st_transform(cmr0, crs(pop_2025)))
+pop_2025_cmr  <- mask(crop(pop_2025, cmr0_v_2025), cmr0_v_2025)
+cmr0_v_2015   <- vect(st_transform(cmr0, crs(pop_2015)))
+pop_2015_cmr  <- mask(crop(pop_2015, cmr0_v_2015), cmr0_v_2015)
+
+breaks_communs <- quantile(
+  c(values(pop_2025_cmr), values(pop_2015_cmr)),
+  probs = seq(0, 1, length.out = 8), na.rm = TRUE
+)
+
+tmap_mode("plot")
+tmap_arrange(
+  tm_shape(pop_2015_cmr) +
+    tm_raster(col.scale = tm_scale_intervals(breaks = breaks_communs,
+                                             values = "brewer.yl_or_rd")) +
+    tm_shape(cmr1) + tm_borders(col = "grey40", lwd = 0.3) +
+    tm_title("2015"),
+  tm_shape(pop_2025_cmr) +
+    tm_raster(col.scale = tm_scale_intervals(breaks = breaks_communs,
+                                             values = "brewer.yl_or_rd")) +
+    tm_shape(cmr1) + tm_borders(col = "grey40", lwd = 0.3) +
+    tm_title("2025"),
+  ncol = 2
+)
+```
+
+# Exercice 4b — Projection WorldPop 2030 {#sec-ex4b}
+
+> **Objectif** : étendre la comparaison temporelle à 2030 pour visualiser la trajectoire de croissance de Yaoundé.
+
+```{r}
+#| label: ex4b-2030
+pop_2030         <- rast(fetch_worldpop_constrained_cmr(2030))
+yaounde_v_2030   <- vect(st_transform(yaounde, crs(pop_2030)))
+pop_2030_yde     <- mask(crop(pop_2030, yaounde_v_2030), yaounde_v_2030)
+pop_yaounde_2030 <- global(pop_2030_yde, "sum", na.rm = TRUE)$sum
+
+evol_yaounde <- tibble(
+  annee      = c(2015, 2025, 2030),
+  population = c(round(pop_yaounde_2015),
+                 round(pop_yaounde_2025),
+                 round(pop_yaounde_2030))
+) |>
+  mutate(croissance_vs_2015 = round(100 * (population - population[1]) /
+                                    population[1], 1))
+
+evol_yaounde
+```
+
+## Graphique d'évolution
+
+```{r}
+#| label: ex4b-graph
+#| fig-width: 7
+#| fig-height: 5
+ggplot(evol_yaounde, aes(x = annee, y = population)) +
+  geom_line(colour = "#2C7FB8", linewidth = 1) +
+  geom_point(colour = "#2C7FB8", size = 3) +
+  scale_y_continuous(labels = comma) +
+  scale_x_continuous(breaks = c(2015, 2025, 2030)) +
+  labs(title    = "Évolution de la population à Yaoundé (Mfoundi)",
+       subtitle = "WorldPop constrained — 2015, 2025, 2030",
+       x = "Année", y = "Population estimée") +
+  theme_minimal()
+```
+
+::: {.callout-warning title="Question 9b (Edith)"}
+La croissance entre 2025 et 2030 est-elle du même ordre que 2015-2025 ? Sur quelles hypothèses repose une projection WorldPop pour 2030 ? Dans quel cas une projection peut-elle diverger fortement de la réalité ?
+:::
+
+# Exercice 5 — Zone personnalisée dessinée à la main {#sec-ex5}
+
+> **Objectif** : choisir une zone sur l'imagerie satellite, la dessiner avec `mapedit` et extraire sa population.
+
+`mapedit::editMap()` ouvre une carte Leaflet interactive dans le Viewer RStudio. L'outil polygone (icône crayon) permet de tracer des contours libres. Bouton « Done » → retourne un objet `sf` avec les géométries dessinées.
+
+```{r}
+#| label: ex5-mapedit
+#| eval: false
+zone_etudiants <- mapedit::editMap(
+  leaflet::leaflet() |>
+    leaflet::addProviderTiles("Esri.WorldImagery") |>
+    leaflet::setView(lng = 11.52, lat = 3.86, zoom = 12)
+)$finished
+```
+
+Une fois la zone dessinée, on extrait sa population avec le même pattern crop + mask + global qu'en exercice 2 :
+
+```{r}
+#| label: ex5-extract
+#| eval: false
+zone_v         <- vect(st_transform(zone_etudiants, crs(pop_2025)))
+pop_zone       <- mask(crop(pop_2025, zone_v), zone_v)
+pop_zone_total <- global(pop_zone, "sum", na.rm = TRUE)$sum
+
+cat("Population de votre zone :",
+    format(round(pop_zone_total), big.mark = " "), "habitants\n")
+```
+
+::: {.callout-tip title="Point formateur (Edith)"}
+Demander à chaque étudiant d'annoncer son effectif et sa zone. Comparer les résultats : même zone dessinée différemment peut donner des valeurs très différentes — illustration parfaite de la **sensibilité au contour**. Question : en quoi votre zone dessinée diffère-t-elle d'une limite administrative officielle ?
+:::
+
+::: {.callout-warning title="Question 10 (Edith)"}
+Comparez votre effectif avec celui d'un(e) voisin(e) qui a dessiné la même zone. Obtenez-vous le même résultat ? Pourquoi peut-il y avoir des différences ? Quelle information supplémentaire serait nécessaire pour valider cet effectif ?
+:::
+
+**Fallback sans interaction** (utile si `mapedit` plante ou si on script en batch) :
+
+```{r}
+#| label: ex5-fallback
+#| eval: false
+bbox_zone <- st_bbox(c(xmin = 11.48, ymin = 3.82, xmax = 11.58, ymax = 3.93),
+                     crs = st_crs(4326)) |>
+  st_as_sfc() |> st_as_sf()
+zone_v    <- vect(st_transform(bbox_zone, crs(pop_2025)))
+pop_zone  <- mask(crop(pop_2025, zone_v), zone_v)
+cat("Population :", round(global(pop_zone, "sum", na.rm = TRUE)$sum), "\n")
+```
+
+# Exercice 5b — Comparer plusieurs villes {#sec-ex5b}
+
+> **Objectif** : calculer la population WorldPop de plusieurs villes camerounaises et comparer leur croissance 2015-2025. Introduction à `lapply` + `bind_rows` comme alternative tidy à la boucle `for`.
+
+```{r}
+#| label: ex5b-villes
+# Helper : matche les noms avec ou sans accent (GADM peut ecrire
+# "Benoue" ou "Bénoué", "Wouri" ou autres variantes)
+norm_ascii <- function(x) iconv(x, to = "ASCII//TRANSLIT")
+
+villes_dept <- c(
+  "Douala (Wouri)"    = "Wouri",
+  "Yaoundé (Mfoundi)" = "Mfoundi",
+  "Bafoussam (Mifi)"  = "Mifi",
+  "Bamenda (Mezam)"   = "Mezam",
+  "Garoua (Bénoué)"   = "Benoue"
+)
+
+pop_villes <- lapply(names(villes_dept), function(nom) {
+  cible <- norm_ascii(villes_dept[[nom]])
+  dept  <- cmr2 |> filter(norm_ascii(NAME_2) == cible)
+
+  if (nrow(dept) == 0) {
+    message("[Ex 5b] Departement introuvable : ", nom,
+            " (cible : ", villes_dept[[nom]], "). Skip.")
+    return(NULL)
+  }
+  dept_v <- vect(st_transform(dept, crs(pop_2025)))
+  tibble(
+    ville    = nom,
+    pop_2015 = round(global(mask(crop(pop_2015, dept_v), dept_v),
+                            "sum", na.rm = TRUE)$sum),
+    pop_2025 = round(global(mask(crop(pop_2025, dept_v), dept_v),
+                            "sum", na.rm = TRUE)$sum)
+  )
+}) |>
+  bind_rows() |>
+  mutate(croissance_pct = round(100 * (pop_2025 - pop_2015) / pop_2015, 1))
+
+pop_villes
+```
+
+::: {.callout-warning title="Question 11 (Edith)"}
+Quelle ville a la plus forte croissance relative ? Comparez Douala et Yaoundé : laquelle a la plus forte population absolue ? Ajoutez une autre ville de votre choix au vecteur `villes_dept`.
+:::
+
+# Exercice 6 — Densité de population {#sec-ex6}
+
+> **Objectif** : calculer la densité hab/km² et cartographier avec une **échelle logarithmique**.
+
+`st_area(geometry)` retourne la surface en m² (unité du CRS si projeté, sinon planimétrique). On divise par `1e6` pour avoir les km². Pour une variable comme la densité qui varie de < 5 hab/km² (Adamaoua Est) à plusieurs milliers (Mfoundi, Wouri), une échelle **linéaire** écrase tout. Une échelle **logarithmique** (`trans = "log10"`) révèle les contrastes.
+
+```{r}
+#| label: ex6-densite
+#| fig-width: 8
+#| fig-height: 7
+# Note : on extrait l'aire AVANT le mutate. La colonne geometrie d'un sf
+# peut s'appeler "geometry" ou "geom" selon la source (GeoPackage GADM
+# utilise "geom"). sf::st_area() sur l'objet complet trouve toujours la
+# colonne active sans qu'on ait a la nommer.
+cmr1_pop$surface_km2 <- as.numeric(st_area(cmr1_pop)) / 1e6
+
+cmr1_densite <- cmr1_pop |>
+  mutate(densite_hab_km2 = T_TL / surface_km2)
+
+ggplot(cmr1_densite) +
+  geom_sf(aes(fill = densite_hab_km2), colour = "white", linewidth = 0.3) +
+  scale_fill_viridis_c(option = "inferno", trans = "log10",
+                       labels = comma, name = "hab/km² (log)") +
+  labs(title    = "Densité de population par région, Cameroun 2025",
+       subtitle = "Échelle logarithmique") +
+  theme_minimal()
+```
+
+::: {.callout-warning title="Question 12 (Edith)"}
+Pourquoi une échelle logarithmique est-elle nécessaire ici ? Quelle différence entre la carte de population totale et cette carte de densité ? Laquelle est plus adaptée pour comparer des régions de tailles différentes ?
+:::
+
+# Exercice 7 — Distribution par âge entre deux régions {#sec-ex7}
+
+> **Objectif** : exploiter les colonnes `T_00_04`...`T_80Plus` pour visualiser la structure par âge de deux régions et la comparer.
+
+`pivot_longer(cols = starts_with("T_"))` passe du format wide (une colonne par groupe d'âge) au format long (une ligne par couple région × groupe d'âge), ce qui rend ggplot beaucoup plus efficace. `gsub("_", "-", groupe_age)` formate l'étiquette pour la lisibilité.
+
+```{r}
+#| label: ex7-age
+#| fig-width: 10
+#| fig-height: 5
+regions_a_comparer <- c("Centre", "Adamawa")
+
+pop_age <- pop_adm1 |>
+  filter(ADM1_EN %in% regions_a_comparer) |>
+  select(ADM1_EN, starts_with("T_"), -T_TL) |>
+  pivot_longer(cols = starts_with("T_"),
+               names_to = "groupe_age", values_to = "population") |>
+  mutate(groupe_age = sub("T_", "", groupe_age),
+         groupe_age = gsub("_", "-", groupe_age),
+         groupe_age = sub("Plus", "+", groupe_age))
+
+ggplot(pop_age, aes(x = groupe_age, y = population, fill = ADM1_EN)) +
+  geom_col(position = "dodge") +
+  scale_y_continuous(labels = comma) +
+  labs(title = "Structure par âge — comparaison entre deux régions",
+       x = "Groupe d'âge", y = "Population", fill = "Région") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+::: {.callout-warning title="Question 13 (Edith)"}
+Quelle région a une population plus jeune ? WorldPop ne différencie pas les âges : comment pallier cette limite dans une analyse de la population scolarisable par exemple ?
+:::
+
+# Exercice 8 — GHSL-POP : mosaïque, reprojection, rognage, comparaison {#sec-ex8}
+
+> **Objectif** : partir des tuiles GHSL brutes (7 ZIP en projection Mollweide), les assembler, reproduire la carte de Yaoundé et comparer les effectifs avec WorldPop.
+
+## Étape 1 — Décompresser les tuiles ZIP
+
+GHSL distribue ses données en tuiles ZIP. On les liste, on les décompresse, puis on liste les `.tif` extraits.
+
+```{r}
+#| label: ex8-unzip
+#| eval: false
+ghsl_dir <- fetch_ghspop_tuiles_dir()
+zips     <- list.files(ghsl_dir, pattern = "\\.zip$", full.names = TRUE)
+cat("Tuiles ZIP :", length(zips), "\n")
+for (z in zips) unzip(z, exdir = ghsl_dir)
+tifs <- list.files(ghsl_dir, pattern = "\\.tif$", full.names = TRUE)
+cat("TIF extraits :", length(tifs), "\n")
+```
+
+## Étape 2 — Explorer une tuile (CRS Mollweide)
+
+```{r}
+#| label: ex8-tuile-exemple
+#| eval: false
+tuile_exemple <- rast(tifs[1])
+print(tuile_exemple)
+cat("CRS :", crs(tuile_exemple, describe = TRUE)$name, "\n")
+cat("Résolution :", res(tuile_exemple), "m\n")
+```
+
+::: {.callout-tip title="Point formateur (Edith)"}
+Le CRS GHSL est **Mollweide (ESRI:54009)**, pas WGS84. Les coordonnées sont en **mètres**. WorldPop est en WGS84 (degrés) — il faudra reprojeter avant de comparer.
+:::
+
+## Étape 3 — Assembler la mosaïque
+
+`sprc(list_of_rasters)` crée une collection. `mosaic(collection, fun = "mean")` assemble les tuiles ; `fun = "mean"` gère les chevauchements (moyenne des valeurs).
+
+```{r}
+#| label: ex8-mosaic
+#| eval: false
+tuiles      <- sprc(lapply(tifs, rast))
+ghsl_mosaic <- mosaic(tuiles, fun = "mean")
+cat("Étendue :", as.character(ext(ghsl_mosaic)), "\n")
+```
+
+## Étape 4 — Reprojection en WGS84
+
+`project(raster, "EPSG:4326", method = "bilinear")` reprojette la mosaïque depuis Mollweide vers WGS84. Méthode `bilinear` adaptée aux variables continues comme la population (interpolation linéaire entre les 4 voisins).
+
+```{r}
+#| label: ex8-project
+#| eval: false
+ghsl_wgs84 <- project(ghsl_mosaic, "EPSG:4326", method = "bilinear")
+cat("CRS :", crs(ghsl_wgs84, describe = TRUE)$name, "\n")
+cat("Résolution (degrés) :", res(ghsl_wgs84), "\n")
+```
+
+## Étape 5 — Rogner au Cameroun
+
+```{r}
+#| label: ex8-mask-cmr
+#| eval: false
+cmr0_v_ghsl <- vect(cmr0)
+ghsl_cmr    <- mask(crop(ghsl_wgs84, cmr0_v_ghsl), cmr0_v_ghsl)
+ghsl_cmr[ghsl_cmr < 0] <- NA   # nettoyer les valeurs aberrantes négatives
+```
+
+## Étape 6 — Extraire la population GHSL de Yaoundé
+
+```{r}
+#| label: ex8-yaounde
+#| eval: false
+yaounde_v_ghsl <- vect(st_transform(yaounde, crs(ghsl_cmr)))
+ghsl_yde       <- mask(crop(ghsl_cmr, yaounde_v_ghsl), yaounde_v_ghsl)
+pop_ghsl_yde   <- global(ghsl_yde, "sum", na.rm = TRUE)$sum
+
+cat("Population GHSL à Yaoundé (Mfoundi) :",
+    format(round(pop_ghsl_yde), big.mark = " "), "habitants\n")
+```
+
+## Étape 7 — Comparaison WorldPop vs GHSL — totaux nationaux
+
+```{r}
+#| label: ex8-totaux
+#| eval: false
+pop_worldpop_total <- round(global(pop_2025_cmr, "sum", na.rm = TRUE)$sum)
+pop_ghsl_total     <- round(global(ghsl_cmr, "sum", na.rm = TRUE)$sum)
+
+cat("WorldPop constrained :", format(pop_worldpop_total, big.mark = " "), "\n")
+cat("GHS-POP              :", format(pop_ghsl_total, big.mark = " "), "\n")
+cat("CSV officiel         :", format(sum(pop_adm1$T_TL), big.mark = " "), "\n")
+cat("Écart GHSL vs WorldPop (%) :",
+    round(100 * (pop_ghsl_total - pop_worldpop_total) / pop_worldpop_total, 1),
+    "\n")
+```
+
+## Étape 8 — Comparaison par région
+
+```{r}
+#| label: ex8-par-region
+#| eval: false
+pop_ghsl_par_region <- exact_extract(ghsl_cmr,
+                                     st_transform(cmr1, crs(ghsl_cmr)), "sum")
+
+regions_comparaison <- cmr1 |>
+  st_drop_geometry() |>
+  select(NAME_1) |>
+  mutate(pop_worldpop_2025 = round(pop_2025_par_region),
+         pop_ghsl_2025     = round(pop_ghsl_par_region),
+         ecart_pct         = round(100 * (pop_ghsl_2025 - pop_worldpop_2025) /
+                                   pop_worldpop_2025, 1)) |>
+  arrange(desc(abs(ecart_pct)))
+
+regions_comparaison
+```
+
+::: {.callout-tip title="Point formateur (Edith)"}
+L'écart varie selon les régions — les zones urbanisées récentes peuvent être mieux captées par GHSL (bâti observé) que par WorldPop (redistribution contrainte).
+:::
+
+::: {.callout-warning title="Question 14 (Edith)"}
+Dans quelles régions l'écart entre WorldPop et GHSL est-il le plus grand ? L'écart est-il systématiquement dans le même sens ? Dans quel cas préférer GHSL à WorldPop pour une analyse démographique ? Pourquoi WorldPop constrained est-il plus proche du CSV officiel ?
+:::
+
+# Synthèse et devoir Q-final {#sec-wrap}
+
+## Ce qu'on a vu
+
+- **Exercices 0, 0b, 0c** — Choroplèthe administratif + variables dérivées (ratio F/H, part jeunes).
+- **Exercice 1** — Visualisation interactive d'une grille raster avec `tmap`.
+- **Exercice 2** — Extraction d'effectif sur un département via `crop + mask + global`.
+- **Exercice 3** — Autonomie : reproduire l'extraction sur 2015.
+- **Exercice 4** — Comparaison 2015-2025 + agrégation `exactextractr` + breaks communs.
+- **Exercice 4b** — Projection 2030 + graphique d'évolution temporelle.
+- **Exercice 5** — Zone dessinée à la main avec `mapedit` (sensibilité au contour).
+- **Exercice 5b** — Comparer plusieurs villes via `lapply` + `bind_rows`.
+- **Exercice 6** — Densité de population avec échelle log.
+- **Exercice 7** — Structure par âge entre régions (`pivot_longer + geom_col`).
+- **Exercice 8** — Pipeline GHSL complet (mosaïque, reprojection, rognage, comparaison WorldPop vs GHSL).
+
+## Questions pour le débrief
+
+1. Quelle différence fondamentale entre un choroplèthe administratif et une grille de population ?
+2. Pourquoi les totaux WorldPop diffèrent-ils des chiffres du recensement ?
+3. Dans quel cas préférer WorldPop à GHS-POP ? Et inversement ?
+4. Quelles précautions avant de publier un effectif tiré d'une grille ?
+5. Comment exploiter les groupes d'âge du CSV pour cibler une intervention (santé, scolarisation) ?
+
+## Demain (J8) — Télédétection et observation de la Terre
+
+J8 prolonge J7 avec **Sentinel-2** (NDVI, NDWI, MNDWI), **GHS-BUILT** temporel pour le suivi de l'expansion du bâti, et un **cas Copernicus EMSR772** sur les inondations de Yagoua (Mayo-Danay, octobre 2024). La grille de population de J7 sert de **base** pour estimer la population exposée à l'aléa.
+
+# Sources et crédits {#sec-sources}
+
+## Crédits
+
+**Conception pédagogique complète** des 9 exercices, des slides théoriques, des choix méthodologiques et des datasets : **Edith Darin** (Senior Researcher, ex-WorldPop/Université d'Oxford, GDSG/IFORD).
+
+**Intégration convention atelier IFORD + bascule WebR + crédits sur le matériel** : **Ramesesse Dzita** (Junior Demographer-Statistician, IT Specialist, GDSG/IFORD).
+
+## Données
+
+| Donnée | Source | Licence |
+|---|---|---|
+| WorldPop CN 100m R2025A (2015, 2025, 2030) | Univ. Southampton — <https://hub.worldpop.org> | CC-BY 4.0 |
+| GHS-POP R2023A (tuiles Mollweide) | Commission européenne (JRC) | CC-BY 4.0 |
+| COD-PS Cameroun 2025 | OCHA — <https://data.humdata.org/dataset/cod-ps-cmr> | OCHA / CC-BY-IGO |
+| GADM v4.1 Cameroun | <https://gadm.org> | Académique libre |
+
+Code distribué sous **CC-BY 4.0** au nom du GDSG/IFORD.
+
+## Références
+
+@tatem2017worldpop ; @stevens2015disaggregating ; @schiavina2023ghsl ; @darin2023bottomup ; @hijmans2024terra ; @pebesma2018simple.

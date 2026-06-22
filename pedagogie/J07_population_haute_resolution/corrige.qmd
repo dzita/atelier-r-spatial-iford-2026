@@ -1,0 +1,354 @@
+---
+title: "J7 — Corrigés (cartographie population haute résolution)"
+subtitle: "Atelier IFORD × GDSG · Distribué J8 matin"
+lang: fr
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    toc-location: left
+    theme: cosmo
+execute:
+  echo: true
+  warning: false
+  message: false
+bibliography: ../_commons/helpers/citations.bib
+---
+
+# Avant le corrigé
+
+Si tu n'as pas tenté les exercices : ferme ce fichier.
+
+Conception pédagogique complète : Edith Darin (GDSG/IFORD). Bascule convention IFORD : Ramesesse Dzita.
+
+# Setup commun
+
+```{r}
+#| label: setup
+library(sf); library(dplyr); library(ggplot2); library(tidyr); library(readr)
+library(terra); library(tmap); library(exactextractr); library(scales)
+library(tibble)
+
+source("../_commons/helpers/fetch_data.R")
+
+pop_adm1 <- read_csv(fetch_admpop_adm1_cmr_2025(), show_col_types = FALSE)
+cmr0     <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_0", quiet = TRUE)
+cmr1     <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_1", quiet = TRUE)
+cmr2     <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_2", quiet = TRUE)
+pop_2015 <- rast(fetch_worldpop_constrained_cmr(2015))
+pop_2025 <- rast(fetch_worldpop_constrained_cmr(2025))
+pop_2030 <- rast(fetch_worldpop_constrained_cmr(2030))
+yaounde  <- cmr2 |> filter(NAME_2 == "Mfoundi")
+```
+
+# Q1 — Diagnostic de jointure
+
+```{r}
+#| label: q1
+cat("Non-correspondances ADM1_EN :",
+    paste(setdiff(cmr1$NAME_1, pop_adm1$ADM1_EN), collapse = ", "), "\n")
+cat("Non-correspondances ADM1_FR :",
+    paste(setdiff(cmr1$NAME_1, pop_adm1$ADM1_FR), collapse = ", "), "\n")
+
+cmr1_pop <- cmr1 |>
+  left_join(pop_adm1 |> select(ADM1_FR, T_TL, F_TL, M_TL),
+            by = c("NAME_1" = "ADM1_FR"))
+
+cat("NA dans T_TL après jointure :", sum(is.na(cmr1_pop$T_TL)), "\n")
+```
+
+**Réponses** :
+- **a.** `T_TL` = **T**otal **T**ous **L**es âges. `F_TL` = total femmes ; `M_TL` = total hommes.
+- **b.** GADM utilise les noms **français** pour le Cameroun → clé `ADM1_FR` → 0 non-correspondance attendue.
+- **c.** Si NA résiduel : un nom GADM n'a pas son équivalent dans le CSV. Lister via `cmr1_pop |> filter(is.na(T_TL)) |> pull(NAME_1)` pour identifier.
+
+# Q2 — Lecture critique du choroplèthe
+
+```{r}
+#| label: q2
+cmr1_pop |>
+  st_drop_geometry() |>
+  arrange(desc(T_TL)) |>
+  select(NAME_1, T_TL)
+```
+
+**Réponses** :
+- **a.** En tête : **Extrême-Nord** (~4,4 M) et **Centre** (~4,4 M, mais boosté par Yaoundé). En queue : **Sud** (~830 k) et **Adamaoua** (~1,4 M).
+- **b.** L'Extrême-Nord couvre ~34 000 km² ; le Centre ~69 000 km². À population égale, l'Extrême-Nord apparaît plus « rouge » sur la carte parce que la couleur est mappée sur la valeur totale et non sur la densité.
+- **c.** Un choroplèthe de **valeur absolue** est trompeur sur des unités de tailles inégales. Solution : cartographier la **densité (hab/km²)** — voir Q12. La grille raster (Exercice 1) est encore plus discriminante car indépendante du découpage administratif.
+
+# Q3 — Ratio F/H
+
+```{r}
+#| label: q3
+cmr1_pop <- cmr1_pop |> mutate(ratio_fm = F_TL / M_TL)
+cmr1_pop |>
+  st_drop_geometry() |>
+  arrange(desc(ratio_fm)) |>
+  select(NAME_1, F_TL, M_TL, ratio_fm)
+```
+
+**Réponses** :
+- **a.** **Ratio > 1** = plus de femmes que d'hommes (par exemple à cause de la migration masculine vers les centres urbains ou les zones minières). **Ratio < 1** = plus d'hommes que de femmes.
+- **b.** Au Cameroun, les écarts sont **modestes** (typiquement 0,95 à 1,05). Les régions agricoles peuvent avoir un ratio > 1 (départ des hommes en migration de travail), les régions de grandes villes restent proches de 1.
+- **c.** Explications : migrations économiques (hommes vers Douala/Yaoundé, vers la Guinée équatoriale), structure agricole (femmes restent gérer les exploitations familiales), événements démographiques (déplacements liés aux conflits anglophones ou aux insurrections Boko Haram dans l'Extrême-Nord).
+
+# Q4 — Part de la population jeune
+
+```{r}
+#| label: q4
+cmr1_pop <- cmr1_pop |>
+  left_join(
+    pop_adm1 |>
+      mutate(jeunes_0_14     = T_00_04 + T_05_09 + T_10_14,
+             part_jeunes_pct = 100 * jeunes_0_14 / T_TL) |>
+      select(ADM1_FR, part_jeunes_pct),
+    by = c("NAME_1" = "ADM1_FR")
+  )
+cmr1_pop |>
+  st_drop_geometry() |>
+  arrange(desc(part_jeunes_pct)) |>
+  select(NAME_1, part_jeunes_pct)
+```
+
+**Réponses** :
+- **a.** Top 3 régions les plus jeunes (typiquement 45-50 %) : **Extrême-Nord, Nord, Adamaoua** — les trois régions septentrionales.
+- **b.** **Pas de corrélation directe** avec la population totale. C'est la **fécondité régionale** qui explique : le Nord a une fécondité plus élevée (4-6 enfants/femme) que le Sud/Littoral/Centre (3-4).
+- **c.** Implications scolarisation : surinvestir au Nord en infrastructures primaires (écoles, instituteurs, manuels), planifier des extensions secondaires d'ici 2030 (les enfants de 0-9 ans aujourd'hui auront 12-21 ans en 2030).
+
+# Q5 — Anatomie du raster WorldPop
+
+```{r}
+#| label: q5
+print(pop_2025)
+cat("Résolution :", res(pop_2025), "°\n")
+cat("Soit ~", round(res(pop_2025)[1] * 111000), "m à l'équateur\n")
+cat("Nombre de cellules :", ncell(pop_2025), "\n")
+cat("CRS :", crs(pop_2025, describe = TRUE)$name, "\n")
+```
+
+**Réponses** :
+- **a.** Résolution = **0,000833°** ≈ **92,5 m** à l'équateur (et le Cameroun est entre 2° et 13° N). On parle communément de « 100 m ».
+- **b.** Plusieurs millions de cellules (le Cameroun fait ~475 000 km², donc ~47,5 millions de pixels à 100 m). CRS = **WGS 84 / EPSG:4326** (lat/lon en degrés décimaux).
+- **c.** La valeur d'une cellule = **estimation du nombre d'habitants dans ce pixel de 100 m × 100 m** (1 hectare). Pas une densité, pas un pourcentage. La somme sur un département donne l'effectif total estimé du département.
+
+# Q6 — Lecture interactive
+
+**Réponses** :
+- **a.** Concentrations maximales : **Yaoundé** (centre-ville, Bastos, Mvog-Mbi, Mokolo : 200-500 hab/cellule) et **Douala** (Akwa, Bonanjo, New Bell, Bonabéri : 300-700 hab/cellule). Valeurs > 1 000 hab/cellule possibles sur les marchés (Mokolo, Marché Sandaga). Tertiaire : Bafoussam, Bamenda, Garoua, Maroua, Limbé, Kribi.
+- **b.** Zones vides : la **forêt équatoriale Sud** (Boumba-et-Ngoko, Dja-et-Lobo, Lobé), les **monts Mandara** (Mayo-Tsanaga), les **zones marécageuses du Logone-et-Chari**. Valeurs typiquement < 0,5 hab/cellule (très peu d'habitants).
+- **c.** `view` → exploration interactive en salle, animation pédagogique, vérification visuelle terrain. `plot` → publication, rapport officiel, intégration dans un document Word/PDF. Bonne pratique : explorer en `view`, publier en `plot`.
+
+# Q7 — Extraction Mfoundi 2025
+
+```{r}
+#| label: q7
+yaounde_v        <- vect(st_transform(yaounde, crs(pop_2025)))
+pop_2025_yde     <- mask(crop(pop_2025, yaounde_v), yaounde_v)
+pop_yaounde_2025 <- global(pop_2025_yde, "sum", na.rm = TRUE)$sum
+cat("Population Mfoundi 2025 :",
+    format(round(pop_yaounde_2025), big.mark = " "), "habitants\n")
+```
+
+**Réponses** :
+- **a.** Reprojeter est obligatoire car `crop` et `mask` exigent que polygone et raster soient dans le **même CRS** (sinon ils ne se chevauchent pas dans l'espace projeté). Sans reprojection, erreur ou résultat aberrant.
+- **b.** Effectif Mfoundi 2025 ≈ **1,8 à 2,2 millions d'habitants** (cohérent avec les ordres de grandeur Yaoundé Grand Mfoundi). Le chiffre exact dépend du release WorldPop.
+- **c.** Écarts visuels typiques : WorldPop sous-estime souvent les **zones d'extension récente** (Nkolfoulou, Soa, Olembé) où le bâti construit après 2020 n'est pas encore intégré au modèle. Sur-estime parfois les **grandes zones de terrain vague avec quelques bâtiments isolés** par lissage spatial.
+
+# Q8 — Reproduction 2015
+
+```{r}
+#| label: q8
+yaounde_v_2015   <- vect(st_transform(yaounde, crs(pop_2015)))
+pop_2015_yde     <- mask(crop(pop_2015, yaounde_v_2015), yaounde_v_2015)
+pop_yaounde_2015 <- global(pop_2015_yde, "sum", na.rm = TRUE)$sum
+cat("Population Mfoundi 2015 :",
+    format(round(pop_yaounde_2015), big.mark = " "), "habitants\n")
+cat("Croissance 2015-2025 :",
+    round(100 * (pop_yaounde_2025 - pop_yaounde_2015) / pop_yaounde_2015, 1),
+    "%\n")
+```
+
+**Réponses** :
+- **a.** `pop_yaounde_2015` ≈ **1,4 à 1,7 millions** (Yaoundé fin de phase de boom démographique).
+- **b.** Croissance 2015-2025 ≈ **20-30 %** sur 10 ans → ~2 % par an, cohérent avec les statistiques BUCREP.
+- **c.** Changements visuels : **expansion vers le Nord-Est** (axe Soa, Université), **densification des quartiers périphériques** (Cité Verte, Etoa-Méki, Damas), **comblement des interstices** (terrains vagues bâtis). Le centre-ville (Bastos, Mokolo) reste stable parce que déjà saturé.
+
+# Q9 — WorldPop vs CSV officiel
+
+```{r}
+#| label: q9
+pop_2025_par_region <- exact_extract(pop_2025,
+                                     st_transform(cmr1, crs(pop_2025)), "sum")
+regions_pop <- cmr1 |>
+  st_drop_geometry() |>
+  select(NAME_1) |>
+  mutate(pop_worldpop_2025 = round(pop_2025_par_region)) |>
+  arrange(desc(pop_worldpop_2025))
+
+total_wp  <- sum(regions_pop$pop_worldpop_2025)
+total_csv <- sum(pop_adm1$T_TL)
+cat("Total WorldPop 2025 :", format(total_wp,  big.mark = " "), "\n")
+cat("Total CSV officiel  :", format(total_csv, big.mark = " "), "\n")
+cat("Écart relatif       :", round(100 * (total_wp - total_csv) / total_csv, 2),
+    "%\n")
+```
+
+**Réponses** :
+- **a-b.** L'écart est typiquement **< 5 %** parce que WorldPop CN est contraint par le recensement (le **C** dans CN = constrained).
+- **c.** Pourquoi un écart persiste malgré la contrainte : (1) l'année de référence du recensement utilisé par WorldPop n'est pas exactement 2025 (souvent un recensement plus ancien projeté), (2) le release R2025A a été calibré sur des données disponibles à mars 2025 alors que le CSV peut être de juin 2025, (3) la grille est arrondie au niveau ADM1 puis ré-agrégée — micro-arrondis cumulés.
+- **d.** **Breaks communs** = règle de visualisation de base. Sans, l'œil interprète les couleurs comme si elles signifiaient la même chose dans les deux cartes, alors que les bornes diffèrent. Cas d'école du **biais visuel**.
+
+# Q9b — Projection 2030
+
+```{r}
+#| label: q9b
+yaounde_v_2030   <- vect(st_transform(yaounde, crs(pop_2030)))
+pop_2030_yde     <- mask(crop(pop_2030, yaounde_v_2030), yaounde_v_2030)
+pop_yaounde_2030 <- global(pop_2030_yde, "sum", na.rm = TRUE)$sum
+
+evol <- tibble(annee = c(2015, 2025, 2030),
+               population = c(round(pop_yaounde_2015), round(pop_yaounde_2025),
+                              round(pop_yaounde_2030))) |>
+  mutate(croissance_annuelle_pct = round(
+    c(NA, 100 * (population[2] / population[1]) ^ (1/10) - 100,
+      100 * (population[3] / population[2]) ^ (1/5) - 100), 2))
+evol
+```
+
+**Réponses** :
+- **a.** Effectif 2030 ≈ **2,2 à 2,7 M** (Yaoundé devient une vraie métropole sub-saharienne).
+- **b.** Croissance 2025-2030 ≈ **1,8 % par an**, en léger ralentissement par rapport à 2015-2025 (~2 % par an). Reflète la transition démographique.
+- **c.** Hypothèses WorldPop 2030 : scénarios **SSP** (Shared Socioeconomic Pathways) du GIEC adaptés à l'Afrique, fécondité projetée selon UN WPP, migration interne extrapolée, **pas d'événements climatiques ou conflits** intégrés.
+- **d.** Une projection peut diverger fortement si : **crise sécuritaire majeure** (déplacements forcés non anticipés — Boko Haram 2015, conflits anglophones 2017-…), **catastrophe climatique** (inondations Yagoua 2024 qui ont déplacé 155 000 personnes), **politique migratoire brutale** (expulsions Guinée équatoriale).
+
+# Q10 — Zone personnalisée
+
+**Réponses** :
+- **a-b.** L'effectif obtenu dépend strictement du polygone dessiné. Pour le campus de Ngoa-Ekellé (~60 ha), on attend ~5 000-10 000 habitants ; pour le marché de Mokolo (~10 ha), ~3 000-5 000 ; pour un quartier résidentiel de Bastos (~50 ha), ~2 000-4 000.
+- **c.** Les effectifs varient entre étudiants parce que **chaque polygone diffère** (épaisseur du tracé, inclusion ou non d'une rue limitrophe, choix d'inclure un parc ou pas). Exemple : inclure 1 immeuble de plus = +100 à +500 habitants selon le bâti.
+- **d.** Pour valider : (i) comparer à une donnée terrain (enquête ménages, recensement de zone), (ii) recouper avec OSM ou Google Buildings (Open Buildings du J6) pour estimer le nombre de bâtiments × occupation moyenne, (iii) calibrer avec un comptage rapide (ex. 5-10 % de la zone) extrapolé.
+
+# Q11 — Comparer plusieurs villes
+
+```{r}
+#| label: q11
+norm_ascii <- function(x) iconv(x, to = "ASCII//TRANSLIT")
+
+villes_dept <- c(
+  "Douala (Wouri)"    = "Wouri",
+  "Yaoundé (Mfoundi)" = "Mfoundi",
+  "Bafoussam (Mifi)"  = "Mifi",
+  "Bamenda (Mezam)"   = "Mezam",
+  "Garoua (Bénoué)"   = "Benoue"
+)
+
+pop_villes <- lapply(names(villes_dept), function(nom) {
+  cible <- norm_ascii(villes_dept[[nom]])
+  dept  <- cmr2 |> filter(norm_ascii(NAME_2) == cible)
+  if (nrow(dept) == 0) return(NULL)
+  dept_v <- vect(st_transform(dept, crs(pop_2025)))
+  tibble(
+    ville    = nom,
+    pop_2015 = round(global(mask(crop(pop_2015, dept_v), dept_v),
+                            "sum", na.rm = TRUE)$sum),
+    pop_2025 = round(global(mask(crop(pop_2025, dept_v), dept_v),
+                            "sum", na.rm = TRUE)$sum)
+  )
+}) |> bind_rows() |>
+  mutate(croissance_pct = round(100 * (pop_2025 - pop_2015) / pop_2015, 1)) |>
+  arrange(desc(croissance_pct))
+pop_villes
+```
+
+**Réponses** :
+- **a.** Croissance la plus forte typiquement : **Bafoussam (Mifi)** ou **Bamenda (Mezam)** selon le release WorldPop, autour de 25-35 % sur 10 ans (croissance des villes secondaires).
+- **b.** **Douala** > Yaoundé en absolu (~3,5 M vs ~2 M pour leur département entier). Mais Yaoundé rattrape rapidement (croissance annuelle plus forte due au statut de capitale politique).
+- **c.** Exemples d'autres villes à ajouter : `"Maroua (Diamaré)" = "Diamare"`, `"Buea (Fako)" = "Fako"`, `"Ngaoundéré (Vina)" = "Vina"`, `"Ebolowa (Mvila)" = "Mvila"`. Adapter selon les variantes orthographiques GADM.
+
+# Q12 — Densité avec échelle log
+
+```{r}
+#| label: q12
+cmr1_pop$surface_km2 <- as.numeric(st_area(cmr1_pop)) / 1e6
+cmr1_pop <- cmr1_pop |> mutate(densite_hab_km2 = T_TL / surface_km2)
+cmr1_pop |>
+  st_drop_geometry() |>
+  arrange(desc(densite_hab_km2)) |>
+  select(NAME_1, T_TL, surface_km2, densite_hab_km2)
+```
+
+**Réponses** :
+- **a.** Densités : Centre ~65 hab/km² (boostée par Yaoundé), Littoral ~140 (Douala), Ouest ~120, Extrême-Nord ~140 (peuplement dense rural), Est et Sud < 15. Facteur de variation : **~10×** entre la plus faible et la plus forte.
+- **b.** Échelle linéaire : les régions denses (Centre, Littoral) écrasent visuellement les autres. Échelle log : on voit le **gradient continu** des contrastes intermédiaires.
+- **c.** Carte de population totale = volume démographique brut (utile pour planification logistique : combien de structures de santé ?). Carte de densité = pression sur le territoire (utile pour aménagement urbain, environnemental).
+- **d.** La **densité** est plus adaptée pour comparer des régions de tailles différentes (parce que normalisée par la surface). La population totale est plus adaptée pour les budgets, les quotas politiques, les ressources allouées proportionnellement à la population.
+
+# Q13 — Structure par âge
+
+```{r}
+#| label: q13
+regions_a_comparer <- c("Littoral", "Far North")  # choix : urbain vs rural
+pop_age <- pop_adm1 |>
+  filter(ADM1_EN %in% regions_a_comparer) |>
+  select(ADM1_EN, starts_with("T_"), -T_TL) |>
+  pivot_longer(cols = starts_with("T_"),
+               names_to = "groupe_age", values_to = "population") |>
+  mutate(groupe_age = sub("T_", "", groupe_age),
+         groupe_age = gsub("_", "-", groupe_age),
+         groupe_age = sub("Plus", "+", groupe_age))
+ggplot(pop_age, aes(x = groupe_age, y = population, fill = ADM1_EN)) +
+  geom_col(position = "dodge") +
+  scale_y_continuous(labels = comma) +
+  labs(title = "Littoral (urbain) vs Far North (rural)",
+       x = "Groupe d'âge", y = "Population", fill = "Région") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+**Réponses** :
+- **a.** Choix Littoral (Douala dominé) vs Far North (rural Nord) = contraste maximum urbain/rural.
+- **b.** **Far North a une population plus jeune** : pyramide nettement plus large à la base (0-14 ans), reflet d'une fécondité plus élevée.
+- **c.** Pour cibler les **scolarisables 6-11 ans** : prendre les groupes `T_05_09` + `T_10_14` (approximation), désagréger par sexe (`F_05_09` + `M_05_09`, etc.) si disponible. Compléter par les données EDS-MICS sur les taux de scolarisation effectifs par tranche d'âge. Croiser avec OSM/écoles pour vérifier la couverture infrastructurelle.
+
+# Q14 — WorldPop vs GHSL
+
+Le pipeline GHSL (Exercice 8 du demo) produit `regions_comparaison`. Sans le réexécuter ici (coûteux), résumé attendu :
+
+**Réponses** :
+- **a.** Les plus grands écarts sont typiquement dans : (i) les régions où le **bâti récent est dense mais le recensement WorldPop ancien** (Centre — Yaoundé expansion 2020-2025, Littoral — Douala expansion), (ii) les zones où **GHSL voit du bâti mais peu d'habitants effectifs** (zones industrielles, marchés).
+- **b.** L'écart **change de signe** selon les régions : GHSL > WorldPop dans le Sud forestier (sur-détection bâti agricole disperse), GHSL < WorldPop dans le Nord rural (sous-détection bâti traditionnel non-toits-tôles).
+- **c.** Préférer **GHSL** quand : pays sans recensement récent fiable (RCA, Soudan du Sud), analyse comparative multi-pays (un seul produit méthodologiquement homogène), zones de conflit où WorldPop ne peut pas être actualisé.
+- **d.** **WorldPop constrained** est plus proche du CSV officiel parce que sa contrainte CN garantit que la somme par unité ADM1 = chiffre officiel. C'est sa raison d'être méthodologique (cf. nomenclature Slide « WorldPop : nomenclature des fichiers »).
+
+# Q-final — Synthèse pour décideur
+
+## 1. Choroplèthe vs grille
+
+Le **choroplèthe** par unité administrative est une moyenne lissée — pratique pour la communication, la budgétisation par région, la comparabilité historique. La **grille raster** est une représentation continue à 100 m — indispensable pour le ciblage micro-spatial (un quartier, un corridor, une zone d'urgence), pour les analyses hors-cadre administratif (bassin versant, zone tampon autour d'une école), pour le croisement avec d'autres rasters (NDVI, accessibilité).
+
+## 2. Écarts WorldPop / recensement
+
+(i) L'année de référence du recensement utilisé par WorldPop n'est pas exactement la même que celle du CSV. (ii) La méthode redistribue selon des covariables — donc des erreurs de cadastre des bâtiments ou de routes se propagent. (iii) Les corrections constrained agissent au niveau ADM1, pas au niveau de la cellule individuelle.
+
+## 3. WorldPop vs GHS-POP
+
+WorldPop quand on veut la **cohérence avec les chiffres officiels** (budgétisation, planification publique, suivi des ODD). GHS-POP quand on veut une **vue indépendante du recensement** (validation croisée, zones sans recensement, comparaison internationale).
+
+## 4. Précautions avant de publier un effectif
+
+(i) Toujours documenter la **source, la version, l'année** du raster. (ii) Présenter une **marge d'incertitude** ou un IC. (iii) Comparer à au moins une source alternative (recensement, autre raster, comptage de validation). (iv) Sur une zone dessinée à la main, mentionner la **sensibilité au contour** (cf. Q10).
+
+## 5. Cibler une intervention via les âges
+
+Exemple : campagne de vaccination contre la rougeole sur les enfants de 9-23 mois. Approximation depuis le CSV : **T_00_04 × (15/60)** = part des nourrissons éligibles (15 mois sur 60 de la classe d'âge 0-4). Croiser avec la densité par région pour dimensionner les équipes : Extrême-Nord ~190 k enfants 9-23 mois → environ 5-10 équipes mobiles par département pour atteindre 95 % de couverture en 3 semaines. Bonne pratique : valider avec MICS/EDS-MICS si les chiffres BUCREP sont calibrés différemment.
+
+# Référence du débrief Edith
+
+> *« WorldPop (top-down) et GHSL (bottom-up) produisent des totaux différents : comprendre les raisons avant de choisir. »*
+
+C'est le message clé final d'Edith — c'est la maturité méthodologique attendue d'un statisticien spatial en 2026.
+
+# Références
+
+@tatem2017worldpop ; @stevens2015disaggregating ; @schiavina2023ghsl ; @darin2023bottomup ; @hijmans2024terra.

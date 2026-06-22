@@ -1,0 +1,650 @@
+---
+title: "J9 — Applications spatiales et sciences sociales"
+subtitle: "ACLED (conflits) et ERA5 (température) au Cameroun — IFORD × GDSG · 6 août 2026"
+author: "Edith Darin (conception complète) · Ramesesse Dzita (intégration IFORD)"
+date: "2026-08-06"
+lang: fr
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    number-sections: true
+    code-fold: false
+    code-tools: true
+    theme: cosmo
+    df-print: paged
+execute:
+  echo: true
+  warning: false
+  message: false
+bibliography: ../_commons/helpers/citations.bib
+---
+
+# Objectifs et plan {#sec-objectifs}
+
+Neuvième jour : on **mobilise deux APIs scientifiques** pour traiter deux sujets de sciences sociales spatiales — les **conflits armés** (ACLED) et le **climat** (réanalyse ERA5). Le contraste pédagogique est volontaire : un dataset événementiel ponctuel (lat/lon, dates discrètes) versus une grille raster mensuelle continue (NetCDF multidimensionnel). Les deux exigent un compte avec token, une bonne hygiène de gestion des identifiants (`.env`), et la maîtrise d'un workflow API → analyse → cartographie.
+
+Le matériel suit l'**architecture en 13 exercices** conçue par Edith Darin (Senior Researcher, ex-WorldPop/Oxford, GDSG/IFORD). On préserve fidèlement ses choix méthodologiques en ajoutant la convention IFORD « expliquer chaque commande avant son exécution ».
+
+# Setup commun {#sec-setup}
+
+On charge les packages du jour, le helper IFORD pour les chemins de fichiers, et un mini helper pour lire le fichier `.env` (identifiants ACLED + CDS).
+
+```{r}
+#| label: setup
+library(sf)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(readr)
+library(tmap)
+library(scales)
+library(terra)
+library(exactextractr)
+library(tibble)
+
+source("../_commons/helpers/fetch_data.R")
+
+# Helper local : charger un fichier .env (clé=valeur, lignes ignorées si #)
+charger_env <- function(path) {
+  if (!file.exists(path)) return(invisible(FALSE))
+  lignes <- readLines(path, warn = FALSE, encoding = "UTF-8")
+  lignes <- lignes[nzchar(trimws(lignes)) & !startsWith(trimws(lignes), "#")]
+  for (ligne in lignes) {
+    morceaux <- strsplit(ligne, "=", fixed = TRUE)[[1]]
+    if (length(morceaux) < 2) next
+    nom    <- trimws(morceaux[1])
+    valeur <- trimws(paste(morceaux[-1], collapse = "="))
+    valeur <- gsub('^["\']|["\']$', "", valeur)
+    if (nzchar(nom)) do.call(Sys.setenv, stats::setNames(list(valeur), nom))
+  }
+  invisible(TRUE)
+}
+
+# Charger le .env du dossier J9 si présent (identifiants ACLED + CDS)
+charger_env("../datasets/cameroun/jour_09_acled_era5/.env")
+
+annee_courante <- as.integer(format(Sys.Date(), "%Y"))
+annee_min      <- annee_courante - 10
+```
+
+Le fichier `.env` ne doit **jamais** être commité (déjà dans `.gitignore`). Voir `.env.example` pour le modèle.
+
+# Partie I — ACLED : conflits armés au Cameroun {#sec-acled}
+
+## Bloc A — Présentation de l'API ACLED
+
+ACLED — *Armed Conflict Location & Event Data Project* — est la base mondiale de référence pour les événements de conflit armé. Mise à jour hebdomadaire, accès gratuit après inscription sur <https://developer.acleddata.com/>.
+
+Le package R **`acledR`** permet d'interroger l'API directement depuis R :
+
+```{r}
+#| label: api-exemple
+#| eval: false
+# Exemple d'appel API (eval: false pour ne pas planter si pas de token)
+acled_brut_api <- acledR::acled_api(
+  email      = Sys.getenv("email_address"),
+  password   = Sys.getenv("acled_password"),
+  country    = "Cameroon",
+  start_date = paste0(annee_min, "-01-01"),
+  end_date   = as.character(Sys.Date()),
+  monadic    = FALSE  # un événement par ligne, deux acteurs maximum
+)
+```
+
+Pour l'atelier, on utilise l'**export CSV** déjà déposé par Edith (qui couvre 2025) — pour 10 ans complets, lancer `acled_api()` une fois avec son token et sauver en CSV local.
+
+## Exercice 1 — Chargement ACLED {#sec-ex1}
+
+> **Objectif** : lire le CSV ACLED et inspecter sa structure (~30 colonnes).
+
+`fetch_acled_cmr()` résout automatiquement le chemin du fichier dans le repo. `glimpse` affiche un aperçu vertical compact.
+
+```{r}
+#| label: ex1-load
+acled_brut <- read_csv(fetch_acled_cmr(), show_col_types = FALSE)
+
+cat("Dimensions ACLED :", nrow(acled_brut), "lignes ×",
+    ncol(acled_brut), "colonnes\n")
+glimpse(acled_brut)
+```
+
+## Exercice 2 — Nettoyage et filtrage {#sec-ex2}
+
+> **Objectif** : convertir les types (dates, numériques), filtrer NA coordonnées et restreindre à 10 ans.
+
+ACLED publie tout en chaînes de caractères dans le CSV. Conversion explicite des dates et coordonnées avant tout calcul. Filtrage des lignes sans coordonnées (impossibles à cartographier).
+
+```{r}
+#| label: ex2-clean
+acled_clean <- acled_brut |>
+  mutate(
+    event_date = as.Date(event_date),
+    annee      = as.integer(year),
+    mois       = format(event_date, "%Y-%m"),
+    fatalities = as.numeric(fatalities),
+    longitude  = as.numeric(longitude),
+    latitude   = as.numeric(latitude)
+  ) |>
+  filter(!is.na(longitude), !is.na(latitude))
+
+cat("Plage temporelle :", format(min(acled_clean$event_date), "%Y-%m-%d"),
+    "à", format(max(acled_clean$event_date), "%Y-%m-%d"), "\n")
+
+if (min(acled_clean$annee) <= annee_min) {
+  acled_clean <- acled_clean |> filter(annee >= annee_min)
+  cat("Après filtre 10 ans :", nrow(acled_clean), "événements\n")
+} else {
+  cat("Note : l'export couvre moins de 10 ans —",
+      "utiliser acledR::acled_api() pour la période complète.\n")
+}
+```
+
+## Exercice 3 — Exploration {#sec-ex3}
+
+> **Objectif** : compter les événements par type et par région pour identifier les patterns dominants.
+
+`count(sort = TRUE)` est un raccourci `group_by + tally + arrange(desc(n))`.
+
+```{r}
+#| label: ex3-explorer
+acled_clean |>
+  count(event_type, sort = TRUE, name = "n_evenements")
+```
+
+```{r}
+#| label: ex3-admin1
+acled_clean |>
+  count(admin1, sort = TRUE, name = "n_evenements")
+```
+
+::: {.callout-tip title="Point formateur (Edith)"}
+Les régions septentrionales (Extrême-Nord) dominent en raison de **Boko Haram**, et les régions anglophones (Nord-Ouest, Sud-Ouest) à cause de la **crise séparatiste** en cours depuis 2017. La distribution des **types** révèle si la violence est dominée par les *Battles*, les *Violence against civilians*, ou les *Strategic developments*.
+:::
+
+## Exercice 4 — Évolution temporelle {#sec-ex4}
+
+> **Objectif** : visualiser l'évolution annuelle, mensuelle, et les décès cumulés.
+
+### 4a — Annuelle par type
+
+```{r}
+#| label: ex4a-annuel
+#| fig-width: 10
+#| fig-height: 6
+resume_annuel <- acled_clean |>
+  count(annee, event_type, name = "n_evenements")
+
+ggplot(resume_annuel,
+       aes(x = annee, y = n_evenements, fill = event_type)) +
+  geom_col() +
+  scale_x_continuous(
+    breaks = seq(min(resume_annuel$annee), max(resume_annuel$annee), by = 1)
+  ) +
+  scale_fill_brewer(palette = "Set2") +
+  labs(title    = "Évolution annuelle des conflits au Cameroun",
+       subtitle = "Source : ACLED",
+       x = "Année", y = "Nombre d'événements", fill = "Type") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+### 4b — Mensuelle
+
+```{r}
+#| label: ex4b-mensuel
+#| fig-width: 12
+#| fig-height: 5
+resume_mensuel <- acled_clean |>
+  count(mois, event_type, name = "n_evenements")
+
+ggplot(resume_mensuel,
+       aes(x = mois, y = n_evenements, fill = event_type)) +
+  geom_col() +
+  scale_fill_brewer(palette = "Set2") +
+  labs(title = "Évolution mensuelle des conflits au Cameroun",
+       x = "Mois", y = "Nombre d'événements", fill = "Type") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 7))
+```
+
+### 4c — Décès annuels
+
+```{r}
+#| label: ex4c-deces
+#| fig-width: 8
+#| fig-height: 5
+resume_deces <- acled_clean |>
+  group_by(annee) |>
+  summarise(deces = sum(fatalities, na.rm = TRUE), .groups = "drop")
+
+ggplot(resume_deces, aes(x = annee, y = deces)) +
+  geom_line(colour = "#CB181D", linewidth = 1.2) +
+  geom_point(colour = "#CB181D", size = 2.5) +
+  scale_x_continuous(
+    breaks = seq(min(resume_deces$annee), max(resume_deces$annee), by = 1)
+  ) +
+  labs(title = "Décès liés aux conflits au Cameroun (source : ACLED)",
+       x = "Année", y = "Nombre de décès") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+::: {.callout-warning title="Question 1 (Edith)"}
+Sur quelles années les pics de **décès** sont-ils les plus marqués ? Coïncident-ils avec les pics d'**événements** ? Que dirait un démographe qui voit ces deux courbes ?
+:::
+
+## Exercice 5 — Cartographie ACLED {#sec-ex5}
+
+> **Objectif** : convertir les points lat/lon en couche `sf`, puis produire deux cartes — points par type et choroplèthe par région.
+
+### Conversion en sf + chargement GADM
+
+```{r}
+#| label: ex5-conversion
+acled_pts <- st_as_sf(
+  acled_clean,
+  coords = c("longitude", "latitude"),
+  crs    = 4326,
+  remove = FALSE
+)
+
+cmr0 <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_0", quiet = TRUE)
+cmr1 <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_1", quiet = TRUE)
+```
+
+### Carte des points par type d'événement
+
+```{r}
+#| label: ex5-points
+#| fig-width: 9
+#| fig-height: 8
+tmap_mode("plot")
+
+tm_shape(cmr1) +
+  tm_borders(col = "grey50", lwd = 0.8) +
+  tm_shape(acled_pts) +
+  tm_dots(
+    fill        = "event_type",
+    size        = 0.04,
+    alpha       = 0.6,
+    fill.legend = tm_legend(title = "Type d'événement")
+  ) +
+  tm_shape(cmr0) +
+  tm_borders(col = "grey20", lwd = 1.8) +
+  tm_title("Conflits armés au Cameroun (source : ACLED)") +
+  tm_layout(legend.outside = TRUE)
+```
+
+### Choroplèthe : agrégation par région via `st_within`
+
+`st_join(... join = st_within)` attache à chaque point la région qui le contient géométriquement. On compte ensuite les événements et les décès par région.
+
+```{r}
+#| label: ex5-regions
+#| fig-width: 8
+#| fig-height: 8
+resume_par_region <- acled_pts |>
+  st_join(cmr1[c("NAME_1")], join = st_within) |>
+  st_drop_geometry() |>
+  filter(!is.na(NAME_1)) |>
+  group_by(NAME_1) |>
+  summarise(
+    n_evenements = n(),
+    deces        = sum(fatalities, na.rm = TRUE),
+    .groups      = "drop"
+  )
+
+cmr1_acled <- cmr1 |>
+  left_join(resume_par_region, by = "NAME_1") |>
+  mutate(
+    n_evenements = replace_na(n_evenements, 0L),
+    deces        = replace_na(deces, 0)
+  )
+
+tm_shape(cmr1_acled) +
+  tm_polygons(
+    fill        = "n_evenements",
+    fill.scale  = tm_scale_continuous(values = "brewer.reds"),
+    fill.legend = tm_legend(title = "Nb d'événements")
+  ) +
+  tm_borders(col = "white", lwd = 0.6) +
+  tm_title("Conflits par région — Cameroun (source : ACLED)") +
+  tm_layout(legend.outside = TRUE)
+```
+
+::: {.callout-warning title="Question 2 (Edith)"}
+Pourquoi certains points peuvent-ils **tomber hors des polygones GADM** (et donc devenir `NA` après `st_within`) ? Quelle alternative utiliser pour rattacher ces points à la région la plus proche (`st_nearest_feature`) ?
+:::
+
+## Exercice 6 — Export ACLED {#sec-ex6}
+
+> **Objectif** : sauver les sorties (GPKG + CSV + PNG) pour réutilisation et publication.
+
+```{r}
+#| label: ex6-export
+#| eval: false
+out_dir <- "outputs"
+dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+
+st_write(acled_pts,   file.path(out_dir, "jour09_acled_points.gpkg"),
+         delete_dsn = TRUE)
+st_write(cmr1_acled, file.path(out_dir, "jour09_acled_regions.gpkg"),
+         delete_dsn = TRUE)
+write_csv(resume_par_region,
+          file.path(out_dir, "jour09_acled_resume_regions.csv"))
+```
+
+# Partie II — ERA5 : température réanalyse {#sec-era5}
+
+## Bloc B — Présentation d'ERA5 et du package ecmwfr
+
+ERA5 est la **cinquième réanalyse atmosphérique de l'ECMWF**, distribuée gratuitement via le Copernicus Climate Data Store (CDS). Pour ce TD on utilise *ERA5 Single Levels Monthly Means*, variable `2m_temperature`, sur une bbox Cameroun et 10 ans.
+
+Le package R **`ecmwfr`** automatise les requêtes API. Workflow :
+
+1. Créer un compte sur <https://cds.climate.copernicus.eu/>
+2. Récupérer UID + clé API dans le profil
+3. Stocker dans le `.env` : `cds_user`, `cds_key`
+4. `wf_set_key()` puis `wf_request()`
+
+## Exercice 7 — Authentification CDS et requête {#sec-ex7}
+
+> **Objectif** : soumettre la requête API à Copernicus (prend 5-30 minutes côté serveur).
+
+::: {.callout-warning}
+Ce bloc est en `eval: false` parce que (i) la requête API peut prendre longtemps et (ii) elle nécessite un token CDS personnel. Lancer en RStudio interactif si on souhaite re-télécharger le NetCDF.
+:::
+
+```{r}
+#| label: ex7-cds
+#| eval: false
+nc_path  <- fetch_era5_t2m_cmr()   # lèvera une erreur explicite si absent
+
+cds_user <- Sys.getenv("cds_user")
+cds_key  <- Sys.getenv("cds_key")
+
+if (nzchar(cds_user) && nzchar(cds_key) &&
+    requireNamespace("ecmwfr", quietly = TRUE)) {
+
+  ecmwfr::wf_set_key(user = cds_user, key = cds_key, service = "cds")
+
+  requete <- list(
+    dataset_short_name = "reanalysis-era5-single-levels-monthly-means",
+    product_type       = "monthly_averaged_reanalysis",
+    variable           = "2m_temperature",
+    year               = as.character((annee_courante - 10):(annee_courante - 1)),
+    month              = sprintf("%02d", 1:12),
+    time               = "00:00",
+    area               = c(13.1, 8.4, 1.6, 16.2),   # N, W, S, E (Cameroun)
+    data_format        = "netcdf",
+    target             = "era5_t2m_mensuel_cameroun.nc"
+  )
+
+  message("Soumission de la requête ERA5 (peut prendre plusieurs minutes)…")
+  ecmwfr::wf_request(request = requete, transfer = TRUE,
+                     path = dirname(nc_path))
+}
+```
+
+## Exercice 8 — Lecture NetCDF + conversion Kelvin → Celsius {#sec-ex8}
+
+> **Objectif** : lire le NetCDF multitemporel avec `terra::rast`, inspecter ses dimensions, convertir K → °C.
+
+```{r}
+#| label: ex8-netcdf
+#| eval: false
+era5_brut <- rast(fetch_era5_t2m_cmr())
+
+cat("Nombre de couches :", nlyr(era5_brut), "(soit ~120 pour 10 ans × 12 mois)\n")
+cat("Résolution :", paste(res(era5_brut), collapse = " × "), "° (~31 km)\n")
+cat("CRS :", crs(era5_brut, describe = TRUE)$name, "\n")
+
+dates_era5 <- as.Date(time(era5_brut))
+cat("Période :", format(min(dates_era5), "%Y-%m"), "→",
+    format(max(dates_era5), "%Y-%m"), "\n")
+
+# Conversion Kelvin → Celsius
+era5_celsius <- era5_brut - 273.15
+
+# Rogner + masquer sur le contour Cameroun
+cmr0_vect <- vect(st_transform(cmr0, crs(era5_celsius)))
+era5_cmr  <- mask(crop(era5_celsius, cmr0_vect), cmr0_vect)
+print(era5_cmr)
+```
+
+::: {.callout-tip title="Point formateur (Edith)"}
+La conversion `- 273.15` est **non-négociable** : sans elle, les températures « ~300 » seraient lues comme °C ce qui n'a aucun sens climatique. Toujours **vérifier l'unité** d'un dataset climatique avant analyse.
+:::
+
+## Exercice 9 — Extraction par région {#sec-ex9}
+
+> **Objectif** : agréger les 120 couches mensuelles par région via `exact_extract`, puis passer en format long pour la suite.
+
+`exact_extract(raster, polygones, "mean")` retourne un `data.frame` avec **une ligne par polygone** et **une colonne par couche** (`mean.1`, `mean.2`, …, `mean.120`). On bind avec les noms de régions puis `pivot_longer`.
+
+```{r}
+#| label: ex9-extract
+#| eval: false
+cmr1_proj   <- st_transform(cmr1, crs(era5_cmr))
+t2m_extrait <- exact_extract(era5_cmr, cmr1_proj, "mean")
+
+t2m_long <- cmr1 |>
+  st_drop_geometry() |>
+  select(NAME_1) |>
+  bind_cols(t2m_extrait) |>
+  pivot_longer(cols = -NAME_1, names_to = "couche",
+               values_to = "t2m_celsius") |>
+  mutate(
+    idx   = as.integer(sub("mean\\.", "", couche)),
+    date  = dates_era5[idx],
+    annee = as.integer(format(date, "%Y")),
+    mois  = as.integer(format(date, "%m"))
+  ) |>
+  select(-couche, -idx)
+
+glimpse(t2m_long)
+```
+
+## Exercice 10 — Évolution temporelle de la température {#sec-ex10}
+
+### 10a — Série mensuelle nationale + tendance loess
+
+```{r}
+#| label: ex10a-serie
+#| eval: false
+#| fig-width: 10
+#| fig-height: 5
+t2m_national <- t2m_long |>
+  group_by(date, annee, mois) |>
+  summarise(t2m_moy = mean(t2m_celsius, na.rm = TRUE), .groups = "drop")
+
+ggplot(t2m_national, aes(x = date, y = t2m_moy)) +
+  geom_line(colour = "#2171B5", linewidth = 0.7) +
+  geom_smooth(method = "loess", se = FALSE,
+              colour = "#CB181D", linetype = "dashed", linewidth = 0.9) +
+  labs(title    = "Évolution de la température 2m au Cameroun",
+       subtitle = "Moyenne mensuelle nationale. Ligne rouge : tendance lissée (loess). Source : ERA5.",
+       x = "Date", y = "Température (°C)") +
+  theme_minimal()
+```
+
+### 10b — Température annuelle par région
+
+```{r}
+#| label: ex10b-regions
+#| eval: false
+#| fig-width: 10
+#| fig-height: 6
+t2m_region_annee <- t2m_long |>
+  group_by(NAME_1, annee) |>
+  summarise(t2m_moy = mean(t2m_celsius, na.rm = TRUE), .groups = "drop")
+
+ggplot(t2m_region_annee, aes(x = annee, y = t2m_moy, colour = NAME_1)) +
+  geom_line(linewidth = 0.8) +
+  labs(title    = "Température annuelle moyenne par région — Cameroun",
+       subtitle = "Source : ERA5",
+       x = "Année", y = "Température (°C)", colour = "Région") +
+  theme_minimal()
+```
+
+### 10c — Saisonnalité (cycle mensuel moyen)
+
+`geom_ribbon` matérialise l'enveloppe min-max sur tous les pixels Cameroun et toutes les années.
+
+```{r}
+#| label: ex10c-saisonnalite
+#| eval: false
+#| fig-width: 8
+#| fig-height: 5
+t2m_saisonnalite <- t2m_long |>
+  group_by(mois) |>
+  summarise(
+    t2m_moy = mean(t2m_celsius, na.rm = TRUE),
+    t2m_min = min(t2m_celsius, na.rm = TRUE),
+    t2m_max = max(t2m_celsius, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+ggplot(t2m_saisonnalite, aes(x = mois, y = t2m_moy)) +
+  geom_ribbon(aes(ymin = t2m_min, ymax = t2m_max),
+              fill = "#FDBB84", alpha = 0.4) +
+  geom_line(colour = "#D94801", linewidth = 1) +
+  scale_x_continuous(breaks = 1:12, labels = month.abb) +
+  labs(title    = "Saisonnalité de la température 2m — Cameroun",
+       subtitle = "Moyenne, min et max mensuels sur la période (ERA5)",
+       x = "Mois", y = "Température (°C)") +
+  theme_minimal()
+```
+
+::: {.callout-warning title="Question 3 (Edith)"}
+Le ruban (min-max) est large dans les **mois secs** et étroit dans les **mois pluvieux**. Comment l'interpréter en termes de variabilité climatique régionale ?
+:::
+
+## Exercice 11 — Cartographie de la température {#sec-ex11}
+
+### 11a — Température moyenne sur la période
+
+```{r}
+#| label: ex11a-moyenne
+#| eval: false
+#| fig-width: 8
+#| fig-height: 8
+t2m_moy_rast <- mean(era5_cmr)
+
+tm_shape(t2m_moy_rast) +
+  tm_raster(
+    col.scale  = tm_scale_continuous(values  = "brewer.rd_yl_bu",
+                                     reverse = TRUE),
+    col.legend = tm_legend(title = "T°C")
+  ) +
+  tm_shape(cmr1) + tm_borders(col = "grey40", lwd = 0.8) +
+  tm_shape(cmr0) + tm_borders(col = "grey10", lwd = 1.8) +
+  tm_title(paste0("Température 2m moyenne — Cameroun")) +
+  tm_layout(legend.outside = TRUE)
+```
+
+### 11b — Anomalie dernière année vs première année
+
+Palette **divergente** centrée sur 0 : rouge = réchauffement, bleu = refroidissement.
+
+```{r}
+#| label: ex11b-anomalie
+#| eval: false
+#| fig-width: 8
+#| fig-height: 8
+annees_dans_donnees <- sort(unique(format(dates_era5, "%Y")))
+if (length(annees_dans_donnees) >= 2) {
+  pa  <- annees_dans_donnees[1]
+  da  <- annees_dans_donnees[length(annees_dans_donnees)]
+  idx_p <- which(format(dates_era5, "%Y") == pa)
+  idx_d <- which(format(dates_era5, "%Y") == da)
+  anomalie <- mean(era5_cmr[[idx_d]]) - mean(era5_cmr[[idx_p]])
+
+  tm_shape(anomalie) +
+    tm_raster(
+      col.scale  = tm_scale_continuous(
+        values   = "brewer.rd_bu",
+        reverse  = TRUE,
+        midpoint = 0
+      ),
+      col.legend = tm_legend(title = "ΔT°C")
+    ) +
+    tm_shape(cmr1) + tm_borders(col = "grey40", lwd = 0.8) +
+    tm_title(paste0("Anomalie de température 2m : ", da, " vs ", pa,
+                    " (ERA5)")) +
+    tm_layout(legend.outside = TRUE)
+}
+```
+
+::: {.callout-warning title="Question 4 (Edith)"}
+Quelles régions du Cameroun montrent l'anomalie la plus forte ? Le **Nord aride** se réchauffe-t-il plus que les **plateaux Ouest** ? Y a-t-il des zones de refroidissement (microclimats) ?
+:::
+
+## Exercice 12 — Export ERA5 {#sec-ex12}
+
+```{r}
+#| label: ex12-export
+#| eval: false
+out_dir <- "outputs"
+dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+
+write_csv(t2m_long,
+          file.path(out_dir, "jour09_era5_t2m_mensuel_regions.csv"))
+write_csv(t2m_region_annee,
+          file.path(out_dir, "jour09_era5_t2m_annuel_regions.csv"))
+
+writeRaster(t2m_moy_rast,
+            file.path(out_dir, "jour09_era5_t2m_moyenne.tif"),
+            overwrite = TRUE)
+```
+
+# Synthèse {#sec-synth}
+
+## Ce qu'on a vu
+
+**Partie I — ACLED** :
+
+- Bloc A : présentation API ACLED + `acledR`.
+- Ex 1 à 3 : chargement, nettoyage, exploration des conflits Cameroun 10 ans.
+- Ex 4 : évolution temporelle (annuelle par type, mensuelle, décès cumulés).
+- Ex 5 : cartographie points par type + choroplèthe par région via `st_within`.
+- Ex 6 : export GPKG / CSV / PNG.
+
+**Partie II — ERA5** :
+
+- Bloc B : présentation Copernicus CDS + `ecmwfr` + NetCDF + conversion Kelvin.
+- Ex 7 à 8 : authentification CDS + lecture NetCDF + conversion °C + crop Cameroun.
+- Ex 9 : extraction multi-couches par région avec `exact_extract` + pivot_longer.
+- Ex 10 : séries temporelles nationale + par région + saisonnalité.
+- Ex 11 : carte moyenne + carte d'anomalie dernière vs première année.
+- Ex 12 : export CSV / GeoTIFF.
+
+## Demain (J10) — Flux reproductibles et clôture
+
+J10 fusionne notre matériel avec celui d'Edith : projets R portables, Quarto pour rapports dynamiques, mini-projet en groupe basé sur les datasets vus J1-J9, synthèse FAIR + feuille de route INS/BUCREP.
+
+# Sources et crédits {#sec-sources}
+
+## Crédits
+
+**Conception pédagogique complète** des 13 exercices, des slides théoriques, des choix méthodologiques et des datasets : **Edith Darin** (Senior Researcher, ex-WorldPop/Université d'Oxford, GDSG/IFORD).
+
+**Intégration convention atelier IFORD + bascule WebR + crédits sur le matériel** : **Ramesesse Dzita** (Junior Demographer-Statistician, IT Specialist, GDSG/IFORD).
+
+## Données
+
+| Donnée | Source | Licence |
+|---|---|---|
+| ACLED Cameroun (CSV + API) | Armed Conflict Location & Event Data Project — <https://acleddata.com/> | Conditions ACLED (académique) |
+| ERA5 ECMWF Single Levels Monthly Means | Copernicus Climate Data Store — <https://cds.climate.copernicus.eu/> | Copernicus Open Data License |
+| GADM v4.1 Cameroun | <https://gadm.org> | Académique libre |
+
+Code distribué sous **CC-BY 4.0** au nom du GDSG/IFORD.
+
+## Références
+
+- **ACLED** : Raleigh, C., Linke, A., Hegre, H., & Karlsen, J. (2010). Introducing ACLED: An armed conflict location and event dataset. *Journal of Peace Research, 47(5), 651-660.*
+- **ERA5** : Hersbach, H., Bell, B., Berrisford, P., et al. (2020). The ERA5 global reanalysis. *Quarterly Journal of the Royal Meteorological Society, 146(730), 1999-2049.*
+- @pebesma2018simple ; @hijmans2024terra.

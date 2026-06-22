@@ -51,6 +51,28 @@ renv/sandbox/
 *.sbn
 *.qix
 
+# ---- Données J9 : ACLED + ERA5 (Edith Darin) ------------------------
+# Le NetCDF ERA5 (~quelques Mo) reste en local — téléchargement via API CDS.
+# Le CSV ACLED reste commité (léger, < 1 Mo) pour permettre le rendu offline.
+**/jour_09_acled_era5/*.nc
+!**/jour_09_acled_era5/ACLED*.csv
+!**/jour_09_acled_era5/.env.example
+# Le fichier .env doit JAMAIS être commité (contient les identifiants API)
+**/jour_09_acled_era5/.env
+.env
+
+# ---- Données J7 : population à haute résolution (Edith Darin) -------
+# Les rasters TIF WorldPop (3 × ~25 Mo) restent en local, hors repo.
+# Les ZIP GHS-POP (7 × ~15 Mo) idem - trop lourd pour Git.
+# Les CSV (admpop) + gpkg GADM + DATA_ECOLE.zip restent commités (légers).
+**/jour_07_population/cmr_pop_*.tif
+**/jour_07_population/GHS-POP/**
+!**/jour_07_population/GHS-POP/.gitkeep
+!**/jour_07_population/*.csv
+!**/jour_07_population/*.gpkg
+!**/jour_07_population/*shp.zip
+!**/jour_07_population/DATA_ECOLE.zip
+
 # ---- Données sensibles (DHS Program — licence interdit redistribution)
 # Bloquer le pack DHS brut où qu'il soit, quel que soit le dossier
 **/CM_2018_DHS/

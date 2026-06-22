@@ -1,0 +1,178 @@
+---
+title: "J9 — Exercices : applications spatiales et sciences sociales"
+subtitle: "ACLED + ERA5 · Atelier IFORD × GDSG · 6 août 2026"
+lang: fr
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    toc-location: left
+    theme: cosmo
+  pdf:
+    toc: true
+---
+
+# Mode d'emploi
+
+Les 12 exercices d'Edith Darin (GDSG/IFORD) sont à suivre **dans l'ordre** : ils s'enchaînent et chaque exercice réutilise les objets construits aux précédents. La **Partie I ACLED** (Ex 1-6) est faisable en autonomie à partir du CSV fourni dans le repo. La **Partie II ERA5** (Ex 7-12) nécessite un compte CDS + un NetCDF téléchargé via `ecmwfr` — on peut la suivre en démo collective.
+
+Les questions encadrées Q1 à Q12 sont à discuter en plénière ou à rédiger en commentaire dans ton script. Le devoir final Q-final synthétise. Solutions complètes dans `corrige.qmd` — à n'ouvrir qu'**après** ta tentative.
+
+Conception pédagogique complète : Edith Darin. Intégration convention atelier IFORD : Ramesesse Dzita.
+
+# Setup commun
+
+```r
+library(sf); library(dplyr); library(tidyr); library(ggplot2); library(readr)
+library(tmap); library(scales); library(terra); library(exactextractr); library(tibble)
+
+source("../_commons/helpers/fetch_data.R")
+
+# Charger le .env (identifiants ACLED + CDS)
+# Le fichier .env contient email_address, acled_password, cds_user, cds_key
+# Voir .env.example pour le modèle
+```
+
+# Partie I — ACLED
+
+## Q1 — Chargement et structure {#sec-q1}
+
+> Référence démo : Exercice 1.
+
+À partir de `acled_brut <- read_csv(fetch_acled_cmr(), show_col_types = FALSE)` :
+
+1. **a.** Affiche `glimpse(acled_brut)`. Combien de colonnes ?
+2. **b.** Identifie les colonnes utiles pour l'analyse spatiale (lat/lon), temporelle (event_date, year), thématique (event_type, sub_event_type, actor1, fatalities), administrative (admin1, admin2, admin3).
+3. **c.** Quelle plage de dates couvre le CSV ? Si moins de 10 ans, lance `acledR::acled_api()` pour la couverture complète (nécessite token).
+
+## Q2 — Nettoyage et conversion {#sec-q2}
+
+> Référence démo : Exercice 2.
+
+1. **a.** Convertis `event_date` en `Date`, `fatalities` en numeric, `longitude` et `latitude` en numeric.
+2. **b.** Filtre les lignes sans coordonnées valides (`!is.na(longitude) & !is.na(latitude)`). Combien de lignes restent ?
+3. **c.** Si le filtre `annee >= annee_min` retire des lignes, combien et de quelle année principalement ?
+
+## Q3 — Exploration des types et régions {#sec-q3}
+
+> Référence démo : Exercice 3.
+
+1. **a.** Top 3 des `event_type` les plus fréquents. Lequel est en tête au Cameroun et pourquoi (Boko Haram, crise anglophone, autres) ?
+2. **b.** Top 3 des régions `admin1` les plus touchées. Cohérence avec les conflits documentés (Extrême-Nord, Nord-Ouest, Sud-Ouest) ?
+3. **c.** Combien de régions ont **0 événement** dans l'export ? Cela signifie-t-il vraiment qu'il n'y a aucun conflit là-bas ? (réfléchir au biais médiatique)
+
+## Q4 — Évolution temporelle {#sec-q4}
+
+> Référence démo : Exercice 4.
+
+1. **a.** Sur le graphique annuel par type, identifie l'**année du pic** d'événements. Quel type domine cette année-là ?
+2. **b.** Sur la courbe des **décès annuels**, l'année du pic d'événements est-elle aussi celle du pic de décès ? Quelle explication si ce n'est pas le cas ?
+3. **c.** Sur le graphique mensuel, identifie un **mois pic** récurrent. Y a-t-il un effet de saisonnalité (saison sèche/saison des pluies, période électorale, etc.) ?
+
+## Q5 — Cartographie {#sec-q5}
+
+> Référence démo : Exercice 5.
+
+1. **a.** Sur la carte des points par type, où se concentrent les événements de type *Battles* vs *Violence against civilians* ? Y a-t-il une géographie distincte ?
+2. **b.** Sur la choroplèthe par région, **quelle région** a le plus d'événements ? Et le plus de décès ? Sont-ce les mêmes ?
+3. **c.** Combien de points ont **échoué** la jointure `st_within` (donc rattachés à `NA`) ? Si > 0, pourquoi (frontière, imprécision GPS) ? Comment les récupérer avec `st_nearest_feature` ?
+
+## Q6 — Export et réutilisation {#sec-q6}
+
+> Référence démo : Exercice 6.
+
+1. **a.** Exporte `acled_pts` en GPKG et `resume_par_region` en CSV.
+2. **b.** Ouvre le GPKG dans QGIS pour vérifier que les attributs `event_type`, `fatalities`, `actor1` sont bien préservés.
+3. **c.** Publie une carte PNG haute résolution (180 dpi minimum) avec `tmap_save`.
+
+# Partie II — ERA5
+
+## Q7 — Compte CDS et requête {#sec-q7}
+
+> Référence démo : Exercice 7. **Nécessite un compte CDS + token API.**
+
+1. **a.** Crée un compte sur <https://cds.climate.copernicus.eu/>.
+2. **b.** Récupère UID et clé API dans ton profil. Stocke-les dans `.env` (jamais dans un script versionné Git).
+3. **c.** Soumets la requête `reanalysis-era5-single-levels-monthly-means` pour `2m_temperature`, bbox Cameroun, 10 dernières années. Combien de couches attends-tu dans le NetCDF final ?
+
+## Q8 — Lecture NetCDF + Kelvin → Celsius {#sec-q8}
+
+> Référence démo : Exercice 8.
+
+À partir de `era5_brut <- rast(fetch_era5_t2m_cmr())` :
+
+1. **a.** `nlyr(era5_brut)` = combien ? Cohérent avec 10 ans × 12 mois = 120 ?
+2. **b.** `res(era5_brut)` = ? Soit ~31 km/cellule. Adapté pour l'analyse régionale ? Pour l'analyse urbaine ?
+3. **c.** Conversion : `era5_celsius <- era5_brut - 273.15`. Pourquoi ce -273.15 et pas autre chose ? Que se passerait-il si on l'oubliait ?
+
+## Q9 — Extraction multi-couches par région {#sec-q9}
+
+> Référence démo : Exercice 9.
+
+À partir de `t2m_extrait <- exact_extract(era5_cmr, cmr1_proj, "mean")` :
+
+1. **a.** `dim(t2m_extrait)` = ? Combien de lignes (régions) ? Combien de colonnes (couches mensuelles) ?
+2. **b.** Les colonnes s'appellent `mean.1`, `mean.2`, … Comment retrouver la **date** correspondant à chaque colonne ? (indice : `dates_era5[idx]`)
+3. **c.** Pourquoi pivoter en format long avec `pivot_longer` ? Quel verbe dplyr / ggplot prend en charge directement le format long ?
+
+## Q10 — Évolution temporelle {#sec-q10}
+
+> Référence démo : Exercice 10.
+
+1. **a.** Sur la **série mensuelle nationale**, identifie visuellement la tendance loess. Réchauffement marqué ? Stable ?
+2. **b.** Sur le graphique **annuel par région**, quelle région est la **plus chaude** ? La **plus froide** ? Cohérent avec ce qu'on sait du climat camerounais (Nord aride / Plateaux Ouest / Sud forestier) ?
+3. **c.** Sur le graphique de **saisonnalité**, le ruban (min-max) est plus large dans quels mois ? Comment l'expliquer ?
+
+## Q11 — Cartographie température + anomalie {#sec-q11}
+
+> Référence démo : Exercice 11.
+
+1. **a.** Sur la carte de **température moyenne**, identifie les zones les plus chaudes (~30 °C+) et les plus froides (~18-22 °C). Cohérent avec l'altitude (Mont Cameroun, plateaux de l'Ouest, plaine de la Sanaga) ?
+2. **b.** Sur la carte d'**anomalie** dernière vs première année, quelles régions montrent le plus fort réchauffement ? Sont-ce des zones agricoles, urbaines, désertiques ?
+3. **c.** L'anomalie est-elle **uniforme** ou très contrastée dans l'espace ? Pourquoi ?
+
+## Q12 — Export ERA5 {#sec-q12}
+
+> Référence démo : Exercice 12.
+
+1. **a.** Exporte `t2m_long` en CSV pour réutilisation hors R.
+2. **b.** Exporte la carte moyenne en GeoTIFF (`writeRaster`) pour intégration dans QGIS.
+3. **c.** Publie un PNG de la carte d'anomalie pour rapport.
+
+# Q-final — Devoir de synthèse {#sec-qfinal}
+
+> ⏱ **~30 minutes**, à rédiger en commentaire dans un script R `R/jour09_synthese.R` ou dans un Quarto `synthese_jour09.qmd`.
+
+Réponds aux **5 questions de débrief** avec le ton d'un démographe-statisticien qui présente ses résultats à un décideur public (BUCREP, MINSANTÉ, MINREX) :
+
+1. **ACLED + ERA5 : pourquoi croiser ces deux sources ?** Donne un cas d'usage camerounais où la combinaison de l'historique de conflit et de la variabilité climatique éclaire une décision (sécurité alimentaire, déplacements forcés, planification sanitaire).
+
+2. **Limites méthodologiques** d'ACLED : (i) biais médiatique, (ii) sous-estimation des zones enclavées, (iii) absence de l'intensité par événement, (iv) délai de mise à jour. Cite un exemple où chaque limite aurait pu fausser une analyse.
+
+3. **Limites méthodologiques** d'ERA5 : (i) résolution 31 km insuffisante pour l'urbain, (ii) réanalyse vs observation directe, (iii) homogénéisation modélisée des zones sans stations météo. Cite un exemple camerounais.
+
+4. **Hygiène des identifiants** : pourquoi le fichier `.env` ne doit-il **jamais** être commité ? Que se passe-t-il si on le pousse accidentellement sur GitHub ? Quelle bonne pratique pour la rotation des tokens ?
+
+5. **Reproductibilité** : si tu publies une analyse basée sur ACLED + ERA5, quels éléments documenter pour qu'un collègue puisse refaire le pipeline 6 mois plus tard ? (références bibliographiques, version des packages, snapshot des données, code commenté…)
+
+## Critères de réussite
+
+- ☐ Le pipeline ACLED Ex 1-6 tourne de bout en bout sans erreur, produit GPKG + CSV + PNG.
+- ☐ Le pipeline ERA5 Ex 7-12 a été testé au moins partiellement (Ex 8-9 suffisent si le NetCDF est local).
+- ☐ Les questions critiques d'Edith sont traitées avec un argument et un chiffre.
+- ☐ Au moins une carte est exportée en PNG (dpi ≥ 180).
+- ☐ Les fichiers `.env` et `era5_*.nc` ne sont **jamais** commités (vérifier avec `git status`).
+
+## Bonus
+
+- Croiser ACLED et ERA5 : pour chaque **mois × région**, calculer (i) le nombre d'événements ACLED et (ii) la température moyenne ERA5. Tracer le scatter `événements ~ température` : y a-t-il une corrélation visible ? Hypothèse : la chaleur extrême renforce les tensions agro-pastorales (corrélation positive faible attendue).
+- Tester `acledR::acled_api()` pour télécharger 10 ans complets et refaire l'analyse temporelle.
+
+# Si tu bloques
+
+- Relis le module correspondant dans `demo.qmd`.
+- Le corrigé est dans `corrige.qmd`, à n'ouvrir qu'**après** ta tentative.
+- Le script `demo.R` reproduit le pipeline complet d'Edith en condensé.
+- Pour ERA5, la documentation officielle Copernicus est <https://confluence.ecmwf.int/display/CKB/ERA5>.
+
+Bonne pratique !

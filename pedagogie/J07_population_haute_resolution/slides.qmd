@@ -1,0 +1,374 @@
+---
+title: "J7 — Cartographie de la population à haute résolution"
+subtitle: "De l'agrégat administratif au carroyage fin"
+author: "Edith Darin (conception) · Ramesesse Dzita (intégration IFORD) · GDSG"
+date: "2026-08-04"
+engine: knitr
+format:
+  revealjs:
+    theme:
+      - default
+      - ../_commons/styles/slides_revealjs.scss
+    slide-number: c/t
+    transition: fade
+    progress: true
+    chalkboard: true
+    footer: "IFORD × GDSG 2026 — J7 · Population haute résolution"
+    incremental: false
+    code-fold: false
+    code-line-numbers: false
+execute:
+  echo: false
+  warning: false
+  message: false
+bibliography: ../_commons/helpers/citations.bib
+---
+
+# Partie 0 — Plan de la journée {data-state="section-break"}
+
+## Objectifs de la journée
+
+- Comprendre les approches **top-down** et **bottom-up** de la cartographie de la population.
+- Découvrir les principaux produits mondiaux : **WorldPop, GHSL, GPW, LandScan**.
+- Produire un choroplèthe en reliant une table de population à des limites administratives.
+- Visualiser une grille de population de manière interactive avec **tmap**.
+- Extraire et comparer des effectifs sur une zone définie.
+- Construire sa propre zone d'étude et en calculer l'effectif.
+
+## Programme 6 heures
+
+| Moment | Contenu |
+|---|---|
+| **Matin 1** | De l'agrégat administratif au carroyage : concepts clés |
+| **Matin 2** | Produits mondiaux et critères de choix |
+| **Après-midi 1** | Atelier R : choroplèthes et grilles de population (exercices 0 à 1) |
+| **Après-midi 2** | Zoom sur une ville, comparaison temporelle, zones personnalisées, GHSL (exercices 2 à 8) |
+
+# Partie 1 — Concepts {data-state="section-break"}
+
+## Limites administratives et population
+
+La cartographie démographique la plus courante :
+
+- Relier des effectifs de recensement à des limites administratives.
+- Le résultat : un **choroplèthe**.
+- Avantage : simple, basé sur des données officielles.
+- Limites : résolution grossière, suppose une population homogène dans chaque unité.
+
+**Exemple** : carte de la population par région au Cameroun.
+
+## Approche top-down
+
+Point de départ : **totaux connus par unité administrative**.
+
+Étapes du processus (exemple WorldPop) :
+
+1. **Entrée** — effectifs du recensement par unité administrative.
+2. **Covariables** — bâti GHSL, lumière nocturne, altitude, routes, occupation du sol, distance aux centres urbains.
+3. **Modèle** — Random Forest : apprend où la population se concentre selon ces indices.
+4. **Distribution** — chaque cellule reçoit un poids relatif ; le total de l'unité est redistribué proportionnellement.
+5. **Contrainte** — la somme des cellules dans chaque unité = effectif officiel.
+
+**Avantage** : cohérent avec les chiffres officiels. **Limite** : dépend de la qualité et de la date du recensement utilisé en entrée.
+
+## Approche bottom-up
+
+Point de départ : **observation directe de la morphologie du bâti**.
+
+- Estimation à partir d'images satellite ou de rasters de bâti.
+- Pas de contrainte sur un total administratif.
+- Exemple : **GHSL Population** (couche GHS-POP).
+
+**Avantage** : couvre les zones sans recensement récent, cohérent à l'échelle mondiale.
+
+**Limite** : peut s'écarter des chiffres officiels nationaux.
+
+::: {.callout-important}
+Top-down et bottom-up sont **complémentaires**, pas concurrents. WorldPop garantit la cohérence avec le recensement ; GHSL offre une vue indépendante du bâti observé. Le choix dépend de l'usage.
+:::
+
+# Partie 2 — Produits mondiaux {data-state="section-break"}
+
+## Principaux produits mondiaux
+
+| Produit | Organisme | Résolution | Méthode |
+|---|---|---|---|
+| **WorldPop** | Univ. Southampton | 100 m | Top-down |
+| **GHS-POP** (GHSL) | Commission européenne (JRC) | 100 m | Bottom-up |
+| GPW v4 | CIESIN / NASA | ~1 km | Top-down |
+| LandScan | ORNL | ~1 km | Top-down |
+
+**Choix selon l'usage** : cohérence avec recensement → WorldPop ; couverture mondiale sans recensement → GHS-POP.
+
+## Projections démographiques WorldPop
+
+WorldPop fournit des estimations pour les années passées **et** des projections pour les années futures :
+
+- **Années passées (2000–2020)** : modèle calibré sur des recensements.
+- **Années récentes (2021–2025)** : extrapolation à partir des tendances récentes.
+- **Projections (ex. 2030)** : basées sur des scénarios démographiques (SSP).
+
+::: {.callout-warning title="Points de vigilance"}
+- Une projection n'est **pas une prévision certaine** — elle dépend des hypothèses de fécondité, mortalité, migration.
+- L'incertitude augmente avec l'horizon temporel.
+- Comparer 2015, 2025 et 2030 avec la **même édition (R2025A)** garantit une cohérence méthodologique.
+:::
+
+## Comparer WorldPop et GHS-POP
+
+| Critère | WorldPop CN | GHS-POP (GHSL) |
+|---|---|---|
+| Organisme | Univ. Southampton | Commission européenne (JRC) |
+| Méthode | Top-down, contraint | Bottom-up (bâti) |
+| Cohérence avec recensement | **Oui** (totaux garantis) | Non |
+| Couverture temporelle | 2000–2030 | 1975–2030 |
+| Distribution | Pays entier | Tuiles de la grille mondiale |
+
+**Quand utiliser GHS-POP ?** Zones sans recensement récent fiable. Analyse globale ou multi-pays sans harmonisation administrative. Comparaison indépendante des chiffres officiels nationaux.
+
+## WorldPop : nomenclature des fichiers
+
+Exemple : `cmr_pop_2025_CN_100m_R2025A_v1.tif`
+
+| Segment | Signification |
+|---|---|
+| `cmr` | Code pays ISO 3166-1 alpha-3 (Cameroun) |
+| `pop_2025` | Année de l'estimation de population |
+| `CN` | **Constrained** : contraint par les totaux administratifs officiels |
+| `100m` | Résolution spatiale de 100 mètres (~0,00083°) |
+| `R2025A` | Release 2025, version A (édition du jeu de données mondial) |
+| `v1` | Numéro de version du fichier |
+
+**CN vs UNadj** : la version CN garantit que la somme des cellules dans chaque unité administrative correspond exactement aux chiffres du recensement. La version UNadj peut s'en écarter.
+
+## Mosaïque de tuiles raster
+
+GHSL distribue ses données en **tuiles** en projection Mollweide (`ESRI:54009`).
+
+Workflow pour obtenir une grille exploitable sur un pays :
+
+1. **Décompresser** les tuiles ZIP (`unzip`).
+2. **Assembler** avec `sprc()` + `mosaic()`.
+3. **Reprojeter** en WGS84 (`project()`) pour aligner avec WorldPop.
+4. **Rogner** au contour du pays (`crop` + `mask`).
+
+```r
+tifs        <- list.files("GHS-POP/", pattern = "\\.tif$", full.names = TRUE)
+tuiles      <- sprc(lapply(tifs, rast))
+ghsl_mosaic <- mosaic(tuiles, fun = "mean")
+ghsl_wgs84  <- project(ghsl_mosaic, "EPSG:4326", method = "bilinear")
+ghsl_cmr    <- mask(crop(ghsl_wgs84, vect(cmr0)), vect(cmr0))
+```
+
+## Résolution spatiale : ce que cela change
+
+Une grille de **100 m** permet de :
+
+- Distinguer la population des zones bâties et non bâties.
+- Zoomer sur une ville, un quartier, un corridor routier.
+- Calculer un effectif sur **n'importe quelle zone**, même sans limites officielles.
+
+Comparée à l'ADM2, la grille révèle :
+
+- Les concentrations intra-urbaines.
+- Les zones vides : forêts, montagnes, marais.
+- La dispersion rurale le long des axes.
+
+## tmap : cartographie interactive et statique
+
+`tmap` fonctionne en deux modes :
+
+- `tmap_mode("view")` : carte interactive Leaflet, zoom et clic dans la cellule.
+- `tmap_mode("plot")` : carte statique haute qualité pour publication.
+
+```r
+tmap_mode("view")
+tm_shape(raster_population) +
+  tm_raster(
+    col.scale  = tm_scale_intervals(n = 7, style = "quantile",
+                                    values = "brewer.yl_or_rd"),
+    col.legend = tm_legend(title = "Population (hab/cellule)")
+  )
+```
+
+Basculer entre les modes en cours de session ne nécessite pas de relancer l'objet.
+
+# Partie 3 — Sources de données {data-state="section-break"}
+
+## Sources des données de l'atelier
+
+**Table de population administrative (COD-PS)**
+
+- Organisme : **OCHA — Common Operational Datasets (COD)**
+- Contenu : population par région, sexe et groupe d'âge (2025)
+- Téléchargement : <https://data.humdata.org/dataset/cod-ps-cmr>
+- Colonnes clés : `ADM1_EN`, `ADM1_FR`, `ADM1_PCODE`, `T_TL`, `F_TL`, `M_TL`, `T_00_04`...
+
+**Grilles de population WorldPop**
+
+- Organisme : **WorldPop, Université de Southampton**
+- Contenu : population estimée à 100 m, 2015 / 2025 / 2030
+- Téléchargement : <https://hub.worldpop.org> (rechercher : CMR, constrained, 100m)
+- Projection : WGS 84 (EPSG:4326) ; chaque cellule = nombre estimé d'habitants
+
+## Fichiers de l'atelier (Edith)
+
+| Fichier | Source |
+|---|---|
+| `data/cmr_admpop_adm1_2025.csv` | OCHA COD-PS |
+| `data/gadm41_CMR.gpkg` (couches ADM_ADM_0/1/2) | GADM v4.1 |
+| `data/cmr_pop_2015_CN_100m_R2025A_v1.tif` | WorldPop R2025A |
+| `data/cmr_pop_2025_CN_100m_R2025A_v1.tif` | WorldPop R2025A |
+| `data/cmr_pop_2030_CN_100m_R2025A_v1.tif` | WorldPop R2025A (projection) |
+| `data/GHS-POP/*.zip` (7 tuiles) | GHSL R2023A (JRC) |
+
+Helpers : `fetch_worldpop_constrained_cmr(year)`, `fetch_gadm_cmr_gpkg()`, `fetch_admpop_adm1_cmr_2025()`, `fetch_ghspop_tuiles_dir()`.
+
+# Partie 4 — Atelier R (plan des exercices) {data-state="section-break"}
+
+## Plan des 9 exercices
+
+| Ex | Thème | Sortie |
+|---|---|---|
+| **0** | Choroplèthe population totale | Carte régionale plasma |
+| **0b** | Ratio femmes/hommes | Carte divergente autour de 1 |
+| **0c** | Part de la population jeune (0-14 ans) | Carte magma |
+| **1** | Grille WorldPop 2025 avec tmap | Carte interactive YlOrRd |
+| **2** | Population à Yaoundé en 2025 | Effectif Mfoundi + superposition satellite |
+| **3** | Population à Yaoundé en 2015 *(autonome)* | Effectif comparable |
+| **4** | Comparaison 2015-2025 + agrégation régionale | Tableau croissance + tmap_arrange |
+| **4b** | Projection 2030 — évolution 15 ans | `geom_line` + 3 panels |
+| **5** | Zone personnalisée dessinée (`mapedit`) | Effectif zone libre |
+| **5b** | Comparer plusieurs villes | tibble + lapply |
+| **6** | Densité hab/km² (échelle log) | Carte inferno log10 |
+| **7** | Distribution par âge entre 2 régions | `geom_col` + pivot_longer |
+| **8** | GHSL — mosaïque + reprojection + rognage + comparaison | Carte GHSL + écart WorldPop |
+
+## Jointure table-géométrie
+
+Principe :
+
+1. Charger la table CSV (`read_csv`).
+2. Charger la couche spatiale (`st_read`).
+3. Joindre par une clé commune (`left_join`).
+4. **Vérifier les non-jointures** avec `setdiff`.
+
+```r
+# Vérifier d'abord quelle clé correspond
+setdiff(cmr1$NAME_1, pop_adm1$ADM1_EN)  # noms anglais
+setdiff(cmr1$NAME_1, pop_adm1$ADM1_FR)  # noms français
+
+# Joindre avec la clé qui minimise les non-correspondances
+cmr1_pop <- cmr1 %>%
+  left_join(pop_adm1, by = c("NAME_1" = "ADM1_FR"))
+```
+
+GADM peut utiliser les noms français pour le Cameroun : **toujours tester `ADM1_EN` et `ADM1_FR`**.
+
+## Extraire une population sur une zone
+
+Principe :
+
+1. Définir un polygone (limite administrative, bounding box, zone dessinée).
+2. **Reprojeter** dans le CRS du raster.
+3. **Rogner** (`crop`) et masquer (`mask`) le raster sur ce polygone.
+4. **Sommer** les valeurs : le total est l'effectif estimé.
+
+```r
+zone_proj <- vect(st_transform(polygone, crs(grille_pop)))
+pop_zone  <- mask(crop(grille_pop, zone_proj), zone_proj)
+effectif  <- global(pop_zone, "sum", na.rm = TRUE)$sum
+```
+
+## Agréger une grille par unités administratives
+
+`exactextractr` extrait les statistiques zonales **plus rapidement** que `terra::extract` sur de grands rasters :
+
+```r
+library(exactextractr)
+cmr1_proj      <- st_transform(cmr1, crs(grille_pop))
+pop_par_region <- exact_extract(grille_pop, cmr1_proj, "sum")
+```
+
+Utilisation typique : comparer les totaux extraits de WorldPop avec les chiffres officiels du recensement.
+
+## Comparaison temporelle et projections
+
+Points de vigilance :
+
+- La méthodologie WorldPop peut évoluer entre deux éditions.
+- Vérifier la **version du modèle** et l'année de référence du recensement.
+- Comparer les totaux nationaux avec les données officielles.
+- Une variation peut refléter le **modèle** autant que la **réalité démographique**.
+
+Pour les projections (2030) :
+
+- Les chiffres reposent sur des hypothèses de fécondité et migration — pas sur des observations.
+- Présenter les projections avec une marge d'incertitude.
+
+**Bonne pratique** : documenter la source, la version et l'année de production.
+
+## Zone personnalisée sur imagerie satellite
+
+Workflow en 4 étapes :
+
+**1. Explorer** — afficher WorldPop sur fond satellite (`Esri.WorldImagery`) pour choisir une zone.
+
+**2. Dessiner** — `mapedit::editMap()` ouvre un Viewer interactif : outil polygone, puis « Done ».
+
+```r
+zone <- mapedit::editMap(
+  leaflet::leaflet() %>%
+    leaflet::addProviderTiles("Esri.WorldImagery") %>%
+    leaflet::setView(lng = 11.52, lat = 3.86, zoom = 12)
+)$finished
+```
+
+**3. Extraire** — `crop` + `mask` + `global(..., "sum")`.
+
+**4. Visualiser** — superposer le raster recadré sur le fond satellite.
+
+**Fallback** sans interaction : `st_bbox(c(xmin=..., ymin=..., xmax=..., ymax=...), crs=4326)`.
+
+# Partie 5 — Synthèse {data-state="section-break"}
+
+## Limites des produits
+
+- WorldPop est un **modèle**, pas une observation directe.
+- L'incertitude est plus grande dans les zones à faible couverture de données.
+- La résolution de 100 m ne signifie pas une précision de 100 m.
+- Un total administratif erroné dans le recensement se propage dans toute la grille.
+- Les comparaisons temporelles supposent une méthodologie stable.
+
+## Messages clés de la journée
+
+- La **grille de population complète l'agrégat administratif** sans le remplacer.
+- `tmap` facilite l'exploration interactive et la communication visuelle.
+- Extraire un effectif sur une zone définie est une opération courante en statistique spatiale.
+- La comparaison temporelle (2015–2025–2030) doit être accompagnée d'une **note méthodologique**.
+- Toujours **confronter les totaux de la grille aux chiffres officiels**.
+- WorldPop (top-down) et GHSL (bottom-up) produisent des totaux différents : **comprendre les raisons avant de choisir**.
+
+## Demain (J8) — Télédétection et observation de la Terre
+
+J8 : indices spectraux Sentinel-2 (NDVI, NDWI, MNDWI), GHS-BUILT temporel pour suivre l'expansion du bâti, et **cas Copernicus EMSR772** sur les inondations de Yagoua (Mayo-Danay, octobre 2024).
+
+# Crédits {data-state="section-break"}
+
+## Conception et intégration
+
+- **Conception pédagogique complète** : Edith Darin (Senior Researcher, ex-WorldPop/Oxford, GDSG/IFORD)
+- **Intégration convention atelier IFORD** : Ramesesse Dzita (Junior Demographer-Statistician, IT Specialist, GDSG/IFORD)
+
+## Sources des données
+
+- **WorldPop** — Univ. Southampton — <https://hub.worldpop.org>
+- **GHS-POP / GHSL** — Commission européenne (JRC)
+- **COD-PS Cameroun** — OCHA — <https://data.humdata.org/dataset/cod-ps-cmr>
+- **GADM v4.1** — <https://gadm.org>
+
+Code et matériel pédagogique : **CC-BY 4.0** au nom du GDSG/IFORD.
+
+## Références méthodologiques
+
+@tatem2017worldpop ; @stevens2015disaggregating ; @schiavina2023ghsl ; @darin2023bottomup.

@@ -1,0 +1,221 @@
+---
+title: "J9 — Applications spatiales et sciences sociales"
+subtitle: "Code R exécutable dans le navigateur — Partie I ACLED"
+engine: knitr
+---
+
+::: {.iford-callout}
+**Mode d'emploi.** Cliquez **Run code** dans chaque cellule. WebR charge `sf` et `dplyr` au premier appel (~25 s la première fois). Tout tourne dans votre navigateur — aucune installation locale.
+
+**Limitation technique** : ce runtime ne couvre que la **Partie I — ACLED** (conflits armés). La **Partie II — ERA5** (température, package `ecmwfr` + NetCDF) nécessite un fichier `.nc` de plusieurs Mo + token Copernicus + le package `ncdf4` non portable sur WebR. Voir `demo.qmd` desktop pour l'expérience ERA5 complète.
+
+**Données 100 % réelles** : export ACLED Explorer pour le Cameroun (déposé par Edith Darin dans le Drive `workshop_material/jour_09_*`). Aucune simulation.
+
+**Conception pédagogique** : Edith Darin (GDSG/IFORD). **Intégration runtime** : Ramesesse Dzita.
+:::
+
+## 1. Charger le CSV ACLED + GADM ADM1
+
+```{webr}
+#| autorun: true
+library(sf)
+library(dplyr)
+library(ggplot2)
+library(readr)
+
+# Export ACLED Cameroun (déposé dans le repo, ~quelques milliers de lignes)
+download.file("../_commons/data/jour_09_extraits/ACLED_Data.csv",
+              "acled.csv", mode = "wb")
+# GADM ADM1 extrait léger (GeoJSON, partagé avec J7)
+download.file("../_commons/data/jour_07_extraits/gadm41_CMR_adm1.geojson",
+              "adm1.geojson", mode = "wb")
+
+acled_brut <- read_csv("acled.csv", show_col_types = FALSE)
+cmr1       <- read_sf("adm1.geojson")
+
+c(evenements = nrow(acled_brut), regions = nrow(cmr1))
+glimpse(acled_brut)
+```
+
+## 2. Nettoyage et conversion (Exercice 2)
+
+```{webr}
+acled_clean <- acled_brut |>
+  mutate(
+    event_date = as.Date(event_date),
+    annee      = as.integer(year),
+    mois       = format(event_date, "%Y-%m"),
+    fatalities = as.numeric(fatalities),
+    longitude  = as.numeric(longitude),
+    latitude   = as.numeric(latitude)
+  ) |>
+  filter(!is.na(longitude), !is.na(latitude))
+
+cat("Evenements valides :", nrow(acled_clean), "\n")
+cat("Periode :", format(min(acled_clean$event_date), "%Y-%m-%d"), "\n         ",
+    format(max(acled_clean$event_date), "%Y-%m-%d"), "\n")
+```
+
+## 3. Exploration : types et régions (Exercice 3)
+
+```{webr}
+acled_clean |>
+  count(event_type, sort = TRUE, name = "n_evenements")
+```
+
+```{webr}
+acled_clean |>
+  count(admin1, sort = TRUE, name = "n_evenements")
+```
+
+## 4. Évolution annuelle par type (Exercice 4a)
+
+```{webr}
+library(scales)
+
+resume_annuel <- acled_clean |>
+  count(annee, event_type, name = "n_evenements")
+
+ggplot(resume_annuel,
+       aes(x = annee, y = n_evenements, fill = event_type)) +
+  geom_col() +
+  scale_x_continuous(
+    breaks = seq(min(resume_annuel$annee), max(resume_annuel$annee), by = 1)
+  ) +
+  scale_fill_brewer(palette = "Set2") +
+  labs(title = "Évolution annuelle des conflits au Cameroun",
+       subtitle = "Source : ACLED",
+       x = "Année", y = "Nombre d'événements", fill = "Type") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## 5. Décès annuels (Exercice 4c)
+
+```{webr}
+resume_deces <- acled_clean |>
+  group_by(annee) |>
+  summarise(deces = sum(fatalities, na.rm = TRUE), .groups = "drop")
+
+ggplot(resume_deces, aes(x = annee, y = deces)) +
+  geom_line(colour = "#CB181D", linewidth = 1.2) +
+  geom_point(colour = "#CB181D", size = 2.5) +
+  scale_x_continuous(
+    breaks = seq(min(resume_deces$annee), max(resume_deces$annee), by = 1)
+  ) +
+  labs(title = "Décès liés aux conflits au Cameroun (source : ACLED)",
+       x = "Année", y = "Nombre de décès") +
+  theme_minimal()
+```
+
+## 6. Conversion en couche sf (Exercice 5a)
+
+```{webr}
+acled_pts <- st_as_sf(
+  acled_clean,
+  coords = c("longitude", "latitude"),
+  crs    = 4326,
+  remove = FALSE
+)
+
+cat("Couche sf :", nrow(acled_pts), "points, CRS :",
+    st_crs(acled_pts)$input, "\n")
+```
+
+## 7. Carte des points par type (Exercice 5b)
+
+Sur WebR on utilise `ggplot2 + geom_sf` à la place de `tmap` (qui n'est pas portable).
+
+```{webr}
+ggplot() +
+  geom_sf(data = cmr1, fill = "grey95", colour = "grey50", linewidth = 0.4) +
+  geom_sf(data = acled_pts, aes(colour = event_type),
+          size = 1, alpha = 0.6) +
+  scale_colour_brewer(palette = "Set2") +
+  labs(title = "Conflits armés au Cameroun (source : ACLED)",
+       colour = "Type d'événement") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+## 8. Choroplèthe par région via st_within (Exercice 5c)
+
+```{webr}
+library(tidyr)
+
+resume_par_region <- acled_pts |>
+  st_join(cmr1[c("NAME_1")], join = st_within) |>
+  st_drop_geometry() |>
+  filter(!is.na(NAME_1)) |>
+  group_by(NAME_1) |>
+  summarise(
+    n_evenements = n(),
+    deces        = sum(fatalities, na.rm = TRUE),
+    .groups      = "drop"
+  )
+
+cmr1_acled <- cmr1 |>
+  left_join(resume_par_region, by = "NAME_1") |>
+  mutate(
+    n_evenements = replace_na(n_evenements, 0L),
+    deces        = replace_na(deces, 0)
+  )
+
+cmr1_acled |>
+  st_drop_geometry() |>
+  arrange(desc(n_evenements)) |>
+  select(NAME_1, n_evenements, deces)
+```
+
+## 9. Carte choroplèthe par région
+
+```{webr}
+ggplot(cmr1_acled) +
+  geom_sf(aes(fill = n_evenements), colour = "white", linewidth = 0.4) +
+  scale_fill_distiller(palette = "Reds", direction = 1) +
+  geom_sf_label(aes(label = NAME_1), size = 2.2, color = "grey20",
+                fontface = "bold", label.padding = unit(0.1, "lines")) +
+  labs(title    = "Conflits par région — Cameroun",
+       subtitle = "Source : ACLED",
+       fill     = "Nb d'événements") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+## 10. Carte des décès par région
+
+```{webr}
+ggplot(cmr1_acled) +
+  geom_sf(aes(fill = deces), colour = "white", linewidth = 0.4) +
+  scale_fill_distiller(palette = "OrRd", direction = 1,
+                       labels = comma) +
+  labs(title    = "Décès liés aux conflits par région — Cameroun",
+       subtitle = "Source : ACLED",
+       fill     = "Nb de décès") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+## 11. À essayer
+
+::: {.iford-callout}
+Modifie la requête `filter(annee >= ...)` pour ne garder que les 3 dernières années. Refais le pipeline jusqu'à la carte. Quelle évolution observes-tu ? Une région prend-elle plus d'importance récemment ?
+
+Tu peux aussi filtrer sur un `event_type` spécifique (par exemple `filter(event_type == "Violence against civilians")`) pour cartographier uniquement ce sous-ensemble.
+:::
+
+## 12. Pour aller plus loin
+
+La version desktop `demo.qmd` ajoute (à exécuter sous RStudio) :
+
+- **Partie II ERA5** : authentification CDS, requête API `ecmwfr`, lecture NetCDF, conversion Kelvin → Celsius, extraction multi-couches par région, série temporelle nationale + saisonnalité + carte d'anomalie. Nécessite un fichier `.nc` de quelques Mo et un token Copernicus personnel.
+- **Cartes `tmap`** avec mode interactif (`view`) sur fond satellite Esri.
+- **Export GPKG / GeoTIFF / PNG** pour réutilisation et publication.
+- **Bonus API ACLED** : `acledR::acled_api()` pour télécharger 10 ans complets et croiser avec les données de Boko Haram / crise anglophone documentées.
+
+Le devoir individuel (12 questions Edith + Q-final 5 questions de synthèse pour décideur) est dans `exercice.qmd`.
+
+[← Retour à l'accueil](../INDEX.md)

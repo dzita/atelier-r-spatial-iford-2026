@@ -1,0 +1,237 @@
+---
+title: "J9 — Corrigés (ACLED + ERA5 Cameroun)"
+subtitle: "Atelier IFORD × GDSG · Distribué J10 matin"
+lang: fr
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    toc-location: left
+    theme: cosmo
+execute:
+  echo: true
+  warning: false
+  message: false
+bibliography: ../_commons/helpers/citations.bib
+---
+
+# Avant le corrigé
+
+Si tu n'as pas tenté les exercices : ferme ce fichier.
+
+Conception pédagogique complète : Edith Darin (GDSG/IFORD). Bascule convention IFORD : Ramesesse Dzita.
+
+# Setup commun
+
+```{r}
+#| label: setup
+library(sf); library(dplyr); library(tidyr); library(ggplot2); library(readr)
+library(tmap); library(scales); library(terra); library(exactextractr); library(tibble)
+
+source("../_commons/helpers/fetch_data.R")
+
+annee_courante <- as.integer(format(Sys.Date(), "%Y"))
+annee_min      <- annee_courante - 10
+```
+
+# Q1 — Chargement et structure
+
+```{r}
+#| label: q1
+acled_brut <- read_csv(fetch_acled_cmr(), show_col_types = FALSE)
+glimpse(acled_brut)
+```
+
+**Réponses** :
+- **a.** ~30 colonnes (`event_id_cnty`, `event_date`, `year`, `time_precision`, `disorder_type`, `event_type`, `sub_event_type`, `actor1`, `actor2`, …, `admin1`, `admin2`, `admin3`, `location`, `latitude`, `longitude`, `geo_precision`, `source`, `notes`, `fatalities`, …).
+- **b.** Spatial : `latitude`, `longitude`, `geo_precision`. Temporel : `event_date`, `year`. Thématique : `event_type`, `sub_event_type`, `actor1`, `actor2`, `fatalities`. Administratif : `admin1`, `admin2`, `admin3`.
+- **c.** L'export Edith ne couvre que **2025**. Pour 10 ans, `acledR::acled_api(country = "Cameroon", start_date = "2015-01-01", end_date = Sys.Date())`.
+
+# Q2 — Nettoyage et conversion
+
+```{r}
+#| label: q2
+acled_clean <- acled_brut |>
+  mutate(
+    event_date = as.Date(event_date),
+    annee      = as.integer(year),
+    mois       = format(event_date, "%Y-%m"),
+    fatalities = as.numeric(fatalities),
+    longitude  = as.numeric(longitude),
+    latitude   = as.numeric(latitude)
+  ) |>
+  filter(!is.na(longitude), !is.na(latitude))
+
+cat("Lignes après filtre coordonnées :", nrow(acled_clean), "\n")
+cat("Période :", format(min(acled_clean$event_date), "%Y-%m"), "→",
+    format(max(acled_clean$event_date), "%Y-%m"), "\n")
+```
+
+**Réponses** :
+- **a-b.** Sur le CSV 2025 d'Edith, attendre ~quelques milliers de lignes (~2000-3000). Aucune ligne perdue par le filtre coordonnées si l'export ACLED Explorer est propre (ACLED géocode tout par défaut).
+- **c.** Si on filtre par `annee >= annee_min` (donc 2016+), pas de lignes filtrées car CSV ne couvre que 2025. Si on charge via API 10 ans, on attend ~quelques milliers à dizaines de milliers d'événements selon l'intensité Boko Haram + crise anglophone.
+
+# Q3 — Exploration
+
+```{r}
+#| label: q3
+acled_clean |> count(event_type, sort = TRUE, name = "n_evenements")
+```
+
+```{r}
+#| label: q3-admin
+acled_clean |> count(admin1, sort = TRUE, name = "n_evenements")
+```
+
+**Réponses** :
+- **a.** Top 3 typiques au Cameroun 2025 : **Violence against civilians** (Boko Haram + Ambazoniens), **Battles** (affrontements FDS vs séparatistes), **Strategic developments** (déclarations, mouvements de troupes). L'évolution dépend de la phase du conflit.
+- **b.** Top 3 régions : **Extrême-Nord** (Boko Haram), **Nord-Ouest** (Ambazonia), **Sud-Ouest** (Ambazonia). Cohérent avec les zones de conflit documentées par OCHA, IRC, HRW.
+- **c.** Régions à 0 événement = principalement Sud forestier (Lobé, Boumba-et-Ngoko). Probable **biais médiatique** : les médias couvrent peu ces zones enclavées, donc ACLED en remonte moins, mais ça ne signifie pas zéro tension (litiges fonciers, braconnage, conflits agropastoraux non couverts).
+
+# Q4 — Évolution temporelle
+
+```{r}
+#| label: q4-annuel
+#| fig-width: 9
+#| fig-height: 5
+resume_annuel <- acled_clean |> count(annee, event_type, name = "n_evenements")
+ggplot(resume_annuel, aes(x = annee, y = n_evenements, fill = event_type)) +
+  geom_col() + scale_fill_brewer(palette = "Set2") + theme_minimal() +
+  labs(title = "Evolution annuelle des conflits Cameroun", fill = "Type")
+```
+
+**Réponses** :
+- **a.** Avec l'export 2025 unique, l'analyse annuelle est limitée. Sur une série 10 ans complète : pic 2017-2019 (cristallisation crise anglophone). Le type dominant change avec le contexte.
+- **b.** Le pic d'**événements** n'est pas toujours celui des **décès** : un seul événement (Toumbisseu 2017, Atanga 2017) peut concentrer des dizaines de morts ; à l'inverse, beaucoup de Strategic developments / Protests font 0 mort.
+- **c.** Saisonnalité : pic mensuel souvent en **saison sèche Nord** (mars-mai pour Boko Haram, mobilité maximale) et **fin d'année** pour les crises anglophones (anniversaires, commémorations, célébrations symboliques).
+
+# Q5 — Cartographie
+
+```{r}
+#| label: q5
+acled_pts <- st_as_sf(acled_clean,
+                      coords = c("longitude", "latitude"),
+                      crs = 4326, remove = FALSE)
+cmr0 <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_0", quiet = TRUE)
+cmr1 <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_1", quiet = TRUE)
+
+resume_par_region <- acled_pts |>
+  st_join(cmr1[c("NAME_1")], join = st_within) |>
+  st_drop_geometry() |>
+  filter(!is.na(NAME_1)) |>
+  group_by(NAME_1) |>
+  summarise(n_evenements = n(),
+            deces = sum(fatalities, na.rm = TRUE),
+            .groups = "drop") |>
+  arrange(desc(n_evenements))
+
+resume_par_region
+```
+
+**Réponses** :
+- **a.** Géographie distincte : **Battles** concentrés sur les **zones frontalières** (Mayo-Sava, Mayo-Tsanaga pour Boko Haram ; Mezam, Boyo, Manyu pour Ambazonia). **Violence against civilians** plus diffus, y compris dans les villages éloignés.
+- **b.** Région avec le plus d'événements et le plus de décès = **Extrême-Nord** typiquement. Pas toujours les mêmes : le Nord-Ouest peut avoir plus d'événements (proximité urbaine = média) mais moins de décès cumulés que l'Extrême-Nord (attaques Boko Haram massives).
+- **c.** Points avec `NA` après `st_within` = **points hors polygones GADM** (frontière approximative, précision GPS limite). Solution : `st_nearest_feature(point, cmr1)` retourne l'index du polygone le plus proche, à utiliser comme fallback.
+
+# Q6 — Export
+
+```{r}
+#| label: q6
+#| eval: false
+out_dir <- "outputs"
+dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+st_write(acled_pts, file.path(out_dir, "jour09_acled_points.gpkg"),
+         delete_dsn = TRUE)
+write_csv(resume_par_region, file.path(out_dir, "jour09_acled_resume.csv"))
+```
+
+**Réponses** :
+- **a-c.** Pipeline export classique. Pour publication : tmap_save avec width/height en pixels, dpi 180-300 selon usage (web / print).
+
+# Q7 — Compte CDS et requête (méta)
+
+**Réponses** :
+- **a-b.** Compte CDS gratuit (instantané). UID + clé visibles dans le profil. À stocker dans `.env` avec `cds_user`, `cds_key`.
+- **c.** Requête ERA5 monthly means : 10 ans × 12 mois = **120 couches** dans le NetCDF final. Taille typique pour bbox Cameroun ~3-10 Mo.
+
+# Q8 — Lecture NetCDF + Kelvin → Celsius
+
+```{r}
+#| label: q8
+#| eval: false
+era5_brut <- rast(fetch_era5_t2m_cmr())
+cat("Couches :", nlyr(era5_brut), "\n")
+cat("Résolution :", paste(res(era5_brut), collapse = " × "), "\n")
+era5_celsius <- era5_brut - 273.15
+```
+
+**Réponses** :
+- **a.** `nlyr` = **120** pour 10 ans × 12 mois.
+- **b.** Résolution **0.25° × 0.25°** soit ~31 km × ~31 km. Adapté pour analyse **régionale** (10 régions Cameroun) et **zonale large** (Adamaoua plateau, bassin du Logone). **Pas adapté** pour analyse intra-urbaine (Mfoundi ne fait que ~300 km², donc ~5-10 pixels seulement).
+- **c.** **0 Kelvin = -273.15 °C** = zéro absolu (l'absence totale d'agitation thermique). Sans cette conversion : 300 K serait lu comme 300 °C ce qui est aberrant climatiquement (température solaire ~5500 °C, terre habitable max ~50 °C).
+
+# Q9 — Extraction multi-couches
+
+```{r}
+#| label: q9
+#| eval: false
+cmr1_proj   <- st_transform(cmr1, crs(era5_cmr))
+t2m_extrait <- exact_extract(era5_cmr, cmr1_proj, "mean")
+dim(t2m_extrait)
+# Attendu : 10 régions × 120 couches
+```
+
+**Réponses** :
+- **a.** `dim` = **10 × 120** : 10 régions Cameroun × 120 couches mensuelles.
+- **b.** L'index `idx` extrait du nom de colonne (`mean.1` → 1, `mean.2` → 2, …) correspond à la **position dans le stack** ; les dates sont dans `dates_era5[idx]`.
+- **c.** Pivot en long pour ggplot (qui consomme du **long format** naturellement avec `aes`), pour `group_by(date)` plus simple, pour les jointures avec d'autres tables temporelles.
+
+# Q10 — Évolution temporelle
+
+**Réponses** :
+- **a.** Sur 10 ans, la tendance loess montre typiquement un **réchauffement** de l'ordre de **+0.3 à +0.5 °C** au Cameroun. La saisonnalité (cycle annuel) reste dominante visuellement.
+- **b.** La **plus chaude** : Extrême-Nord (Sahel, Diamaré) ~28-30 °C annuel. La **plus froide** : Ouest (plateaux Bafoussam, Bamenda) ~22-24 °C, ou Adamaoua (haut plateau). Cohérent avec l'altitude (Bamenda à ~1200 m, Mont Cameroun à 4040 m).
+- **c.** Le ruban min-max est plus large en **saison sèche** (décembre-mars) parce que les contrastes entre régions chaudes (Nord) et froides (Ouest) sont maximaux. En saison des pluies, la couverture nuageuse uniformise.
+
+# Q11 — Cartographie
+
+**Réponses** :
+- **a.** Zones chaudes (~28-30 °C) : Logone-et-Chari, Mayo-Sava (Sahel). Zones froides (~18-22 °C) : Mont Cameroun, plateaux Bamboutos (Ouest), Mbéré et Vina (Adamaoua haut). Très cohérent avec l'altitude.
+- **b.** Réchauffement le plus fort typiquement dans le **Nord** (effet désertique accentué, perte d'humidité) et dans certaines **zones agricoles déboisées**. Refroidissement possible dans des zones de reforestation ou de microclimats lacustres (lac Mbakaou).
+- **c.** Anomalie **non uniforme** : effet de l'altitude, de la couverture végétale (déforestation accélère le réchauffement local), de l'urbanisation (effet d'îlot de chaleur urbain peu visible à 31 km résolution mais discernable sur Yaoundé/Douala).
+
+# Q12 — Export
+
+**Réponses** : classique (writeRaster GeoTIFF, write_csv, tmap_save PNG).
+
+# Q-final — Synthèse pour décideur
+
+## 1. Pourquoi croiser ACLED + ERA5
+
+Exemple camerounais : la crise sécurité alimentaire dans l'**Extrême-Nord** combine (i) **conflit Boko Haram** qui restreint l'accès aux marchés et aux terres cultivables et (ii) **stress climatique** (températures en hausse + sécheresses prolongées). Croiser ACLED (intensité des événements par département × mois) avec ERA5 (anomalie de température + précipitations) permet de **prédire les zones de tension agropastorale** émergente et de prépositionner l'aide humanitaire. Le PAM utilise ce type de croisement pour ses Climate Risk Hotspots.
+
+## 2. Limites ACLED
+
+(i) **Biais médiatique** : Lobé (Sud forestier) sous-représenté faute de couverture média. (ii) **Sous-estimation zones enclavées** : un attaque dans Akwaya (Manyu) peut prendre 2-3 semaines à être codée. (iii) **Absence d'intensité** : un événement à 100 morts est codé comme un événement, à intégrer la variable `fatalities`. (iv) **Délai** : mise à jour hebdomadaire donc analyse temps-réel impossible — pour les alertes, croiser avec données OCHA en flux.
+
+## 3. Limites ERA5
+
+(i) **31 km insuffisant pour Yaoundé/Douala** : l'îlot de chaleur urbain (typiquement +2 à +4 °C sur 5-10 km) est lissé. Solution : ERA5-Land (9 km) ou produits MODIS LST (1 km) pour analyse urbaine. (ii) **Réanalyse vs observation** : dans les zones sans stations météo (massif du Mbam-Inoubou, plateau Adamaoua intérieur), ERA5 est essentiellement une simulation contrainte par des observations distantes. (iii) **Homogénéisation** : les anomalies locales (microclimats lacustres, vallées encaissées) sont gommées par la résolution.
+
+## 4. Hygiène des identifiants
+
+Le `.env` contient le **token API ACLED + le token CDS** — donc l'**identité scientifique** de l'animateur. S'il est commité accidentellement sur GitHub public : (i) un acteur tiers peut faire des requêtes API en ton nom, (ii) ton quota mensuel CDS peut être épuisé, (iii) ACLED peut suspendre ton compte. **Bonne pratique** : (a) `.gitignore` strict, (b) rotation des tokens tous les 6 mois, (c) `git secrets` ou GitHub secret scanning activé, (d) vérification systématique avec `git status` avant chaque push.
+
+## 5. Reproductibilité
+
+Documenter : (i) **références ACLED et ERA5** (Raleigh 2010, Hersbach 2020) avec DOI, (ii) **version des packages** (`sessionInfo()`), (iii) **snapshot des données** (date de téléchargement ACLED, version release ERA5), (iv) **code commenté** en français (convention IFORD), (v) **structure de projet portable** (chemins relatifs, `.Rproj` versionné), (vi) **`README.md`** avec instructions de reproduction. La cible : un collègue doit pouvoir refaire tourner le pipeline 6 mois plus tard juste avec les fichiers du repo + son propre `.env`.
+
+# Référence du débrief Edith
+
+> *« ACLED et ERA5 sont deux sources complémentaires pour les sciences sociales spatiales. Les deux utilisent une API avec authentification — stocker les clés dans un fichier `.env`. NetCDF est multidimensionnel : `terra::rast()` lit toutes les couches en une seule commande. `exactextractr` permet d'extraire des statistiques zonales pour chaque couche en une ligne. Toujours afficher la plage temporelle des données avant de les analyser. »*
+
+# Références
+
+- **ACLED** : Raleigh, C. et al. (2010). *Introducing ACLED: An armed conflict location and event dataset*. Journal of Peace Research.
+- **ERA5** : Hersbach, H. et al. (2020). *The ERA5 global reanalysis*. Quarterly Journal of the Royal Meteorological Society.
+- @pebesma2018simple ; @hijmans2024terra.

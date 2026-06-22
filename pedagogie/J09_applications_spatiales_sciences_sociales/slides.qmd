@@ -1,0 +1,386 @@
+---
+title: "J9 — Applications spatiales et sciences sociales"
+subtitle: "ACLED (conflits armés) et ERA5 (température) au Cameroun"
+author: "Edith Darin (conception) · Ramesesse Dzita (intégration IFORD) · GDSG"
+date: "2026-08-06"
+engine: knitr
+format:
+  revealjs:
+    theme:
+      - default
+      - ../_commons/styles/slides_revealjs.scss
+    slide-number: c/t
+    transition: fade
+    progress: true
+    chalkboard: true
+    footer: "IFORD × GDSG 2026 — J9 · ACLED + ERA5"
+    incremental: false
+    code-fold: false
+    code-line-numbers: false
+execute:
+  echo: false
+  warning: false
+  message: false
+bibliography: ../_commons/helpers/citations.bib
+---
+
+# Partie 0 — Plan de la journée {data-state="section-break"}
+
+## Objectifs
+
+- Découvrir **ACLED** : conflits armés géoréférencés, API, package `acledR`.
+- Découvrir **ERA5** : réanalyse climatique, Copernicus CDS, package `ecmwfr`.
+- Comprendre le format **NetCDF** et le lire avec `terra`.
+- Analyser l'**évolution temporelle** des conflits et de la température.
+- Cartographier et **agréger** des données par région administrative.
+
+## Programme 6 heures
+
+| Moment | Contenu |
+|---|---|
+| Matin 1 | ACLED : source, types, compte, export, package `acledR` |
+| Matin 2 | ERA5 : réanalyse, CDS, NetCDF, package `ecmwfr` |
+| Après-midi 1 | TD R Partie I : conflits ACLED (exercices 1-6) |
+| Après-midi 2 | TD R Partie II : température ERA5 (exercices 7-12) |
+
+# Partie I — ACLED {data-state="section-break"}
+
+## Qu'est-ce qu'ACLED ?
+
+ACLED — *Armed Conflict Location & Event Data Project*
+
+- Base de données mondiale des événements de conflit armé.
+- Couvre tous les pays depuis 1997 (Afrique sub-saharienne depuis 1997).
+- **Mise à jour hebdomadaire** par des codeurs spécialisés.
+- Accès **gratuit** après création d'un compte.
+- Site : [acleddata.com](https://acleddata.com/)
+
+## Types d'événements ACLED
+
+| Type | Description |
+|---|---|
+| **Battles** | Affrontements armés entre groupes organisés |
+| **Explosions/Remote violence** | Bombes, mines, drones, artillerie |
+| **Violence against civilians** | Attaques contre des non-combattants |
+| **Riots** | Émeutes et troubles collectifs |
+| **Protests** | Manifestations (souvent pacifiques) |
+| **Strategic developments** | Accords, mouvements de troupes, recrutement |
+
+## Colonnes clés d'ACLED
+
+| Colonne | Description |
+|---|---|
+| `event_date` | Date de l'événement |
+| `event_type` / `sub_event_type` | Type et sous-type |
+| `actor1` / `actor2` | Acteurs impliqués |
+| `admin1` / `admin2` / `admin3` | Région / Département / Arrondissement |
+| `location` | Localité |
+| `latitude` / `longitude` | Coordonnées géographiques |
+| `fatalities` | Décès déclarés |
+
+## Créer un compte myACLED
+
+1. Aller sur [developer.acleddata.com](https://developer.acleddata.com/)
+2. Cliquer sur *Register* (gratuit, instantané).
+3. Confirmer l'adresse email.
+4. L'email et le mot de passe sont les identifiants API.
+
+Ces identifiants permettent d'accéder à :
+
+- **ACLED Explorer** : interface web de téléchargement en CSV.
+- **API ACLED** depuis R via le package `acledR`.
+
+## Le package acledR
+
+```r
+install.packages("acledR")
+```
+
+Fonction principale : `acledR::acled_api()`
+
+```r
+acled_brut <- acledR::acled_api(
+  email      = "votre@email.com",
+  password   = "votre_mdp",
+  country    = "Cameroon",
+  start_date = "2015-01-01",
+  end_date   = as.character(Sys.Date()),
+  monadic    = FALSE  # deux acteurs par ligne
+)
+```
+
+Le résultat est un `data.frame` **identique** à l'export CSV.
+
+## Bonnes pratiques — protéger les identifiants
+
+**Ne jamais** écrire email/mot de passe dans un script versionné Git.
+
+Fichier `.env` local (ignoré par `.gitignore`) :
+
+```
+email_address="votre@email.com"
+acled_password="votre_mdp"
+```
+
+Lecture dans R :
+
+```r
+readRenviron(".env")
+email    <- Sys.getenv("email_address")
+password <- Sys.getenv("acled_password")
+```
+
+Sauvegarder le résultat en CSV pour **éviter de rappeler l'API** à chaque session.
+
+## Analyse ACLED — évolution temporelle
+
+```r
+resume_annuel <- acled_clean |>
+  count(annee, event_type, name = "n_evenements")
+
+ggplot(resume_annuel,
+       aes(x = annee, y = n_evenements, fill = event_type)) +
+  geom_col() +
+  scale_fill_brewer(palette = "Set2") +
+  theme_minimal()
+```
+
+Visualiser **par année et par type** révèle :
+
+- Pics de violence à certaines périodes (crise anglophone 2017+, Boko Haram 2014+).
+- Changement de composition des types (montée des protests, des battles…).
+
+## Analyse ACLED — cartographie points
+
+```r
+acled_pts <- st_as_sf(acled_clean,
+  coords = c("longitude", "latitude"), crs = 4326)
+
+tmap_mode("plot")
+tm_shape(cmr1) + tm_borders() +
+tm_shape(acled_pts) +
+  tm_dots(fill = "event_type", size = 0.04, alpha = 0.6) +
+tm_layout(legend.outside = TRUE)
+```
+
+## Analyse ACLED — agrégation par région
+
+```r
+resume_regions <- acled_pts |>
+  st_join(cmr1["NAME_1"], join = st_within) |>
+  st_drop_geometry() |>
+  group_by(NAME_1) |>
+  summarise(n_evenements = n(),
+            deces = sum(fatalities, na.rm = TRUE))
+
+cmr1_acled <- cmr1 |>
+  left_join(resume_regions, by = "NAME_1") |>
+  mutate(n_evenements = replace_na(n_evenements, 0L))
+```
+
+# Partie II — ERA5 {data-state="section-break"}
+
+## Qu'est-ce qu'ERA5 ?
+
+ERA5 — *cinquième réanalyse atmosphérique de l'ECMWF*
+
+- Institution : ECMWF (European Centre for Medium-Range Weather Forecasts)
+- Accès via le **Copernicus Climate Data Store (CDS)**
+- Résolution spatiale : **~31 km (0.25°)**
+- Couverture temporelle : **1940 à aujourd'hui** (mise à jour continue)
+- Plus de **200 variables** : température, précipitations, vent, humidité…
+
+## Les produits ERA5
+
+| Produit | Résolution | Usage |
+|---|---|---|
+| ERA5 Single Levels | 0.25°, horaire | Température 2m, précipitations… |
+| ERA5 Pressure Levels | 0.25°, horaire | Variables en altitude |
+| ERA5-Land | ~9 km, horaire | Surface continentale uniquement |
+
+Pour ce TD : **ERA5 Single Levels Monthly Means**
+
+Variable : `2m_temperature`
+
+## Le format NetCDF
+
+NetCDF — *Network Common Data Form*
+
+- Format **standard** pour les données scientifiques multidimensionnelles.
+- Dimensions typiques : **longitude × latitude × time** (parfois × level).
+- Stocke les **métadonnées** (unités, dates, CRS) dans le fichier.
+- Les températures ERA5 sont en **Kelvin** → conversion nécessaire :
+
+$$T_{°C} = T_K - 273.15$$
+
+- Un fichier ERA5 mensuel pour le Cameroun (10 ans) ≈ **quelques Mo**.
+- Lecture dans R : `terra::rast()` ou `ncdf4::nc_open()`
+
+## Créer un compte CDS
+
+1. Aller sur [cds.climate.copernicus.eu](https://cds.climate.copernicus.eu/)
+2. Cliquer sur *Register* (gratuit, instantané).
+3. Dans le profil : copier l'**UID** (numérique) et la **clé API**.
+4. Stocker dans le fichier `.env` (même fichier que les identifiants ACLED) :
+
+```
+cds_user="123456"
+cds_key="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+```
+
+## Le package ecmwfr
+
+```r
+install.packages("ecmwfr")
+```
+
+Workflow :
+
+```r
+# 1. Enregistrer les identifiants
+ecmwfr::wf_set_key(user = "123456",
+                   key  = "xxx...",
+                   service = "cds")
+
+# 2. Construire la requête
+requete <- list(
+  dataset_short_name = "reanalysis-era5-single-levels-monthly-means",
+  product_type = "monthly_averaged_reanalysis",
+  variable     = "2m_temperature",
+  year = as.character(2015:2024),
+  month = sprintf("%02d", 1:12),
+  time = "00:00",
+  area = c(13.1, 8.4, 1.6, 16.2),  # N, W, S, E
+  data_format = "netcdf",
+  target = "era5_t2m_mensuel_cameroun.nc"
+)
+
+# 3. Soumettre et télécharger
+ecmwfr::wf_request(request = requete, transfer = TRUE, path = data_dir)
+```
+
+La requête peut prendre **5 à 30 minutes** côté serveur Copernicus.
+
+## Lire un NetCDF avec terra
+
+```r
+library(terra)
+era5_brut <- rast("era5_t2m_mensuel_cameroun.nc")
+
+# Infos sur le fichier
+nlyr(era5_brut)        # nombre de couches (120 pour 10 ans × 12 mois)
+res(era5_brut)         # résolution spatiale
+time(era5_brut)        # dates de chaque couche
+
+# Conversion Kelvin → Celsius
+era5_celsius <- era5_brut - 273.15
+
+# Découpage sur le Cameroun
+cmr0_vect <- vect(st_transform(cmr0, crs(era5_celsius)))
+era5_cmr  <- mask(crop(era5_celsius, cmr0_vect), cmr0_vect)
+```
+
+## Extraction par région avec exactextractr
+
+```r
+library(exactextractr)
+
+cmr1_proj   <- st_transform(cmr1, crs(era5_cmr))
+t2m_extrait <- exact_extract(era5_cmr, cmr1_proj, "mean")
+# data.frame : une ligne par région, UNE COLONNE PAR COUCHE (mean.1, mean.2, …)
+
+t2m_long <- cmr1 |>
+  st_drop_geometry() |> select(NAME_1) |>
+  bind_cols(t2m_extrait) |>
+  pivot_longer(-NAME_1, names_to = "couche",
+               values_to = "t2m_celsius") |>
+  mutate(idx   = as.integer(sub("mean\\.", "", couche)),
+         date  = dates_era5[idx],
+         annee = as.integer(format(date, "%Y")),
+         mois  = as.integer(format(date, "%m")))
+```
+
+## ERA5 — série temporelle nationale
+
+```r
+t2m_national <- t2m_long |>
+  group_by(date) |>
+  summarise(t2m_moy = mean(t2m_celsius, na.rm = TRUE))
+
+ggplot(t2m_national, aes(x = date, y = t2m_moy)) +
+  geom_line(colour = "#2171B5") +
+  geom_smooth(method = "loess", colour = "#CB181D", linetype = "dashed") +
+  theme_minimal()
+```
+
+La courbe lissée (loess) révèle la **tendance climatique** au-delà de la saisonnalité.
+
+## ERA5 — carte de la température moyenne
+
+```r
+t2m_moy_rast <- mean(era5_cmr)
+
+tm_shape(t2m_moy_rast) +
+  tm_raster(
+    col.scale  = tm_scale_continuous(values = "brewer.rd_yl_bu",
+                                     reverse = TRUE),
+    col.legend = tm_legend(title = "T°C")
+  ) +
+  tm_shape(cmr1) + tm_borders() +
+  tm_layout(legend.outside = TRUE)
+```
+
+Palette **rouge-jaune-bleu inversée** : rouge = chaud (Nord aride), bleu = frais (plateaux Ouest).
+
+# Partie III — Synthèse {data-state="section-break"}
+
+## Limites et précautions
+
+### ACLED
+
+- **Couverture dépend des sources médiatiques** — zones enclavées sous-représentées.
+- Nombre d'événements ≠ intensité de la violence.
+- Citer ACLED **et préciser la date** de téléchargement.
+
+### ERA5
+
+- **Réanalyse, pas observations directes** — zones sans stations météo dépendent du modèle.
+- Résolution de 31 km : pas adaptée à l'analyse intra-urbaine.
+- Unité en Kelvin : toujours vérifier la conversion.
+
+## Messages clés
+
+- ACLED et ERA5 sont deux sources **complémentaires** pour les sciences sociales spatiales.
+- Les deux utilisent une **API avec authentification** — stocker les clés dans un fichier `.env`.
+- **NetCDF** est multidimensionnel : `terra::rast()` lit toutes les couches en une seule commande.
+- `exactextractr` permet d'extraire des statistiques zonales pour **chaque couche** en une ligne.
+- Toujours **afficher la plage temporelle** des données avant de les analyser.
+
+## Demain (J10) — Flux reproductibles et clôture
+
+J10 fusionne notre matériel avec celui d'Edith pour conclure l'atelier :
+
+- Projets R portables et chemins relatifs.
+- Quarto pour rapports dynamiques.
+- Mini-projet en groupe basé sur les datasets vus J1-J9.
+- Synthèse FAIR et feuille de route INS/BUCREP.
+
+# Crédits {data-state="section-break"}
+
+## Conception et intégration
+
+- **Conception pédagogique complète** : Edith Darin (Senior Researcher, ex-WorldPop/Oxford, GDSG/IFORD)
+- **Intégration convention atelier IFORD** : Ramesesse Dzita (Junior Demographer-Statistician, IT Specialist, GDSG/IFORD)
+
+## Sources des données
+
+- **ACLED** — Armed Conflict Location & Event Data Project — <https://acleddata.com/>
+- **ERA5** — ECMWF / Copernicus CDS — <https://cds.climate.copernicus.eu/>
+- **GADM v4.1** — <https://gadm.org>
+
+Code et matériel pédagogique : **CC-BY 4.0** au nom du GDSG/IFORD.
+
+## Références méthodologiques
+
+- Raleigh et al. (2010) — Introducing ACLED: An armed conflict location and event dataset. *Journal of Peace Research*.
+- Hersbach et al. (2020) — The ERA5 global reanalysis. *Quarterly Journal of the Royal Meteorological Society*.
