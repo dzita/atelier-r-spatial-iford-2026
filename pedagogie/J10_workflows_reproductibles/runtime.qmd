@@ -1,52 +1,174 @@
 ---
-title: "J10 — Reproductibilité et clôture"
-subtitle: "Pas de cellules WebR — travail sur vos projets locaux"
+title: "J10 — Flux reproductibles et mini-projet"
+subtitle: "Code R exécutable dans le navigateur — indicateurs régionaux"
 engine: knitr
 ---
 
 ::: {.iford-callout}
-**J10 est différent.** Pas de runtime WebR ici : la journée porte sur la **mise en place de votre propre projet reproductible** dans votre RStudio local, avec votre compte GitHub.
+**Mode d'emploi.** Cliquez **Run code** dans chaque cellule. WebR charge `sf`, `dplyr`, `purrr`, `tmap` au premier appel (~30 s la première fois). Tout tourne dans votre navigateur — aucune installation locale.
+
+**Limitation technique** : le runtime WebR couvre les **sections 1, 3, 5 et 6** de `demo.qmd` (chargement projet + tmap plot/view + automatisation purrr + métadonnées FAIR). Les sections **2 (Quarto multi-format render)** et **4 (Git init/commit/push)** exigent un terminal système et ne tournent pas dans WebR — voir `demo.qmd` desktop.
+
+**Données 100 % réelles** : `regions_indicateurs_demo.gpkg` préparé par Edith Darin (10 régions du Cameroun, indicateurs démographiques et sociaux). Aucune simulation.
+
+**Conception pédagogique** : Edith Darin (GDSG/IFORD). **Intégration runtime** : Ramesesse Dzita.
 :::
 
-## Plan de la journée
+## 1. Charger le dataset fil rouge
 
-| Bloc | Format |
-|---|---|
-| Pourquoi la reproductibilité | Slides |
-| Construire un rapport Quarto | demo + Q1 |
-| Versioning avec Git | demo + Q2 |
-| Automatisation : fonction et boucle | demo + Q3 |
-| Présentations courtes des participants | Restitutions |
-| Session clôture : FAIR + métadonnées + feuille route INS | Slides |
-| Cérémonie de remise des certificats | Cérémonie |
+```{webr}
+#| autorun: true
+library(sf); library(dplyr); library(tibble)
 
-## Boîte à outils — runtimes des journées précédentes
+# Telecharger le GeoPackage des indicateurs regionaux (10 features)
+download.file("../_commons/data/jour_10_extraits/regions_indicateurs_demo.gpkg",
+              "regions.gpkg", mode = "wb")
 
-Pour consulter rapidement les runtimes WebR utiles à votre présentation courte :
+regions <- sf::read_sf("regions.gpkg")
 
-- [J1 — Intro R + pensée spatiale](../J01_intro_R_pensee_spatiale/runtime.qmd)
-- [J2 — sf + CRS](../J02_sf_CRS_vecteurs/runtime.qmd)
-- [J3 — Données raster avec terra](../J03_donnees_raster_terra/runtime.qmd)
-- [J5 — Visualisation et cartographie](../J05_visualisation_cartographie/runtime.qmd) *(à activer une fois renommé)*
+cat("Nombre de regions :", nrow(regions), "\n")
+cat("CRS               :", sf::st_crs(regions)$input, "\n")
+cat("Colonnes          :", paste(names(regions), collapse = ", "), "\n")
+```
 
-Les autres jours (J4, J6, J7, J8, J9) ont chacun leur runtime accessible depuis le menu **Modules** de la navbar.
+## 2. Inspecter le tableau d'indicateurs
 
-## Référence : démo reproductibilité complète
+```{webr}
+regions |>
+  sf::st_drop_geometry() |>
+  dplyr::select(region, population, menages, eau_amelioree_pct,
+                alphabetisation_pct, ecoles, formations_sanitaires) |>
+  dplyr::arrange(dplyr::desc(population))
+```
 
-Le fichier `demo.qmd` de J10 montre comment construire un projet R-spatial reproductible en **6 étapes** : création projet RStudio, init Git, pipeline 4 scripts, rapport Quarto, fonction d'automatisation, snapshot renv. À ouvrir dans RStudio comme modèle.
+## 3. Carte statique de l'accès à l'eau améliorée
 
-## Format des présentations courtes (5–8 min)
+```{webr}
+library(tmap)
+tmap_mode("plot")
 
-Chaque participant (ou binôme) présente :
+tm_shape(regions) +
+  tm_polygons(
+    fill        = "eau_amelioree_pct",
+    fill.scale  = tm_scale_intervals(style = "quantile", values = "viridis"),
+    fill.legend = tm_legend(title = "Eau amelioree (%)")
+  ) +
+  tm_text("region", size = 0.5) +
+  tm_title("Acces a l'eau amelioree par region",
+           position = tm_pos_in("left", "top"))
+```
 
-1. **Une chose produite pendant les 9 jours** : une carte, une analyse, un script.
-2. **Ce qu'il a appris** en la faisant.
-3. **Comment il compte la réutiliser** dans son institution.
+## 4. La même carte en mode interactif
 
-L'objectif n'est pas la perfection technique — c'est le partage d'une compétence acquise.
+`tmap_mode("view")` bascule en Leaflet. Pan, zoom, popup au survol — tout fonctionne dans le navigateur. C'est la démonstration directe de la Section 3 de `demo.qmd`.
 
-## Certificats
+```{webr}
+tmap_mode("view")
 
-À l'issue des présentations, **Pr Kuépié** remet les certificats IFORD nominatifs. Photo de groupe pour la communication institutionnelle.
+tm_shape(regions) +
+  tm_polygons(
+    fill        = "eau_amelioree_pct",
+    fill.scale  = tm_scale_intervals(style = "quantile", values = "viridis"),
+    fill.legend = tm_legend(title = "Eau amelioree (%)")
+  ) +
+  tm_text("region", size = 0.5)
+```
+
+## 5. Automatisation par boucle régionale
+
+Fonction unitaire qui calcule densité + taille de ménage + FOSA/10k pour une région donnée.
+
+```{webr}
+library(purrr)
+
+resumer_region <- function(nom) {
+  r <- regions |> dplyr::filter(region == nom)
+  if (nrow(r) == 0) {
+    return(tibble::tibble(region = nom, densite = NA_real_,
+                          taille_menage = NA_real_,
+                          fosa_pour_10k = NA_real_))
+  }
+  surface_km2 <- as.numeric(sf::st_area(r)) / 1e6
+  tibble::tibble(
+    region        = nom,
+    pop_2024      = r$population,
+    surface_km2   = round(surface_km2, 0),
+    densite       = round(r$population / surface_km2, 1),
+    taille_menage = round(r$population / r$menages, 2),
+    fosa_pour_10k = round(r$formations_sanitaires / r$population * 1e4, 2)
+  )
+}
+
+resumer_region("Adamaoua")
+```
+
+## 6. Appliquer aux 10 régions en une commande
+
+```{webr}
+tableau_regions <- purrr::map_dfr(regions$region, resumer_region) |>
+  dplyr::arrange(dplyr::desc(densite))
+
+tableau_regions
+```
+
+## 7. À essayer — ton mini-projet
+
+::: {.iford-callout}
+Modifie l'indicateur calculé dans `resumer_region()` :
+- Remplace `densite` par `ecoles_pour_1000_hab = r$ecoles / r$population * 1000`.
+- Ou crée un indice composite (par exemple `0.5 * eau_amelioree_pct + 0.5 * alphabetisation_pct`).
+
+Relance `map_dfr` et trie. Quelles régions se démarquent ?
+
+C'est exactement le pattern du **mini-projet** : choisir un indicateur, le calculer pour les 10 régions, l'interpréter.
+:::
+
+```{webr}
+# A toi de jouer :
+mon_indicateur <- function(nom) {
+  r <- regions |> dplyr::filter(region == nom)
+  tibble::tibble(
+    region = nom,
+    valeur = ???  # remplacer par ton calcul
+  )
+}
+
+# resultats <- purrr::map_dfr(regions$region, mon_indicateur) |>
+#   dplyr::arrange(dplyr::desc(valeur))
+# resultats
+```
+
+## 8. Les 7 métadonnées minimales d'un livrable
+
+Voici la grille à coller dans chaque export FAIR (Section 6 de `demo.qmd`).
+
+```{webr}
+metadonnees_livrable <- tibble::tribble(
+  ~`#`, ~`Element`,           ~`Valeur exemple`,
+  1L,   "Titre",              "Mon indicateur compose par region",
+  2L,   "Source",             "regions_indicateurs_demo.gpkg (Edith Darin, GDSG)",
+  3L,   "Date production",    format(Sys.Date(), "%Y-%m-%d"),
+  4L,   "CRS",                "EPSG:4326 (WGS84)",
+  5L,   "Echelle/resolution", "ADM1 - 10 regions du Cameroun",
+  6L,   "Methode",            "decrire la formule de l'indicateur",
+  7L,   "Limites",            "donnees d'entrainement, ne pas citer comme officiel"
+)
+metadonnees_livrable
+```
+
+::: {.iford-callout}
+**Règle simple** : sans ces 7 informations, ton `.gpkg` ou `.csv` est inutilisable par quelqu'un d'autre dans 6 mois.
+:::
+
+## 9. Pour aller plus loin
+
+La version desktop `demo.qmd` ajoute (à exécuter sous RStudio) :
+
+- **Section 2 complète** : rendu Quarto multi-format (HTML / PPTX / PDF / Word) avec commandes `quarto render --to ...`.
+- **Section 4 complète** : workflow Git complet (init, add, commit, push) + équivalents `usethis::use_git()` / `use_github()`.
+- **Sidecar JSON FAIR** : export `regions_indicateurs_enrichi.gpkg.json` lisible par machine avec capture du commit Git court pour traçabilité.
+- **Carte sauvée en PNG** via `tmap_save(..., dpi = 200)`.
+
+Le devoir individuel (Q1-Q5 + mini-projet en groupe avec grille de présentation 5 min × 6 étapes) est dans `exercice.qmd`.
 
 [← Retour à l'accueil](../INDEX.md)

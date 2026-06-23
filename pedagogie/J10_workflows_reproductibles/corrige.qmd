@@ -1,6 +1,6 @@
 ---
-title: "J10 — Corrigés et exemple de présentation réussie"
-subtitle: "Atelier IFORD × GDSG · Distribué à la fin de la journée"
+title: "J10 — Corrigés (flux reproductibles + mini-projet)"
+subtitle: "Atelier IFORD × GDSG · Distribué après la session"
 lang: fr
 format:
   html:
@@ -10,6 +10,7 @@ format:
     theme: cosmo
 execute:
   echo: true
+  eval: false
   warning: false
   message: false
 bibliography: ../_commons/helpers/citations.bib
@@ -17,276 +18,300 @@ bibliography: ../_commons/helpers/citations.bib
 
 # Avant le corrigé
 
-Si tu n'as pas tenté les activités : **ferme ce fichier**. La valeur du corrigé est dans la **comparaison** avec ta tentative.
+Si tu n'as pas tenté les exercices : ferme ce fichier.
 
-# Q1 — Projet RStudio + Git
+Conception pédagogique (atelier R + mini-projet + grille présentation + métadonnées minimales) : **Edith Darin** (GDSG/IFORD). Intégration convention IFORD : **Ramesesse Dzita**.
 
-## Q1.a — `usethis::create_project()`
+> **Note** : les blocs sont en `eval: false` pour éviter de re-exécuter le pipeline complet. Pour exécuter, ouvrir dans RStudio et lancer manuellement.
 
-```{r}
-#| label: q1a
-#| eval: false
-usethis::create_project("~/projets/cmr_demo_j10")
+# Q1 — Initialiser un projet R reproductible
+
+## a. Différence projet RStudio vs dossier ordinaire
+
+Un projet RStudio contient un fichier `.Rproj` à la racine. Trois conséquences pratiques :
+
+- RStudio fixe automatiquement le **répertoire de travail** sur ce dossier — tous les chemins relatifs partent de là.
+- `here::here()` détecte le `.Rproj` comme racine et construit tous les chemins par rapport.
+- Le projet peut être **partagé / cloné** en l'état : le voisin l'ouvre, RStudio retrouve la même structure.
+
+## b. Arborescence + README
+
+```r
+library(fs)
+fs::dir_create(c("data", "scripts", "outputs", "reports"))
 ```
 
-`usethis` crée :
+```markdown
+# Mon projet IFORD J10
 
-- Le dossier `cmr_demo_j10/`.
-- Un fichier `cmr_demo_j10.Rproj` (qui définit le projet RStudio).
-- Un `.gitignore` minimal (ignore `.Rproj.user/`, `.Rhistory`, etc.).
-- Ouvre RStudio dans le nouveau projet.
+Atelier R-spatial IFORD x GDSG (2026). Petit projet d'entrainement
+pour pratiquer le workflow reproductible.
 
-## Q1.b — `usethis::use_git()`
+- data/    : donnees source (non modifiees)
+- scripts/ : code R
+- outputs/ : tableaux et cartes produits
+- reports/ : rapports Quarto rendus (HTML, PPTX)
 
-```{r}
-#| label: q1b
-#| eval: false
-usethis::use_git()
+Auteur : Prenom Nom. Licence : CC-BY 4.0.
 ```
 
-Cette commande :
+## c. Chargement sans chemin absolu
 
-1. `git init` le projet.
-2. Fait un premier commit avec tous les fichiers existants.
-3. Demande s'il faut redémarrer RStudio pour activer le panneau Git (répondre Yes).
-
-## Q1.c — `usethis::use_github()` ou manuel
-
-```{r}
-#| label: q1c
-#| eval: false
-# Approche idéale
-usethis::use_github()    # nécessite gh CLI installé ou token configuré
-
-# Si ça plante, manuel via terminal RStudio :
-# 1. Créer le repo sur github.com/<user>/cmr_demo_j10 (sans README ni gitignore)
-# 2. Dans le terminal :
-#    git remote add origin https://github.com/<user>/cmr_demo_j10.git
-#    git branch -M main
-#    git push -u origin main
+```r
+library(here); library(sf)
+source(here("..", "atelier-r-spatial-iford-2026", "pedagogie",
+            "_commons", "helpers", "fetch_data.R"))
+regions <- sf::read_sf(fetch_indicateurs_regions_demo())
+cat("Racine detectee par here :", here::here(), "\n")
 ```
 
-## Q1.d — Premier push
+**Astuce** : si `here::here()` retourne un chemin inattendu (par exemple `pedagogie/` au lieu du repo racine), c'est qu'il y a plusieurs marqueurs de racine concurrents. Utilise alors `rprojroot::find_root(rprojroot::has_file("mon_projet.Rproj"))` qui ancre explicitement.
 
-Vérifier sur <https://github.com/`<user>`/cmr_demo_j10> que le code apparaît. Si oui : ton projet est versionné publiquement et reproductible.
+# Q2 — Rapport Quarto multi-format
 
-# Q2 — Rapport Quarto
+## a. En-tête YAML
 
-## Q2.a — Squelette de `rapport.qmd`
-
-```{verbatim}
+```yaml
 ---
-title: "Densité de population du Cameroun 2020"
-author: "<Ton nom>"
-date: "2026-08-06"
+title: "Indicateurs regionaux du Cameroun"
+author: "Prenom Nom"
+date: today
 format:
-  pdf:
+  html:
     toc: true
-    number-sections: true
+    theme: cosmo
+    embed-resources: true
+  pptx:
+    reference-doc: ../brand/iford_reference.pptx
 execute:
-  echo: true
+  echo: false
   warning: false
 ---
-
-# Introduction
-
-Cette analyse répond à la question : *quelle est la densité de population
-estimée par région du Cameroun en 2020 ?* Elle s'appuie sur les limites
-administratives GADM v4.1 (ADM1, 10 régions) et sur les estimations
-WorldPop top-down 2020 à 100 m.
-
-Le Cameroun compte officiellement 475 442 km² pour une population
-estimée 2020 d'environ 26 millions d'habitants, soit une densité moyenne
-nationale de 55 hab/km². Les contrastes régionaux sont importants — le
-Littoral (Douala) approche 170 hab/km² tandis que le Sud reste sous
-10 hab/km².
 ```
 
-## Q2.b — Deux blocs R
+## b. Tableau d'indicateurs
 
-```{r}
-#| label: q2b-block1
-#| eval: false
-library(sf)
-library(here)
+```r
+library(dplyr); library(knitr)
+indicateurs <- regions |>
+  sf::st_drop_geometry() |>
+  dplyr::select(region, population, menages, eau_amelioree_pct,
+                alphabetisation_pct) |>
+  dplyr::arrange(dplyr::desc(population))
 
-adm1 <- read_sf(
-  "~/projets/atelier-r-spatial-iford-2026/datasets/cameroun/admin_boundaries/gadm41_CMR_1.json"
-)
-nrow(adm1)
+knitr::kable(indicateurs,
+             format.args = list(big.mark = " "),
+             caption = "Indicateurs regionaux du Cameroun")
 ```
 
-```{r}
-#| label: q2b-block2
-#| eval: false
-library(ggplot2)
+## c. Render HTML vs PPTX
 
-ggplot(adm1) +
-  geom_sf(aes(fill = NAME_1), color = "white", show.legend = FALSE) +
-  geom_sf_label(aes(label = NAME_1), size = 2.4, color = "white",
-                fontface = "bold") +
-  scale_fill_viridis_d() +
-  labs(title = "Les 10 régions du Cameroun") +
-  theme_minimal()
+Sortie HTML :
+- Tableau interactif si on utilise `DT::datatable()` (tri / filtre / pagination).
+- TOC à gauche, navigation par section.
+- Embarque tout dans un seul `.html` si `embed-resources: true`.
+
+Sortie PPTX :
+- Une diapo par section H2.
+- Le tableau perd l'interactivité et devient une grille statique.
+- La mise en page suit le `reference-doc` IFORD (logo, couleurs, polices).
+
+# Q3 — `tmap` plot vs view
+
+## a. Construire l'objet `carte_alpha`
+
+```r
+library(tmap)
+
+carte_alpha <- tm_shape(regions) +
+  tm_polygons(
+    fill        = "alphabetisation_pct",
+    fill.scale  = tm_scale_intervals(style = "quantile", values = "viridis"),
+    fill.legend = tm_legend(title = "Alphabetisation (%)")
+  ) +
+  tm_text("region", size = 0.5) +
+  tm_title("Taux d'alphabetisation par region",
+           position = tm_pos_in("left", "top"))
 ```
 
-## Q2.c — Rendu PDF
+## b. Mode plot + export PNG
 
-```{r}
-#| label: q2c
-#| eval: false
-quarto::quarto_render("rapport.qmd", output_format = "pdf")
-# OU dans le terminal :
-# quarto render rapport.qmd --to pdf
+```r
+tmap_mode("plot")
+print(carte_alpha)
+tmap_save(carte_alpha,
+          filename = "outputs/carte_alphabetisation.png",
+          width = 7, height = 5, units = "in", dpi = 200)
 ```
 
-Si Quarto demande TinyTeX, l'installer : `quarto install tinytex`.
+## c. Mode view (interactif)
 
-## Q2.d — Commit
-
-```bash
-git add rapport.qmd
-git commit -m "Ajouter rapport Quarto initial avec carte des 10 régions"
-git push
+```r
+tmap_mode("view")
+print(carte_alpha)
 ```
 
-# Q3 — Automatisation
+**Ce qui se passe** : le panel Viewer de RStudio affiche un widget Leaflet — pan, zoom, popup au survol, choix du fond de carte (OpenStreetMap, Esri.WorldImagery, etc.).
 
-## Q3.a — Fonction `superficie_region()`
+**Format de sortie qui conserve l'interactivité** : **HTML uniquement**. En PPTX ou PDF, ce bloc affichera une capture statique. Bonne pratique multi-format : utiliser `eval: !expr knitr::is_html_output()` pour skipper le bloc interactif en sortie non-HTML.
 
-```{r}
-#| label: q3a
-#| eval: false
-library(sf)
-library(dplyr)
+# Q4 — Automatisation par boucle régionale
 
-superficie_region <- function(nom) {
-  region <- adm1 |> filter(NAME_1 == nom)
-  region_utm <- st_transform(region, 32632)
-  as.numeric(st_area(region_utm)) / 1e6   # km²
+## a. Fonction `calculer_ratios()`
+
+```r
+library(purrr); library(tibble)
+
+calculer_ratios <- function(nom_region) {
+  r <- regions |> dplyr::filter(region == nom_region)
+  if (nrow(r) == 0) {
+    return(tibble::tibble(region = nom_region,
+                          taille_menage = NA_real_,
+                          ecoles_pour_1000 = NA_real_,
+                          fosa_pour_10k = NA_real_))
+  }
+  tibble::tibble(
+    region           = nom_region,
+    population       = r$population,
+    menages          = r$menages,
+    taille_menage    = round(r$population / r$menages, 2),
+    ecoles_pour_1000 = round(r$ecoles / r$population * 1e3, 3),
+    fosa_pour_10k    = round(r$formations_sanitaires / r$population * 1e4, 2)
+  )
 }
-
-# Test
-superficie_region("Centre")
 ```
 
-## Q3.b — Boucle fonctionnelle avec `purrr`
+## b. Application + tri
 
-```{r}
-#| label: q3b
-#| eval: false
-library(purrr)
+```r
+ratios <- purrr::map_dfr(regions$region, calculer_ratios) |>
+  dplyr::arrange(taille_menage)
 
-superficies <- map_dbl(adm1$NAME_1, superficie_region)
-names(superficies) <- adm1$NAME_1
-sort(superficies, decreasing = TRUE)
+print(ratios)
 ```
 
-`map_dbl` applique la fonction à chaque élément et retourne un vecteur numérique typé.
+**Lecture attendue** :
+- Plus petite taille de ménage : régions urbaines / Sud (Littoral, Centre, Sud — typiquement 4.5–5.5 personnes).
+- Plus grande taille de ménage : Extrême-Nord, Nord, Adamaoua (5.5–6.5 personnes — concessions élargies, polygamie).
 
-## Q3.c — Comparaison avec boucle `for`
+## c. Version `for` boucle (à fins comparatives)
 
-```{r}
-#| label: q3c
-#| eval: false
-# Avec boucle for
-superficies_for <- numeric(nrow(adm1))
-for (i in seq_along(adm1$NAME_1)) {
-  superficies_for[i] <- superficie_region(adm1$NAME_1[i])
+```r
+ratios_for <- tibble::tibble()
+for (nom in regions$region) {
+  ligne <- calculer_ratios(nom)
+  ratios_for <- dplyr::bind_rows(ratios_for, ligne)
 }
-names(superficies_for) <- adm1$NAME_1
+ratios_for <- dplyr::arrange(ratios_for, taille_menage)
+```
 
-# Comparaison de durée
-microbenchmark::microbenchmark(
-  for_loop = {
-    for (i in seq_along(adm1$NAME_1))
-      superficies_for[i] <- superficie_region(adm1$NAME_1[i])
-  },
-  purrr = map_dbl(adm1$NAME_1, superficie_region),
-  times = 10
+**Comparaison lisibilité** : la version `map_dfr` tient en une ligne, retourne directement un tibble typé. La version `for` exige un accumulateur, un `bind_rows` à chaque itération (coûteux), et un tri post-boucle. **Préférer `map_dfr` pour 99 % des cas**.
+
+## d. Export CSV
+
+```r
+library(readr)
+fs::dir_create("outputs")
+readr::write_csv(ratios, "outputs/ratios_regions.csv")
+```
+
+# Q5 — Métadonnées du livrable
+
+## a. Tableau des 7 métadonnées minimales
+
+```r
+metadata_ratios <- tibble::tribble(
+  ~`#`, ~`Element`,           ~`Valeur`,
+  1L,   "Titre",              "Ratios derives par region (atelier IFORD J10)",
+  2L,   "Source",             "regions_indicateurs_demo.gpkg (Edith Darin, GDSG)",
+  3L,   "Date production",    format(Sys.Date(), "%Y-%m-%d"),
+  4L,   "CRS",                "EPSG:4326 (WGS84)",
+  5L,   "Echelle/resolution", "ADM1 - 10 regions du Cameroun",
+  6L,   "Methode",            "taille_menage = pop/menages ; FOSA/10k = FOSA/pop*1e4",
+  7L,   "Limites",            "donnees d'entrainement ; ne pas citer comme officiel"
 )
+knitr::kable(metadata_ratios)
 ```
 
-**Verdict** : sur 10 éléments, les deux sont **équivalents en performance**. `purrr::map_dbl` est plus lisible et type le résultat. Le `for` reste valide pour 2–3 itérations simples. Au-delà : `purrr`.
+## b. Sidecar JSON
 
-## Q3.d — Commit
-
-```bash
-git add R/superficie.R
-git commit -m "Ajouter fonction superficie_region + benchmark map vs for"
-git push
+```r
+library(jsonlite)
+meta_json <- list(
+  titre            = metadata_ratios$Valeur[1],
+  source           = metadata_ratios$Valeur[2],
+  date             = metadata_ratios$Valeur[3],
+  crs              = metadata_ratios$Valeur[4],
+  resolution       = metadata_ratios$Valeur[5],
+  methode          = metadata_ratios$Valeur[6],
+  limites          = metadata_ratios$Valeur[7],
+  licence          = "CC-BY 4.0 (donnees d'entrainement)",
+  auteur           = "Prenom Nom",
+  code_source      = "scripts/calcul_ratios.R",
+  reproductibilite = "git rev-parse --short HEAD"
+)
+jsonlite::write_json(meta_json,
+                     "outputs/ratios_regions.csv.json",
+                     pretty = TRUE, auto_unbox = TRUE)
 ```
 
-# Q4 — Présentation courte (exemples de réussite)
+## c. Les 3 informations les plus importantes à 6 mois
 
-## Exemple 1 : Statisticienne INS Cameroun
+1. **Méthode** — la formule de calcul. Sans elle, on ne sait pas si `taille_menage` est `pop/menages` ou `menages/pop`. Le 1er chiffre est 5, le 2e est 0,2 — quelle interprétation ?
+2. **Source** — quel fichier d'origine, quelle date. Permet de revenir à la donnée brute et de recalculer.
+3. **Limites** — la phrase « données d'entraînement, ne pas citer comme officiel ». Évite à un collègue de publier dans 6 mois un rapport avec ces chiffres comme vérités.
 
-**Slide 1** : *« J'ai construit une carte des taux d'urbanisation par région avec ColorBrewer YlOrBr et tous les éléments d'habillage. »*
+::: {.takeaway}
+Les 4 autres (titre, date, CRS, échelle) sont importantes mais reconstructibles. Méthode + source + limites sont **non-reconstructibles** — c'est leur absence qui rend un fichier inutilisable.
+:::
 
-**Slides 2–3** : Capture d'écran de la carte (J5 + Q6 J5). Bref commentaire : choix de palette, classification quantile.
+# Q-final — Exemple de mini-projet réussi
 
-**Slide 4** : *« J'ai compris pourquoi la classification Jenks raconte une histoire différente des quantiles — c'est ça que je transmettrai à mes collègues. »*
+## Modèle « Priorité régionale WASH au Cameroun »
 
-**Slide 5** : *« J'intègre cette méthodologie dans nos publications ECAM 4 — chaque indicateur régional aura sa carte standardisée IFORD. »*
+Voici un exemple type, à utiliser comme **gabarit**, pas comme solution unique.
 
-**Slide 6** : *« Merci à tous. Questions ? »*
+### 1. Question
 
-→ **5 minutes**, message clair, applicabilité immédiate. Réussite.
+**Quelles régions concentrent à la fois forte population et faible accès à l'eau améliorée, et devraient être priorisées par un programme WASH national ?**
 
-## Exemple 2 : Démographe IFORD doctorant
+### 2. Indicateur
 
-**Slide 1** : *« J'ai comparé WorldPop top-down et un proto bottom-up sur Yaoundé. »*
+`pop_a_risque_eau = population × (1 - eau_amelioree_pct / 100)`
 
-**Slides 2–3** : Deux cartes côte à côte (J7 + J9). Tableau des écarts.
+→ Nombre de personnes par région qui n'ont **pas** accès à une source d'eau améliorée.
 
-**Slide 4** : *« Les écarts atteignent 12 % sur certains arrondissements urbains. C'est la limite du top-down quand le bâti évolue rapidement. »*
+### 3. Carte
 
-**Slide 5** : *« Je veux soumettre cette analyse comme contribution à mon papier de thèse sur les dynamiques urbaines du Cameroun. »*
+Carte choroplèthe `tmap` du `pop_a_risque_eau` par région, palette `magma` (sombres = plus à risque), nom de région en label, échelle + flèche nord + source en bas.
 
-**Slide 6** : Q&A.
+### 4. Interprétation (3 phrases)
 
-→ **7 minutes**, projet de recherche, ouverture sur publication. Réussite.
+L'Extrême-Nord concentre **plus de 2,5 millions de personnes** sans accès à l'eau améliorée, soit le plus grand effectif national. Le Centre et le Littoral, malgré leur forte population, présentent un risque modéré grâce à un taux d'accès supérieur à 80 %. La région **Est**, peu peuplée mais avec un taux d'accès de 49 %, est dans la **zone d'alerte rapport population/couverture** et pourrait justifier une intervention prioritaire par habitant ciblée.
 
-## Exemple 3 : Technicien ministère santé
+### 5. Limite méthodologique
 
-**Slide 1** : *« J'ai cartographié la couverture vaccinale par département avec un effet « buffer 30 km autour des hôpitaux ». »*
+L'indicateur agrège l'accès « amélioré » sans distinguer **forage**, **borne-fontaine** ou **eau courante** — la qualité réelle de service varie considérablement entre ces sources. De plus, les chiffres utilisés ici sont des **valeurs d'entraînement pédagogique**, non issus de l'ECAM 4 ou de MICS — le résultat ne peut pas être présenté à un décideur sans recalcul sur des données officielles.
 
-**Slides 2–3** : Carte choroplèthe avec buffers superposés. Commentaire : 18 départements ont une couverture < 60 %, et tous sont à plus de 30 km du chef-lieu de santé le plus proche.
+### 6. Décision possible
 
-**Slide 4** : *« Le pipeline R me permet de refaire cette analyse en 10 minutes avec les nouvelles données DHIS2. »*
+Pour un programme WASH MINEE/MINHDU/UNICEF, deux pistes complémentaires : un **plan d'investissement par tête** ciblé sur l'Extrême-Nord (plus gros effectif absolu), et un **diagnostic accéléré qualité de service** dans l'Est (où le déficit relatif est le plus alarmant). Une cartographie ADM2 (départements) serait l'étape suivante pour localiser les points d'investissement précis.
 
-**Slide 5** : *« Mes collègues du MINSANTÉ verront cette carte en réunion lundi. »*
+## Pourquoi ce mini-projet réussit
 
-**Slide 6** : Q&A.
+- **Question** sans jargon, formulée comme un décideur la poserait.
+- **Indicateur** transparent, formule à la portée d'un non-statisticien.
+- **Une seule carte** — pas 6 graphiques qui diluent le message.
+- **Interprétation honnête** : nuance « malgré leur forte population… » + zoom sur l'Est.
+- **Limite assumée** : on dit clairement que ce sont des données d'entraînement.
+- **Décision concrète** : deux pistes opérationnelles, pas une recommandation vague.
 
-→ **6 minutes**, application sectorielle, valorisation institutionnelle. Réussite.
+# Référence du débrief
 
-# Bonus — Erreurs à éviter en présentation
-
-| Erreur | Pourquoi c'est problématique | Remède |
-|---|---|---|
-| Slides 100 % de code | Le public ne peut pas lire et écouter en même temps | 1 slide visuelle (carte) + commentaire à l'oral |
-| Présentation > 8 minutes | Mange le temps des suivants | Répéter chez soi avec un chronomètre |
-| Pas de slide « réutilisation » | L'apport pour ton institution n'est pas visible | Toujours finir par « comment je vais utiliser ça » |
-| Tout dans le titre | Le titre devrait être l'**accroche**, pas le résumé | Titre court, slide 1 développe |
-| Aucune question préparée | Les Q&A créent un blanc | Avoir 2 questions ouvertes en réserve |
-
-# Conclusion : et après ?
-
-Tu repars de cet atelier avec :
-
-- **Un repo GitHub personnel** versionné, reproductible.
-- **Un certificat IFORD** validant 10 jours d'atelier R-spatial.
-- **Une compétence professionnelle** rare en Afrique subsaharienne en 2026.
-
-Trois actions concrètes dans les 30 jours :
-
-1. **Présente ta carte** au moins une fois dans ton institution.
-2. **Active la communauté GDSG** (Slack / WhatsApp).
-3. **Identifie un cas d'usage** dans ton service où R-spatial peut remplacer Excel.
-
-Bonne suite à toi.
+> *« Le code est une partie du produit statistique. La reproductibilité réduit les erreurs et facilite la transmission. Une carte officielle exige données, méthode, validation et métadonnées. La capacité spatiale se construit par projets répétables. »*
+>
+> — Messages de clôture d'Edith Darin, J10 IFORD 2026.
 
 # Références
 
-@pebesma2018simple ; @hijmans2024terra ; @tatem2017worldpop ; @bucrep_rgph4.
+@wilkinson2016fair ; @pebesma2018simple ; @tennekes2018tmap ; @bryan2018excuse ; @rprojroot.

@@ -1,8 +1,8 @@
 ---
-title: "J10 — Flux de travail reproductibles et renforcement des capacités"
-subtitle: "Atelier IFORD × GDSG · Yaoundé · 6 août 2026"
+title: "J10 — Flux reproductibles, mini-projet et clôture"
+subtitle: "Atelier IFORD × GDSG · Yaoundé · 7 août 2026"
 author: "Ramesesse Dzita · Geospatial Data Science Group"
-date: "2026-08-06"
+date: "2026-08-07"
 engine: knitr
 format:
   revealjs:
@@ -13,7 +13,7 @@ format:
     transition: fade
     progress: true
     chalkboard: true
-    footer: "IFORD × GDSG 2026 — J10 · Reproductibilité + clôture"
+    footer: "IFORD × GDSG 2026 — J10 · Reproductibilité + mini-projet + clôture"
     incremental: false
     code-fold: false
     code-line-numbers: false
@@ -41,7 +41,7 @@ Vous arrivez **au bout** d'un atelier de 10 jours. Récap :
 | J7 | Cartographie population haute résolution + bottom-up |
 | J8 | Télédétection et observation de la Terre |
 | J9 | Sciences spatiales et sociales : projets inspirants |
-| **J10** | **Reproductibilité + restitutions + clôture** |
+| **J10** | **Reproductibilité + mini-projet + clôture** |
 
 ## Pourquoi un dernier jour sur la reproductibilité ?
 
@@ -55,20 +55,29 @@ Trois raisons :
 Une analyse non reproductible est, en pratique, perdue dès qu'on ferme RStudio.
 :::
 
+## Le fil rouge de la journée
+
+Un seul dataset accompagne **toutes** les démos et le mini-projet :
+
+`regions_indicateurs_demo.gpkg` — 10 régions du Cameroun avec indicateurs démographiques et sociaux.
+
+Préparé par **Edith Darin** (GDSG/IFORD), distribué dans `pedagogie/datasets/cameroun/jour_10/`.
+
+Ce parti pris pédagogique : démontrer que **le même dataset** peut nourrir un rapport Quarto multi-format, des cartes tmap statiques et interactives, une automatisation par boucle régionale, et un livrable mini-projet — bref, l'ensemble d'un workflow reproductible.
+
 ## Plan détaillé J10
 
 | Bloc | Durée |
 |---|---|
 | Wrap-up J1–J9 + intro J10 | 30 min |
-| **Théorie 1** — Pourquoi la reproductibilité ? | 30 min |
-| **Démo 1** — Construire un rapport Quarto | 1 h |
-| **Théorie 2** — Versioning avec Git | 30 min |
-| **Démo 2** — Init Git + commit + push | 45 min |
-| **Théorie 3** — Automatisation | 30 min |
-| **Démo 3** — Fonction + boucle batch | 30 min |
+| **Matin 1** — Structure projet + chemins relatifs | 30 min |
+| **Matin 2** — Quarto multi-format + tmap plot vs view | 1 h 30 |
+| **Théorie + démo Git** | 45 min |
+| **Démo automatisation par boucle régionale** | 30 min |
+| **Mini-projet en groupe** | 1 h 30 |
 | **Présentations courtes** | 1 h |
 | **Session clôture** : FAIR + métadonnées + feuille route INS | 30 min |
-| Q&A + remise certificats | 30 min |
+| Q&A + cérémonie + remise certificats | 30 min |
 
 # Partie 1 — Pourquoi la reproductibilité ? {data-state="section-break"}
 
@@ -84,6 +93,18 @@ S'il ne l'est pas :
 
 - Vous passez deux jours à essayer de retrouver « comment vous aviez fait », sans y arriver complètement.
 
+## Une définition opérationnelle
+
+Un résultat est **reproductible** si une autre personne peut :
+
+- Retrouver les **données source**.
+- Comprendre le **traitement**.
+- Relancer le **code**.
+- Obtenir les **mêmes tableaux et graphiques**.
+- Identifier la **date, l'auteur et la version**.
+
+Ces cinq capacités sont la grille de lecture qu'on appliquera tout au long de la journée.
+
 ## Les cinq piliers d'un workflow reproductible
 
 | Pilier | Outil R / standard |
@@ -98,36 +119,93 @@ S'il ne l'est pas :
 
 | Niveau | Définition | Effort |
 |---|---|---|
-| **Reproductibilité méthodologique** | « Quelqu'un d'autre, avec les mêmes données, obtient les mêmes résultats » | Moyen |
-| **Reproductibilité computationnelle** | « N'importe qui, sur n'importe quelle machine, retrouve les chiffres exacts » | Élevé — exige `renv` ou Docker |
-| **Reproductibilité scientifique** | « Avec d'autres données comparables, on retrouve les mêmes conclusions » | Le plus élevé — exige plusieurs études |
+| **Méthodologique** | « Quelqu'un d'autre, avec les mêmes données, obtient les mêmes résultats » | Moyen |
+| **Computationnelle** | « N'importe qui, sur n'importe quelle machine, retrouve les chiffres exacts » | Élevé — exige `renv` ou Docker |
+| **Scientifique** | « Avec d'autres données comparables, on retrouve les mêmes conclusions » | Le plus élevé — exige plusieurs études |
 
 Pour l'atelier : on vise le niveau **méthodologique** (un projet RStudio versionné Git, un Quarto exécutable).
 
-# Partie 2 — Quarto pour les rapports reproductibles {data-state="section-break"}
+## Structure de projet conseillée
 
-## Anatomie d'un rapport Quarto
-
-Un fichier `.qmd` est du texte Markdown + des blocs de code R (ou Python, Julia) + une YAML d'en-tête.
-
-```{verbatim}
----
-title: "Mon rapport"
-author: "Mon nom"
-format: pdf
----
-
-# Introduction
-
-Le Cameroun compte 10 régions :
-
-{r}
-library(sf)
-adm1 <- read_sf(...)
-nrow(adm1)
+```text
+projet/
+  data/
+  scripts/
+  outputs/
+  reports/
+  README.md
 ```
 
-À la commande `quarto render rapport.qmd`, Quarto exécute le code R, capture les sorties, et produit un PDF ou HTML.
+::: {.takeaway}
+Principe absolu : **jamais de chemin absolu** vers le poste d'une personne. `here::here("data", "fichier.csv")` plutôt que `"C:/Users/Ramesesse/.../fichier.csv"`.
+:::
+
+# Partie 2 — Quarto pour les rapports reproductibles {data-state="section-break"}
+
+## Quarto : idée centrale
+
+Quarto transforme un fichier `.qmd` en livrable :
+
+- HTML interactif.
+- Word.
+- PDF.
+- PowerPoint.
+
+Le **même fichier** peut contenir texte, code, résultats, cartes et métadonnées.
+
+::: {.takeaway}
+Une seule source. Plusieurs formats. Aucune resaisie manuelle quand les données changent.
+:::
+
+## Un seul fichier, plusieurs formats
+
+Avec Quarto, le format se choisit dans le YAML ou en ligne de commande.
+
+```yaml
+format:
+  html: default
+  pptx: default
+  pdf: default
+```
+
+Commandes :
+
+```bash
+quarto render rapport.qmd --to html
+quarto render rapport.qmd --to pptx
+quarto render rapport.qmd --to pdf
+```
+
+## Quand choisir quel format ?
+
+| Format | Usage principal | Point d'attention |
+|---|---|---|
+| **HTML** | rapport interactif, cartes `tmap_mode("view")` | facile à partager, navigateur requis |
+| **PPTX** | restitution, formation, réunion de décision | mise en page par diapositives |
+| **PDF** | rapport figé, archive, diffusion officielle | demande un moteur LaTeX (TinyTeX) |
+| **Word** | relecture institutionnelle | pratique pour commentaires et corrections |
+
+::: {.takeaway}
+Important : une carte interactive reste interactive **en HTML uniquement**. En PPTX/PDF, il faut une carte statique ou une capture.
+:::
+
+## Anatomie d'un fichier Quarto
+
+```yaml
+---
+title: "Rapport spatial"
+format: html
+---
+```
+
+Puis :
+
+- Texte explicatif en Markdown.
+- Blocs de code R entre triple-backticks `{r}`.
+- Résultats calculés automatiquement.
+- Cartes `ggplot2` ou `tmap` insérées en sortie.
+
+Avantage : le rapport se **régénère** quand les données changent.
 
 ## L'avantage : code + narration + résultats dans un seul fichier
 
@@ -135,28 +213,70 @@ nrow(adm1)
 ::: {.column width="50%"}
 **Sans Quarto**
 
-- Le code est dans `analyse.R`.
-- Les graphiques sont sauvegardés en PNG.
-- Le rapport est rédigé dans Word.
+- Code dans `analyse.R`.
+- Graphiques sauvegardés en PNG.
+- Rapport rédigé dans Word.
 - À chaque modification de données, refaire tout manuellement.
 :::
 ::: {.column width="50%"}
 **Avec Quarto**
 
 - Code + texte + graphiques **dans un seul `.qmd`**.
-- À chaque modification de données : `quarto render` re-génère tout en automatique.
-- Sortie PDF, HTML, Word, et même slides revealjs depuis la **même source**.
+- À chaque modification de données : `quarto render` re-génère tout.
+- Sortie PDF, HTML, Word, et slides revealjs depuis la **même source**.
 :::
 :::
 
 ## Le standard scientifique en 2026
 
-Quarto est **adopté massivement** depuis 2023 :
+Quarto est adopté massivement depuis 2023 :
 
 - *Nature*, *Science* recommandent la soumission de matériel supplémentaire en R Markdown / Quarto.
 - *JAMA Network* exige des données + code reproductibles.
 - WorldPop, le DHS Program, l'INED publient leur méthode en Quarto.
 - Le BUCREP devrait s'aligner sur cette pratique pour le RGPH 4.
+
+# Partie 2bis — `tmap` : plot vs view {data-state="section-break"}
+
+## Deux modes pour deux usages
+
+`tmap` fonctionne avec deux modes complémentaires :
+
+```r
+tmap_mode("plot")   # carte statique pour rapport ou impression
+tmap_mode("view")   # carte interactive HTML (zoom, popup, fond satellite)
+```
+
+Cette logique permet de produire **à la fois** un rapport officiel imprimable **et** un outil d'exploration en ligne — depuis le même code.
+
+## Pourquoi cette distinction est centrale en J10
+
+| Mode | Sortie typique | Format Quarto |
+|---|---|---|
+| `tmap_mode("plot")` | PNG haute résolution | PDF, PPTX, Word, HTML |
+| `tmap_mode("view")` | Leaflet interactif (zoom, popup) | HTML uniquement |
+
+::: {.takeaway}
+Dans un rapport multi-format : on bascule en `"plot"` avant la section officielle (export PPTX/PDF), puis en `"view"` pour la version HTML interactive.
+:::
+
+## Démo en direct sur le dataset fil rouge
+
+```r
+library(sf); library(tmap)
+
+regions <- read_sf("regions_indicateurs_demo.gpkg")
+
+tmap_mode("plot")
+carte_statique <- tm_shape(regions) +
+  tm_polygons("indicateur_principal", palette = "viridis")
+
+tmap_mode("view")
+carte_interactive <- tm_shape(regions) +
+  tm_polygons("indicateur_principal", palette = "viridis", popup.vars = TRUE)
+```
+
+Le **même tableau** `tm_shape() + tm_polygons()` produit deux livrables selon le mode actif.
 
 # Partie 3 — Versioning avec Git {data-state="section-break"}
 
@@ -168,13 +288,13 @@ Sans Git, votre arborescence ressemble vite à :
 analyse_v1.R
 analyse_v2.R
 analyse_v3_FINAL.R
-analyse_v3_FINAL_corrigé.R
-analyse_v3_FINAL_corrigé_VRAIMENT_FINAL.R
+analyse_v3_FINAL_corrige.R
+analyse_v3_FINAL_corrige_VRAIMENT_FINAL.R
 ```
 
 Avec Git, vous avez **un seul fichier** `analyse.R`, et l'historique de **toutes ses versions** est dans un sous-dossier `.git`. Vous pouvez revenir à n'importe quelle version précédente en une commande.
 
-## Trois opérations Git de base
+## Cinq opérations Git de base
 
 | Commande | Action |
 |---|---|
@@ -190,10 +310,10 @@ Avec Git, vous avez **un seul fichier** `analyse.R`, et l'historique de **toutes
 
 ## Bonne pratique : messages de commit
 
-| ❌ Mauvais | ✅ Bon |
+| Mauvais | Bon |
 |---|---|
 | « MAJ » | « Ajouter Q4 corrigé — distance Bamenda-Buea » |
-| « update » | « Corriger CRS dans la fonction `dissolve_adm()` |
+| « update » | « Corriger CRS dans la fonction `dissolve_adm()` » |
 | « Pour Pierre » | « Refonte du chapitre 3 selon retours de M. Kuepié » |
 
 Les messages sont lus dans 6 mois — ils doivent être interprétables hors contexte.
@@ -219,58 +339,85 @@ Exemples typiques en analyse spatiale :
 - Produire une carte mensuelle → fonction qui prend le mois en paramètre.
 - Vérifier 365 fichiers de données → fonction qui scanne un dossier.
 
+## Quand automatiser ?
+
+Automatiser quand :
+
+- Le même calcul est répété par région.
+- Plusieurs cartes doivent être produites.
+- Le traitement doit être refait chaque mois.
+- Les erreurs manuelles deviennent probables.
+
 ## Trois outils d'automatisation en R
 
 | Outil | Quand l'utiliser |
 |---|---|
 | **`for` boucle** | Pour 2–3 itérations simples |
 | **`purrr::map_*`** | Boucle fonctionnelle, sortie typée, code lisible |
-| **Script + `Rscript`** | Automatisation système (cron) |
+| **Script + `Rscript`** | Automatisation système (cron, Windows Task Scheduler) |
 
-## Exemple : calculer la densité pour chaque région
+## Exemple : densité pour chaque région du Cameroun
 
 ```r
-library(purrr)
-library(sf)
+library(purrr); library(sf); library(dplyr)
 
-# Une fonction qui prend un nom de région et retourne la densité
+regions <- read_sf("regions_indicateurs_demo.gpkg")
+
 densite_region <- function(nom) {
-  region <- adm1 |> filter(NAME_1 == nom)
-  pop <- pop_par_region[pop_par_region$NAME_1 == nom, "pop_2020"]
-  superficie <- as.numeric(st_area(region)) / 1e6
-  tibble(region = nom, densite = pop / superficie)
+  r <- regions |> filter(NAME_1 == nom)
+  superficie_km2 <- as.numeric(st_area(r)) / 1e6
+  tibble(region   = nom,
+         pop_2024 = r$pop_2024,
+         densite  = r$pop_2024 / superficie_km2)
 }
 
-# Appliquer à toutes les régions
-resultats <- map_dfr(adm1$NAME_1, densite_region)
+resultats <- map_dfr(regions$NAME_1, densite_region)
 ```
 
 `map_dfr` applique la fonction à chaque élément et combine les résultats en un seul tibble. C'est l'équivalent fonctionnel d'une boucle.
 
-# Partie 5 — Présentations courtes {data-state="section-break"}
+# Partie 5 — Mini-projet et présentations {data-state="section-break"}
 
-## Format
+## Mini-projet : six éléments à livrer
 
-Chaque participant (ou binôme) présente **5 à 8 minutes** sur :
+Chaque groupe (3-4 personnes) construit un livrable comportant exactement :
 
-- Une carte, une analyse, un script qu'il a produit pendant les 9 jours.
-- Ce qu'il a appris en le faisant.
-- Comment il compte réutiliser cet outil dans son institution.
+1. Une **question** statistique précise.
+2. Un **indicateur** principal calculé.
+3. Un **graphique** ou une **carte**.
+4. Une **interprétation** en 3 phrases.
+5. Une **limite méthodologique** assumée.
+6. Une **recommandation** de suite.
 
 ::: {.takeaway}
-L'objectif n'est pas la perfection technique — c'est de **partager une compétence acquise**.
+Cette grille en 6 éléments structure aussi bien la conception du mini-projet que sa restitution orale.
 :::
+
+## Grille de présentation — 5 minutes par groupe
+
+| # | Étape | Temps |
+|---|---|---|
+| 1 | Question | 30 s |
+| 2 | Données (source, licence, date) | 45 s |
+| 3 | Méthode (traitement, hypothèse) | 1 min |
+| 4 | Résultat (un graphique ou une carte) | 1 min |
+| 5 | Limite (ce qui n'est pas garanti) | 45 s |
+| 6 | Décision possible | 1 min |
 
 ## Tous les profils sont valorisés
 
 | Profil | Type de présentation typique |
 |---|---|
 | Statisticien INS | Carte d'un indicateur ECAM par région avec décoration soignée |
-| Démographe IFORD | Comparaison top-down/bottom-up sur un département pilote |
+| Démographe IFORD | Comparaison top-down / bottom-up sur un département pilote |
 | Technicien ministère sectoriel | Application au secteur d'attache (santé, éducation, agriculture) |
 | Cadre ONG | Cartographie d'un programme géré par l'institution |
 
-# Partie 6 — Principes FAIR et clôture {data-state="section-break"}
+::: {.takeaway}
+L'objectif n'est pas la perfection technique — c'est de **partager une compétence acquise**.
+:::
+
+# Partie 6 — FAIR, métadonnées et clôture {data-state="section-break"}
 
 ## Les principes FAIR (2016)
 
@@ -280,16 +427,32 @@ Quatre principes pour la **science ouverte** :
 |---|---|---|
 | **F** | **Findable** (Trouvable) | Identifiant unique (DOI), métadonnées complètes, indexé dans un catalogue |
 | **A** | **Accessible** (Accessible) | Protocoles standards (HTTPS), authentification claire, archivage long terme |
-| **I** | **Interoperable** (Interopérable) | Formats ouverts (GeoPackage, NetCDF), vocabulaires standardisés (CF Conventions) |
+| **I** | **Interoperable** (Interopérable) | Formats ouverts (GeoPackage, NetCDF), vocabulaires standardisés |
 | **R** | **Reusable** (Réutilisable) | Licence claire (CC-BY recommandé), métadonnées de provenance, documentation |
 
-Les principes FAIR sont devenus la **norme de référence** des bailleurs internationaux (UE Horizon, NIH, Wellcome) — toute donnée publique non-FAIR sera de plus en plus rejetée.
+Les principes FAIR sont devenus la **norme** des bailleurs internationaux (UE Horizon, NIH, Wellcome) — toute donnée publique non-FAIR sera de plus en plus rejetée.
 
-## Métadonnées géospatiales
+## Métadonnées minimales d'un livrable géospatial
+
+Sept éléments indispensables — la grille à coller dans chaque export :
+
+1. **Titre** et description.
+2. **Source** et producteur.
+3. **Date** de production.
+4. **Système de coordonnées** (CRS).
+5. **Échelle** ou résolution.
+6. **Méthode** de traitement.
+7. **Limites** d'utilisation.
+
+::: {.takeaway}
+Sans ces 7 informations, un fichier `.gpkg` ou `.tif` est inutilisable par quelqu'un d'autre dans 6 mois.
+:::
+
+## Standards de métadonnées géospatiales
 
 | Standard | Domaine d'application |
 |---|---|
-| **ISO 19115** | Métadonnées géospatiales générales (le standard de référence pour les SIG nationaux) |
+| **ISO 19115** | Métadonnées géospatiales générales (standard de référence pour les SIG nationaux) |
 | **Dublin Core étendu** | Métadonnées scientifiques génériques |
 | **DataCite Schema** | DOI pour les jeux de données scientifiques |
 | **OGC CSW** | Catalogue de services pour la découverte |
@@ -306,7 +469,20 @@ Cinq étapes pour mettre en place une infrastructure de données spatiales (IDS)
 4. **Catalogue** : déployer GeoNetwork ou équivalent pour la découverte interne et publique.
 5. **Politique de partage** : définir ce qui est public, restreint, interne.
 
-L'IDS du BUCREP, une fois en place, sera **la référence** pour toutes les analyses post-RGPH 4.
+Pratiquement, pour démarrer dans un INS :
+
+- Standardiser les dossiers de projets.
+- Maintenir un catalogue de données spatiales.
+- Documenter les scripts critiques.
+- Former des référents R spatial.
+- Définir une procédure de validation cartographique.
+
+## Messages de clôture
+
+- Le **code** est une partie du produit statistique.
+- La **reproductibilité** réduit les erreurs et facilite la transmission.
+- Une **carte officielle** exige données, méthode, validation et métadonnées.
+- La **capacité spatiale** se construit par projets répétables.
 
 ## Ressources pour continuer
 
@@ -314,6 +490,7 @@ L'IDS du BUCREP, une fois en place, sera **la référence** pour toutes les anal
 - **Spatial Data Science** (Pebesma, Bivand) : <https://r-spatial.org/book/>
 - **R Packages** (Wickham, Bryan) : <https://r-pkgs.org/>
 - **Happy Git and GitHub for the useR** (Bryan) : <https://happygitwithr.com/>
+- **Quarto guide** : <https://quarto.org/docs/guide/>
 - **WorldPop documentation** : <https://www.worldpop.org/>
 - **DHS Spatial Analysis Reports** : <https://dhsprogram.com/publications/>
 - **Afrimapr** (communauté R-spatial Afrique) : <https://afrimapr.github.io/>

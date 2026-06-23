@@ -505,6 +505,52 @@ fetch_data_ecole_cmr <- function() {
                "Dataset bonus DATA_ECOLE (Edith Darin)")
 }
 
+# ---------------------------------------------------------------------
+# Indicateurs regionaux demo (Edith Darin) - dataset fil rouge J10
+# Format            : GeoPackage avec 10 features (regions du Cameroun)
+#                     + colonnes population/menages/eau/alphabetisation/...
+# Licence           : usage formation interne IFORD/GDSG (datasets fictifs
+#                     d'entrainement, prepares par Edith Darin)
+# Dossier reception : pedagogie/datasets/cameroun/jour_10/
+#
+# Variantes disponibles via parametre 'format' :
+#   "gpkg"  -> regions_indicateurs_demo.gpkg            (defaut)
+#   "shp"   -> regions_indicateurs_demo_shp/regions_indicateurs_demo.shp
+#   "csv"   -> projet_final_indicateurs_demo.csv       (tabulaire, pour merge)
+#
+# Usage :
+#   regions <- sf::read_sf(fetch_indicateurs_regions_demo())
+#   tab     <- readr::read_csv(fetch_indicateurs_regions_demo("csv"))
+# ---------------------------------------------------------------------
+fetch_indicateurs_regions_demo <- function(format = c("gpkg", "shp", "csv")) {
+  format <- match.arg(format)
+  base <- file.path(.PROJECT_ROOT, "pedagogie", "datasets", "cameroun",
+                    "jour_10")
+  rel <- switch(format,
+    gpkg = "regions_indicateurs_demo.gpkg",
+    shp  = file.path("regions_indicateurs_demo_shp",
+                     "regions_indicateurs_demo.shp"),
+    csv  = "projet_final_indicateurs_demo.csv"
+  )
+  p <- file.path(base, rel)
+  if (file.exists(p) && file.size(p) >= .MIN_VALID_BYTES) {
+    return(normalizePath(p, mustWork = TRUE))
+  }
+  stop(sprintf(
+    paste0(
+      "\n=================================================================\n",
+      " Indicateurs regionaux demo (Edith) - format %s introuvable.\n",
+      "=================================================================\n",
+      " Lancer le bootstrap pour copier les datasets depuis le repo Edith :\n",
+      "   Rscript pedagogie/J10_workflows_reproductibles/00_copier_datasets_edith_j10.R\n",
+      " Fichier attendu :\n",
+      "   %s\n",
+      "=================================================================\n"
+    ),
+    format, p
+  ), call. = FALSE)
+}
+
 # Dossier des tuiles GHS-POP (ZIP Mollweide, JRC R2023A)
 # Retourne le dossier, pas un fichier (car 7 tuiles)
 fetch_ghspop_tuiles_dir <- function() {

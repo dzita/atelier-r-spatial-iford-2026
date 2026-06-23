@@ -1,19 +1,19 @@
 ---
-title: "J10 — Démo : un projet R-spatial reproductible en 30 minutes"
-subtitle: "Atelier IFORD × GDSG · Yaoundé, 6 août 2026"
-author: "Ramesesse Dzita (GDSG)"
-date: "2026-08-06"
+title: "J10 — Démo : un projet R-spatial reproductible de bout en bout"
+subtitle: "Atelier IFORD × GDSG · Yaoundé · 7 août 2026"
+author: "Ramesesse Dzita · Geospatial Data Science Group"
+date: "2026-08-07"
 lang: fr
 format:
   html:
     toc: true
-    toc-depth: 3
+    toc-depth: 2
     toc-location: left
-    number-sections: true
     code-fold: false
-    code-tools: true
     theme: cosmo
-    df-print: paged
+    embed-resources: true
+  pptx:
+    reference-doc: ../_commons/styles/iford_reference.pptx
 execute:
   echo: true
   warning: false
@@ -21,277 +21,422 @@ execute:
 bibliography: ../_commons/helpers/citations.bib
 ---
 
-# Ce que cette démo montre
+# Avant de commencer
 
-On construit **en direct** un mini-projet R-spatial reproductible en suivant les cinq piliers : projet structuré + Quarto + Git + automatisation + métadonnées. À la fin, le projet est sur GitHub et publiable.
+Cette démo est le **rapport reproductible** qui sert de référence à la journée J10. Elle traite **6 sections** :
 
-Cas d'usage : *« Densité de population par département du Cameroun en 2020, à partir de WorldPop »*.
+1. Projet structuré et chemins relatifs (`here::here()`).
+2. Quarto en pratique : un seul fichier, plusieurs formats.
+3. `tmap` plot vs view : le même code, deux livrables.
+4. Git : versionner un projet R-spatial.
+5. Automatisation : un indicateur calculé pour 10 régions en une commande.
+6. FAIR et métadonnées minimales : ce qu'un livrable géospatial doit toujours porter.
 
-# Étape 1 — Créer le projet RStudio
+Le **fil rouge** est un dataset unique : `regions_indicateurs_demo.gpkg`, fourni par Edith Darin (GDSG/IFORD). Toute la démo s'y rapporte. À la fin, vous saurez le lire, le cartographier (statique et interactif), l'agréger, l'exporter et le documenter.
 
-`usethis` automatise la création de la structure standard. Cette commande crée un dossier, un `.Rproj`, un `.gitignore`, et ouvre RStudio dans le nouveau projet.
+Convention atelier : **chaque bloc de code est précédé d'une phrase qui explique ce qu'il fait**.
 
-```{r}
-#| label: create-project
-#| eval: false
-usethis::create_project("~/projets/cmr_densite_dep")
-```
+# Section 1 — Projet structuré et chemins relatifs
 
-Le résultat :
+## Pourquoi `here::here()` plutôt que des chemins absolus
 
-```
-cmr_densite_dep/
-├── cmr_densite_dep.Rproj
-├── .gitignore
-└── R/
-```
+Quand on partage un projet R, le premier point qui casse la reproductibilité est le **chemin absolu** : `C:/Users/Ramesesse/Documents/...`. Sur la machine de votre collègue, ce chemin n'existe pas. La solution : utiliser `here::here()` qui détecte automatiquement la racine du projet R (le fichier `.Rproj` ou `.here`) et construit les chemins relatifs à cette racine.
 
-On crée ensuite à la main l'arborescence convention de l'atelier (cf. J10 cahier des charges) :
+On commence par charger les packages dont la section a besoin, puis on demande à `here` où est la racine du projet.
 
-```{r}
-#| label: structure
-#| eval: false
+```{r setup-section1}
 library(here)
+library(fs)
 
-dir.create(here("R"),               showWarnings = FALSE)
-dir.create(here("data", "raw"),     showWarnings = FALSE, recursive = TRUE)
-dir.create(here("data", "intermediate"), showWarnings = FALSE, recursive = TRUE)
-dir.create(here("outputs", "figures"),   showWarnings = FALSE, recursive = TRUE)
-dir.create(here("outputs", "tables"),    showWarnings = FALSE, recursive = TRUE)
+projet_root <- here::here()
+message("Racine detectee : ", projet_root)
 ```
 
-# Étape 2 — Initialiser Git
+## Structure de dossier conseillée
 
-```{r}
-#| label: git-init
-#| eval: false
-usethis::use_git()           # init + premier commit
-usethis::use_github()        # creer le repo distant + push (necessite gh CLI ou token)
+Voici l'arborescence type pour un projet R-spatial. On la décrit avant de l'expliquer.
+
+```{r structure-conseillee}
+arbre_type <- c(
+  "projet/",
+  "  data/        # donnees source, non modifiees",
+  "  scripts/     # code R",
+  "  outputs/     # tables, CSV, GeoPackages produits",
+  "  reports/     # rapports Quarto rendus (HTML, PDF...)",
+  "  README.md    # description du projet"
+)
+cat(arbre_type, sep = "\n")
 ```
 
-Si tu n'as pas configuré `usethis::use_github()`, tu peux le faire manuellement en ligne de commande :
+Le principe : **les données source ne sont jamais modifiées** ; tout résultat est produit dans `outputs/` ou `reports/`. Si on supprime ces deux dossiers et qu'on relance le code, on doit retrouver exactement les mêmes fichiers.
+
+## Charger le dataset fil rouge
+
+On utilise le helper `fetch_indicateurs_regions_demo()` du projet atelier (défini dans `pedagogie/_commons/helpers/fetch_data.R`). Il retourne le chemin absolu vers le GeoPackage, peu importe la machine.
+
+Quand Quarto rend ce `.qmd`, il fixe le **répertoire de travail au dossier du fichier source** (ici `pedagogie/J10_workflows_reproductibles/`). On atteint donc `fetch_data.R` par un **chemin relatif** `../_commons/helpers/fetch_data.R`. Une fois sourcé, le helper utilise `rprojroot` pour ancrer ses propres chemins sur le `.Rproj` racine — donc tous les `fetch_*()` retourneront des chemins absolus corrects.
+
+```{r charger-fil-rouge}
+source("../_commons/helpers/fetch_data.R")
+
+library(sf)
+library(dplyr)
+
+regions <- sf::read_sf(fetch_indicateurs_regions_demo())
+
+cat("Nombre de regions :", nrow(regions), "\n")
+cat("Colonnes          :", paste(names(regions), collapse = ", "), "\n")
+cat("CRS               :", sf::st_crs(regions)$input, "\n")
+```
+
+Si ce bloc tourne, c'est que la structure est respectée : le helper trouve le fichier dans `pedagogie/datasets/cameroun/jour_10/`, et `read_sf` lit le GeoPackage. **Aucun chemin absolu n'a été écrit** dans ce `.qmd`.
+
+::: {.callout-tip}
+**Pourquoi `../` plutôt que `here::here("pedagogie", "_commons", ...)` ?** Le projet atelier contient deux marqueurs de racine concurrents : le `.Rproj` à la racine du repo **et** un `_quarto.yml` dans `pedagogie/`. Selon le contexte d'appel (RStudio ouvert, `quarto preview` depuis le terminal, runtime WebR), `here::here()` peut résoudre vers l'un ou l'autre. Le chemin relatif `../` est, lui, déterministe par rapport au `.qmd`.
+:::
+
+# Section 2 — Quarto en pratique : un fichier, plusieurs formats
+
+## L'idée centrale
+
+Un fichier `.qmd` combine texte Markdown, blocs de code R et un YAML d'en-tête qui décrit les formats de sortie. La commande `quarto render` exécute le code, capture les résultats et produit le livrable.
+
+Voici un exemple minimaliste d'en-tête multi-format.
+
+```yaml
+---
+title: "Rapport indicateurs régionaux"
+format:
+  html: default
+  pptx: default
+  pdf: default
+  docx: default
+---
+```
+
+## Choisir le format en ligne de commande
+
+Plutôt que de tout générer à chaque fois, on peut cibler un seul format.
 
 ```bash
-git init
-git add .
-git commit -m "Initial commit: structure projet cmr_densite_dep"
-git branch -M main
-git remote add origin https://github.com/<user>/cmr_densite_dep.git
-git push -u origin main
+quarto render rapport.qmd --to html
+quarto render rapport.qmd --to pptx
+quarto render rapport.qmd --to pdf
+quarto render rapport.qmd --to docx
 ```
 
-# Étape 3 — Le pipeline de traitement en quatre scripts
+## Quand choisir quel format
 
-## `R/01_acquisition.R`
+Tableau de décision tiré directement du débrief d'Edith.
 
-```{r}
-#| label: script01
-#| eval: false
-library(here)
-library(sf)
-library(terra)
+```{r tableau-formats}
+library(tibble)
 
-# Limites departementales (ADM2)
-adm2 <- read_sf(here("..", "atelier-r-spatial-iford-2026",
-                     "datasets", "cameroun", "admin_boundaries",
-                     "gadm41_CMR_2.json"))
-
-# WorldPop 100 m 2020
-worldpop_path <- here("..", "atelier-r-spatial-iford-2026",
-                      "datasets", "cameroun", "population_grids",
-                      "CMR_pop_WorldPop_top-down_100m_2020.tif")
-worldpop <- rast(worldpop_path)
-
-# Sauvegarder en intermediate
-saveRDS(adm2,     here("data", "intermediate", "adm2.rds"))
-writeRaster(worldpop, here("data", "intermediate", "worldpop.tif"),
-            overwrite = TRUE)
+formats <- tibble::tribble(
+  ~Format, ~`Usage principal`,                                ~`Point d'attention`,
+  "HTML",  "rapport interactif, cartes tmap_mode('view')",    "facile a partager, navigateur requis",
+  "PPTX",  "restitution, formation, reunion de decision",     "mise en page par diapositives",
+  "PDF",   "rapport fige, archive, diffusion officielle",     "demande un moteur LaTeX (TinyTeX)",
+  "Word",  "relecture institutionnelle",                      "pratique pour commentaires et corrections"
+)
+knitr::kable(formats)
 ```
 
-## `R/02_preparation.R`
+**Règle clé** : une carte interactive reste interactive en **HTML uniquement**. En PPTX/PDF/Word, il faut soit une carte statique, soit une capture d'écran de la carte interactive.
 
-```{r}
-#| label: script02
-#| eval: false
-library(here)
-library(sf)
-library(terra)
-library(dplyr)
+## Le tableau d'indicateurs régionaux
 
-adm2 <- readRDS(here("data", "intermediate", "adm2.rds")) |>
-  st_transform(3119) |>     # Lambert Cameroun
-  st_make_valid() |>
-  mutate(superficie_km2 = as.numeric(st_area(geometry)) / 1e6)
+On crée un petit tableau résumé à partir du dataset chargé en Section 1. Ce tableau sera affiché de la même manière dans tous les formats de sortie.
 
-saveRDS(adm2, here("data", "intermediate", "adm2_lambert.rds"))
+```{r tableau-indicateurs}
+indicateurs <- regions |>
+  sf::st_drop_geometry() |>
+  dplyr::select(region, population, menages, eau_amelioree_pct,
+                alphabetisation_pct, ecoles, formations_sanitaires) |>
+  dplyr::arrange(dplyr::desc(population))
+
+knitr::kable(indicateurs,
+             format.args = list(big.mark = " "),
+             caption = "Indicateurs regionaux (10 regions du Cameroun)")
 ```
 
-## `R/03_analyse.R`
+# Section 3 — `tmap` plot vs view
 
-```{r}
-#| label: script03
-#| eval: false
-library(here)
-library(sf)
-library(terra)
-library(dplyr)
-library(exactextractr)
+## Deux modes complémentaires
 
-adm2 <- readRDS(here("data", "intermediate", "adm2_lambert.rds"))
-worldpop <- rast(here("data", "intermediate", "worldpop.tif"))
+`tmap` peut afficher la même carte de deux manières selon le mode actif :
 
-# Reprojeter le raster pour aligner avec ADM2 Lambert
-worldpop_lam <- project(worldpop, "EPSG:3119")
+- `tmap_mode("plot")` : carte **statique** (PNG), pour PDF, PPTX, Word ou impression.
+- `tmap_mode("view")` : carte **interactive** Leaflet (zoom, pan, popup), pour HTML uniquement.
 
-# Extraction zonale : population totale par departement
-adm2$pop_2020 <- exact_extract(worldpop_lam, adm2, "sum")
-adm2$densite_km2 <- adm2$pop_2020 / adm2$superficie_km2
+On va construire **un seul objet `tm_shape()` + `tm_polygons()`**, puis le rendre dans chaque mode.
 
-# Sauvegarder le resultat
-saveRDS(adm2, here("data", "intermediate", "adm2_avec_pop.rds"))
-write.csv(adm2 |> st_drop_geometry() |>
-            select(NAME_1, NAME_2, pop_2020, superficie_km2, densite_km2),
-          here("outputs", "tables", "densite_par_dep.csv"),
-          row.names = FALSE)
+## Carte statique pour le rapport
+
+On définit le mode `"plot"`, on charge tmap, on construit la carte de la part de population ayant accès à l'eau améliorée.
+
+```{r carte-statique}
+#| fig-cap: "Carte statique - acces a l'eau amelioree (regions du Cameroun)"
+#| fig-width: 7
+#| fig-height: 5
+library(tmap)
+
+tmap_mode("plot")
+
+carte_eau <- tm_shape(regions) +
+  tm_polygons(
+    fill        = "eau_amelioree_pct",
+    fill.scale  = tm_scale_intervals(style = "quantile", values = "viridis"),
+    fill.legend = tm_legend(title = "Eau amelioree (%)")
+  ) +
+  tm_text("region", size = 0.5) +
+  tm_title("Acces a l'eau amelioree par region",
+           position = tm_pos_in("left", "top"))
+
+carte_eau
 ```
 
-## `R/04_cartes.R`
+## Carte interactive pour la version HTML
 
-```{r}
-#| label: script04
-#| eval: false
-library(here)
-library(sf)
-library(dplyr)
-library(ggplot2)
+On bascule en mode `"view"`. **Le même objet `carte_eau` devient interactif** : pan, zoom, popup au survol. En sortie PDF/PPTX, ce bloc afficherait une capture statique ; en HTML, c'est une vraie carte Leaflet.
 
-adm2 <- readRDS(here("data", "intermediate", "adm2_avec_pop.rds"))
-
-carte <- ggplot(adm2) +
-  geom_sf(aes(fill = densite_km2), color = "white", linewidth = 0.2) +
-  scale_fill_viridis_c(option = "B", trans = "sqrt",
-                       name = "Densité\n(hab/km²)") +
-  labs(title = "Densité de population par département — Cameroun 2020",
-       subtitle = "WorldPop top-down 100 m, agrégation Lambert (EPSG:3119)",
-       caption = "Source : WorldPop · GADM v4.1 · IFORD × GDSG 2026") +
-  theme_minimal() +
-  theme(axis.text = element_blank(), axis.ticks = element_blank(),
-        panel.grid = element_blank())
-
-ggsave(here("outputs", "figures", "densite_dep.png"),
-       carte, width = 9, height = 7, dpi = 300)
-ggsave(here("outputs", "figures", "densite_dep.pdf"),
-       carte, width = 9, height = 7)
+```{r carte-interactive}
+#| eval: !expr knitr::is_html_output()
+tmap_mode("view")
+carte_eau
 ```
 
-# Étape 4 — Le rapport Quarto reproductible
+::: {.callout-note}
+Quand on rend ce document en HTML, la carte ci-dessus est interactive — cliquez sur une région pour voir l'indicateur. Quand on le rend en PPTX ou en PDF, ce bloc est skippé (via `eval: !expr knitr::is_html_output()`). C'est un patron utile pour les rapports multi-format.
+:::
 
-Le fichier `rapport.qmd` (4–5 pages) rassemble narration + cartes + résultats. Il **réexécute** les scripts 1–4 à chaque rendu.
+# Section 4 — Git pour versionner le projet
 
-```{r}
-#| label: rapport-template
-#| eval: false
-quarto::quarto_render(here("rapport.qmd"), output_format = "pdf")
+## Pourquoi Git
+
+Sans Git, l'historique des modifications est dans des fichiers `_v1`, `_v2_FINAL`, `_v2_FINAL_corrige`. Avec Git, on a **un seul fichier** et l'historique de toutes ses versions est dans un sous-dossier `.git`.
+
+## Cinq commandes à connaître
+
+Ces commandes sont à lancer dans le terminal (PowerShell sur Windows, Terminal sur Mac/Linux), pas dans R.
+
+```bash
+# Voir ce qui a change
+git status
+
+# Preparer un fichier pour le prochain commit
+git add scripts/analyse.R
+
+# Enregistrer un instantane avec un message
+git commit -m "Ajouter le calcul de densite par region"
+
+# Envoyer les commits vers GitHub
+git push
+
+# Recuperer les commits faits par d'autres
+git pull
 ```
 
-Structure type du rapport :
+## Bon message vs mauvais message de commit
 
-1. **Introduction** (½ page) — contexte RGPH 4, question.
-2. **Données** (½ page) — sources (WorldPop, GADM), licences.
-3. **Méthode** (1 page) — pipeline 4 scripts, justifications CRS et extraction.
-4. **Résultats** (2 pages) — carte densité + tableau top 10 départements.
-5. **Discussion** (1 page) — limites, recommandations RGPH 4.
+Le message de commit est lu par votre collègue (et par vous-même dans 6 mois). Il doit être **interprétable hors contexte**.
 
-# Étape 5 — Fonction d'automatisation
+```{r messages-commits}
+exemples_commits <- tibble::tribble(
+  ~`Mauvais`,               ~`Bon`,
+  "MAJ",                    "Ajouter Q4 corrige - distance Bamenda-Buea",
+  "update",                 "Corriger CRS dans dissolve_adm()",
+  "Pour Pierre",            "Refonte chapitre 3 selon retours M. Kuepie",
+  "fix",                    "Reparer le bug d'encodage UTF-8 sur Extreme-Nord"
+)
+knitr::kable(exemples_commits)
+```
 
-Au lieu de répéter le pipeline pour chaque source de données (WorldPop, GHS-POP, HRSL), on l'**enveloppe** dans une fonction et on l'applique en boucle.
+## Initialiser Git depuis R
 
-```{r}
-#| label: function-batch
+Pour rester dans l'environnement R, on peut utiliser `usethis` qui automatise les étapes.
+
+```{r usethis-git}
 #| eval: false
-pipeline_source <- function(raster_path, source_nom, adm2_template) {
-  r <- rast(raster_path) |> project("EPSG:3119")
-  pop <- exact_extract(r, adm2_template, "sum")
+library(usethis)
 
-  tibble(
-    source = source_nom,
-    NAME_1 = adm2_template$NAME_1,
-    NAME_2 = adm2_template$NAME_2,
-    pop = pop
+# Une fois par projet
+use_git()              # git init + premier commit
+use_github()           # cree le repo distant + push
+use_readme_md()        # cree un README.md standard
+use_mit_license()      # ou use_cc0_license() pour les donnees
+```
+
+# Section 5 — Automatisation : un calcul pour 10 régions
+
+## La règle des trois
+
+Toute tâche **répétée trois fois** mérite d'être automatisée. Ici, on veut calculer la **densité de population** (habitants par km²) pour chacune des 10 régions. Plutôt que copier-coller le calcul 10 fois, on écrit **une fonction** qui prend le nom de région et retourne le résultat, puis on **boucle** sur la liste des régions.
+
+## La fonction unitaire
+
+On écrit une fonction qui prend un nom de région et retourne un tibble d'une ligne avec les indicateurs calculés.
+
+```{r fonction-densite}
+library(purrr)
+
+resumer_region <- function(nom) {
+  r <- regions |> dplyr::filter(region == nom)
+  if (nrow(r) == 0) {
+    return(tibble::tibble(region = nom, densite = NA_real_,
+                          taille_menage = NA_real_,
+                          fosa_pour_10k = NA_real_))
+  }
+  surface_km2 <- as.numeric(sf::st_area(r)) / 1e6
+  tibble::tibble(
+    region        = nom,
+    pop_2024      = r$population,
+    surface_km2   = round(surface_km2, 0),
+    densite       = round(r$population / surface_km2, 1),
+    taille_menage = round(r$population / r$menages, 2),
+    fosa_pour_10k = round(r$formations_sanitaires / r$population * 1e4, 2)
   )
 }
 
-# Charger ADM2 une fois
-adm2 <- readRDS(here("data", "intermediate", "adm2_lambert.rds"))
+# Test rapide sur une seule region
+resumer_region("Adamaoua")
+```
 
-# Appliquer le pipeline à trois sources
-library(purrr)
-trois_sources <- map_dfr(
-  list(worldpop = "data/intermediate/worldpop.tif",
-       ghspop   = "data/intermediate/ghspop.tif",
-       hrsl     = "data/intermediate/hrsl.tif"),
-  ~ pipeline_source(.x, .y, adm2),
-  .id = "source"
+## Appliquer à toutes les régions avec `purrr::map_dfr`
+
+`map_dfr` applique la fonction à chaque élément du vecteur et **combine les résultats en un seul tibble**. C'est l'équivalent fonctionnel d'une boucle `for`, mais plus lisible et typé.
+
+```{r appliquer-map-dfr}
+tableau_regions <- purrr::map_dfr(regions$region, resumer_region) |>
+  dplyr::arrange(dplyr::desc(densite))
+
+knitr::kable(tableau_regions,
+             format.args = list(big.mark = " "),
+             caption = "Indicateurs calcules - densite, taille menage, FOSA/10k hab")
+```
+
+## Sauvegarder le résultat dans `outputs/`
+
+On respecte la convention : tout résultat va dans `outputs/`. Le dossier est créé si besoin, puis le CSV et le GeoPackage sont écrits.
+
+```{r exporter-resultats}
+# Chemin relatif au .qmd : Quarto fixe le CWD au dossier du .qmd
+outputs_dir <- "outputs"
+fs::dir_create(outputs_dir)
+
+# CSV des indicateurs calcules
+readr::write_csv(
+  tableau_regions,
+  file.path(outputs_dir, "indicateurs_regions_calcul.csv")
 )
+
+# GeoPackage enrichi : on attache les calculs aux geometries
+regions_enrichi <- regions |>
+  dplyr::left_join(tableau_regions, by = "region")
+
+sf::st_write(
+  regions_enrichi,
+  file.path(outputs_dir, "regions_indicateurs_enrichi.gpkg"),
+  delete_dsn = TRUE,
+  quiet = TRUE
+)
+
+message("Fichiers produits :")
+for (f in fs::dir_ls(outputs_dir)) {
+  message("  ", basename(f), " (",
+          round(fs::file_info(f)$size / 1024, 1), " ko)")
+}
 ```
 
-`map_dfr` applique la fonction à chaque chemin et combine en un tibble long, prêt pour comparaison ou ggplot facet.
+# Section 6 — FAIR et métadonnées minimales
 
-# Étape 6 — Gérer les versions de packages avec `renv`
+## Les 4 principes FAIR (2016)
 
-Pour garantir que le projet tourne identique dans **2 ans** sur **n'importe quelle machine** :
-
-```{r}
-#| label: renv
-#| eval: false
-renv::init()        # snapshot des packages installes
-# travailler sur le projet
-renv::snapshot()    # quand on ajoute / met a jour des packages
+```{r tableau-fair}
+fair <- tibble::tribble(
+  ~Lettre, ~Principe,        ~`Implication pratique`,
+  "F",     "Findable",       "Identifiant unique (DOI), metadonnees completes, catalogue",
+  "A",     "Accessible",     "Protocoles standards (HTTPS), authentification claire",
+  "I",     "Interoperable",  "Formats ouverts (GeoPackage, NetCDF), vocabulaires standards",
+  "R",     "Reusable",       "Licence claire (CC-BY recommande), metadonnees de provenance"
+)
+knitr::kable(fair)
 ```
 
-`renv` crée un fichier `renv.lock` qui liste **chaque package avec sa version exacte**. Un collègue qui clone le repo et exécute `renv::restore()` retrouve l'environnement identique.
+## Les 7 métadonnées minimales d'un livrable géospatial
 
-# Étape 7 — Métadonnées minimales
+C'est la grille à coller dans chaque export. Sans ces 7 informations, un fichier `.gpkg` ou `.tif` est inutilisable par quelqu'un d'autre dans 6 mois.
 
-Au minimum, ajouter un `README.md` au racine du projet qui contient :
-
-```{verbatim}
-# CMR — Densité de population par département (2020)
-
-## Question
-Quelle est la densité de population estimée par département du Cameroun
-en 2020, selon les estimations WorldPop ?
-
-## Sources
-- WorldPop top-down 2020, 100 m (Univ. Southampton, CC-BY 4.0)
-- GADM v4.1 ADM2 Cameroun (gadm.org, libre académique)
-
-## Reproduction
-1. Cloner le repo
-2. `renv::restore()`
-3. Exécuter `R/01_acquisition.R` à `R/04_cartes.R` dans l'ordre
-4. Ou : `quarto render rapport.qmd`
-
-## Licence
-Code CC-BY 4.0 — IFORD × GDSG 2026.
-
-## Citation
-Dzita, R. (2026). Densité de population par département du Cameroun 2020.
-Atelier IFORD × GDSG. https://github.com/dzita/cmr_densite_dep
+```{r tableau-metadonnees}
+metadata <- tibble::tribble(
+  ~`#`, ~`Element`,         ~`Valeur pour ce livrable`,
+  1L,   "Titre",            "Indicateurs regionaux - calculs derives (atelier IFORD J10)",
+  2L,   "Source",           "regions_indicateurs_demo.gpkg (Edith Darin / GDSG IFORD)",
+  3L,   "Date production",  format(Sys.Date(), "%Y-%m-%d"),
+  4L,   "CRS",              sf::st_crs(regions)$input,
+  5L,   "Echelle/resolution", "ADM1 - 10 regions du Cameroun",
+  6L,   "Methode",          "densite = pop / superficie_km2 ; FOSA/10k hab = formations_sanitaires / pop * 10000",
+  7L,   "Limites",          "Indicateurs derives de chiffres d'entrainement ; ne pas citer comme statistique officielle"
+)
+knitr::kable(metadata, caption = "Metadonnees minimales - livrable J10")
 ```
 
-# Conclusion
+## Écrire un sidecar `.json` à côté de l'export
 
-En **6 étapes** et **moins d'une journée de travail**, un projet R-spatial est :
+Pour rendre les métadonnées **lisibles par machine** (pas juste par un humain), on les écrit dans un sidecar JSON à côté du fichier produit.
 
-- structuré (projet RStudio + arborescence convention)
-- documenté (Quarto + README)
-- versionné (Git + GitHub)
-- reproductible (renv + scripts numérotés)
-- partageable (licence CC-BY + métadonnées)
+```{r sidecar-json}
+library(jsonlite)
 
-C'est cette discipline qui transforme une analyse one-shot en **bien commun scientifique**.
+`%||%` <- function(a, b) if (is.null(a) || length(a) == 0) b else a
+
+commit_court <- tryCatch(
+  system("git rev-parse --short HEAD", intern = TRUE,
+         ignore.stderr = TRUE)[1],
+  error = function(e) NA_character_
+)
+
+meta_livrable <- list(
+  titre          = "Indicateurs regionaux - calculs derives (atelier IFORD J10)",
+  source         = "regions_indicateurs_demo.gpkg (Edith Darin / GDSG IFORD)",
+  date           = format(Sys.Date(), "%Y-%m-%d"),
+  auteur         = "Ramesesse Dzita - GDSG IFORD",
+  crs            = sf::st_crs(regions)$input,
+  resolution     = "ADM1 - 10 regions du Cameroun",
+  methode        = list(
+    densite        = "pop / superficie_km2",
+    taille_menage  = "pop / nb_menages",
+    fosa_pour_10k  = "formations_sanitaires / pop * 10000"
+  ),
+  licence        = "CC-BY 4.0 (donnees d'entrainement)",
+  limites        = paste("Indicateurs derives de chiffres d'entrainement.",
+                         "Ne pas citer comme statistique officielle."),
+  reproductibilite = list(
+    code         = "pedagogie/J10_workflows_reproductibles/demo.qmd",
+    commit       = commit_court %||% "unknown"
+  )
+)
+
+sidecar_path <- file.path(outputs_dir, "regions_indicateurs_enrichi.gpkg.json")
+jsonlite::write_json(meta_livrable, sidecar_path,
+                     pretty = TRUE, auto_unbox = TRUE)
+
+message("Sidecar metadata ecrit : ", basename(sidecar_path))
+```
+
+# Synthèse
+
+En 6 sections, ce rapport :
+
+- A chargé un dataset via un helper portable (Section 1).
+- A montré comment le **même fichier `.qmd`** produit HTML, PPTX, PDF, Word (Section 2).
+- A construit **une seule carte** rendue en statique pour le rapport et en interactif pour le HTML (Section 3).
+- A esquissé un workflow Git pour versionner le tout (Section 4).
+- A calculé **3 indicateurs dérivés** pour 10 régions en une commande (Section 5).
+- A produit un **livrable documenté** avec sidecar JSON FAIR (Section 6).
+
+Quand vous fermerez RStudio et reviendrez dans 6 mois, ce projet reste **reproductible** : il vous suffira de cloner le repo, lancer `install_packages_day.R`, et faire `quarto render demo.qmd`.
 
 # Références
 
-@pebesma2018simple ; @tatem2017worldpop ; @hijmans2024terra.
+@wilkinson2016fair (principes FAIR) ; @pebesma2018simple (`sf`) ; @tennekes2018tmap (`tmap`) ; @bryan2018excuse (Happy Git).

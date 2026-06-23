@@ -1,6 +1,6 @@
 ---
-title: "J10 — Activités du jour : reproductibilité + présentation"
-subtitle: "Atelier IFORD × GDSG · 6 août 2026"
+title: "J10 — Exercices : flux reproductibles + mini-projet"
+subtitle: "Atelier IFORD × GDSG · Yaoundé · 7 août 2026"
 lang: fr
 format:
   html:
@@ -14,102 +14,136 @@ format:
 
 # Mode d'emploi
 
-J10 mêle **activités techniques en séance** (Q1 à Q3) et **préparation de la présentation courte** (cahier des charges Q4). Pas de devoir du soir — c'est le dernier jour.
+Cinq exercices guidés (Q1-Q5) suivis d'un **devoir de synthèse** : un mini-projet en groupe, présenté en 5 minutes selon la grille en 6 étapes.
 
-# Q1 — Initialiser un projet RStudio versionné Git {#sec-q1}
+Le **fil rouge** est `regions_indicateurs_demo.gpkg` — 10 régions du Cameroun avec indicateurs démographiques et sociaux, fourni par Edith Darin (GDSG/IFORD).
 
-> Référence démo : section « Étapes 1 et 2 ».
+Solutions complètes dans `corrige.qmd` — à n'ouvrir qu'**après** ta tentative.
 
-À partir de RStudio sur ta machine :
+Conception pédagogique (atelier R + mini-projet + grille présentation + métadonnées minimales) : **Edith Darin**. Intégration convention IFORD : **Ramesesse Dzita**.
 
-1. **a.** Crée un nouveau projet avec `usethis::create_project("~/projets/cmr_demo_j10")`.
-2. **b.** Active Git dessus avec `usethis::use_git()`.
-3. **c.** Crée un dépôt distant GitHub avec `usethis::use_github()` **OU** manuellement via le navigateur + commandes git.
-4. **d.** Fais un premier commit + push. Vérifie sur github.com que ton repo est en ligne.
+# Setup commun
 
-> 💡 Si `usethis::use_github()` plante : c'est probablement que ton token GitHub n'est pas configuré. Manuel via terminal RStudio : `git remote add origin https://github.com/<user>/cmr_demo_j10.git` puis `git push -u origin main`.
+```r
+library(here); library(fs); library(sf); library(dplyr)
+library(tibble); library(readr); library(purrr)
+library(tmap); library(ggplot2); library(jsonlite)
 
-# Q2 — Construire un rapport Quarto reproductible {#sec-q2}
+source("../_commons/helpers/fetch_data.R")
 
-> Référence démo : section « Étape 4 ».
+regions <- sf::read_sf(fetch_indicateurs_regions_demo())
+```
 
-Dans ton projet `cmr_demo_j10` :
+# Q1 — Initialiser un projet R reproductible {#sec-q1}
 
-1. **a.** Crée un fichier `rapport.qmd` avec le squelette YAML + introduction de 100 mots sur la question « densité de population du Cameroun 2020 ».
-2. **b.** Ajoute **deux blocs de code R** : un qui charge `sf` et lit GADM ADM1 ; un qui produit une carte ggplot des 10 régions.
-3. **c.** Rends en PDF avec `quarto render rapport.qmd --to pdf`. Vérifie que le PDF s'ouvre.
-4. **d.** Commit + push.
+> Référence démo : Section 1.
 
-# Q3 — Automatisation : fonction + boucle {#sec-q3}
+1. **a.** Crée un nouveau projet RStudio (File → New Project → New Directory) appelé `mon_projet_iford_j10`. Quelle est la différence entre un dossier ordinaire et un projet RStudio ?
+2. **b.** Crée à l'intérieur l'arborescence : `data/`, `scripts/`, `outputs/`, `reports/`, et un fichier `README.md` qui décrit le projet en 5 lignes.
+3. **c.** Charge le dataset fil rouge dans une session R **sans utiliser de chemin absolu**. Démontre que `here::here()` détecte bien la racine du projet.
 
-> Référence démo : section « Étape 5 ».
+::: {.callout-tip}
+Si `here::here()` retourne un chemin inattendu, essaie `rprojroot::find_root(rprojroot::has_file("mon_projet_iford_j10.Rproj"))` qui ancre explicitement sur le `.Rproj`.
+:::
 
-À partir des données ADM1 :
+# Q2 — Construire un rapport Quarto multi-format {#sec-q2}
 
-1. **a.** Écris une fonction `superficie_region(nom)` qui prend un nom de région et retourne sa superficie en km² (UTM 32 N).
-2. **b.** Applique cette fonction à toutes les 10 régions avec `purrr::map_dbl(adm1$NAME_1, superficie_region)`.
-3. **c.** Compare le temps avec une **boucle `for`** classique. Lequel est plus lisible ? Lequel est plus rapide ?
-4. **d.** Commit ton script avec un message descriptif.
+> Référence démo : Section 2.
 
-# Q4 — Cahier des charges de la présentation courte {#sec-q4}
+1. **a.** Crée `reports/rapport_indicateurs.qmd` avec en-tête YAML qui produit **à la fois** HTML et PPTX.
+2. **b.** Ajoute une section qui affiche le tableau d'indicateurs (population, ménages, eau améliorée, alphabétisation) triés par population décroissante via `knitr::kable()`.
+3. **c.** Rends le rapport en HTML puis en PPTX depuis le terminal :
 
-## Format
+```bash
+quarto render reports/rapport_indicateurs.qmd --to html
+quarto render reports/rapport_indicateurs.qmd --to pptx
+```
 
-**5 à 8 minutes** par participant (ou binôme).
+Vérifie que les deux sorties existent dans `reports/`. Quelles différences observes-tu entre les deux ?
 
-## Contenu attendu
+# Q3 — `tmap` plot vs view {#sec-q3}
 
-| Élément | Durée approximative |
-|---|---|
-| **Slide 1** : « Ce que j'ai produit » | 30 s |
-| **Slides 2–3** : Démonstration du livrable (carte, analyse, script) | 3 min |
-| **Slide 4** : « Ce que j'ai appris en le faisant » | 1 min |
-| **Slide 5** : « Comment je vais le réutiliser dans mon institution » | 1 min |
-| **Slide 6** : Questions / Remerciements | 30 s |
+> Référence démo : Section 3.
 
-## Choix du livrable à présenter
+1. **a.** Construis un objet `carte_alpha` qui cartographie le taux d'alphabétisation (`alphabetisation_pct`) avec une palette quantile et le nom des régions en label.
+2. **b.** Affiche `carte_alpha` en mode `"plot"` (statique). Sauvegarde-la en PNG 7×5 pouces dans `outputs/`.
+3. **c.** Bascule en mode `"view"` et affiche le **même objet** `carte_alpha`. Que se passe-t-il dans le panel Viewer de RStudio ? Quel format de sortie peut conserver cette interactivité ?
 
-Tout ce qui a été produit pendant les 9 jours précédents est valide :
+# Q4 — Automatisation par boucle régionale {#sec-q4}
 
-- Une **carte de production** complète (J5/cartographie).
-- Une **analyse top-down** sur un département (J7).
-- Une **fonction R utile** que tu as construite.
-- Un **croisement raster × vecteur** (J3 + J6).
-- Un **micro-projet** d'application à ton institution.
+> Référence démo : Section 5.
 
-## Conseils tactiques
+1. **a.** Écris une fonction `calculer_ratios(nom_region)` qui retourne un tibble avec : population, ménages, taille moyenne du ménage (`population / menages`), nombre d'écoles pour 1000 habitants, nombre de FOSA pour 10 000 habitants.
+2. **b.** Applique-la aux 10 régions via `purrr::map_dfr(regions$region, calculer_ratios)`. Trie le résultat par taille moyenne de ménage croissante. Quelle région a la plus petite taille de ménage ? La plus grande ?
+3. **c.** Refais la même chose en utilisant une boucle `for` au lieu de `map_dfr`. Compare la lisibilité du code.
+4. **d.** Exporte le tableau final en CSV dans `outputs/ratios_regions.csv`.
 
-1. **Pas plus de 6 slides** — le format court oblige à choisir.
-2. **Une slide = une idée** — pas de bullet points denses.
-3. **Une carte par slide visuelle** — laisse le visuel parler.
-4. **Préparer la question « comment je vais réutiliser ? »** — c'est ce que le jury de l'IFORD retient le plus.
+# Q5 — Métadonnées du livrable {#sec-q5}
 
-## Préparation
+> Référence démo : Section 6.
 
-Tu peux utiliser `slides.qmd` (revealjs) construit comme on a vu en J1 / J5. Ou un PowerPoint classique si tu préfères. L'important est la **clarté du message**, pas l'outil.
+1. **a.** Liste les **7 métadonnées minimales** (titre, source, date, CRS, échelle, méthode, limites) pour le CSV produit en Q4. Rédige-les sous forme de tibble R.
+2. **b.** Sauvegarde ces métadonnées en sidecar JSON : `outputs/ratios_regions.csv.json`. Utilise `jsonlite::write_json(..., pretty = TRUE)`.
+3. **c.** Réfléchis : dans 6 mois, qu'est-ce qui permettra à quelqu'un de **comprendre** ton CSV sans te demander ? Liste les 3 éléments les plus importants.
 
-## Bonus : graviter sur ton portfolio
+# Q-final — Mini-projet en groupe {#sec-qfinal}
 
-Si tu as un compte GitHub, **publie ton projet** sur celui-ci avant la fin de l'atelier — tu repars avec un livrable que tu peux montrer à ton institution ou à un futur employeur.
+> ⏱ **1 h 30 de préparation**, puis **5 min de présentation** par groupe.
 
-# Activité collective — Évaluation de l'atelier
+Vous travaillez en **groupes de 3 ou 4**. Choisissez un indicateur du dataset fil rouge (`regions_indicateurs_demo.gpkg`) ou un croisement de plusieurs indicateurs (densité, taille ménage, FOSA pour 10k hab, etc.).
 
-À la fin de la journée, **évaluation anonyme** via Forms IFORD. 10 questions, 5 minutes.
+## Livrables attendus (six éléments)
 
-Trois axes :
+Votre dossier de mini-projet doit contenir exactement :
 
-1. **Contenu** : équilibrage des 10 jours.
-2. **Forme** : qualité des supports (slides, démos, runtimes WebR).
-3. **Suite** : besoins de formation continue.
+1. **Question** — une question statistique précise, formulée en une phrase.
+2. **Indicateur** — l'indicateur principal calculé, avec sa formule.
+3. **Graphique ou carte** — un visuel unique, propre, signé (titre + source + date).
+4. **Interprétation** — 3 phrases qui décrivent ce que le visuel montre.
+5. **Limite méthodologique** — une phrase honnête sur ce que l'analyse **ne dit pas**.
+6. **Recommandation** — qu'est-ce qu'un décideur (INS, MINHDU, MINEPDED, MINAS, ONG) pourrait en faire ?
 
-Tes réponses influencent directement l'atelier 2027.
+## Format de présentation (5 minutes × 6 étapes)
 
-# Activité collective — Cérémonie
+| # | Étape | Temps | Conseil |
+|---|---|---|---|
+| 1 | Question | 30 s | Une seule phrase, sans jargon |
+| 2 | Données | 45 s | Nommez la source, la licence, la date |
+| 3 | Méthode | 1 min | Une formule ou un schéma, pas du code |
+| 4 | Résultat | 1 min | **Un seul** graphique ou carte |
+| 5 | Limite | 45 s | Soyez honnête, c'est une force pédagogique |
+| 6 | Décision possible | 1 min | À qui ça sert, concrètement |
 
-À l'issue des présentations, **remise des certificats** par Pr Kuépié + photo de groupe.
+## Exemples de questions inspirantes
+
+- Quelles régions concentrent à la fois forte population et faible accès à l'eau améliorée ? (priorisation d'investissements WASH)
+- La taille moyenne de ménage (pop / nb_ménages) suit-elle un gradient nord-sud au Cameroun ?
+- Le ratio écoles / habitants est-il corrélé au taux d'alphabétisation régional ?
+- Quelles régions ont moins de 0,5 formation sanitaire pour 10 000 habitants ? (alerte couverture sanitaire)
+
+::: {.callout-warning}
+**Honnêteté méthodologique** : les chiffres du dataset `regions_indicateurs_demo.gpkg` sont des **valeurs d'entraînement** préparées par Edith Darin pour la pédagogie. Vos résultats sont à présenter comme **exemples d'analyse**, pas comme statistiques officielles du Cameroun. Citez ECAM 4, MICS, EDS-MICS 2018, RGPH ou ADM-PS comme sources réelles à utiliser dans un contexte INS.
+:::
+
+## Critères d'évaluation
+
+- ☐ Les 6 éléments sont **tous** présents.
+- ☐ Le code source est versionné Git avec au moins **3 commits** aux messages explicites.
+- ☐ Le rapport Quarto rend en **HTML + PPTX** sans erreur.
+- ☐ Les **7 métadonnées minimales** accompagnent le livrable (sidecar JSON ou section dédiée du Quarto).
+- ☐ La présentation tient en **5 minutes** chrono.
+
+## Bonus
+
+- **Tableau d'analyse de sensibilité** : refais ton calcul d'indicateur avec une variation ±20 % du dénominateur. Le classement des régions change-t-il ?
+- **Double sortie** : produis le mini-projet à la fois en HTML interactif (avec carte `tmap_mode("view")`) et en PPTX statique pour la présentation orale.
+- **README pédagogique** : rédige un README qui explique à un statisticien INS comment **réutiliser** ton pipeline avec ses propres données ECAM.
 
 # Si tu bloques
 
-Demande à l'animateur ou aux co-formateurs présents. Pas de devoir du soir — repos amplement mérité.
+- Relis le module correspondant dans `demo.qmd`.
+- Le corrigé est dans `corrige.qmd`, à n'ouvrir qu'**après** ta tentative.
+- Pour `here::here()` qui ne pointe pas vers la racine attendue : utiliser `rprojroot::find_root(has_file("ton_projet.Rproj"))`.
+- Pour `tmap_mode("view")` qui plante : vérifie que `library(leaflet)` est installé (charge automatique).
 
-**Bonne dernière journée !**
+Bonne synthèse !

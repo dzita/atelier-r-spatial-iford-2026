@@ -1,0 +1,19 @@
+{
+  "titre": "Indicateurs regionaux - calculs derives (atelier IFORD J10)",
+  "source": "regions_indicateurs_demo.gpkg (Edith Darin / GDSG IFORD)",
+  "date": "2026-06-23",
+  "auteur": "Ramesesse Dzita - GDSG IFORD",
+  "crs": "WGS 84",
+  "resolution": "ADM1 - 10 regions du Cameroun",
+  "methode": {
+    "densite": "pop / superficie_km2",
+    "taille_menage": "pop / nb_menages",
+    "fosa_pour_10k": "formations_sanitaires / pop * 10000"
+  },
+  "licence": "CC-BY 4.0 (donnees d'entrainement)",
+  "limites": "Indicateurs derives de chiffres d'entrainement. Ne pas citer comme statistique officielle.",
+  "reproductibilite": {
+    "code": "pedagogie/J10_workflows_reproductibles/demo.qmd",
+    "commit": "287faa5"
+  }
+}
