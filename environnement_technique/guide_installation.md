@@ -267,7 +267,7 @@ quarto check
 
 Les lignes `knitr` et `rmarkdown` doivent maintenant afficher un numéro de version au lieu de `(None)`.
 
-> 📌 **Plus tard**, on lancera `03_ENVIRONNEMENT_TECHNIQUE/install_packages.R` qui installe les ~50 packages de l'atelier (sf, terra, tmap, spdep, etc.). Ici on n'installe que les deux strictement nécessaires pour que Quarto fonctionne.
+> 📌 **Plus tard**, on lancera `environnement_technique/install_packages.R` qui installe les ~50 packages de l'atelier (sf, terra, tmap, spdep, etc.). Ici on n'installe que les deux strictement nécessaires pour que Quarto fonctionne.
 
 ---
 

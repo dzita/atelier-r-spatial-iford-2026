@@ -266,9 +266,13 @@ Une fois le premier workflow réussi (branche `gh-pages` créée), enregistrer d
 
 GitHub Pages construit son edge cache (~30 à 90 secondes) puis l'URL publique devient `https://<user>.github.io/<repo>/`. Pour notre projet : <https://dzita.github.io/atelier-r-spatial-iford-2026/>.
 
-### 5.4 Servir les datasets via `resources:`
+### 5.4 Servir les datasets — pattern `webr.resources` YAML
 
-Les fichiers GADM sont copiés dans `pedagogie/_commons/data/` puis déclarés dans `_quarto.yml` :
+Le pattern historique `download.file("/_commons/data/...")` dans les cellules WebR **ne marche plus** depuis WebR 0.6 (régression `TypeError: resolved is not a function` sur les URL root-relatives dans le Web Worker — détails dans `MANUEL_SUPPORT_TECHNIQUE.md` §7).
+
+Le pattern actuel utilise le mécanisme natif `webr.resources` du filtre `r-wasm/live` : le fichier est **pré-chargé dans la VM WebR au boot de la page**, et la cellule R le lit directement depuis le filesystem virtuel.
+
+**Étape 1 — Quarto resources (`_quarto.yml`)** :
 
 ```yaml
 project:
@@ -276,18 +280,36 @@ project:
     - "_commons/data/**"
 ```
 
-Au render, Quarto copie tel quel le contenu vers `_site/_commons/data/`. Le déploiement gh-pages les expose à <https://dzita.github.io/atelier-r-spatial-iford-2026/_commons/data/gadm41_CMR_1.json>.
+Au render, Quarto copie tel quel le contenu vers `_site/_commons/data/`. Pages les expose à `https://.../_commons/data/...`.
 
-Côté cellule WebR, on les charge avec un chemin **absolu** (commence par `/`) qui marche en local preview et en production :
+**Étape 2 — YAML du `runtime.qmd`** :
 
-```r
-download.file("/_commons/data/gadm41_CMR_1.json", "adm1.json", mode = "wb")
-adm1 <- sf::read_sf("adm1.json")
+```yaml
+---
+title: "JX — ..."
+engine: knitr
+webr:
+  packages:
+    - sf
+    - dplyr
+  resources:
+    - ../_commons/data/gadm41_CMR_1.json
+    - ../_commons/data/dhs_cmr/foo.csv
+---
 ```
 
-Le `/` initial signifie « racine du site web courant ». En `quarto preview` local, cela résout vers <http://localhost:NNNN/_commons/data/...>. En production, vers le sous-chemin de Pages.
+La JS de boot de `r-wasm/live` (`webr-setup.ojs` lignes 60-94) fait `fetch(file)` **dans le main thread du navigateur** (où il a accès à l'origine de la page), puis écrit le contenu dans la VM WebR via `webR.FS.writeFile()`. Le `../` est strippé au moment de l'écriture (`collapsePath`), donc dans la VM le fichier est à `_commons/data/foo.json` (sans le `..`).
 
-**Limite de taille** : la branche `gh-pages` est servie par GitHub Pages avec une limite douce de ~1 Go au total et 100 Mo par fichier. Les datasets WorldPop GeoTIFF (~150 Mo) sont à exclure de cette voie et à laisser côté desktop seulement.
+**Étape 3 — code R de la cellule** :
+
+```r
+# Pas de download.file. Lecture directe depuis la VM (fichier pré-chargé au boot).
+adm1 <- sf::read_sf("_commons/data/gadm41_CMR_1.json")
+```
+
+Le même code marche en `quarto preview` local (fetch depuis `localhost:PORT/_commons/...`) ET en prod GitHub Pages (fetch depuis `https://dzita.github.io/.../_commons/...`) parce que `fetch()` côté main thread utilise l'origine de la page automatiquement.
+
+**Limite de taille** : la branche `gh-pages` est servie par GitHub Pages avec une limite douce de ~1 Go au total et 100 Mo par fichier. Les datasets WorldPop GeoTIFF (~150 Mo) sont à exclure de cette voie et à laisser côté desktop seulement. Pour les extraits légers (< 5 Mo), pré-générer côté formateur dans `_commons/data/jour_XX_extraits/`.
 
 ## 6. Gotchas connus
 
@@ -415,6 +437,7 @@ Documentation officielle :
 
 Ressources internes :
 
-- `pedagogie/manuel_animateur.md` — conventions pédagogiques et workflow d'animation.
-- `environnement_technique/guide_installation.md` — installation pour participants.
-- `_commons/helpers/fetch_data.R` — chargement des datasets avec fallback local.
+- **`MANUEL_SUPPORT_TECHNIQUE.md`** (à la racine du repo) — manuel formateur complet : architecture, 17 datasets fichés (origine, URL, taille, licence), troubleshooting WebR (11 cas), FAQ pédagogique par jour, urgences atelier, maintenance.
+- `environnement_technique/guide_installation.md` — installation pas-à-pas pour participants (Windows référence, équivalents macOS/Linux).
+- `pedagogie/_commons/helpers/fetch_data.R` — résolution de chemins datasets avec fallback local.
+- `pedagogie/INDEX.md` — page d'accueil du site Quarto (navigation entre les 10 jours).
