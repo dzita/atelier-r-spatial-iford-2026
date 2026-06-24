@@ -92,25 +92,33 @@
 - `scales` — formatage des étiquettes
 - **`R.utils`** — décompression GZ pour Open Buildings (nouveau du jour)
 
-## Données mobilisées (100 % réelles, conçues par Edith Darin)
+## Données utilisées
 
-| Élément | Description | Localisation |
-|---|---|---|
-| `gadm41_CMR.gpkg` | GADM v4.1 unifié (couches ADM_0/1/2/3) — réutilisé de J7 | `pedagogie/datasets/cameroun/jour_07_population/` (commité) |
-| `cmr_pop_2024_CN_100m_R2025A_v1.tif` | WorldPop constrained 2024 — pour estimer la population exposée | `pedagogie/datasets/cameroun/jour_08_teledetection/` (**exclu Git**, ~25 Mo) |
-| `GHS-BUILT/` (15 tuiles ZIP) | GHS-BUILT-S R2023A 100m Mollweide : 8 tuiles 2025 + 7 tuiles 2015 (couverture Cameroun) | idem (**exclu Git**, ~300 Mo) |
-| `EMSR772_products/` (3 AOI) | Couches Copernicus EMS pour les inondations Yagoua 2024 — shapefiles + GeoTIFF flood depth + PDF maps | idem (**exclu Git**, ~50 Mo) |
-| `Open Buildings/` (5 CSV.GZ) | Empreintes de bâtiments Google détectées par imagerie satellite — `latitude`, `longitude`, `area_in_meters`, `confidence` | idem (**exclu Git**, ~100 Mo) |
+### Embarqué dans le repo (chargé automatiquement par le runtime WebR)
 
-**Stratégie Git** : **TOUS les datasets J8 sont exclus du repo** via `.gitignore` (volumineux : ~500 Mo total). Chaque animateur garde les fichiers en local sur sa machine (téléchargés depuis le Drive d'Edith). Pour le runtime WebR, on prépare des **extraits Yagoua** (bbox stricte) par un script `00_extraire_yagoua_pour_webr.R` (à venir).
+Extraits Yagoua produits une fois pour toutes depuis le poste formateur par `00_construire_extraits_webr_yagoua.R` (filtrage de la bbox AOI01 + buffer 1 km, reprojection EPSG:4326, validation des géométries) :
 
-**Helpers de chargement** dans `pedagogie/_commons/helpers/fetch_data.R` :
+- `pedagogie/_commons/data/jour_08_extraits/aoi01_yagoua.geojson` — polygone Copernicus EMSR772 AOI01 (zone d'intérêt Yagoua), ~50 ko, source [Copernicus EMSR772](https://emergency.copernicus.eu/mapping/list-of-components/EMSR772).
+- `pedagogie/_commons/data/jour_08_extraits/flood01_yagoua.geojson` — polygones d'inondation `floodDepthA_v2` ventilés par classe de profondeur, ~200 ko, même source.
+- `pedagogie/_commons/data/jour_08_extraits/batiments_yagoua.geojson` — empreintes Google Open Buildings sur la zone (filtrage `confidence >= 0.7`), ~2-5 Mo (~10 000 bâtiments), source [Google Open Buildings](https://sites.research.google/open-buildings/).
 
-- `fetch_worldpop_2024_cmr()` — résout le TIF WorldPop 2024
-- `fetch_ghs_built_dir()` — résout le dossier GHS-BUILT (15 tuiles ZIP)
-- `fetch_emsr772_dir()` — résout le dossier EMSR772_products (3 AOI)
-- `fetch_open_buildings_dir()` — résout le dossier Open Buildings (5 CSV.GZ)
-- `fetch_gadm_cmr_gpkg()` — réutilise le GeoPackage GADM unifié (déjà existant, J7)
+Réutilisé de J7 (déjà embarqué) pour la carte de cadrage régional :
+
+- `pedagogie/_commons/data/jour_07_extraits/gadm41_CMR_adm1.geojson` — 10 régions du Cameroun, source [GADM v4.1](https://gadm.org).
+
+### À télécharger manuellement (utilisé par `demo.qmd` desktop, trop lourd pour le repo)
+
+Tous ces fichiers sont en `.gitignore` (volume total ~500 Mo). Chemins attendus résolus par les helpers `fetch_*()` dans `pedagogie/_commons/helpers/fetch_data.R`.
+
+| Fichier / Dossier | Emplacement attendu | Source officielle | Taille | Comment l'obtenir |
+|---|---|---|---|---|
+| `gadm41_CMR.gpkg` | `pedagogie/datasets/cameroun/jour_07_population/` | <https://gadm.org/download_country.html> (Cameroun, GeoPackage) | ~30 Mo | Téléchargement direct (réutilisé depuis J7) — helper `fetch_gadm_cmr_gpkg()`. |
+| `cmr_pop_2024_CN_100m_R2025A_v1.tif` | `pedagogie/datasets/cameroun/jour_08_teledetection/` | WorldPop constrained 100m R2025A — <https://hub.worldpop.org/> | ~25 Mo | Hub WorldPop, filtre Cameroun + année 2024 — helper `fetch_worldpop_2024_cmr()`. |
+| `GHS-BUILT/` (15 tuiles ZIP) | `pedagogie/datasets/cameroun/jour_08_teledetection/GHS-BUILT/` | JRC Copernicus GHSL Built-Up Surface R2023A — <https://human-settlement.emergency.copernicus.eu/download.php?ds=bu> | ~300 Mo | 8 tuiles 2025 + 7 tuiles 2015 couvrant le Cameroun (Mollweide, 100 m) — helper `fetch_ghs_built_dir()`. |
+| `EMSR772_products/` (3 ZIP AOI01-03) | `pedagogie/datasets/cameroun/jour_08_teledetection/EMSR772_products/` | Copernicus Emergency Management Service — <https://emergency.copernicus.eu/mapping/list-of-components/EMSR772> | ~50 Mo | Téléchargement direct libre (3 AOI : Yagoua + 2 zones voisines) — helper `fetch_emsr772_dir()`. |
+| `Open Buildings/` (CSV.GZ tuiles S2) | `pedagogie/datasets/cameroun/jour_08_teledetection/Open Buildings/` | Google Open Buildings — <https://sites.research.google/open-buildings/> | ~100 Mo | Téléchargement des tuiles S2 couvrant le nord Cameroun (colonnes `latitude`, `longitude`, `area_in_meters`, `confidence`) — helper `fetch_open_buildings_dir()`. |
+
+Pour régénérer les extraits WebR à partir des datasets lourds après mise à jour : `Rscript pedagogie/J08_teledetection_observation_terre/00_construire_extraits_webr_yagoua.R`.
 
 ## Pré-requis
 

@@ -37,6 +37,8 @@ Un projet RStudio contient un fichier `.Rproj` à la racine. Trois conséquences
 ## b. Arborescence + README
 
 ```r
+# fs::dir_create accepte un vecteur de chemins : tous les dossiers crees d'un coup.
+# Convention atelier : data brute, scripts code, outputs resultats, reports rapports.
 library(fs)
 fs::dir_create(c("data", "scripts", "outputs", "reports"))
 ```
@@ -58,6 +60,8 @@ Auteur : Prenom Nom. Licence : CC-BY 4.0.
 ## c. Chargement sans chemin absolu
 
 ```r
+# here::here() concatene des segments en partant de la racine projet detectee.
+# Aucun chemin absolu (C:/Users/...) -> code portable sur autre machine.
 library(here); library(sf)
 source(here("..", "atelier-r-spatial-iford-2026", "pedagogie",
             "_commons", "helpers", "fetch_data.R"))
@@ -65,7 +69,7 @@ regions <- sf::read_sf(fetch_indicateurs_regions_demo())
 cat("Racine detectee par here :", here::here(), "\n")
 ```
 
-**Astuce** : si `here::here()` retourne un chemin inattendu (par exemple `pedagogie/` au lieu du repo racine), c'est qu'il y a plusieurs marqueurs de racine concurrents. Utilise alors `rprojroot::find_root(rprojroot::has_file("mon_projet.Rproj"))` qui ancre explicitement.
+**Astuce** : si `here::here()` retourne un chemin inattendu (par exemple `pedagogie/` au lieu du repo racine), c'est qu'il y a plusieurs marqueurs de racine concurrents. Utilise alors `rprojroot::find_root(rprojroot::has_file("mon_projet.Rproj"))` qui ancre explicitement — c'est l'alternative robuste.
 
 # Q2 — Rapport Quarto multi-format
 
@@ -126,12 +130,16 @@ library(tmap)
 carte_alpha <- tm_shape(regions) +
   tm_polygons(
     fill        = "alphabetisation_pct",
-    fill.scale  = tm_scale_intervals(style = "quantile", values = "viridis"),
-    fill.legend = tm_legend(title = "Alphabetisation (%)")
+    # Palette magma (consigne Q3) : jaune -> noir, lisible daltoniens.
+    fill.scale  = tm_scale_intervals(style = "quantile", values = "magma"),
+    fill.legend = tm_legend(title = "Alphabetisation (% adultes)")
   ) +
   tm_text("region", size = 0.5) +
-  tm_title("Taux d'alphabetisation par region",
-           position = tm_pos_in("left", "top"))
+  tm_title("Taux d'alphabetisation des adultes par region - Cameroun",
+           position = tm_pos_in("left", "top")) +
+  # Sous-titre methode + caption FAIR (source + organisation + nature des donnees).
+  tm_credits("Sous-titre : 10 regions ADM1 - quantile 5 classes (% adultes)\nSource : regions_indicateurs_demo (Edith Darin, GDSG) - IFORD x GDSG 2026 - Donnees d'entrainement, non officielles",
+             position = c("left", "bottom"), size = 0.5)
 ```
 
 ## b. Mode plot + export PNG

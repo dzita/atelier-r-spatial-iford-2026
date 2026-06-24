@@ -12,7 +12,9 @@
 # A executer UNE SEULE FOIS sur la machine de l'animateur apres avoir
 # place les datasets Edith dans
 # pedagogie/datasets/cameroun/jour_07_population/
-# (ou en pointant vers C:/Dev/GitHub/jour_07_cartographie_*/data/).
+# (ou ailleurs : voir .J07_CANDIDATES_DIRS() dans fetch_data.R pour
+# la liste des emplacements alternatifs reconnus, p. ex. un clone du
+# repo formateur 'jour_07_cartographie_population_haute_resolution').
 #
 # Production :
 #   - pop_2015_mfoundi.tif  (~1 Mo)

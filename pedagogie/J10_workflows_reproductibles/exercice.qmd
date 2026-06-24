@@ -25,10 +25,13 @@ Conception pédagogique (atelier R + mini-projet + grille présentation + métad
 # Setup commun
 
 ```r
+# Packages utilises dans les exercices : chemins (here/fs), spatial (sf), wrangling
+# (dplyr/tibble/readr), fonctionnel (purrr), cartes (tmap/ggplot2), metadata (jsonlite).
 library(here); library(fs); library(sf); library(dplyr)
 library(tibble); library(readr); library(purrr)
 library(tmap); library(ggplot2); library(jsonlite)
 
+# Helper du projet atelier : retourne le chemin absolu vers regions_indicateurs_demo.gpkg.
 source("../_commons/helpers/fetch_data.R")
 
 regions <- sf::read_sf(fetch_indicateurs_regions_demo())
@@ -38,17 +41,21 @@ regions <- sf::read_sf(fetch_indicateurs_regions_demo())
 
 > Référence démo : Section 1.
 
+**Rappel debutant.** Un *projet RStudio* est un dossier qui contient un fichier `.Rproj`. RStudio fixe alors le repertoire de travail sur ce dossier, et `here::here()` ancre tous les chemins relatifs sur cette racine - cle de la reproductibilite computationnelle.
+
 1. **a.** Crée un nouveau projet RStudio (File → New Project → New Directory) appelé `mon_projet_iford_j10`. Quelle est la différence entre un dossier ordinaire et un projet RStudio ?
 2. **b.** Crée à l'intérieur l'arborescence : `data/`, `scripts/`, `outputs/`, `reports/`, et un fichier `README.md` qui décrit le projet en 5 lignes.
 3. **c.** Charge le dataset fil rouge dans une session R **sans utiliser de chemin absolu**. Démontre que `here::here()` détecte bien la racine du projet.
 
 ::: {.callout-tip}
-Si `here::here()` retourne un chemin inattendu, essaie `rprojroot::find_root(rprojroot::has_file("mon_projet_iford_j10.Rproj"))` qui ancre explicitement sur le `.Rproj`.
+Si `here::here()` retourne un chemin inattendu, essaie `rprojroot::find_root(rprojroot::has_file("mon_projet_iford_j10.Rproj"))` qui ancre explicitement sur le `.Rproj`. C'est l'alternative robuste quand plusieurs marqueurs de racine sont en concurrence.
 :::
 
 # Q2 — Construire un rapport Quarto multi-format {#sec-q2}
 
 > Référence démo : Section 2.
+
+**Rappel debutant.** Quarto est un systeme qui combine texte + code R + YAML d'en-tete. Une meme `.qmd` peut produire HTML, PPTX, PDF ou Word selon le bloc `format:` du YAML. La commande `quarto render fichier.qmd --to FORMAT` execute le code et produit le livrable cible.
 
 1. **a.** Crée `reports/rapport_indicateurs.qmd` avec en-tête YAML qui produit **à la fois** HTML et PPTX.
 2. **b.** Ajoute une section qui affiche le tableau d'indicateurs (population, ménages, eau améliorée, alphabétisation) triés par population décroissante via `knitr::kable()`.
@@ -65,13 +72,19 @@ Vérifie que les deux sorties existent dans `reports/`. Quelles différences obs
 
 > Référence démo : Section 3.
 
-1. **a.** Construis un objet `carte_alpha` qui cartographie le taux d'alphabétisation (`alphabetisation_pct`) avec une palette quantile et le nom des régions en label.
+**Rappel debutant.** `tmap_mode("plot")` produit une carte **statique** (PNG, pour PPTX/PDF/Word). `tmap_mode("view")` bascule le meme objet en carte **interactive** Leaflet (zoom/pan/popup, HTML uniquement). Le mode "view" est **desktop seulement** : sur Posit Cloud restreint ou WebR, on retombe sur ggplot2 statique.
+
+Ta carte doit etre complete : titre indicateur + zone, sous-titre methode, legende avec unite, etiquettes regions, source en bas.
+
+1. **a.** Construis un objet `carte_alpha` qui cartographie le taux d'alphabétisation (`alphabetisation_pct`) avec une palette **magma** quantile et le nom des régions en label.
 2. **b.** Affiche `carte_alpha` en mode `"plot"` (statique). Sauvegarde-la en PNG 7×5 pouces dans `outputs/`.
 3. **c.** Bascule en mode `"view"` et affiche le **même objet** `carte_alpha`. Que se passe-t-il dans le panel Viewer de RStudio ? Quel format de sortie peut conserver cette interactivité ?
 
 # Q4 — Automatisation par boucle régionale {#sec-q4}
 
 > Référence démo : Section 5.
+
+**Rappel debutant.** `purrr::map_dfr()` applique une fonction a chaque element d'un vecteur et empile les resultats en un seul tibble. C'est l'equivalent fonctionnel d'une boucle `for` + `bind_rows`, mais plus court et typecheck. **Regle des trois** : toute tache repetee 3+ fois merite une fonction + boucle.
 
 1. **a.** Écris une fonction `calculer_ratios(nom_region)` qui retourne un tibble avec : population, ménages, taille moyenne du ménage (`population / menages`), nombre d'écoles pour 1000 habitants, nombre de FOSA pour 10 000 habitants.
 2. **b.** Applique-la aux 10 régions via `purrr::map_dfr(regions$region, calculer_ratios)`. Trie le résultat par taille moyenne de ménage croissante. Quelle région a la plus petite taille de ménage ? La plus grande ?
@@ -81,6 +94,8 @@ Vérifie que les deux sorties existent dans `reports/`. Quelles différences obs
 # Q5 — Métadonnées du livrable {#sec-q5}
 
 > Référence démo : Section 6.
+
+**Rappel debutant.** Les principes **FAIR** (Findable, Accessible, Interoperable, Reusable) demandent que tout livrable porte sa documentation. En pratique = 7 metadonnees minimales. Un **sidecar JSON** est un fichier `.json` pose A COTE de l'export (meme nom + `.json`), lisible par humain ET par machine.
 
 1. **a.** Liste les **7 métadonnées minimales** (titre, source, date, CRS, échelle, méthode, limites) pour le CSV produit en Q4. Rédige-les sous forme de tibble R.
 2. **b.** Sauvegarde ces métadonnées en sidecar JSON : `outputs/ratios_regions.csv.json`. Utilise `jsonlite::write_json(..., pretty = TRUE)`.

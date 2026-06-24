@@ -25,14 +25,15 @@ suppressPackageStartupMessages({
 
 projet_root <- rprojroot::find_root(rprojroot::has_file("README.md"))
 
-# Source : repo formateur d'Edith (positionnement standard sur poste GDSG)
-# A adapter si le repo Edith est ailleurs sur la machine.
+# Source : repo formateur d'Edith (positionnement standard sur poste GDSG).
+# Si le repo Edith est ailleurs sur la machine, ajouter le chemin
+# correspondant dans la liste 'candidats_source' ci-dessous.
 candidats_source <- c(
-  "C:/Dev/GitHub/jour_10_flux_reproductibles_projets/data",
   file.path(Sys.getenv("USERPROFILE"),
             "Dev/GitHub/jour_10_flux_reproductibles_projets/data"),
   file.path(Sys.getenv("HOME"),
-            "Dev/GitHub/jour_10_flux_reproductibles_projets/data")
+            "Dev/GitHub/jour_10_flux_reproductibles_projets/data"),
+  "~/Dev/GitHub/jour_10_flux_reproductibles_projets/data"
 )
 src_dir <- NULL
 for (c in candidats_source) {

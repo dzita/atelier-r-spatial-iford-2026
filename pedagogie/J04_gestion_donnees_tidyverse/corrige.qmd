@@ -23,6 +23,7 @@ Si tu n'as pas tenté l'exercice : ferme ce fichier.
 
 ```{r}
 #| label: setup
+# Tidyverse + srvyr (sondages) + ggplot2 (cartes) + sf (vectoriel spatial).
 library(dplyr)
 library(tidyr)
 library(readr)
@@ -32,6 +33,7 @@ library(sf)
 
 source("../_commons/helpers/fetch_data.R")
 
+# Chargement des deux extraits DHS Cameroun 2018 (option B : CSV legers).
 data_dir <- "../_commons/data/dhs_cmr"
 menages   <- read_csv(file.path(data_dir, "dhs_cmr_2018_menages_extrait.csv"),
                      show_col_types = FALSE)
@@ -45,6 +47,7 @@ personnes <- read_csv(file.path(data_dir, "dhs_cmr_2018_personnes_extrait.csv"),
 
 ```{r}
 #| label: q1a
+# Deux conditions separees par virgule = ET logique.
 menages |>
   filter(sexe_chef == "female", region == "west") |>
   nrow()
@@ -56,6 +59,7 @@ menages |>
 
 ```{r}
 #| label: q1b
+# Pattern type : filter (sous-population) -> group_by -> summarise -> arrange.
 menages |>
   filter(milieu == "rural") |>
   group_by(region) |>
@@ -71,6 +75,8 @@ Le pattern classique : `filter` → `group_by` → `summarise`. Les régions sep
 
 ```{r}
 #| label: q1c
+# count() = group_by + summarise(n = n()) en un appel.
+# pivot_wider() etale la colonne quintile en 5 colonnes (poorest, poorer, ...).
 menages |>
   count(region, quintile) |>
   pivot_wider(names_from = quintile, values_from = n, values_fill = 0)
@@ -84,6 +90,7 @@ menages |>
 
 ```{r}
 #| label: q2a
+# anti_join() = lignes de gauche SANS correspondance a droite. Diagnostic systematique.
 personnes_orph <- personnes |>
   anti_join(menages, by = c("cluster_id", "menage_id")) |>
   nrow()
@@ -96,13 +103,14 @@ Sur un microfichier DHS officiel propre, on attend **zéro** orphelin : tout mem
 
 ```{r}
 #| label: q2b
+# left_join propre sur la DOUBLE cle (cluster_id, menage_id).
 personnes_enrichies <- personnes |>
   left_join(
     menages |> select(cluster_id, menage_id, region, milieu, electricite, quintile),
     by = c("cluster_id", "menage_id")
   )
 
-# NA résiduels sur les colonnes ajoutées
+# Controle qualite : memes lignes a gauche + 0 NA = jointure parfaite.
 c(personnes        = nrow(personnes),
   apres_join       = nrow(personnes_enrichies),
   na_sur_electricite = sum(is.na(personnes_enrichies$electricite)))
@@ -114,15 +122,17 @@ Le `left_join` préserve la gauche (`personnes`) → le nombre de lignes ne doit
 
 ```{r}
 #| label: q2c
-# DANGER : sans cluster_id, on duplique massivement
+# DEMO du piege : sur 100 lignes seulement, pour ne pas exploser la RAM.
+# relationship = "many-to-many" force dplyr a accepter (sinon erreur de securite).
 piege <- personnes |>
-  head(100) |>  # échantillon pour ne pas exploser la mémoire
+  head(100) |>
   left_join(
     menages |> select(menage_id, electricite),
     by = "menage_id",
     relationship = "many-to-many"
   )
 
+# duplication_ratio = combien de copies par personne ? Doit etre > 10 = catastrophe.
 c(personnes_echantillon = 100,
   lignes_obtenues       = nrow(piege),
   duplication_ratio     = round(nrow(piege) / 100, 1))
@@ -136,6 +146,8 @@ Pourquoi le désastre : le `menage_id` n'est unique **que dans un cluster**. San
 
 ```{r}
 #| label: q3a
+# Recette du diagnostic NA en 4 etapes : count NA par colonne, format long,
+# filtrer les variables a NA, calculer le pourcentage, trier.
 resume_na <- menages |>
   summarise(across(everything(), ~ sum(is.na(.)))) |>
   pivot_longer(everything(), names_to = "variable", values_to = "n_na") |>
@@ -151,6 +163,8 @@ Les microfichiers DHS sont **fortement nettoyés** par ICF avant publication : l
 
 ```{r}
 #| label: q3b
+# group_by(region, milieu) + mutate = la mediane est calculee PAR groupe.
+# On ne jamais ecraser l'original : on cree une NOUVELLE colonne age_chef_imp.
 menages <- menages |>
   mutate(age_chef_num = as.numeric(age_chef)) |>
   group_by(region, milieu) |>
@@ -173,6 +187,7 @@ Conversion explicite en numeric pour éviter le piège `dplyr::if_else` strict s
 
 ```{r}
 #| label: q3c
+# pull() extrait un vecteur depuis une colonne (pratique apres summarise).
 avant <- menages |>
   summarise(moy_age = round(mean(age_chef, na.rm = TRUE), 2)) |>
   pull(moy_age)
@@ -181,6 +196,7 @@ apres <- menages |>
   summarise(moy_age = round(mean(age_chef_imp, na.rm = TRUE), 2)) |>
   pull(moy_age)
 
+# Si la difference est faible, l'imputation n'a pas biaise l'estimation : OK.
 c(avant_imputation = avant, apres_imputation = apres,
   difference = round(apres - avant, 2))
 ```
@@ -193,6 +209,8 @@ L'écart est généralement très faible (< 0.5 an) parce que (a) il y a peu de 
 
 ```{r}
 #| label: q4a
+# Declaration du design srvyr : poids HV005/1e6, cluster = PSU, strate = HV022.
+# nest = TRUE pour les EDS (clusters emboites dans strates region x milieu).
 dhs_design <- menages |>
   mutate(poids = poids_menage / 1e6) |>
   as_survey_design(
@@ -210,6 +228,7 @@ dhs_design
 
 ```{r}
 #| label: q4b
+# survey_mean(..., vartype = "ci") retourne valeur + borne basse + borne haute (IC 95%).
 nat_pond <- dhs_design |>
   summarise(
     tx_elec = round(survey_mean(electricite == "yes", vartype = "ci") * 100, 1)
@@ -223,12 +242,13 @@ nat_pond
 
 ```{r}
 #| label: q4c
+# Desagregation par quintile de richesse : revele le gradient socio-economique.
 par_quintile <- dhs_design |>
   group_by(quintile) |>
   summarise(
     tx_elec = round(survey_mean(electricite == "yes") * 100, 1)
   ) |>
-  select(-ends_with("_se"))
+  select(-ends_with("_se"))    # on jette les colonnes d'erreur-type
 par_quintile
 ```
 
@@ -240,11 +260,12 @@ Le gradient quintile est **monotone et très marqué** : `poorest` autour de 5-1
 
 ```{r}
 #| label: q5a
-# Définition JMP : eau améliorée
+# Definition JMP-OMS/UNICEF des sources d'eau ameliorees (officielle ODD 6).
 eau_amelio_mods <- c("piped to dwelling", "piped to yard/plot",
                      "public tap/standpipe", "tube well or borehole",
                      "protected well", "protected spring", "bottled water")
 
+# %in% teste l'appartenance a la liste -> renvoie TRUE/FALSE (binaire).
 indic_eau_region <- dhs_design |>
   mutate(eau_amelio_bin = source_eau %in% eau_amelio_mods) |>
   group_by(region) |>
@@ -259,11 +280,13 @@ indic_eau_region
 
 ```{r}
 #| label: q5b
+# Moyenne nationale ponderee pour servir de reference.
 moyenne_nat <- dhs_design |>
   mutate(eau_amelio_bin = source_eau %in% eau_amelio_mods) |>
   summarise(moy = survey_mean(eau_amelio_bin) * 100) |>
   pull(moy)
 
+# Comparaison rigoureuse : on regarde si l'IC 95% region contient la moyenne nationale.
 indic_eau_region |>
   mutate(
     position = case_when(
@@ -282,6 +305,7 @@ Lecture : les régions « strictement au-dessus » ou « en-dessous » sont cell
 ```{r}
 #| label: q5c
 #| eval: false
+# dir.create() avec showWarnings = FALSE evite l'erreur si le dossier existe deja.
 dir.create("outputs", showWarnings = FALSE, recursive = TRUE)
 write_csv(indic_eau_region, "outputs/indicateurs_region_q5.csv")
 ```
@@ -294,7 +318,9 @@ Solution intégrée (sans la rédaction R complète — voir le script `R/04_dev
 
 ```{r}
 #| label: q6-pipeline
-# Choix : indicateur 1 = pct_chef_femme, indicateur 2 = pct_alpha_femmes_25plus
+# Choix indicateurs supplementaires :
+#   - indicateur 1 (cote menages) : pct_chef_femme   -> ODD 5
+#   - indicateur 2 (cote personnes) : pct_alpha_femmes_25plus -> ODD 4
 indic_menages <- dhs_design |>
   group_by(region) |>
   summarise(
@@ -304,7 +330,7 @@ indic_menages <- dhs_design |>
   ) |>
   select(-ends_with("_se"))
 
-# Indicateur sur personnes : alphabétisation femmes 25+ (pondéré)
+# Design separe sur les personnes (joindre HR -> PR AVANT le design).
 personnes_design <- personnes |>
   left_join(menages |> select(cluster_id, menage_id, strate, poids_menage, region),
             by = c("cluster_id", "menage_id")) |>
@@ -319,12 +345,14 @@ personnes_design <- personnes |>
   ) |>
   as_survey_design(ids = cluster_id, strata = strate, weights = poids, nest = TRUE)
 
+# Filtre sur population cible : femmes 25+ ans avec alphabetisation renseignee.
 indic_femmes <- personnes_design |>
   filter(age >= 25, !is.na(alpha_bin), sexe == "female") |>
   group_by(region) |>
   summarise(pct_alpha_femmes_25plus = round(survey_mean(alpha_bin) * 100, 1)) |>
   select(-ends_with("_se"))
 
+# Fusion des deux tables d'indicateurs en une seule, cle = region.
 indicateurs_region <- indic_menages |>
   left_join(indic_femmes, by = "region")
 
@@ -335,8 +363,10 @@ indicateurs_region
 
 ```{r}
 #| label: q6-gadm
+# Chargement des polygones GADM ADM1 (10 regions du Cameroun).
 adm1 <- read_sf(fetch_gadm_cameroon(1))
 
+# Fonction de normalisation : 3 etapes (sans accent, minuscule, sans tiret).
 norm <- function(x) {
   x |> iconv(from = "UTF-8", to = "ASCII//TRANSLIT") |> tolower() |>
        gsub("[^a-z0-9]", "", x = _)
@@ -349,13 +379,15 @@ normalize_region <- function(x) {
   v <- norm(x); ifelse(v %in% names(dict), dict[v], v)
 }
 
+# Ajout de la cle propre dans les DEUX tables.
 adm1$region_key                 <- normalize_region(adm1$NAME_1)
 indicateurs_region$region_key   <- normalize_region(indicateurs_region$region)
 
+# left_join sur sf : preserve la geometrie cote gauche -> adm1_indic reste un sf.
 adm1_indic <- adm1 |>
   left_join(indicateurs_region, by = "region_key")
 
-# Vérification : 0 NA après jointure
+# Controle final : 0 NA = jointure parfaite, tous les polygones ont leurs indicateurs.
 sum(is.na(adm1_indic$pct_electricite))
 ```
 
@@ -364,6 +396,8 @@ sum(is.na(adm1_indic$pct_electricite))
 ```{r}
 #| label: q6-export
 #| eval: false
+# Double export : CSV (tabulaire pour J5) + GeoPackage (couche SIG ouvrable dans QGIS).
+# delete_dsn = TRUE remplace le fichier s'il existe deja.
 dir.create("outputs", showWarnings = FALSE, recursive = TRUE)
 write_csv(indicateurs_region, "outputs/indicateurs_region_v2.csv")
 write_sf(adm1_indic, "outputs/cmr_adm1_indicateurs_dhs2018.gpkg",
@@ -383,6 +417,8 @@ write_sf(adm1_indic, "outputs/cmr_adm1_indicateurs_dhs2018.gpkg",
 ```{r}
 #| label: q7a
 #| eval: false
+# Indicateurs publies par StatCompiler DHS (telechargement via API officielle).
+# Format long en entree -> format wide pour comparaison cote a cote.
 dhs_pub <- read_csv("../_commons/data/dhs_cmr/indicateurs_dhs_cmr_2018.csv",
                    show_col_types = FALSE)
 dhs_wide <- dhs_pub |>
@@ -396,21 +432,22 @@ dhs_wide
 ```{r}
 #| label: q7b
 #| eval: false
-# Le tx_electricite que TU as calculé
+# Cote 1 : ce que TU as calcule en Module 5.
 mon_tx <- indic_menages |> select(region, pct_electricite)
 
-# StatCompiler publié
+# Cote 2 : la reference publique StatCompiler (variable HC_ELEC_H_ELC).
 dhs_pub_tx <- dhs_wide |>
   select(region, tx_elec_pub = HC_ELEC_H_ELC)
 
-# Normaliser pour joindre
+# Normaliser cote a cote AVANT la jointure (memes regions, ecritures differentes).
 mon_tx$region_key      <- normalize_region(mon_tx$region)
 dhs_pub_tx$region_key  <- normalize_region(dhs_pub_tx$region)
 
+# inner_join = ne garder que les regions qui matchent dans les deux jeux.
 compar <- mon_tx |>
   inner_join(dhs_pub_tx, by = "region_key") |>
   mutate(ecart_pts = round(pct_electricite - tx_elec_pub, 1))
-compar |> arrange(desc(abs(ecart_pts)))
+compar |> arrange(desc(abs(ecart_pts)))   # plus gros ecart en haut
 ```
 
 ## Q7.c, Q7.d — Lecture

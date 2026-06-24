@@ -20,6 +20,21 @@ Les 14 questions encadrées sont à discuter en plénière (Q1 à Q9) ou à réd
 
 Conception pédagogique complète : Edith Darin. Intégration convention atelier IFORD : Ramesesse Dzita.
 
+# Glossaire express (a relire avant de commencer)
+
+| Terme | Definition courte |
+|---|---|
+| **Population grid** | Raster ou chaque cellule (~100m x 100m = 1 hectare) porte une estimation d'habitants. |
+| **Top-down (WorldPop, Stevens 2015)** | Methode de redistribution : on part d'un total officiel par unite admin et on le distribue pixel par pixel selon des covariables. |
+| **Constrained R2025A** | Derniere release WorldPop (2024) qui restreint la redistribution aux pixels effectivement batis. |
+| **Bottom-up (Darin & Leasure 2023)** | On part de micro-recensements terrain et on extrapole par modele bayesien. Approche GDSG sur le RGPH 4 (Bamenda 1, Fongo Tongo, Buea, Mora). |
+| **Dasymetrie** | Redistribution d'une variable agregee selon une couche auxiliaire (ex: batiment). |
+| **GHSL / GHS-POP** | Global Human Settlement Layer (JRC, Commission europeenne). Estime la population a partir du bati observe par satellite. |
+| **Meta HRSL** | High Resolution Settlement Layer (Meta + CIESIN). Couche tierce, ~30 m, basee detection satellite + Facebook. |
+| **Agregation pixel -> ADM** | `exact_extract` (package exactextractr) : somme les cellules d'un raster a l'interieur de polygones. |
+| **EPSG:32632** | Projection UTM zone 32N, en metres, recommandee pour mesurer des surfaces au Cameroun. |
+| **Top-down vs bottom-up** | Pas opposes — complementaires : WorldPop colle aux chiffres officiels, GHSL voit le bati reel, GDSG donne la verite terrain micro-spatiale. |
+
 # Setup commun
 
 ```r

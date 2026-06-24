@@ -23,6 +23,7 @@ Si tu n'as pas tenté l'exercice : ferme ce fichier et lance-toi.
 
 ```{r}
 #| label: setup
+# Packages cles : terra (raster moderne), sf (vecteur), exactextractr (extraction rapide).
 library(sf)
 library(terra)
 library(dplyr)
@@ -35,9 +36,11 @@ source("../_commons/helpers/fetch_data.R")
 source("../_commons/helpers/theme_iford.R")
 
 # MNT SRTM Cameroun 30 arc-sec — donnees reelles NASA/USGS via geodata
+# rast() ouvre le raster sans charger les pixels en RAM.
 srtm <- rast(fetch_srtm_cameroon())
 names(srtm) <- "elevation_m"
 
+# ADM0 = pays, ADM1 = regions, ADM2 = departements, ADM3 = arrondissements.
 adm0 <- read_sf(fetch_gadm_cameroon(0))
 adm1 <- read_sf(fetch_gadm_cameroon(1))
 adm2 <- read_sf(fetch_gadm_cameroon(2))
@@ -48,6 +51,7 @@ adm3 <- read_sf(fetch_gadm_cameroon(3))
 
 ```{r}
 #| label: q1
+# Resolution en degres x 111 km -> approximation en metres a l'equateur.
 c(resolution_deg = res(srtm)[1],
   resolution_metres_approx = res(srtm)[1] * 111000,
   nb_cellules = ncell(srtm),
@@ -64,10 +68,12 @@ c(resolution_deg = res(srtm)[1],
 
 ```{r}
 #| label: q2
+# Crop sur la bbox de la region Centre, puis mask par sa forme exacte.
 centre <- adm1 |> filter(NAME_1 == "Centre")
 srtm_centre_crop   <- crop(srtm, centre)
 srtm_centre_masked <- mask(srtm_centre_crop, vect(centre))
 
+# Apres mask, le nombre total de cellules ne change pas, mais beaucoup deviennent NA.
 c(crop_seul = ncell(srtm_centre_crop),
   apres_mask = ncell(srtm_centre_masked),
   pixels_NA  = sum(is.na(values(srtm_centre_masked))))
@@ -79,17 +85,19 @@ c(crop_seul = ncell(srtm_centre_crop),
 
 ```{r}
 #| label: q3
+# crop + mask combines : raster restreint au territoire camerounais (NA hors silhouette).
 srtm_cmr <- mask(crop(srtm, adm0), vect(adm0))
+# Algebre raster avec combinaison logique : ET (&) entre deux conditions.
 interesting <- (srtm_cmr > 200) & (srtm_cmr < 800)
 
-# Superficie d'une cellule en km^2 (approximation a la latitude du Cameroun)
+# Superficie d'une cellule en km^2 (approximation a la latitude du Cameroun ~7degN)
 area_cell_km2 <- prod(res(srtm_cmr)) * (111 ** 2) * cos(7 * pi / 180)
 
-# Cellules TRUE
+# values() extrait le vecteur de valeurs ; on compte les pixels TRUE.
 n_true <- sum(values(interesting) == 1, na.rm = TRUE)
 sup_interesting_km2 <- n_true * area_cell_km2
 
-# Total Cameroun
+# Total Cameroun = nombre de cellules non-NA apres masque pays.
 n_total <- sum(!is.na(values(srtm_cmr)))
 sup_totale_km2 <- n_total * area_cell_km2
 
@@ -104,6 +112,8 @@ c(superficie_interesting_km2 = round(sup_interesting_km2),
 
 ```{r}
 #| label: q4
+# exact_extract = extraction zonale exacte (fraction de chaque pixel dans le polygone).
+# Sur 58 departements, c'est quasi instantane et plus precis sur les bords.
 elev_dep <- exact_extract(srtm_cmr, adm2, "mean")
 adm2_avec_elev <- adm2 |>
   mutate(elev_moy = round(elev_dep))
@@ -128,10 +138,12 @@ adm2_avec_elev |>
 
 ```{r}
 #| label: q5
+# aggregate(fact=10) : 10x10 = 100 pixels fusionnes en 1 -> raster ~100x plus leger.
 srtm_agg10 <- aggregate(srtm_cmr, fact = 10, fun = "mean", na.rm = TRUE)
 res(srtm_agg10)
 ncell(srtm_agg10)
 
+# Cree un template vide a la resolution voulue, puis aligne le raster source dessus.
 template_1km <- rast(srtm_cmr)
 res(template_1km) <- c(0.009, 0.009)  # ~1km
 srtm_1km <- resample(srtm_cmr, template_1km, method = "bilinear")
@@ -144,10 +156,11 @@ res(srtm_1km)
 
 ```{r}
 #| label: q6
+# exact_extract sur 365 polygones ADM3 : altitude moyenne par arrondissement.
 adm3_elev <- adm3 |>
   mutate(elev_moy = round(exact_extract(srtm_cmr, adm3, "mean")))
 
-# 20 plus bas
+# 20 plus bas : tri croissant, on prend les premieres lignes.
 top20_bas <- adm3_elev |>
   arrange(elev_moy) |>
   head(20)
@@ -163,6 +176,8 @@ top20_bas |>
 #| label: q6-carte
 #| fig-width: 10
 #| fig-height: 8
+# Carte en 3 couches : (1) tous les arrondissements en gris, (2) surcouche top 20
+# en degrade rouge/orange, (3) etiquettes des 20 arrondissements concernes.
 ggplot() +
   geom_sf(data = adm3, fill = "grey92", color = "white", linewidth = 0.15) +
   geom_sf(data = top20_bas, aes(fill = elev_moy),
@@ -174,8 +189,8 @@ ggplot() +
                check_overlap = TRUE) +
   labs(
     title = "Les 20 arrondissements à plus basse altitude — Cameroun",
-    subtitle = "MNT SRTM agrégé par exact_extract(adm3, fun = mean)",
-    caption = "Sources : SRTM 30 m · GADM v4.1 · IFORD × GDSG 2026"
+    subtitle = "MNT SRTM 30 arc-sec agrégé par exact_extract(adm3, fun = mean)",
+    caption = "Source : NASA SRTM 30 arc-sec · GADM v4.1 · IFORD x GDSG 2026"
   ) +
   theme_minimal() +
   theme(axis.text = element_blank(), axis.ticks = element_blank(),

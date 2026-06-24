@@ -40,14 +40,21 @@ Convention atelier : **chaque bloc de code est précédé d'une phrase qui expli
 
 ## Pourquoi `here::here()` plutôt que des chemins absolus
 
+**Rappel reproductibilite.** On distingue 3 niveaux : **methodologique** (decrire ce qu'on a fait), **computationnelle** (relancer le code donne le meme resultat), **scientifique** (un tiers retrouve la meme conclusion avec d'autres donnees). Le projet R adresse surtout le niveau computationnel.
+
+**Projet RStudio.** Un dossier devient un "projet" quand on cree un fichier `.Rproj` (File -> New Project). RStudio fixe alors automatiquement le **repertoire de travail** sur ce dossier : tous les chemins relatifs partent de la.
+
 Quand on partage un projet R, le premier point qui casse la reproductibilité est le **chemin absolu** : `C:/Users/Ramesesse/Documents/...`. Sur la machine de votre collègue, ce chemin n'existe pas. La solution : utiliser `here::here()` qui détecte automatiquement la racine du projet R (le fichier `.Rproj` ou `.here`) et construit les chemins relatifs à cette racine.
 
 On commence par charger les packages dont la section a besoin, puis on demande à `here` où est la racine du projet.
 
 ```{r setup-section1}
+# here = construit des chemins relatifs au .Rproj (cross-OS Windows/Mac/Linux).
+# fs = manipulation moderne du systeme de fichiers (cree dossiers, liste, etc.).
 library(here)
 library(fs)
 
+# here::here() sans argument retourne la racine detectee du projet.
 projet_root <- here::here()
 message("Racine detectee : ", projet_root)
 ```
@@ -77,11 +84,15 @@ On utilise le helper `fetch_indicateurs_regions_demo()` du projet atelier (défi
 Quand Quarto rend ce `.qmd`, il fixe le **répertoire de travail au dossier du fichier source** (ici `pedagogie/J10_workflows_reproductibles/`). On atteint donc `fetch_data.R` par un **chemin relatif** `../_commons/helpers/fetch_data.R`. Une fois sourcé, le helper utilise `rprojroot` pour ancrer ses propres chemins sur le `.Rproj` racine — donc tous les `fetch_*()` retourneront des chemins absolus corrects.
 
 ```{r charger-fil-rouge}
+# source() = execute un script R (charge les fonctions helper du projet atelier).
+# Chemin relatif "../" car le CWD est fixe au dossier du .qmd par Quarto.
 source("../_commons/helpers/fetch_data.R")
 
 library(sf)
 library(dplyr)
 
+# fetch_indicateurs_regions_demo() retourne un chemin absolu vers le .gpkg.
+# read_sf() lit un fichier spatial vectoriel (ESRI shp, GeoPackage, GeoJSON).
 regions <- sf::read_sf(fetch_indicateurs_regions_demo())
 
 cat("Nombre de regions :", nrow(regions), "\n")
@@ -99,7 +110,7 @@ Si ce bloc tourne, c'est que la structure est respectée : le helper trouve le f
 
 ## L'idée centrale
 
-Un fichier `.qmd` combine texte Markdown, blocs de code R et un YAML d'en-tête qui décrit les formats de sortie. La commande `quarto render` exécute le code, capture les résultats et produit le livrable.
+Un fichier `.qmd` (Quarto markdown) combine texte Markdown, blocs de code R et un YAML d'en-tête qui décrit les formats de sortie. La commande `quarto render` exécute le code, capture les résultats et produit le livrable. **Un seul `.qmd` peut produire 4 formats** (HTML, PPTX, PDF, Word) sans toucher au code R, juste en changeant la cible de rendu.
 
 Voici un exemple minimaliste d'en-tête multi-format.
 
@@ -149,6 +160,8 @@ knitr::kable(formats)
 On crée un petit tableau résumé à partir du dataset chargé en Section 1. Ce tableau sera affiché de la même manière dans tous les formats de sortie.
 
 ```{r tableau-indicateurs}
+# st_drop_geometry() = on retire la geometrie pour ne garder que les attributs.
+# kable() = renderer de tableaux qui s'adapte au format (HTML, Word, PDF).
 indicateurs <- regions |>
   sf::st_drop_geometry() |>
   dplyr::select(region, population, menages, eau_amelioree_pct,
@@ -166,8 +179,10 @@ knitr::kable(indicateurs,
 
 `tmap` peut afficher la même carte de deux manières selon le mode actif :
 
-- `tmap_mode("plot")` : carte **statique** (PNG), pour PDF, PPTX, Word ou impression.
-- `tmap_mode("view")` : carte **interactive** Leaflet (zoom, pan, popup), pour HTML uniquement.
+- `tmap_mode("plot")` : carte **statique** (PNG), pour PDF, PPTX, Word ou impression. Disponible partout (RStudio desktop, serveur).
+- `tmap_mode("view")` : carte **interactive** Leaflet (zoom, pan, popup), pour HTML uniquement. **Desktop seulement** : ne fonctionne pas dans le runtime WebR (le package tmap n'est pas portable).
+
+Quand tmap est indisponible (WebR, Posit Cloud restreint), on retombe sur **ggplot2 + geom_sf()** pour le statique : moins de fonctionnalites cartographiques mais 100 % portable.
 
 On va construire **un seul objet `tm_shape()` + `tm_polygons()`**, puis le rendre dans chaque mode.
 
@@ -179,19 +194,27 @@ On définit le mode `"plot"`, on charge tmap, on construit la carte de la part d
 #| fig-cap: "Carte statique - acces a l'eau amelioree (regions du Cameroun)"
 #| fig-width: 7
 #| fig-height: 5
+# tmap = grammaire cartographique (couches + scales + legendes + titres + nord).
 library(tmap)
 
+# Mode "plot" = sortie statique PNG/PDF/PPTX (par defaut au demarrage).
 tmap_mode("plot")
 
+# tm_shape() declare la couche spatiale ; tm_polygons() la dessine avec couleur ;
+# tm_scale_intervals quantile = 5 classes equi-effectifs ; viridis = lisible daltoniens.
 carte_eau <- tm_shape(regions) +
   tm_polygons(
     fill        = "eau_amelioree_pct",
     fill.scale  = tm_scale_intervals(style = "quantile", values = "viridis"),
-    fill.legend = tm_legend(title = "Eau amelioree (%)")
+    fill.legend = tm_legend(title = "Eau amelioree (% menages)")
   ) +
   tm_text("region", size = 0.5) +
-  tm_title("Acces a l'eau amelioree par region",
-           position = tm_pos_in("left", "top"))
+  tm_title("Acces a l'eau amelioree par region - Cameroun",
+           position = tm_pos_in("left", "top")) +
+  # Sous-titre = methode/zone (10 regions ADM1, classes quantiles).
+  # tm_credits = caption FAIR (source + auteur + organisation + nature des donnees).
+  tm_credits("Sous-titre : 10 regions ADM1 - quantile 5 classes (% menages)\nSource : regions_indicateurs_demo (Edith Darin, GDSG) - IFORD x GDSG 2026 - Donnees d'entrainement, non officielles",
+             position = c("left", "bottom"), size = 0.5)
 
 carte_eau
 ```
@@ -202,6 +225,8 @@ On bascule en mode `"view"`. **Le même objet `carte_eau` devient interactif** :
 
 ```{r carte-interactive}
 #| eval: !expr knitr::is_html_output()
+# eval conditionnel : ce bloc ne s'execute que si la sortie est HTML.
+# En PPTX/PDF/Word, knitr::is_html_output() est FALSE -> bloc ignore.
 tmap_mode("view")
 carte_eau
 ```
@@ -215,6 +240,8 @@ Quand on rend ce document en HTML, la carte ci-dessus est interactive — clique
 ## Pourquoi Git
 
 Sans Git, l'historique des modifications est dans des fichiers `_v1`, `_v2_FINAL`, `_v2_FINAL_corrige`. Avec Git, on a **un seul fichier** et l'historique de toutes ses versions est dans un sous-dossier `.git`.
+
+**Git basics en 4 commandes** : `init` (creer un depot), `add` (preparer un fichier), `commit` (enregistrer un instantane), `push` (envoyer sur GitHub). Plus `pull` pour recuperer les commits des autres.
 
 ## Cinq commandes à connaître
 
@@ -258,11 +285,13 @@ Pour rester dans l'environnement R, on peut utiliser `usethis` qui automatise le
 
 ```{r usethis-git}
 #| eval: false
+# usethis = package qui automatise les taches de mise en place projet.
 library(usethis)
 
-# Une fois par projet
+# Chaque fonction = quelques commandes Git/shell encapsulees.
+# eval: false car ces commandes modifient l'etat du projet (commit, push).
 use_git()              # git init + premier commit
-use_github()           # cree le repo distant + push
+use_github()           # cree le repo distant + push (necessite gh CLI ou token)
 use_readme_md()        # cree un README.md standard
 use_mit_license()      # ou use_cc0_license() pour les donnees
 ```
@@ -273,13 +302,17 @@ use_mit_license()      # ou use_cc0_license() pour les donnees
 
 Toute tâche **répétée trois fois** mérite d'être automatisée. Ici, on veut calculer la **densité de population** (habitants par km²) pour chacune des 10 régions. Plutôt que copier-coller le calcul 10 fois, on écrit **une fonction** qui prend le nom de région et retourne le résultat, puis on **boucle** sur la liste des régions.
 
+**Deux options pour boucler** : la boucle `for` classique (impérative, avec un accumulateur), ou `purrr::map_dfr()` (fonctionnelle, une seule ligne). Les deux donnent le meme resultat ; `map_dfr` est plus lisible et type.
+
 ## La fonction unitaire
 
 On écrit une fonction qui prend un nom de région et retourne un tibble d'une ligne avec les indicateurs calculés.
 
 ```{r fonction-densite}
+# purrr = manipulation fonctionnelle (map, reduce, walk).
 library(purrr)
 
+# Fonction unitaire : 1 region en entree -> 1 ligne de tibble en sortie.
 resumer_region <- function(nom) {
   r <- regions |> dplyr::filter(region == nom)
   if (nrow(r) == 0) {
@@ -287,26 +320,31 @@ resumer_region <- function(nom) {
                           taille_menage = NA_real_,
                           fosa_pour_10k = NA_real_))
   }
+  # st_area renvoie m^2 ; /1e6 -> km^2.
   surface_km2 <- as.numeric(sf::st_area(r)) / 1e6
   tibble::tibble(
     region        = nom,
     pop_2024      = r$population,
     surface_km2   = round(surface_km2, 0),
-    densite       = round(r$population / surface_km2, 1),
-    taille_menage = round(r$population / r$menages, 2),
+    densite       = round(r$population / surface_km2, 1),    # hab/km^2
+    taille_menage = round(r$population / r$menages, 2),      # personnes/menage
     fosa_pour_10k = round(r$formations_sanitaires / r$population * 1e4, 2)
   )
 }
 
-# Test rapide sur une seule region
+# Test rapide sur une seule region avant d'industrialiser sur les 10.
 resumer_region("Adamaoua")
 ```
 
 ## Appliquer à toutes les régions avec `purrr::map_dfr`
 
-`map_dfr` applique la fonction à chaque élément du vecteur et **combine les résultats en un seul tibble**. C'est l'équivalent fonctionnel d'une boucle `for`, mais plus lisible et typé.
+`map_dfr` applique la fonction à chaque élément du vecteur et **combine les résultats en un seul tibble** (d = data-frame, fr = row-bind). C'est l'équivalent fonctionnel d'une boucle `for`, mais plus lisible et typé.
+
+**Equivalent boucle `for`** (plus verbose) : `acc <- list(); for (r in regions$region) acc[[r]] <- resumer_region(r); dplyr::bind_rows(acc)`. Memes resultats, 3 lignes au lieu d'une.
 
 ```{r appliquer-map-dfr}
+# map_dfr : 1) applique resumer_region a chaque element ; 2) bind_rows les tibbles.
+# arrange(desc(...)) : tri par densite decroissante (la region la plus dense en haut).
 tableau_regions <- purrr::map_dfr(regions$region, resumer_region) |>
   dplyr::arrange(dplyr::desc(densite))
 
@@ -320,7 +358,8 @@ knitr::kable(tableau_regions,
 On respecte la convention : tout résultat va dans `outputs/`. Le dossier est créé si besoin, puis le CSV et le GeoPackage sont écrits.
 
 ```{r exporter-resultats}
-# Chemin relatif au .qmd : Quarto fixe le CWD au dossier du .qmd
+# Chemin relatif au .qmd : Quarto fixe le CWD au dossier du .qmd.
+# dir_create cree le dossier s'il n'existe pas (silent si deja la).
 outputs_dir <- "outputs"
 fs::dir_create(outputs_dir)
 
@@ -351,6 +390,8 @@ for (f in fs::dir_ls(outputs_dir)) {
 # Section 6 — FAIR et métadonnées minimales
 
 ## Les 4 principes FAIR (2016)
+
+**FAIR** = acronyme propose par Wilkinson et al. (2016) pour rendre les donnees scientifiques **F**indable, **A**ccessible, **I**nteroperable, **R**eusable. Pas une norme rigide, mais une grille d'auto-evaluation.
 
 ```{r tableau-fair}
 fair <- tibble::tribble(
@@ -386,10 +427,14 @@ knitr::kable(metadata, caption = "Metadonnees minimales - livrable J10")
 Pour rendre les métadonnées **lisibles par machine** (pas juste par un humain), on les écrit dans un sidecar JSON à côté du fichier produit.
 
 ```{r sidecar-json}
+# jsonlite = lecture/ecriture JSON (format texte structure, lisible humain + machine).
 library(jsonlite)
 
+# Operateur "null-coalesce" : a %||% b retourne a sauf si NULL/vide, sinon b.
 `%||%` <- function(a, b) if (is.null(a) || length(a) == 0) b else a
 
+# Capture du hash Git court pour ancrer la version exacte du code utilisee.
+# tryCatch protege contre l'absence de Git (script lance hors repo).
 commit_court <- tryCatch(
   system("git rev-parse --short HEAD", intern = TRUE,
          ignore.stderr = TRUE)[1],
@@ -418,6 +463,8 @@ meta_livrable <- list(
 )
 
 sidecar_path <- file.path(outputs_dir, "regions_indicateurs_enrichi.gpkg.json")
+# write_json : pretty = TRUE pour indentation lisible ; auto_unbox = TRUE pour eviter
+# que les chaines de caracteres uniques soient embarquees dans des [..].
 jsonlite::write_json(meta_livrable, sidecar_path,
                      pretty = TRUE, auto_unbox = TRUE)
 

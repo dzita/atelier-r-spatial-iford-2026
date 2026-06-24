@@ -44,12 +44,15 @@ Avant d'avancer, on s'assure que R, Quarto et les packages requis sont prêts. L
 
 ```{r}
 #| label: check-versions
-R.version.string
+R.version.string   # ex. "R version 4.4.2 (2024-10-31)"
+# system2 lance une commande système ; tryCatch attrape l'erreur si Quarto
+# n'est pas dans le PATH, pour éviter de planter tout le rendu du document.
 quarto_version <- tryCatch(system2("quarto", "--version", stdout = TRUE),
                            error = function(e) NA)
 quarto_version
 
-# Packages installés ?
+# Liste des packages nécessaires pour J1 — on teste l'appartenance à la
+# liste des packages installés via %in% (TRUE / FALSE par paquet).
 pkgs_jour1 <- c("here", "fs", "tidyverse", "janitor", "skimr",
                 "haven", "readxl", "sf", "tmap", "ggplot2", "rnaturalearth")
 installed <- pkgs_jour1 %in% rownames(installed.packages())
@@ -60,6 +63,8 @@ Si un package manque, on l'installe **maintenant**, pas en fin de séance. Le bl
 
 ```{r}
 #| eval: false
+# pkgs_jour1[!installed] = sous-ensemble des paquets ENCORE absents.
+# dependencies = TRUE installe aussi les dépendances Imports + LinkingTo.
 install.packages(pkgs_jour1[!installed], dependencies = TRUE)
 ```
 
@@ -84,24 +89,27 @@ Un **vecteur** est la structure de base de R : une séquence ordonnée d'éléme
 
 ```{r}
 #| label: vecteurs-base
-# Un vecteur numérique : les 10 régions du Cameroun par population
-# (estimations BUCREP 2019, ordres de grandeur, à actualiser avec RGPH 4)
+# c() = "combine" : on assemble des valeurs en un vecteur.
+# Vecteur de caractères (les noms des 10 régions du Cameroun).
 regions <- c("Adamaoua", "Centre", "Est", "Extrême-Nord", "Littoral",
              "Nord", "Nord-Ouest", "Ouest", "Sud", "Sud-Ouest")
+# Vecteur numérique parallèle (estimations BUCREP 2019, ordres de grandeur).
+# IMPORTANT : même ordre que `regions` — c'est la convention "vecteurs alignés".
 pop_est <- c(1340000, 4400000, 870000, 4200000, 3400000,
              2700000, 2000000, 2000000, 800000, 1700000)
 
-length(regions)
-sum(pop_est)
-mean(pop_est)
-range(pop_est)
+length(regions)   # combien d'éléments ?
+sum(pop_est)      # somme totale
+mean(pop_est)     # moyenne
+range(pop_est)    # min et max (renvoie un couple)
 ```
 
 R **vectorise** par défaut : une opération arithmétique sur un vecteur s'applique élément par élément, sans boucle. Le bloc ci-dessous divise les 10 populations par un million d'un seul coup, puis arrondit le résultat à deux décimales avec `round()`.
 
 ```{r}
+# Vectorisation : l'opération / s'applique élément par élément, sans boucle.
 pop_millions <- pop_est / 1e6
-round(pop_millions, 2)
+round(pop_millions, 2)   # arrondi à 2 décimales
 ```
 
 Le **recyclage** est une source d'erreurs subtiles — on en parlera demain. Pour aujourd'hui : si on additionne deux vecteurs de tailles différentes, R recycle silencieusement le plus court.
@@ -112,14 +120,15 @@ R distingue plusieurs types primitifs (`character`, `numeric`, `logical`, `integ
 
 ```{r}
 #| label: types
-class(regions)   # character
-class(pop_est)   # numeric
-typeof(pop_est)  # double
+class(regions)   # "character" — vecteur de chaînes
+class(pop_est)   # "numeric"
+typeof(pop_est)  # "double" — stockage interne, virgule flottante 64 bits
 
-# Coercion implicite : un seul caractère contamine tout
+# Coercion implicite : R cherche un type qui peut TOUT contenir.
+# Le "trois" force tout le vecteur en "character" — les nombres deviennent "1", "2".
 mix <- c(1, 2, "trois")
 mix
-class(mix)
+class(mix)       # désormais "character", plus "numeric"
 ```
 
 En pratique démographique, on lit souvent des CSV où un code région est mal interprété comme nombre (perte des zéros en tête). On verra `readr::read_csv()` qui devine plus prudemment.
@@ -132,16 +141,17 @@ On assemble un `data.frame` avec une liste de colonnes nommées de **même longu
 
 ```{r}
 #| label: dataframe
+# data.frame : structure de base de R, un tableau (colonnes nommées).
 df_cmr <- data.frame(
   region   = regions,
   pop_2019 = pop_est,
   capitale = c("Ngaoundéré", "Yaoundé", "Bertoua", "Maroua", "Douala",
                "Garoua", "Bamenda", "Bafoussam", "Ebolowa", "Buea"),
-  stringsAsFactors = FALSE
+  stringsAsFactors = FALSE   # ne pas convertir les chaînes en facteurs
 )
 df_cmr
 
-# Mêmes données en tibble
+# tibble = version modernisée du data.frame (affichage tronqué, règles strictes).
 library(tibble)
 tbl_cmr <- as_tibble(df_cmr)
 tbl_cmr
@@ -155,15 +165,16 @@ R offre trois syntaxes pour accéder à une partie d'un tableau, et il faut savo
 
 ```{r}
 #| label: indexation
-# Notation [ligne, colonne ]
-df_cmr[1, ]              # première région
-df_cmr[, "region"]       # colonne region (vecteur)
-df_cmr[df_cmr$pop_2019 > 3e6, ]  # régions de plus de 3 millions
+# Notation [ligne, colonne] : vide à gauche = toutes les lignes, etc.
+df_cmr[1, ]              # première région (toutes ses colonnes)
+df_cmr[, "region"]       # colonne region, sortie vecteur
+df_cmr[df_cmr$pop_2019 > 3e6, ]  # filtrage booléen : populations > 3M
 
-# Notation $
+# Notation $nom : extraction directe d'une colonne par son nom (vecteur).
 df_cmr$pop_2019
 
-# Notation [[ ]] (élément unique)
+# Notation [[ ]] : extrait un élément unique d'une liste/data.frame.
+# Pratique quand le nom de la colonne est lui-même dans une variable.
 df_cmr[["region"]]
 ```
 
@@ -172,10 +183,12 @@ En tidyverse on préfère un enchaînement de verbes. Le bloc qui suit lit comme
 ```{r}
 #| label: dplyr-intro
 library(dplyr)
+# Pipeline lu "à voix haute" : prendre tbl_cmr, PUIS filtrer, PUIS trier,
+# PUIS sélectionner ces 3 colonnes. Chaque verbe prend/renvoie un tibble.
 tbl_cmr |>
-  filter(pop_2019 > 3e6) |>
-  arrange(desc(pop_2019)) |>
-  select(region, capitale, pop_2019)
+  filter(pop_2019 > 3e6) |>          # lignes : pop > 3 millions
+  arrange(desc(pop_2019)) |>         # tri décroissant par population
+  select(region, capitale, pop_2019) # ne garder que ces 3 colonnes
 ```
 
 Le **pipe natif** `|>` (R ≥ 4.1) se lit « puis ». Il rend les pipelines lisibles à voix haute et évite les imbrications du type `select(arrange(filter(...)))` qui se lisent de l'intérieur vers l'extérieur.
@@ -186,13 +199,15 @@ Le **pipe natif** `|>` (R ≥ 4.1) se lit « puis ». Il rend les pipelines lisi
 
 ```{r}
 #| label: mutate
+# mutate ajoute (ou modifie) une ou plusieurs colonnes.
+# case_when est un if/else if/else lisible : la 1ère condition VRAIE gagne.
 tbl_cmr <- tbl_cmr |>
   mutate(
     pop_millions = pop_2019 / 1e6,
     pop_classe   = case_when(
       pop_2019 < 1e6      ~ "Moins de 1M",
       pop_2019 < 3e6      ~ "1 à 3M",
-      TRUE                ~ "Plus de 3M"
+      TRUE                ~ "Plus de 3M"    # clause par défaut
     )
   )
 tbl_cmr
@@ -204,11 +219,13 @@ tbl_cmr
 
 ```{r}
 #| label: summarise
+# group_by partitionne le tibble par classe ; summarise réduit chaque groupe
+# à UNE ligne en appliquant les fonctions d'agrégation.
 tbl_cmr |>
   group_by(pop_classe) |>
   summarise(
-    n_regions = n(),
-    pop_totale = sum(pop_2019),
+    n_regions   = n(),            # n() = nombre de lignes dans le groupe
+    pop_totale  = sum(pop_2019),
     pop_moyenne = mean(pop_2019)
   )
 ```
@@ -230,17 +247,17 @@ Chaque fonction installée dans R a une page d'aide accessible **sans connexion 
 ```{r}
 #| eval: false
 ?mean              # ouvre l'aide de la fonction mean()
-help(mean)         # équivalent
-?dplyr::filter     # aide spécifique au filter de dplyr
-??regression       # cherche "regression" dans toute la doc installée
+help(mean)         # équivalent verbose
+?dplyr::filter     # aide spécifique au filter de dplyr (évite conflit stats::filter)
+??regression       # recherche full-text dans toute la doc installée
 ```
 
 Pour chaque package, il existe aussi des **vignettes** — tutoriels longs maintenus par les auteurs du package. `vignette(package = "sf")` liste celles disponibles, `vignette("sf1")` ouvre la première.
 
 ```{r}
 #| eval: false
-vignette(package = "sf")
-vignette("sf1")
+vignette(package = "sf")   # liste les vignettes (tutoriels longs) du package sf
+vignette("sf1")            # ouvre la vignette d'introduction de sf
 ```
 
 ## 2. Les cheatsheets RStudio
@@ -290,9 +307,9 @@ Créer un projet (en salle) : `File → New Project → New Directory → New Pr
 
 ```{r}
 #| label: here
-library(here)
-here()                                       # racine du projet
-here("data", "monfichier.csv")               # chemin OS-indépendant
+library(here)   # gestion de chemins relatifs à la racine du projet
+here()                                       # racine du projet RStudio
+here("data", "monfichier.csv")               # chemin construit relativement
 ```
 
 À partir de maintenant, **aucun chemin absolu** dans nos scripts. Si un participant écrit `"C:/Users/.../bureau/fichier.csv"`, c'est un bug en attente.
@@ -304,23 +321,27 @@ Démonstration sur un extrait ménages format Stata (typique DHS / MICS / ECAM).
 ```{r}
 #| label: lecture-enquete
 #| eval: false
-library(haven)
-# Lecture du fichier ménages EDS-MICS Cameroun 2018 (apres inscription DHS)
+library(haven)   # lecture de fichiers Stata (.dta), SPSS (.sav), SAS (.sas7bdat)
+# read_dta : lit un .dta Stata en préservant les labels (étiquettes de valeurs).
 hh <- read_dta(here("datasets", "cameroun", "dhs_mics", "CMHR71FL.DTA"))
-dim(hh)
-names(hh)[1:20]
+dim(hh)              # (lignes, colonnes) — un fichier ménages DHS = ~15k × ~1500
+names(hh)[1:20]      # premiers noms de variables
 ```
 
 En attendant l'arrivée du microfichier brut (J4), on travaille sur les **indicateurs agrégés DHS Cameroun 2018** par région, déjà téléchargés via `rdhs::dhs_data()` depuis l'API officielle DHS StatCompiler. Format long, une ligne par couple (région × indicateur), aucune valeur simulée.
 
 ```{r}
 #| label: load-dhs-cmr2018
-library(readr)
-library(tidyr)
+library(readr)   # read_csv : lecture rapide et plus prudente que read.csv()
+library(tidyr)   # pivot_wider / pivot_longer pour réorganiser
 
+# Le CSV est en format LONG (1 ligne par couple région × indicateur).
+# show_col_types = FALSE évite l'affichage du diagnostic de types.
 dhs <- read_csv("../_commons/data/dhs_cmr/indicateurs_dhs_cmr_2018.csv",
                 show_col_types = FALSE)
 
+# pivot_wider : passe en format LARGE — 1 ligne par région, 1 col par indicateur.
+# rename : renomme les codes StatCompiler par des noms parlants en français.
 dhs_wide <- dhs |>
   select(region, indicateur, valeur) |>
   pivot_wider(names_from = indicateur, values_from = valeur) |>
@@ -340,6 +361,8 @@ Premier coup d'œil systématique : `skimr::skim()` produit en une commande un r
 ```{r}
 #| label: skim
 library(skimr)
+# skim() produit en 1 commande un résumé : type, valeurs manquantes, distribution
+# par variable. À utiliser SYSTÉMATIQUEMENT avant toute analyse.
 skim(dhs_wide)
 ```
 
@@ -349,6 +372,7 @@ Sur des données déjà agrégées par région, on illustre `arrange(desc(...))`
 
 ```{r}
 #| label: indicateurs-base
+# On dérive un indicateur (écart H-F) puis on classe les régions dessus.
 dhs_wide |>
   mutate(ecart_alpha_hf = tx_alpha_hommes - tx_alpha_femmes) |>
   arrange(desc(ecart_alpha_hf)) |>
@@ -374,9 +398,9 @@ Avant tout `sf` repose sur trois bibliothèques C/C++ — **GDAL** lit/écrit le
 
 ```{r}
 #| label: sf-intro
-library(sf)
-packageVersion("sf")
-sf_extSoftVersion()  # versions de GDAL, GEOS, PROJ sous-jacentes
+library(sf)   # sf = "Simple Features" : objets spatiaux vectoriels (norme OGC)
+packageVersion("sf")     # version R du package
+sf_extSoftVersion()      # versions des bibliothèques C/C++ : GDAL, GEOS, PROJ
 ```
 
 Ces trois bibliothèques sont les fondations de tout SIG dans le monde. R les expose via `sf`.
@@ -387,22 +411,25 @@ On charge nos données. `source()` exécute le script `fetch_data.R` qui défini
 
 ```{r}
 #| label: load-adm
+# source() exécute un script et ramène ses fonctions dans l'environnement.
 source("../_commons/helpers/fetch_data.R")
 
-# Charger les 3 niveaux administratifs GADM v4.1 telecharges manuellement
-# dans datasets/cameroun/admin_boundaries/
-adm0 <- read_sf(fetch_gadm_cameroon(0))
-adm1 <- read_sf(fetch_gadm_cameroon(1))
-adm3 <- read_sf(fetch_gadm_cameroon(3))
+# fetch_gadm_cameroon(n) retourne le CHEMIN local du JSON GADM niveau n,
+# en vérifiant qu'il existe (sinon message d'aide pour télécharger).
+# read_sf() ouvre ce JSON et retourne un objet sf (data.frame + géométrie).
+adm0 <- read_sf(fetch_gadm_cameroon(0))   # frontière nationale
+adm1 <- read_sf(fetch_gadm_cameroon(1))   # 10 régions
+adm3 <- read_sf(fetch_gadm_cameroon(3))   # ~360 arrondissements
 ```
 
 Premier réflexe : que contient l'objet ? `print()` sur un `sf` affiche un en-tête standardisé (type de géométrie, dimensions, emprise, CRS) puis les premières lignes du tableau attributaire. `names()` liste les colonnes, `nrow()` compte les entités, `st_geometry_type()` retourne le type géométrique de chaque entité (MULTIPOLYGON ici) — `table()` les compte par type.
 
 ```{r}
 #| label: explore-adm
-print(adm1)        # affichage standardisé sf : géométries, bbox, CRS, attributs
-names(adm1)
-nrow(adm1)         # 10 régions attendues
+print(adm1)        # entête sf : type, dimensions, emprise (bbox), CRS, attributs
+names(adm1)        # liste des colonnes attributaires
+nrow(adm1)         # nombre d'entités spatiales (10 régions attendues)
+# table() compte les occurrences de chaque type géométrique.
 st_geometry_type(adm1) |> table()
 ```
 
@@ -412,10 +439,10 @@ Quatre fonctions à mémoriser pour interroger un objet `sf` : `class()` montre 
 
 ```{r}
 #| label: anatomie-sf
-class(adm1)              # "sf" + "data.frame"
-st_bbox(adm1)            # emprise géographique
-st_crs(adm1)$input       # quel CRS ?
-st_crs(adm1)$epsg        # code EPSG
+class(adm1)              # héritage : un sf EST AUSSI un data.frame
+st_bbox(adm1)            # emprise rectangulaire (xmin, ymin, xmax, ymax)
+st_crs(adm1)$input       # description littérale du CRS
+st_crs(adm1)$epsg        # code EPSG (4326 = WGS 84 géographiques)
 ```
 
 L'objet `adm1` est **à la fois** un `data.frame` (tu peux y appliquer `dplyr`) **et** un objet spatial (tu peux y appliquer des opérations géométriques). C'est le génie de `sf`.
@@ -424,9 +451,11 @@ Le bloc qui suit montre que `dplyr` marche directement sur un `sf`. `st_drop_geo
 
 ```{r}
 #| label: dplyr-on-sf
-# dplyr fonctionne directement
+# dplyr fonctionne tel quel sur un sf (la géométrie suit automatiquement).
+# st_drop_geometry retire la colonne géométrie : on obtient un tibble pur,
+# beaucoup plus léger à afficher / exporter.
 adm1 |>
-  st_drop_geometry() |>     # enlever la géométrie pour table propre
+  st_drop_geometry() |>
   select(NAME_1, GID_1) |>
   arrange(NAME_1)
 ```
@@ -437,8 +466,14 @@ Filtrer un `sf`, c'est juste filtrer un `data.frame` — la géométrie suit aut
 
 ```{r}
 #| label: centre
+# Filtrer un sf = filtrer un data.frame : la géométrie suit la ligne retenue.
 centre <- adm1 |> filter(NAME_1 == "Centre")
-plot(st_geometry(centre), main = "Région du Centre")
+# st_geometry extrait juste la couche géométrique (sans attributs) ;
+# plot() de base R dessine alors un contour minimaliste.
+plot(st_geometry(centre),
+     col  = "grey90", border = "steelblue", lwd = 1.5,
+     main = "Région du Centre (Cameroun) — GADM v4.1",
+     axes = TRUE)
 ```
 
 # Quatrième session — Premier coup d'œil cartographique {#sec-carto-base}
@@ -451,9 +486,15 @@ Le plus minimaliste, utile pour vérifier rapidement. `plot(st_geometry(x))` des
 
 ```{r}
 #| label: plot-base
+# 1ʳᵉ couche : les 10 régions (contours fins gris).
 plot(st_geometry(adm1), border = "grey50",
-     main = "Régions du Cameroun (GADM v4.1)")
+     main = "Régions du Cameroun (GADM v4.1)",
+     axes = TRUE)
+# add = TRUE : superposer la couche suivante sur le MÊME graphique.
 plot(st_geometry(adm0), border = "black", lwd = 2, add = TRUE)
+# Caption manuelle car plot() de base R n'a pas de "labs(caption=...)".
+mtext("Source : GADM v4.1 · IFORD x GDSG 2026",
+      side = 1, line = 4, cex = 0.7, adj = 1)
 ```
 
 ## Avec `ggplot2`
@@ -462,13 +503,17 @@ plot(st_geometry(adm0), border = "black", lwd = 2, add = TRUE)
 
 ```{r}
 #| label: ggplot-adm
-source("../_commons/helpers/theme_iford.R")
+source("../_commons/helpers/theme_iford.R")   # theme_iford, iford_caption
 library(ggplot2)
 
 ggplot(adm1) +
+  # geom_sf dessine la géométrie ; fill = NAME_1 colore par région.
   geom_sf(aes(fill = NAME_1), color = "white", linewidth = 0.3, show.legend = FALSE) +
-  geom_sf_label(aes(label = NAME_1), size = 2.8, color = "white",
+  # Étiquette posée au centroïde de chaque polygone.
+  geom_sf_label(aes(label = NAME_1), size = 2.8, colour = "black",
+                fill = scales::alpha("white", 0.75), label.size = 0,
                 fontface = "bold", label.padding = unit(0.1, "lines")) +
+  # Palette viridis discrète : daltonien-friendly.
   scale_fill_viridis_d(option = "G") +
   labs(
     title    = "Les 10 régions du Cameroun",
@@ -485,16 +530,19 @@ ggplot(adm1) +
 ```{r}
 #| label: tmap-intro
 library(tmap)
-setup_tmap_iford()
+setup_tmap_iford()   # applique les défauts visuels de l'atelier
 
+# tm_shape fixe la couche, puis chaque tm_* ajoute une représentation.
 tm_shape(adm1) +
   tm_polygons(
-    fill = "NAME_1",
-    fill.scale  = tm_scale_categorical(values = "brewer.set3"),
+    fill        = "NAME_1",                                    # variable encodée
+    fill.scale  = tm_scale_categorical(values = "brewer.set3"),# palette qualitative
     fill.legend = tm_legend("Région")
   ) +
-  tm_title("Cameroun — découpage régional") +
-  tm_credits("GADM v4.1 · IFORD × GDSG 2026", position = c("right", "bottom"))
+  tm_text("NAME_1", size = 0.6, col = "grey20") +              # étiquettes des régions
+  tm_title("Cameroun — découpage régional (10 régions)") +
+  tm_credits("Source : GADM v4.1 · IFORD x GDSG 2026",
+             position = c("right", "bottom"))
 ```
 
 Pour basculer en interactif on change de mode global avec `tmap_mode("view")`. Le bloc reste `eval: false` parce que le HTML statique ne sait pas afficher l'iframe Leaflet ici. `tmap_mode("plot")` revient au statique — important de toujours revenir, sinon les graphiques suivants seront eux aussi interactifs.
@@ -502,10 +550,10 @@ Pour basculer en interactif on change de mode global avec `tmap_mode("view")`. L
 ```{r}
 #| label: tmap-view
 #| eval: false
-tmap_mode("view")
+tmap_mode("view")              # bascule en mode interactif (Leaflet)
 tm_shape(adm1) +
   tm_polygons(fill = "NAME_1", fill_alpha = 0.5)
-tmap_mode("plot")  # revenir au mode statique
+tmap_mode("plot")              # IMPORTANT : revenir au mode statique
 ```
 
 # Cinquième session — La pensée projective : un détour critique {#sec-crs}
@@ -532,14 +580,18 @@ On crée deux points isolés en WGS 84 (longitude, latitude) avec `st_sfc(st_poi
 
 ```{r}
 #| label: crs-warning
+# st_sfc = simple feature collection (géométrie + CRS, sans attributs).
+# st_point(c(lon, lat)) crée un point ; crs = 4326 = WGS 84 (degrés GPS).
 yaounde <- st_sfc(st_point(c(11.5021, 3.8480)), crs = 4326)
 douala  <- st_sfc(st_point(c(9.7679, 4.0511)), crs = 4326)
 
-# Distance "naïve" sur des degrés (FAUX)
+# Pythagore sur des degrés : aucun sens physique (un degré de longitude
+# ne fait pas la même distance qu'un degré de latitude).
 distance_fausse <- sqrt((11.5021 - 9.7679)^2 + (3.8480 - 4.0511)^2)
 cat("Distance naïve sur degrés :", round(distance_fausse, 4), "(unité ??)\n")
 
-# Bonne distance grâce à sf (en mètres)
+# st_distance détecte le CRS géographique et calcule la distance géodésique
+# sur l'ellipsoïde (résultat en mètres avec l'unité attachée).
 distance_correcte <- st_distance(yaounde, douala)
 distance_correcte
 ```
@@ -552,10 +604,12 @@ Sur le terrain Yaoundé–Douala fait ~240 km. Si on ne pose pas le CRS et qu'on
 
 ```{r}
 #| label: reprojection
+# st_transform recalcule chaque coordonnée vers un nouveau CRS.
+# EPSG:32632 = UTM zone 32N (mètres, adapté à l'ouest du Cameroun).
 adm1_utm32 <- st_transform(adm1, crs = 32632)
 st_crs(adm1_utm32)$input
 
-# Surfaces en kilomètres carrés (jamais en degrés² !)
+# st_area retourne une surface en m² (unité du CRS) ; on convertit en km².
 adm1_utm32$superficie_km2 <- as.numeric(st_area(adm1_utm32)) / 1e6
 adm1_utm32 |>
   st_drop_geometry() |>
@@ -566,6 +620,7 @@ adm1_utm32 |>
 Vérification : la somme doit être proche de **475 442 km²** (superficie officielle du Cameroun). `sum()` agrège la colonne, `round()` arrondit à l'entier.
 
 ```{r}
+# Contrôle de cohérence : somme proche de 475 442 km² (chiffre officiel CMR).
 sum(adm1_utm32$superficie_km2) |> round()
 ```
 
@@ -579,9 +634,11 @@ On reprojette en EPSG:3857 et on recalcule les surfaces. On assemble ensuite un 
 
 ```{r}
 #| label: webmercator-demo
+# Reprojection en Web Mercator (EPSG:3857), puis surface en km².
 adm1_webmerc <- st_transform(adm1, crs = 3857)
 adm1_webmerc$webmerc_km2 <- as.numeric(st_area(adm1_webmerc)) / 1e6
 
+# Table de comparaison : si Web Mercator était fidèle, ratio = 1 partout.
 comparaison <- tibble::tibble(
   region        = adm1_utm32$NAME_1,
   utm32N_km2    = round(adm1_utm32$superficie_km2),
@@ -619,14 +676,16 @@ On combine les estimations BUCREP par région et la géométrie. D'abord on asse
 
 ```{r}
 #| label: densite
-# Table de population (notre vecteur du début)
+# On reconstruit une mini-table population avec la clé NAME_1 = nom de région.
 pop_tbl <- tibble(NAME_1 = regions, pop_2019 = pop_est)
 
-# Jointure attributaire
+# left_join : on garde toutes les lignes de adm1_utm32 et on attache la
+# population correspondante. Comme adm1_utm32 est un sf, le résultat reste sf.
 adm1_pop <- adm1_utm32 |>
   left_join(pop_tbl, by = "NAME_1") |>
-  mutate(densite = pop_2019 / superficie_km2)
+  mutate(densite = pop_2019 / superficie_km2)   # densité = hab / km²
 
+# Tri descendant + extraction du tableau pur (sans géométrie).
 adm1_pop |>
   st_drop_geometry() |>
   select(NAME_1, pop_2019, superficie_km2, densite) |>
@@ -640,14 +699,18 @@ Pour la carte choroplèthe : `tm_scale_intervals(style = "jenks", n = 5)` décou
 tm_shape(adm1_pop) +
   tm_polygons(
     fill = "densite",
-    fill.scale = tm_scale_intervals(style = "jenks", n = 5,
-                                    values = "brewer.yl_or_rd"),
+    # Jenks (Fisher-Jenks) : découpe optimale qui maximise la variance INTER classes.
+    # Palette jaune→rouge : séquentielle, adaptée à une variable positive croissante.
+    fill.scale  = tm_scale_intervals(style = "jenks", n = 5,
+                                     values = "brewer.yl_or_rd"),
     fill.legend = tm_legend("Densité\n(hab/km²)")
   ) +
-  tm_text("NAME_1", size = 0.6, col = "grey20") +
+  tm_text("NAME_1", size = 0.6, col = "grey20") +     # étiquette de chaque région
+  tm_compass(position = c("right", "top"), size = 1.2) +
+  tm_scalebar(position = c("left", "bottom")) +
   tm_title("Densité de population par région — Cameroun, estimations 2019",
            position = c("left", "top")) +
-  tm_credits("Source : BUCREP (estimations), GADM v4.1\nAtelier IFORD × GDSG 2026",
+  tm_credits("Source : BUCREP (estimations), GADM v4.1\nAtelier IFORD x GDSG 2026",
              position = c("right", "bottom"))
 ```
 

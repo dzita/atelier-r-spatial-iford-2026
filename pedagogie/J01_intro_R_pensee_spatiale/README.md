@@ -40,12 +40,28 @@ Statisticiens d'INS, démographes IFORD, techniciens de ministères, ONG. Manipu
 | `exercice.qmd` | participants | TP individuel à faire le soir (30 min). |
 | `corrige.qmd` | participants | Corrigé du TP, distribué le lendemain matin. |
 
-## Données mobilisées
+## Données utilisées
 
-- **GADM v4.1 Cameroun ADM0–ADM3** — <https://gadm.org/download_country.html> · libre académique.
-- **Estimations population régionale BUCREP 2019** — ordres de grandeur pédagogiques, à actualiser dès la diffusion du RGPH 4.
-- **EDS-MICS Cameroun 2018** — <https://dhsprogram.com/data/dataset/Cameroon_Standard-DHS_2018.cfm> · DHS Program (inscription requise).
-- Coordonnées chefs-lieux (compilation pédagogique).
+### Embarqué dans le repo (chargé automatiquement par le runtime WebR)
+
+- `pedagogie/_commons/data/gadm41_CMR_0.json` — limites nationales Cameroun (ADM0), GeoJSON, ~30 Ko. Source : GADM v4.1, <https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_CMR_0.json> (libre académique).
+- `pedagogie/_commons/data/gadm41_CMR_1.json` — 10 régions du Cameroun (ADM1), GeoJSON, ~190 Ko. Source : GADM v4.1, <https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_CMR_1.json>. Pré-chargé dans la VM WebR via `webr.resources` du `runtime.qmd`.
+- `pedagogie/_commons/data/gadm41_CMR_2.json` — départements (ADM2), GeoJSON. Source : GADM v4.1, <https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_CMR_2.json>.
+- `pedagogie/_commons/data/gadm41_CMR_3.json` — arrondissements (ADM3, ~360 entités), GeoJSON. Source : GADM v4.1, <https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_CMR_3.json>. Utilisé par `demo.qmd`, `demo.R`, exercice Q6 et corrigé.
+- `pedagogie/_commons/data/dhs_cmr/indicateurs_dhs_cmr_2018.csv` — indicateurs DHS Cameroun 2018 agrégés par région (format long, vraies valeurs StatCompiler). Source : API DHS StatCompiler via `rdhs::dhs_data()`, bootstrap dans `pedagogie/_commons/data/dhs_cmr/00_telecharger_dhs_indicateurs.R`. Page d'origine : <https://dhsprogram.com/data/dataset/Cameroon_Standard-DHS_2018.cfm> (DHS Program). Utilisé par `demo.qmd`, `demo.R`, runtime WebR (pré-chargé), exercice Q3 et corrigé.
+
+> Coordonnées des chefs-lieux (Yaoundé, Douala, Bamenda, Buea, Maroua…) : compilation pédagogique en dur dans `demo.qmd`, `demo.R`, `exercice.qmd` (Q5) et `corrige.qmd` — pas de fichier externe.
+
+### À télécharger manuellement (utilisé par demo.qmd desktop, trop lourd pour le repo)
+
+Aucun pour ce jour. Les datasets lourds (microfichiers DHS .DTA, rasters WorldPop) ne sont pas mobilisés en J1 ; ils arrivent à partir de J4 (DHS) et J7 (rasters population).
+
+Pour info, le helper `pedagogie/_commons/helpers/fetch_data.R` (sourcé par `demo.qmd`, `demo.R`, exercice et corrigé via `fetch_gadm_cameroon(level)`) cherche d'abord le JSON GADM dans `pedagogie/datasets/cameroun/admin_boundaries/gadm41_CMR_<level>.json` (téléchargement manuel haute-fidélité) puis bascule sur le fallback embarqué `pedagogie/_commons/data/gadm41_CMR_<level>.json`. Aucune action n'est requise du participant tant que le repo est cloné intégralement.
+
+| Fichier | Emplacement attendu | Source | Taille | Comment l'obtenir |
+|---|---|---|---|---|
+| `gadm41_CMR_<0..3>.json` (optionnel, version haute-fidélité) | `pedagogie/datasets/cameroun/admin_boundaries/` | <https://gadm.org/download_country.html> (choisir Cameroon, format GeoJSON) | ~30 Ko à ~5 Mo selon niveau | Bouton « Download » sur la page GADM, dézipper, placer les 4 JSON dans le dossier. |
+| `BUCREP RGPH 4` (à actualiser à diffusion) | (à documenter) | (à documenter) | (à documenter) | Estimations BUCREP 2019 actuellement codées en dur dans `demo.R` / `demo.qmd` à titre pédagogique ; à remplacer par les chiffres officiels dès publication. |
 
 ## Packages R utilisés
 

@@ -35,17 +35,31 @@
 - `exactextractr` — extraction zonale rapide et précise
 - `tidyterra` (optionnel) — interface tidyverse pour `terra`
 
-## Données mobilisées
+## Données utilisées
 
-- **SRTM 30 m du Cameroun** (Shuttle Radar Topography Mission) — modèle numérique d'élévation, source principale en démo.
-- **GADM ADM1, ADM3** du Cameroun (hérité de J2) pour l'extraction zonale.
-- **WorldPop 100 m 2020** pré-chargé (sera approfondi en J7) — pour démo de combinaison raster-vecteur.
+### Embarqué dans le repo (chargé automatiquement par le runtime WebR)
+
+- `pedagogie/_commons/data/cmr_srtm/srtm_cmr_30s.tif` — MNT SRTM agrégé à 30 arc-sec (~1 km), GeoTIFF mono-bande `elevation_m`, ~3 Mo. Source : NASA/USGS SRTM via `geodata::elevation_30s("CMR")`, crop + mask sur GADM ADM0. Pipeline de génération : `pedagogie/_commons/data/cmr_srtm/00_telecharger_srtm.R` (exécuté une fois côté animateur, .tif commit dans le repo). Helper : `fetch_srtm_cameroon()`.
+- `pedagogie/_commons/data/gadm41_CMR_0.json` — GADM v4.1 Cameroun niveau national (silhouette pays), GeoJSON. Source : https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_CMR_0.json. Helper : `fetch_gadm_cameroon(0)`.
+- `pedagogie/_commons/data/gadm41_CMR_1.json` — GADM v4.1 niveau ADM1 (10 régions). Source : https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_CMR_1.json. Helper : `fetch_gadm_cameroon(1)`.
+- `pedagogie/_commons/data/gadm41_CMR_2.json` — GADM v4.1 niveau ADM2 (58 départements), utilisé par `corrige.qmd` Q4. Source : https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_CMR_2.json. Helper : `fetch_gadm_cameroon(2)`.
+- `pedagogie/_commons/data/gadm41_CMR_3.json` — GADM v4.1 niveau ADM3 (~360 arrondissements), utilisé pour le cas RGPH 4 et le devoir Q6. Source : https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_CMR_3.json. Helper : `fetch_gadm_cameroon(3)`.
+
+### À télécharger manuellement (optionnel, bonus pour le devoir Q6 desktop)
+
+| Fichier | Emplacement attendu | Source | Taille | Comment l'obtenir |
+|---|---|---|---|---|
+| `cmr_pop_2020_CN_100m_R2025A_v1.tif` (WorldPop, optionnel pour bonus Q6) | `pedagogie/datasets/cameroun/jour_07_population/` ou repo Edith `jour_07_cartographie_population_haute_resolution/data/` | https://hub.worldpop.org/geodata/summary?id=49866 | ~25–30 Mo | Inscription gratuite WorldPop, choisir « Population Counts → Constrained → Cameroon → 2020 » ; helper `fetch_worldpop_constrained_cmr()` (réutilisé en J7). |
+
+**Note** : aucun téléchargement n'est obligatoire pour J3. Toute la journée tourne sur les 5 fichiers embarqués ci-dessus. WorldPop n'est sollicité que pour le bonus Q6 (croisement altitude × population dans les 20 arrondissements les plus bas) ; la branche principale du devoir s'en passe.
+
+Pour régénérer le MNT SRTM (si besoin) : `Rscript pedagogie/_commons/data/cmr_srtm/00_telecharger_srtm.R`.
 
 ## Pré-requis
 
 - J1 et J2 validés.
 - Q6 du J2 terminé (GeoPackage multi-couches dans `outputs/`).
-- Un GeoTIFF SRTM Cameroun déjà téléchargé dans `datasets/cameroun/elevation/` (via `elevatr::get_elev_raster()` ou manuellement).
+- Les 5 datasets embarqués listés ci-dessus sont présents dans le repo après `git clone` — aucun téléchargement préalable n'est requis pour la journée.
 
 ## Fichiers du jour
 

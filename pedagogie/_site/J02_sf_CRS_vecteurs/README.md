@@ -35,10 +35,22 @@
 - `lwgeom` — opérations géométriques avancées (Voronoï notamment)
 - `rmapshaper` — simplification de géométries
 
-## Données mobilisées
+## Données utilisées
 
-- GADM v4.1 Cameroun ADM0, ADM1, ADM2, ADM3 (déjà téléchargés en J1, dans `datasets/cameroun/admin_boundaries/`).
-- Tibble des chefs-lieux régionaux camerounais (construit en séance, ∼10 points GPS).
+### Embarqué dans le repo (chargé automatiquement par le runtime WebR)
+
+- `pedagogie/_commons/data/gadm41_CMR_0.json` — limites administratives Cameroun niveau 0 (frontière nationale), GeoJSON, ~0.2 Mo, source GADM v4.1 (<https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_CMR_0.json>) — résolu par `fetch_gadm_cameroon(0)`.
+- `pedagogie/_commons/data/gadm41_CMR_1.json` — 10 régions ADM1 du Cameroun, GeoJSON, ~1 Mo, source GADM v4.1 (<https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_CMR_1.json>) — résolu par `fetch_gadm_cameroon(1)`. Pré-chargé dans la VM WebR via `resources:` du `runtime.qmd`.
+- `pedagogie/_commons/data/gadm41_CMR_2.json` — 58 départements ADM2, GeoJSON, ~3 Mo, source GADM v4.1 (<https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_CMR_2.json>) — résolu par `fetch_gadm_cameroon(2)`. Utilisé par `corrige.qmd` (Q1, Q4, Q6) et `demo.R`.
+- `pedagogie/_commons/data/gadm41_CMR_3.json` — ~365 arrondissements ADM3, GeoJSON, ~10 Mo, source GADM v4.1 (<https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_CMR_3.json>) — résolu par `fetch_gadm_cameroon(3)`. Pré-chargé dans la VM WebR via `resources:` du `runtime.qmd`.
+
+Le tibble `chefs_lieux` (10 chefs-lieux régionaux : Ngaoundéré, Yaoundé, Bertoua, Maroua, Douala, Garoua, Bamenda, Bafoussam, Ebolowa, Buea) est **construit en séance** dans `demo.qmd`, `demo.R`, `runtime.qmd`, `exercice.qmd` et `corrige.qmd` à partir de coordonnées GPS approximatives (source : OpenStreetMap + connaissance terrain). Ce n'est pas un fichier dataset.
+
+### À télécharger manuellement (utilisé par demo.qmd desktop, trop lourd pour le repo)
+
+Aucun pour J2. Toutes les données utilisées par les cinq fichiers du jour (`slides.qmd`, `demo.qmd`, `demo.R`, `runtime.qmd`, `exercice.qmd`, `corrige.qmd`) sont embarquées dans `pedagogie/_commons/data/`.
+
+Les Shapefiles BUCREP officiels mentionnés en slides (partie 4, cadrage RGPH 4) sont évoqués comme exemple théorique mais ne sont pas distribués dans le repo ni chargés par le code du jour.
 
 ## Pré-requis
 

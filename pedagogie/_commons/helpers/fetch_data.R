@@ -306,11 +306,19 @@ fetch_srtm_cameroon <- function() {
 # GHSL Built-Up (2015 vs 2025) + EMSR772 Yagoua + Open Buildings + WorldPop 2024.
 
 .J08_CANDIDATES_DIRS <- function() {
+  # Emplacements candidats pour les datasets J8 (materiel Edith Darin).
+  # Si le repo formateur n'est pas dans l'un de ces dossiers, ajouter
+  # un chemin local ci-dessous.
   c(
     file.path(.PROJECT_ROOT, "pedagogie", "datasets", "cameroun",
               "jour_08_teledetection"),
-    "C:/Users/PROLOG/Downloads/jour_08_teledetection_observation_terre/data",
-    "C:/Dev/GitHub/jour_08_teledetection_observation_terre/data"
+    file.path(Sys.getenv("USERPROFILE"),
+              "Dev/GitHub/jour_08_teledetection_observation_terre/data"),
+    file.path(Sys.getenv("USERPROFILE"),
+              "Downloads/jour_08_teledetection_observation_terre/data"),
+    file.path(Sys.getenv("HOME"),
+              "Dev/GitHub/jour_08_teledetection_observation_terre/data"),
+    "~/Dev/GitHub/jour_08_teledetection_observation_terre/data"
   )
 }
 
@@ -388,10 +396,17 @@ fetch_open_buildings_dir <- function() {
 # Donnees : ACLED (conflits) + ERA5 (temperature) + GADM (reutilise J7).
 
 .J09_CANDIDATES_DIRS <- function() {
+  # Emplacements candidats pour les datasets J9 (materiel Edith Darin).
+  # Si le repo formateur n'est pas dans l'un de ces dossiers, ajouter
+  # un chemin local ci-dessous.
   c(
     file.path(.PROJECT_ROOT, "pedagogie", "datasets", "cameroun",
               "jour_09_acled_era5"),
-    "C:/Dev/GitHub/jour_09_applications_spatiales_sciences_sociales/data"
+    file.path(Sys.getenv("USERPROFILE"),
+              "Dev/GitHub/jour_09_applications_spatiales_sciences_sociales/data"),
+    file.path(Sys.getenv("HOME"),
+              "Dev/GitHub/jour_09_applications_spatiales_sciences_sociales/data"),
+    "~/Dev/GitHub/jour_09_applications_spatiales_sciences_sociales/data"
   )
 }
 
@@ -443,15 +458,22 @@ fetch_era5_t2m_cmr <- function() {
 # JOUR 7 - Population a haute resolution (materiel Edith Darin)
 # =====================================================================
 # Toutes ces fonctions resolvent vers pedagogie/datasets/cameroun/
-# jour_07_population/ OU vers le dossier source externe d'Edith :
-# C:/Dev/GitHub/jour_07_cartographie_population_haute_resolution/data/
-# pour eviter la duplication des gros rasters.
+# jour_07_population/ OU vers le dossier source externe d'Edith
+# (repo 'jour_07_cartographie_population_haute_resolution') pour eviter
+# la duplication des gros rasters.
 
 .J07_CANDIDATES_DIRS <- function() {
+  # Emplacements candidats pour les datasets J7 (materiel Edith Darin).
+  # Si le repo formateur n'est pas dans l'un de ces dossiers, ajouter
+  # un chemin local ci-dessous.
   c(
     file.path(.PROJECT_ROOT, "pedagogie", "datasets", "cameroun",
               "jour_07_population"),
-    "C:/Dev/GitHub/jour_07_cartographie_population_haute_resolution/data",
+    file.path(Sys.getenv("USERPROFILE"),
+              "Dev/GitHub/jour_07_cartographie_population_haute_resolution/data"),
+    file.path(Sys.getenv("HOME"),
+              "Dev/GitHub/jour_07_cartographie_population_haute_resolution/data"),
+    "~/Dev/GitHub/jour_07_cartographie_population_haute_resolution/data",
     file.path(.PROJECT_ROOT, "datasets", "cameroun", "population_grids",
               "jour_07")
   )

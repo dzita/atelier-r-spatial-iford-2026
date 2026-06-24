@@ -24,47 +24,64 @@ dir.create(out_dir, showWarnings = FALSE)
 
 # ====================================================================
 # EXERCICE 0 : Choropleth population administrative
+# Un choropleth = carte ou la couleur du polygone code une variable.
+# On joint CSV officiel (population) + GADM (geometrie) puis on cartographie.
 # ====================================================================
 pop_adm1 <- read_csv(fetch_admpop_adm1_cmr_2025(), show_col_types = FALSE)
 cmr1     <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_1", quiet = TRUE)
 
+# setdiff(x, y) = elements de x absents de y. Diagnostic de cle de jointure.
 cat("Non-correspondances ADM1_EN :",
     paste(setdiff(cmr1$NAME_1, pop_adm1$ADM1_EN), collapse = ", "), "\n")
 cat("Non-correspondances ADM1_FR :",
     paste(setdiff(cmr1$NAME_1, pop_adm1$ADM1_FR), collapse = ", "), "\n")
 
-# GADM utilise ADM1_FR pour le Cameroun
+# GADM utilise ADM1_FR pour le Cameroun -> cle = noms francais.
 cmr1_pop <- cmr1 |>
   left_join(pop_adm1 |> select(ADM1_FR, T_TL, F_TL, M_TL),
             by = c("NAME_1" = "ADM1_FR"))
 
+# Compteur de NA = controle qualite : 0 = jointure parfaite.
 cat("Regions sans match (NA T_TL):", sum(is.na(cmr1_pop$T_TL)), "\n")
 
+# Carte complete : titre + sous-titre + legende avec unite + caption + etiquettes.
 carte_choropleth <- ggplot(cmr1_pop) +
   geom_sf(aes(fill = T_TL), colour = "white", linewidth = 0.3) +
-  scale_fill_viridis_c(option = "plasma", labels = comma) +
-  labs(title    = "Population par region au Cameroun, 2025",
-       subtitle = "Source: OCHA COD-PS Cameroun",
-       fill     = "Population") +
+  geom_sf_label(aes(label = NAME_1), size = 2.5, colour = "black",
+                fill = scales::alpha("white", 0.75), label.size = 0,
+                label.padding = unit(0.12, "lines")) +
+  scale_fill_viridis_c(option = "plasma", labels = comma,
+                       name = "Population\n(habitants)") +
+  labs(title    = "Population totale par region - Cameroun, 2025",
+       subtitle = "Choroplethe administratif ADM1 (10 regions)",
+       caption  = "Source : OCHA COD-PS Cameroun 2025 - GADM v4.1 - IFORD x GDSG 2026") +
   theme_minimal()
 print(carte_choropleth)
 
 # ====================================================================
 # EXERCICE 0b : Ratio femmes/hommes
+# Variable derivee (F_TL / M_TL) + palette divergente centree sur 1 (parite).
 # ====================================================================
 cmr1_pop <- cmr1_pop |> mutate(ratio_fm = F_TL / M_TL)
 
+# gradient2 = 3 couleurs (low/mid/high) pivotees sur midpoint = 1.
 carte_ratio <- ggplot(cmr1_pop) +
   geom_sf(aes(fill = ratio_fm), colour = "white", linewidth = 0.3) +
+  geom_sf_label(aes(label = NAME_1), size = 2.5, colour = "black",
+                fill = scales::alpha("white", 0.75), label.size = 0,
+                label.padding = unit(0.12, "lines")) +
   scale_fill_gradient2(low = "#2166AC", mid = "white", high = "#B2182B",
-                       midpoint = 1, labels = number_format(accuracy = 0.01)) +
-  labs(title = "Ratio femmes / hommes par region, Cameroun 2025",
-       fill  = "F/H") +
+                       midpoint = 1, labels = number_format(accuracy = 0.01),
+                       name = "Ratio F/H\n(sans unite)") +
+  labs(title    = "Ratio femmes / hommes par region - Cameroun, 2025",
+       subtitle = "Palette divergente centree sur la parite (F/H = 1)",
+       caption  = "Source : OCHA COD-PS Cameroun 2025 - GADM v4.1 - IFORD x GDSG 2026") +
   theme_minimal()
 print(carte_ratio)
 
 # ====================================================================
 # EXERCICE 0c : Part de la population jeune (0-14 ans)
+# Agregation de 3 classes d'age (T_00_04 + T_05_09 + T_10_14) -> part en %.
 # ====================================================================
 cmr1_pop <- cmr1_pop |>
   left_join(
@@ -77,32 +94,42 @@ cmr1_pop <- cmr1_pop |>
 
 carte_jeunes <- ggplot(cmr1_pop) +
   geom_sf(aes(fill = part_jeunes_pct), colour = "white", linewidth = 0.3) +
-  scale_fill_viridis_c(option = "magma") +
-  labs(title    = "Part de la population de moins de 15 ans",
-       subtitle = "Cameroun, 2025",
-       fill     = "% 0-14 ans") +
+  geom_sf_label(aes(label = NAME_1), size = 2.5, colour = "black",
+                fill = scales::alpha("white", 0.75), label.size = 0,
+                label.padding = unit(0.12, "lines")) +
+  scale_fill_viridis_c(option = "magma", name = "% 0-14 ans") +
+  labs(title    = "Part des moins de 15 ans par region - Cameroun, 2025",
+       subtitle = "Indicateur de jeunesse demographique",
+       caption  = "Source : OCHA COD-PS Cameroun 2025 - GADM v4.1 - IFORD x GDSG 2026") +
   theme_minimal()
 print(carte_jeunes)
 
 # ====================================================================
 # EXERCICE 1 : Grille WorldPop 2025 avec tmap
+# Population grid = raster ou chaque cellule porte une estimation de population.
+# WorldPop top-down (Stevens et al. 2015) + constrained R2025A (release 2024) :
+# total officiel redistribue selon des covariables, contraint par les pixels batis.
 # ====================================================================
 pop_2025 <- rast(fetch_worldpop_constrained_cmr(2025))
 print(pop_2025)
+# Resolution = 0.000833 deg ~ 92.5 m a l'equateur (on parle de "100m").
 cat("Resolution (degres):", res(pop_2025), "\n")
 cat("Nombre de cellules:", ncell(pop_2025), "\n")
 
-# Mode statique pour export
+# Mode statique pour export PDF/Word ; "view" pour exploration Leaflet en salle.
 tmap_mode("plot")
 carte_grille_2025 <- tm_shape(pop_2025) +
   tm_raster(
     col.scale  = tm_scale_intervals(n = 7, style = "quantile",
                                     values = "brewer.yl_or_rd"),
-    col.legend = tm_legend(title = "Population (hab/cellule)")
+    col.legend = tm_legend(title = "Population (hab/pixel ~100m)")
   ) +
   tm_shape(cmr1) +
   tm_borders(col = "grey40", lwd = 0.5) +
-  tm_title("Population carroyee WorldPop 2025 - Cameroun")
+  tm_text("NAME_1", size = 0.55, col = "grey15", shadow = TRUE) +
+  tm_title("Population carroyee WorldPop 2025 - Cameroun (top-down constrained R2025A)") +
+  tm_credits("Source : WorldPop R2025A constrained 100m - GADM v4.1 - IFORD x GDSG 2026",
+             position = c("left", "bottom"), size = 0.5)
 print(carte_grille_2025)
 
 # Decommenter pour le mode interactif Leaflet en salle
@@ -111,12 +138,17 @@ print(carte_grille_2025)
 
 # ====================================================================
 # EXERCICE 2 : Population a Yaounde en 2025
+# Pattern d'extraction universel : crop + mask + global("sum").
 # ====================================================================
 cmr2    <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_2", quiet = TRUE)
 yaounde <- cmr2 |> filter(NAME_2 == "Mfoundi")
 
+# vect() = conversion sf -> SpatVector (format natif de terra).
+# st_transform aligne le CRS du polygone sur celui du raster (obligatoire).
 yaounde_v        <- vect(st_transform(yaounde, crs(pop_2025)))
+# crop = reduction a l'emprise rectangulaire ; mask = NA hors polygone exact.
 pop_2025_yde     <- mask(crop(pop_2025, yaounde_v), yaounde_v)
+# global("sum") = somme toutes les cellules non-NA = effectif total estime.
 pop_yaounde_2025 <- global(pop_2025_yde, "sum", na.rm = TRUE)$sum
 
 cat("Population Yaounde (Mfoundi) en 2025:",
@@ -146,6 +178,9 @@ cat("Population Yaounde en 2015:",
 
 # ====================================================================
 # EXERCICE 4 : Comparaison 2015-2025 + agregation par region
+# Agregation pixel -> ADM via exactextractr::exact_extract :
+# exploite la fraction exacte de chaque pixel dans le polygone (5-10x plus
+# rapide que terra::extract). Outil standard pour le dasymetrique inverse.
 # ====================================================================
 cat("2015:", format(round(pop_yaounde_2015), big.mark = " "), "\n")
 cat("2025:", format(round(pop_yaounde_2025), big.mark = " "), "\n")
@@ -153,6 +188,7 @@ cat("Croissance Yaounde:",
     round(100 * (pop_yaounde_2025 - pop_yaounde_2015) / pop_yaounde_2015, 1),
     "%\n")
 
+# exact_extract necessite que le polygone soit dans le meme CRS que le raster.
 pop_2025_par_region <- exact_extract(pop_2025, st_transform(cmr1, crs(pop_2025)), "sum")
 pop_2015_par_region <- exact_extract(pop_2015, st_transform(cmr1, crs(pop_2015)), "sum")
 
@@ -173,6 +209,7 @@ pop_2025_cmr  <- mask(crop(pop_2025, cmr0_v), cmr0_v)
 cmr0_v_2015   <- vect(st_transform(cmr0, crs(pop_2015)))
 pop_2015_cmr  <- mask(crop(pop_2015, cmr0_v_2015), cmr0_v_2015)
 
+# REGLE D'OR : pour comparer 2 cartes raster, breaks communs sur la concat.
 breaks_communs <- quantile(
   c(values(pop_2025_cmr), values(pop_2015_cmr)),
   probs = seq(0, 1, length.out = 8), na.rm = TRUE
@@ -182,14 +219,16 @@ tmap_mode("plot")
 carte_comparaison <- tmap_arrange(
   tm_shape(pop_2015_cmr) +
     tm_raster(col.scale = tm_scale_intervals(breaks = breaks_communs,
-                                             values = "brewer.yl_or_rd")) +
+                                             values = "brewer.yl_or_rd"),
+              col.legend = tm_legend(title = "Pop. (hab/pixel)")) +
     tm_shape(cmr1) + tm_borders(col = "grey40", lwd = 0.3) +
-    tm_title("2015"),
+    tm_title("WorldPop constrained - Cameroun 2015"),
   tm_shape(pop_2025_cmr) +
     tm_raster(col.scale = tm_scale_intervals(breaks = breaks_communs,
-                                             values = "brewer.yl_or_rd")) +
+                                             values = "brewer.yl_or_rd"),
+              col.legend = tm_legend(title = "Pop. (hab/pixel)")) +
     tm_shape(cmr1) + tm_borders(col = "grey40", lwd = 0.3) +
-    tm_title("2025"),
+    tm_title("WorldPop constrained - Cameroun 2025"),
   ncol = 2
 )
 print(carte_comparaison)
@@ -213,11 +252,14 @@ print(evol_yaounde)
 graphique_evolution <- ggplot(evol_yaounde, aes(x = annee, y = population)) +
   geom_line(colour = "#2C7FB8", linewidth = 1) +
   geom_point(colour = "#2C7FB8", size = 3) +
-  scale_y_continuous(labels = comma) +
+  geom_text(aes(label = comma(population)), vjust = -1.2, size = 3.2,
+            colour = "#2C7FB8") +
+  scale_y_continuous(labels = comma, expand = expansion(mult = c(0.05, 0.12))) +
   scale_x_continuous(breaks = c(2015, 2025, 2030)) +
-  labs(title    = "Evolution de la population a Yaounde (Mfoundi)",
-       subtitle = "WorldPop constrained - 2015, 2025, 2030",
-       x = "Annee", y = "Population estimee") +
+  labs(title    = "Evolution de la population a Yaounde (Mfoundi) - 2015 / 2025 / 2030",
+       subtitle = "Top-down WorldPop constrained R2025A - projection SSP pour 2030",
+       caption  = "Source : WorldPop R2025A constrained 100m - IFORD x GDSG 2026",
+       x = "Annee", y = "Population estimee (habitants)") +
   theme_minimal()
 print(graphique_evolution)
 
@@ -279,6 +321,9 @@ print(pop_villes)
 
 # ====================================================================
 # EXERCICE 6 : Densite de population (echelle log)
+# Densite hab/km2 = normalisation par la surface (essentielle pour comparer
+# des regions de tailles inegales). Pour des surfaces exactes, EPSG:32632
+# (UTM 32N) est le CRS projete recommande pour le Cameroun.
 # ====================================================================
 # Aire calculee avant le mutate (la colonne geometrie peut s'appeler "geom" ou "geometry")
 cmr1_pop$surface_km2 <- as.numeric(st_area(cmr1_pop)) / 1e6
@@ -286,12 +331,17 @@ cmr1_pop$surface_km2 <- as.numeric(st_area(cmr1_pop)) / 1e6
 cmr1_densite <- cmr1_pop |>
   mutate(densite_hab_km2 = T_TL / surface_km2)
 
+# Echelle log10 : indispensable quand le facteur de variation depasse 10x.
 carte_densite <- ggplot(cmr1_densite) +
   geom_sf(aes(fill = densite_hab_km2), colour = "white", linewidth = 0.3) +
+  geom_sf_label(aes(label = NAME_1), size = 2.5, colour = "black",
+                fill = scales::alpha("white", 0.75), label.size = 0,
+                label.padding = unit(0.12, "lines")) +
   scale_fill_viridis_c(option = "inferno", trans = "log10",
-                       labels = comma, name = "hab/km2 (log)") +
-  labs(title    = "Densite de population par region, Cameroun 2025",
-       subtitle = "Echelle logarithmique") +
+                       labels = comma, name = "hab/km2\n(echelle log)") +
+  labs(title    = "Densite de population par region - Cameroun, 2025",
+       subtitle = "Echelle logarithmique (facteur ~10x entre regions extremes)",
+       caption  = "Source : OCHA COD-PS Cameroun 2025 - GADM v4.1 - IFORD x GDSG 2026") +
   theme_minimal()
 print(carte_densite)
 
@@ -312,13 +362,20 @@ pop_age <- pop_adm1 |>
 ggplot(pop_age, aes(x = groupe_age, y = population, fill = ADM1_EN)) +
   geom_col(position = "dodge") +
   scale_y_continuous(labels = comma) +
-  labs(title = "Structure par age - comparaison entre deux regions",
-       x = "Groupe d'age", y = "Population", fill = "Region") +
+  labs(title    = "Structure par age - Centre vs Adamawa - Cameroun, 2025",
+       subtitle = "Comparaison de pyramides : Centre (urbain dominant) vs Adamawa (rural)",
+       caption  = "Source : OCHA COD-PS Cameroun 2025 - IFORD x GDSG 2026",
+       x = "Groupe d'age", y = "Population (habitants)", fill = "Region") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 # ====================================================================
 # EXERCICE 8 : GHSL-POP - mosaique, reprojection, comparaison
+# GHS-POP (JRC) = pendant complementaire de WorldPop : estime la population
+# directement a partir du bati observe par satellite (pas de contrainte
+# par totaux officiels). Approche differente du top-down WorldPop.
+# Pour le bottom-up plus fin (micro-recensement), cf Darin & Leasure 2023
+# (GDSG) sur les sites pilotes RGPH 4 : Bamenda 1, Fongo Tongo, Buea, Mora.
 # ====================================================================
 ghsl_dir <- fetch_ghspop_tuiles_dir()
 zips     <- list.files(ghsl_dir, pattern = "\\.zip$", full.names = TRUE)

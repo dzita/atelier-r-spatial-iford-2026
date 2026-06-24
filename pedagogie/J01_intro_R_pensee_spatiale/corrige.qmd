@@ -27,17 +27,18 @@ Le bloc qui suit charge tous les packages utiles pour la journée et nos helpers
 
 ```{r}
 #| label: setup
-library(here)
-library(sf)
-library(dplyr)
-library(tibble)
-library(tmap)
+library(here)     # chemins relatifs au projet
+library(sf)       # objets spatiaux vectoriels
+library(dplyr)    # filter, mutate, select...
+library(tibble)   # tableau moderne
+library(tmap)     # cartographie thématique
 
 # Chemins relatifs depuis le .qmd : here::here() peut etre dupe par
 # pedagogie/_quarto.yml et resoudre vers pedagogie/pedagogie/_commons/...
+# On utilise donc le chemin relatif ../ explicite pour les sources.
 source("../_commons/helpers/fetch_data.R")
 source("../_commons/helpers/theme_iford.R")
-setup_tmap_iford()
+setup_tmap_iford()   # défauts visuels tmap pour l'atelier
 ```
 
 # Q1 — `dplyr` et `case_when`
@@ -48,6 +49,7 @@ On reconstruit le tibble de base puis on en ajoute une ligne avec `bind_rows()` 
 
 ```{r}
 #| label: q1a
+# On reconstruit le tibble de base (vecteurs régions + populations).
 regions <- c("Adamaoua", "Centre", "Est", "Extrême-Nord", "Littoral",
              "Nord", "Nord-Ouest", "Ouest", "Sud", "Sud-Ouest")
 pop_est <- c(1340000, 4400000, 870000, 4200000, 3400000,
@@ -60,9 +62,12 @@ tbl_cmr <- tibble(
                "Garoua", "Bamenda", "Bafoussam", "Ebolowa", "Buea")
 )
 
+# bind_rows = empilement vertical "tidyverse" (tolère les noms mélangés,
+# contrairement à rbind() qui exige des colonnes identiques en nombre et ordre).
 tbl_cmr_aug <- tbl_cmr |>
   bind_rows(tibble(region = "Diaspora", pop_2019 = 1500000, capitale = "Paris"))
 
+# Re-classification puis agrégation par classe.
 tbl_cmr_aug |>
   mutate(pop_classe = case_when(
     pop_2019 < 1e6 ~ "Moins de 1M",
@@ -81,6 +86,7 @@ Les seuils de `case_when` ne sont que des nombres : on les modifie sans changer 
 
 ```{r}
 #| label: q1b
+# Mêmes verbes que Q1.a, seuls les seuils de case_when changent.
 tbl_cmr |>
   mutate(pop_classe = case_when(
     pop_2019 < 1.5e6 ~ "Moins de 1.5 M",
@@ -96,10 +102,12 @@ tbl_cmr |>
 
 ## Q1.c — Grouper par la première lettre
 
-`substr(x, start, stop)` extrait une sous-chaîne par position de caractère. Combiné avec `group_by`, on découvre que trois régions commencent par « N » (Nord, Nord-Ouest, Ngaoundéré… non, Ngaoundéré est la capitale, pas la région — donc Nord, Nord-Ouest seulement). À vérifier en sortie.
+`substr(x, start, stop)` extrait une sous-chaîne par position de caractère. Combiné avec `group_by`, on découvre que deux régions commencent par « N » (Nord, Nord-Ouest).
 
 ```{r}
 #| label: q1c
+# substr(x, 1, 1) = sous-chaîne de la position 1 à 1 = 1ère lettre.
+# paste(..., collapse = ", ") concatène les noms de régions par groupe.
 tbl_cmr |>
   mutate(lettre = substr(region, 1, 1)) |>
   group_by(lettre) |>
@@ -144,6 +152,7 @@ R refuse de calculer une moyenne sur un caractère, mais au lieu de planter, il 
 ```{r}
 #| label: q3-setup
 library(readr); library(tidyr)
+# Lecture du CSV long, puis pivot en wide (1 ligne par région) et renommage.
 dhs <- read_csv("../_commons/data/dhs_cmr/indicateurs_dhs_cmr_2018.csv",
                 show_col_types = FALSE)
 dhs_wide <- dhs |>
@@ -163,6 +172,7 @@ dhs_wide
 
 ```{r}
 #| label: q3a
+# Tri décroissant : on voit immédiatement le top et le bas du classement.
 dhs_wide |>
   select(region, tx_electricite) |>
   arrange(desc(tx_electricite))
@@ -176,6 +186,8 @@ On crée une typologie à 4 classes en croisant `tx_alpha_femmes` (axe humain) e
 
 ```{r}
 #| label: q3b
+# 4 classes croisant 2 axes (humain × infrastructure) avec seuils 70 % et 75 %.
+# case_when évalue dans l'ordre : la 1ère condition VRAIE gagne.
 dhs_wide |>
   mutate(typologie = case_when(
     tx_alpha_femmes >= 70 & tx_eau_ameliore >= 75 ~ "Haut humain + haut infra",
@@ -193,6 +205,7 @@ dhs_wide |>
 
 ```{r}
 #| label: q3c
+# Indicateur dérivé (différence H - F en points), trié décroissant.
 dhs_wide |>
   mutate(ecart_alpha_hf = tx_alpha_hommes - tx_alpha_femmes) |>
   arrange(desc(ecart_alpha_hf)) |>
@@ -207,6 +220,7 @@ dhs_wide |>
 
 ```{r}
 #| label: q4-setup
+# Charger GADM ADM1 (10 régions du Cameroun).
 adm1 <- read_sf(fetch_gadm_cameroon(1))
 ```
 
@@ -216,15 +230,17 @@ adm1 <- read_sf(fetch_gadm_cameroon(1))
 
 ```{r}
 #| label: q4a
+# %in% teste l'appartenance à un vecteur (équivalent SQL "IN (...)").
 adm1_cotier <- adm1 |>
   filter(NAME_1 %in% c("Littoral", "Sud-Ouest"))
-nrow(adm1_cotier)
+nrow(adm1_cotier)   # 2 régions attendues
 ```
 
 ## Q4.b — Reprojection et superficie
 
 ```{r}
 #| label: q4b
+# Reprojection en UTM 32N (mètres) puis surface en km².
 adm1_cotier_utm <- st_transform(adm1_cotier, 32632)
 adm1_cotier_utm$superficie_km2 <- as.numeric(st_area(adm1_cotier_utm)) / 1e6
 
@@ -240,6 +256,8 @@ Littoral ~20 200 km², Sud-Ouest ~24 600 km² (ordres de grandeur GADM, à compa
 ```{r}
 #| label: q4c
 #| warning: true
+# Appel volontairement "sale" : st_area sur un sf en WGS 84 (degrés).
+# sf émet alors un avertissement et passe en mode géodésique approximatif.
 st_area(adm1_cotier) |> head(2)
 ```
 
@@ -253,6 +271,7 @@ R retourne quand même une valeur, mais avec une **unité** affichée explicitem
 
 ```{r}
 #| label: q5a
+# 2 points GPS (longitude, latitude) en WGS 84 (EPSG:4326).
 bamenda <- st_sfc(st_point(c(10.1591, 5.9597)), crs = 4326)
 buea    <- st_sfc(st_point(c(9.2402, 4.1546)), crs = 4326)
 ```
@@ -261,6 +280,7 @@ buea    <- st_sfc(st_point(c(9.2402, 4.1546)), crs = 4326)
 
 ```{r}
 #| label: q5b
+# st_distance sur WGS 84 : calcule la distance géodésique (ellipsoïde), en m.
 dist_wgs <- st_distance(bamenda, buea)
 dist_wgs
 ```
@@ -271,6 +291,7 @@ dist_wgs
 
 ```{r}
 #| label: q5c
+# Reprojection en UTM 32N puis distance en mètres (calcul plan euclidien).
 bamenda_utm <- st_transform(bamenda, 32632)
 buea_utm    <- st_transform(buea, 32632)
 dist_utm <- st_distance(bamenda_utm, buea_utm)
@@ -291,6 +312,7 @@ Solution illustrée sur l'**Extrême-Nord**, pédagogiquement intéressante : r�
 
 ```{r}
 #| label: load-adm3
+# GADM niveau 3 = arrondissements (~360 entités pour le Cameroun).
 adm3 <- read_sf(fetch_gadm_cameroon(3))
 nrow(adm3)
 ```
@@ -301,10 +323,11 @@ nrow(adm3)
 
 ```{r}
 #| label: filter-en
+# Filtre attributaire : on ne garde que les arrondissements de l'Extrême-Nord.
 extreme_nord <- adm3 |>
   filter(NAME_1 == "Extrême-Nord")
 
-nrow(extreme_nord)
+nrow(extreme_nord)   # ~47 arrondissements attendus
 ```
 
 L'Extrême-Nord doit contenir environ 47 arrondissements répartis dans 6 départements (Diamaré, Logone-et-Chari, Mayo-Danay, Mayo-Kani, Mayo-Sava, Mayo-Tsanaga).
@@ -315,6 +338,7 @@ L'Extrême-Nord doit contenir environ 47 arrondissements répartis dans 6 dépar
 
 ```{r}
 #| label: reproject
+# UTM 32N puis calcul des superficies par arrondissement.
 extreme_nord_utm <- st_transform(extreme_nord, 32632)
 extreme_nord_utm$superficie_km2 <- as.numeric(st_area(extreme_nord_utm)) / 1e6
 
@@ -328,6 +352,7 @@ Si vous obtenez ~34 000 km², c'est cohérent avec le chiffre officiel BUCREP.
 
 ```{r}
 #| label: top10
+# Top 10 par superficie : st_drop_geometry pour alléger l'affichage.
 extreme_nord_utm |>
   st_drop_geometry() |>
   select(NAME_2, NAME_3, superficie_km2) |>
@@ -343,20 +368,23 @@ Les plus grands arrondissements (Kousseri, Makary…) sont en bordure du Lac Tch
 #| label: carte
 #| fig-width: 9
 #| fig-height: 8
+# Carte choroplèthe : superficie de chaque arrondissement encodée en couleur.
 carte_en <- tm_shape(extreme_nord_utm) +
   tm_polygons(
     fill        = "superficie_km2",
+    # Jenks = découpe optimale ; palette séquentielle jaune→rouge.
     fill.scale  = tm_scale_intervals(style = "jenks", n = 5,
                                      values = "brewer.yl_or_rd"),
     fill.legend = tm_legend("Superficie\n(km²)"),
     col         = "white",
     lwd         = 0.3
   ) +
-  tm_text("NAME_3", size = 0.4, col = "grey20") +
+  tm_text("NAME_3", size = 0.4, col = "grey20") +           # nom des arrondissements
   tm_compass(type = "arrow", position = c("right", "top"), size = 1.2) +
   tm_scalebar(position = c("left", "bottom")) +
-  tm_title("Arrondissements de l'Extrême-Nord — Cameroun", size = 1.0) +
-  tm_credits("Source : GADM v4.1 · Atelier IFORD × GDSG 2026",
+  tm_title("Arrondissements de l'Extrême-Nord — Cameroun",
+           size = 1.0) +
+  tm_credits("Source : GADM v4.1 · Atelier IFORD x GDSG 2026",
              position = c("right","bottom"), size = 0.5)
 
 carte_en
@@ -369,9 +397,11 @@ carte_en
 ```{r}
 #| label: export
 #| eval: false
+# Création du dossier outputs/ si absent (silencieux si déjà présent).
 dir.create(here("pedagogie", "J01_intro_R_pensee_spatiale", "outputs"),
            showWarnings = FALSE, recursive = TRUE)
 
+# tmap_save : sérialise la carte en PNG haute résolution (300 dpi = presse).
 tmap_save(
   carte_en,
   filename = here("pedagogie", "J01_intro_R_pensee_spatiale", "outputs",
@@ -384,10 +414,12 @@ tmap_save(
 
 ```{r}
 #| label: bonus
-# Coordonnées approximatives
+# 2 points GPS créés en WGS 84 puis reprojetés en UTM 32N pour la mesure.
+# Le pipe |> chaîne création + reprojection en une seule expression lisible.
 maroua  <- st_sfc(st_point(c(14.3158, 10.5910)), crs = 4326) |> st_transform(32632)
 yaounde <- st_sfc(st_point(c(11.5021,  3.8480)), crs = 4326) |> st_transform(32632)
 
+# Distance euclidienne en mètres (les points sont en UTM), puis conversion km.
 distance_m  <- st_distance(maroua, yaounde)
 distance_km <- as.numeric(distance_m) / 1000
 round(distance_km, 1)

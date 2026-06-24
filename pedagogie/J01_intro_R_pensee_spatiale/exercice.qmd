@@ -107,16 +107,18 @@ Notez votre choix.
 Dans une console R (du projet de l'atelier) :
 
 ```r
-library(here)
-library(sf)
-library(dplyr)
-library(tmap)
+library(here)    # chemins relatifs au projet
+library(sf)      # objets spatiaux vectoriels
+library(dplyr)   # filter, mutate, select...
+library(tmap)    # cartographie thématique
 
+# source() ramène les helpers maison dans l'environnement.
 source(here("pedagogie", "_commons", "helpers", "fetch_data.R"))
 
-# Charge GADM CMR niveau 3 (arrondissements)
+# fetch_gadm_cameroon(3) renvoie le chemin local du JSON GADM niveau 3.
+# read_sf l'ouvre comme un objet sf (data.frame + géométrie).
 adm3 <- read_sf(fetch_gadm_cameroon(3))
-nrow(adm3)
+nrow(adm3)        # ~360 arrondissements attendus
 ```
 
 > 💡 Si le fichier n'est pas présent localement, `fetch_gadm_cameroon(3)` s'arrête avec un message expliquant **où** placer le fichier — c'est la stratégie « téléchargement manuel ».
@@ -126,10 +128,11 @@ nrow(adm3)
 Remplacez `"Votre Région"` par le nom exact (attention aux accents et tirets) :
 
 ```r
+# filter : on garde uniquement les arrondissements de la région choisie.
 ma_region <- adm3 |>
   filter(NAME_1 == "Votre Région")
 
-nrow(ma_region)
+nrow(ma_region)   # nombre d'arrondissements filtrés
 ```
 
 > ⚠ Si `nrow(ma_region) == 0`, c'est une erreur de libellé. Listez les valeurs disponibles avec `unique(adm3$NAME_1)` pour vérifier l'orthographe exacte.
@@ -139,11 +142,13 @@ nrow(ma_region)
 Reprojetez en UTM 32N (EPSG:32632), adapté à l'ouest et au sud du Cameroun, ou Lambert Cameroun (EPSG:3119) pour un calcul national plus uniforme :
 
 ```r
+# Reprojection en UTM 32N (mètres) — NÉCESSAIRE pour mesurer une surface.
 ma_region_utm <- st_transform(ma_region, 32632)
 
-# Calculer la superficie de chaque arrondissement (en km²)
+# st_area renvoie m² (unité du CRS) ; on convertit en km².
 ma_region_utm$superficie_km2 <- as.numeric(st_area(ma_region_utm)) / 1e6
 
+# Top 10 arrondissements par superficie (sans la géométrie, plus léger).
 ma_region_utm |>
   st_drop_geometry() |>
   select(NAME_2, NAME_3, superficie_km2) |>
@@ -154,21 +159,24 @@ ma_region_utm |>
 ## Étape 5 — Produire la carte `tmap`
 
 ```r
+# Helpers cartographiques IFORD (theme + défauts visuels tmap).
 source(here("pedagogie", "_commons", "helpers", "theme_iford.R"))
 setup_tmap_iford()
 
+# Carte choroplèthe : couleur = superficie ; étiquettes = noms NAME_3.
 ma_carte <- tm_shape(ma_region_utm) +
   tm_polygons(
     fill = "superficie_km2",
+    # Jenks = découpe optimale ; palette séquentielle jaune→rouge.
     fill.scale  = tm_scale_intervals(style = "jenks", n = 5,
                                      values = "brewer.yl_or_rd"),
     fill.legend = tm_legend("Superficie (km²)")
   ) +
   tm_text("NAME_3", size = 0.5, col = "grey20") +
-  tm_compass(position = c("right", "top")) +
-  tm_scalebar(position = c("left", "bottom")) +
+  tm_compass(position = c("right", "top")) +     # flèche du Nord
+  tm_scalebar(position = c("left", "bottom")) +  # échelle graphique
   tm_title("Arrondissements de la région (votre choix)") +
-  tm_credits("Source : GADM v4.1 · Atelier IFORD × GDSG 2026",
+  tm_credits("Source : GADM v4.1 · Atelier IFORD x GDSG 2026",
              position = c("right","bottom"))
 
 ma_carte
@@ -177,10 +185,12 @@ ma_carte
 ## Étape 6 — Exporter en PNG 300 dpi
 
 ```r
-# Créer le dossier de sortie s'il n'existe pas
+# dir.create avec recursive = TRUE crée toute l'arborescence si nécessaire ;
+# showWarnings = FALSE supprime l'avertissement si le dossier existe déjà.
 dir.create(here("pedagogie", "J01_intro_R_pensee_spatiale", "outputs"),
            showWarnings = FALSE, recursive = TRUE)
 
+# tmap_save : sérialise la carte vers un fichier image (300 dpi = qualité presse).
 tmap_save(
   ma_carte,
   filename = here("pedagogie", "J01_intro_R_pensee_spatiale", "outputs",

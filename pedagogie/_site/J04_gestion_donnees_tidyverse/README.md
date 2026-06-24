@@ -36,19 +36,36 @@
 - **`survey` + `srvyr`** — plan de sondage stratifié à deux degrés, pondération, intervalles de confiance (nouveau du jour)
 - **`naniar`** — exploration visuelle des NA (`vis_miss`, `gg_miss_var`, `gg_miss_upset`)
 
-## Données mobilisées (100 % réelles)
+## Données utilisées
 
-| Fichier | Volume | Description | Localisation |
-|---|---|---|---|
-| `CMHR71FL.DTA` | ~14 000 ménages × 5 741 vars | Household Recode (HR) EDS-MICS Cameroun 2018 — fichier maître | `pedagogie/datasets/cameroun/CM_2018_DHS/CMHR71DT/` |
-| `CMPR71FL.DTA` | ~70 000 personnes × 394 vars | Person Recode (PR) EDS-MICS Cameroun 2018 — un membre par ligne | `pedagogie/datasets/cameroun/CM_2018_DHS/CMPR71DT/` |
-| `dhs_cmr_2018_menages_extrait.csv` | 11 710 ménages × 24 vars | Extrait pédagogique HR pour le runtime WebR | `pedagogie/_commons/data/dhs_cmr/` |
-| `dhs_cmr_2018_personnes_extrait.csv` | 60 699 personnes × 12 vars | Extrait pédagogique PR pour le runtime WebR | `pedagogie/_commons/data/dhs_cmr/` |
-| `gadm41_CMR_1.json` | 10 régions | Polygones GADM ADM1 du Cameroun (jointure spatiale fin de journée) | `pedagogie/_commons/data/` |
+### Embarqué dans le repo (chargé automatiquement par le runtime WebR)
 
-**Pipeline de production des extraits CSV** : `pedagogie/_commons/data/dhs_cmr/00_extraire_dhs_pour_webr.R` (à exécuter UNE seule fois sur la machine de l'animateur, après extraction du pack DHS).
+- `pedagogie/_commons/data/dhs_cmr/dhs_cmr_2018_menages_extrait.csv` — Extrait pédagogique HR de l'EDS-MICS Cameroun 2018, 11 710 ménages × 24 variables (CSV ~1-2 Mo). Produit par le script `pedagogie/_commons/data/dhs_cmr/00_extraire_dhs_pour_webr.R` à partir du microfichier `.DTA` DHS officiel. Utilisé par `runtime.qmd`, `demo.qmd` (option B), `exercice.qmd`, `corrige.qmd`.
+- `pedagogie/_commons/data/dhs_cmr/dhs_cmr_2018_personnes_extrait.csv` — Extrait pédagogique PR (Person Recode), 60 699 personnes × 12 variables (CSV ~3-4 Mo). Même origine et même script que l'extrait HR. Utilisé par les mêmes fichiers.
+- `pedagogie/_commons/data/dhs_cmr/dhs_cmr_2018_README.csv` — Documentation tabulaire des deux extraits CSV ci-dessus (variables, types, libellés, provenance `.DTA`).
+- `pedagogie/_commons/data/dhs_cmr/indicateurs_dhs_cmr_2018.csv` — Indicateurs nationaux agrégés (50 lignes = 10 régions × 5 indicateurs : eau améliorée, électricité, taille ménage, alphabétisation F/H). Calculés en local depuis HR/IR/MR avec `srvyr` par `00_telecharger_dhs_indicateurs.R`. Utilisé par `exercice.qmd` Q7 et `corrige.qmd` Q7 (confrontation pipeline microdonnées ↔ indicateurs publiés DHS StatCompiler).
+- `pedagogie/_commons/data/gadm41_CMR_1.json` — Polygones GADM v4.1 ADM1 du Cameroun (10 régions), GeoJSON, ~1-2 Mo. Source : <https://gadm.org/download_country.html> (libre académique). Récupéré via le helper `fetch_gadm_cameroon(1)` (cache local). Utilisé par `demo.qmd` Module 6, `runtime.qmd` Module 6, `corrige.qmd` Q6.
 
-**Licence DHS** : usage formation IFORD/GDSG. Les `.DTA` bruts sont **exclus du repo** par `.gitignore` (redistribution interdite par le DHS Program). Les CSV extraits pédagogiques sont commités pour permettre le runtime WebR — voir `dhs_cmr_2018_README.csv` pour les détails de provenance et de jointure.
+### À télécharger manuellement (utilisé par demo.qmd / demo.R desktop, trop lourd pour le repo)
+
+| Fichier | Emplacement attendu | Source | Taille | Comment l'obtenir |
+|---|---|---|---|---|
+| `CMHR71FL.DTA` (Household Recode, ~14 000 ménages × 5 741 vars) | `pedagogie/datasets/cameroun/CM_2018_DHS/CMHR71DT/` | <https://dhsprogram.com/data/dataset/Cameroon_Standard-DHS_2018.cfm> | ~40-80 Mo | Inscription compte DHS Program + soumission d'un projet (validation 24-48 h) + téléchargement du pack `CMHR71DT.ZIP` (format Stata) + extraction dans le dossier cible |
+| `CMPR71FL.DTA` (Person Recode, ~70 000 personnes × 394 vars) | `pedagogie/datasets/cameroun/CM_2018_DHS/CMPR71DT/` | Idem URL DHS Program ci-dessus | ~20-50 Mo | Idem (pack `CMPR71DT.ZIP`) |
+| `CMIR71FL.DTA`, `CMMR71FL.DTA`, `CMKR71FL.DTA`, `CMBR71FL.DTA`, `CMCR71FL.DTA`, `CMFW71FL.DTA` (autres recodes utilisés par `00_telecharger_dhs_indicateurs.R` et préparation J7/J9) | `pedagogie/datasets/cameroun/CM_2018_DHS/CM<RC>71DT/` | Idem URL DHS Program | ~10-50 Mo chacun | Idem (un pack ZIP par recode) |
+| `Guide_to_DHS_Statistics_DHS-7.pdf` | `pedagogie/datasets/cameroun/CM_2018_DHS/` | <https://dhsprogram.com/publications/publication-DHSG1-DHS-Questionnaires-and-Manuals.cfm> | ~10 Mo | Téléchargement direct (compte DHS requis) |
+| `rapport finalEds2018.pdf` (rapport final EDS-MICS 2018, valeurs officielles de référence) | `pedagogie/datasets/cameroun/CM_2018_DHS/` | <https://dhsprogram.com/publications/publication-FR360-DHS-Final-Reports.cfm> | ~15 Mo | Téléchargement direct |
+
+Le helper `fetch_dhs_recode_cmr_2018("HR")` (et autres codes `"PR"`, `"IR"`, etc.) défini dans `pedagogie/_commons/helpers/fetch_data.R` résout automatiquement le chemin `pedagogie/datasets/cameroun/CM_2018_DHS/CM<RC>71DT/CM<RC>71FL.DTA` une fois les `.DTA` extraits.
+
+Pour automatiser la production des extraits CSV embarqués à partir des `.DTA` téléchargés :
+
+```sh
+Rscript pedagogie/_commons/data/dhs_cmr/00_extraire_dhs_pour_webr.R
+Rscript pedagogie/_commons/data/dhs_cmr/00_telecharger_dhs_indicateurs.R
+```
+
+**Licence DHS** : usage formation IFORD/GDSG. Les `.DTA` bruts sont **exclus du repo** par `.gitignore` (redistribution interdite par le DHS Program). Les CSV extraits et indicateurs agrégés sont commités (le DHS Program autorise la publication d'estimations dérivées) pour permettre le runtime WebR — voir `pedagogie/_commons/data/dhs_cmr/README.md` et `dhs_cmr_2018_README.csv` pour les détails de provenance et de jointure.
 
 ## Pré-requis
 

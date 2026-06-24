@@ -88,22 +88,25 @@
 - **`ecmwfr`** — API Copernicus CDS pour ERA5 (nouveau du jour, optionnel pour télécharger le NetCDF)
 - `ncdf4` (optionnel) — exploration NetCDF avancée
 
-## Données mobilisées (100 % réelles, conçues par Edith Darin)
+## Données utilisées
 
-| Élément | Description | Localisation |
-|---|---|---|
-| `ACLED_Data.csv` | Export ACLED Explorer Cameroun (~quelques milliers de lignes, ~30 colonnes) — `event_date`, `event_type`, `actor1`, `latitude`, `longitude`, `fatalities`, `admin1`, `admin2`, … | `pedagogie/datasets/cameroun/jour_09_acled_era5/` (commité) |
-| `gadm41_CMR.gpkg` | GADM v4.1 unifié (couches ADM_ADM_0/1/2) — réutilisé de J7 | `pedagogie/datasets/cameroun/jour_07_population/` (commité) |
-| `era5_t2m_mensuel_cameroun.nc` | Réanalyse ERA5 température 2m mensuelle, 120 couches (10 ans × 12 mois), résolution 0.25° (~31 km) — Copernicus CDS / ECMWF | `pedagogie/datasets/cameroun/jour_09_acled_era5/` (**exclu Git**, à télécharger via `ecmwfr`) |
-| `.env.example` | Modèle de configuration des identifiants ACLED + CDS — à copier en `.env` localement et compléter avec ses propres identifiants | `pedagogie/datasets/cameroun/jour_09_acled_era5/` (commité) |
+### Embarqué dans le repo (chargé automatiquement par le runtime WebR)
 
-**Stratégie Git** : le NetCDF ERA5 (~quelques Mo, ~3-10 selon période) est **exclu du repo** via `.gitignore` — chaque animateur le télécharge via `ecmwfr` avec son propre token CDS. Le CSV ACLED reste commité (léger). Le fichier `.env` (identifiants personnels) est **strictement exclu** et ne doit jamais quitter la machine de l'animateur.
+- `pedagogie/datasets/cameroun/jour_09_acled_era5/ACLED_Data.csv` — export ACLED Explorer pour le Cameroun (~quelques milliers de lignes, ~30 colonnes : `event_date`, `event_type`, `actor1`, `latitude`, `longitude`, `fatalities`, `admin1/2/3`, …), < 1 Mo, source [ACLED Explorer](https://acleddata.com/explorer/) — helper `fetch_acled_cmr()`.
+- `pedagogie/datasets/cameroun/jour_09_acled_era5/.env.example` — modèle de configuration des identifiants API (`email_address`, `acled_password`, `cds_user`, `cds_key`). À copier en `.env` localement et compléter ; le `.env` est strictement exclu de Git.
+- `pedagogie/_commons/data/jour_07_extraits/gadm41_CMR_adm1.geojson` — 10 régions du Cameroun pour les cartes ACLED en WebR (réutilisé de J7), source [GADM v4.1](https://gadm.org).
 
-**Helpers de chargement** dans `pedagogie/_commons/helpers/fetch_data.R` :
+> **Note technique** : le `runtime.qmd` pointe vers `_commons/data/jour_09_extraits/ACLED_Data.csv`. Ce dossier n'existe pas encore — l'embarquement WebR consomme aujourd'hui le CSV `pedagogie/datasets/cameroun/jour_09_acled_era5/ACLED_Data.csv`. Un mini-extrait dédié `jour_09_extraits/` (sélection de colonnes, allègement < 500 ko) est à produire pour le runtime WebR final.
 
-- `fetch_acled_cmr()` — résout le CSV ACLED (gère plusieurs noms possibles : `ACLED_Data.csv`, `ACLED Data.csv`, `acled_cmr.csv`)
-- `fetch_era5_t2m_cmr()` — résout le NetCDF ERA5 (lève une erreur explicite si absent avec lien de téléchargement)
-- `fetch_gadm_cmr_gpkg()` — résout le GeoPackage GADM unifié (déjà existant, J7)
+### À télécharger manuellement (utilisé par `demo.qmd` desktop, trop lourd ou identifiants requis)
+
+| Fichier | Emplacement attendu | Source officielle | Taille | Comment l'obtenir |
+|---|---|---|---|---|
+| `era5_t2m_mensuel_cameroun.nc` | `pedagogie/datasets/cameroun/jour_09_acled_era5/` | Copernicus Climate Data Store — <https://cds.climate.copernicus.eu/> (dataset `reanalysis-era5-single-levels-monthly-means`, variable `2m_temperature`) | ~3-10 Mo | Créer un compte CDS gratuit, récupérer UID + clé API, remplir `.env` (`cds_user`, `cds_key`), puis lancer le bloc d'authentification `ecmwfr::wf_set_key()` + `ecmwfr::wf_request()` de `demo.qmd` (bbox Cameroun, 10 ans × 12 mois) — helper `fetch_era5_t2m_cmr()`. |
+| `gadm41_CMR.gpkg` | `pedagogie/datasets/cameroun/jour_07_population/` | <https://gadm.org/download_country.html> (Cameroun, GeoPackage) | ~30 Mo | Téléchargement direct (réutilisé depuis J7) — helper `fetch_gadm_cmr_gpkg()`. |
+| `.env` (jamais commité) | `pedagogie/datasets/cameroun/jour_09_acled_era5/` | Comptes personnels [ACLED developer](https://developer.acleddata.com/) + [Copernicus CDS](https://cds.climate.copernicus.eu/) | < 1 ko | Copier `.env.example` → `.env` et remplir les 4 valeurs. Vérifier qu'il est ignoré (`git status` ne doit pas le lister). |
+
+Pour télécharger 10 ans complets d'ACLED via API (au lieu du CSV de démo) : lancer dans R `acledR::acled_api(country = "Cameroon", start_date = "2016-01-01", end_date = Sys.Date())` après avoir rempli `.env`.
 
 ## Configuration des identifiants API (.env)
 

@@ -1,93 +1,159 @@
 ---
 title: "J3 — Données raster avec terra"
-subtitle: "Code R exécutable dans le navigateur"
+subtitle: "Code R exécutable dans le navigateur — vecteur + raster lecture seule"
 engine: knitr
+webr:
+  packages:
+    - sf
+    - dplyr
+    - ggplot2
+  resources:
+    - ../_commons/data/gadm41_CMR_0.json
+    - ../_commons/data/gadm41_CMR_1.json
 ---
 
 ::: {.iford-callout}
-**Mode d'emploi.** Cliquez **Run code** dans chaque cellule. WebR charge `terra` au premier appel (∼20 s la première fois). Tout tourne dans votre navigateur.
+**Mode d'emploi.** Les cellules **Run code** (cellules bleues `{webr}`) tournent dans le navigateur — clique pour exécuter. Les blocs `r` simples (non bleus) sont en **lecture seule** : ils montrent le code raster à étudier et à exécuter dans RStudio desktop.
 
-**Données 100 % réelles** : MNT SRTM agrégé 30 arc-sec (~1 km) du Cameroun, produit par `geodata::elevation_30s("CMR")` côté animateur, pré-publié dans le repo (~3 Mo, accessible via URL Pages). Aucun raster simulé.
+**Pourquoi cette séparation ?** Le package R `terra` (raster + GDAL/PROJ/GEOS compilés en WASM, ~15 Mo) déclenche une régression connue de WebR 0.6 : `TypeError: resolved is not a function` au moment du téléchargement. Tant que ce bug amont n'est pas corrigé, **la partie raster ne peut pas s'exécuter dans le navigateur** — mais les lignes restent visibles pour la lecture et la copie vers desktop.
+
+**Données 100 % réelles** : limites administratives officielles GADM v4.1, MNT SRTM agrégé 30 arc-sec (~1 km) du Cameroun (NASA/USGS).
 :::
 
-## 1. Charger terra et le vrai SRTM Cameroun
+## 1. Charger la silhouette et les régions du Cameroun
 
 ```{webr}
 #| autorun: true
+# sf = "simple features" : objets spatiaux vectoriels (points, lignes, polygones).
+library(sf)
+library(dplyr)
+library(ggplot2)
+
+# Limites administratives GADM v4.1 pre-chargees dans la VM via webr.resources.
+# ADM0 = silhouette du pays (1 polygone). ADM1 = 10 regions.
+adm0 <- read_sf("_commons/data/gadm41_CMR_0.json")
+adm1 <- read_sf("_commons/data/gadm41_CMR_1.json")
+
+c(adm0 = nrow(adm0), adm1 = nrow(adm1))
+```
+
+## 2. Carte de référence — silhouette + régions
+
+```{webr}
+ggplot() +
+  # Silhouette du pays en arriere-plan (contour gris epais).
+  geom_sf(data = adm0, fill = NA, color = "grey30", linewidth = 0.8) +
+  # Regions ADM1 en remplissage colore.
+  geom_sf(data = adm1, aes(fill = NAME_1),
+          color = "white", linewidth = 0.3, alpha = 0.9,
+          show.legend = FALSE) +
+  scale_fill_viridis_d(option = "G") +
+  labs(title = "Cameroun — silhouette ADM0 + 10 régions ADM1",
+       subtitle = "Base spatiale vectorielle commune à toutes les analyses raster (J3)",
+       caption = "Source : GADM v4.1 · IFORD x GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+## 3. Vecteur vs raster
+
+Le **vecteur** (points, lignes, polygones) décrit des **entités discrètes** : un département, une route, une ville. Le **raster** (grille de pixels) décrit des **phénomènes continus** : altitude, température, densité, indice de végétation.
+
+Pour la plupart des analyses spatiales utiles à la statistique publique, on combine les deux : on prend un raster continu (par exemple un MNT SRTM ou une grille WorldPop), et on l'**agrège par polygone administratif** (extraction zonale) pour obtenir une valeur par région ou par département.
+
+Les sections **3 bis** à **3 octies** ci-dessous présentent le pipeline complet `terra` à reproduire dans RStudio desktop. Le code y est commenté ligne à ligne. Note : sur un poste avec R installé, ouvrir `demo.qmd` du même dossier exécute ce pipeline en direct.
+
+## 3 bis. Charger terra et le SRTM Cameroun
+
+```r
+# sf = vecteur ; terra = raster (grille de pixels, successeur de l'ancien package raster).
 library(sf)
 library(terra)
 library(dplyr)
 library(ggplot2)
 
-# Limites administratives du Cameroun (GADM v4.1)
-download.file("/_commons/data/gadm41_CMR_0.json", "adm0.json", mode = "wb")
-adm0 <- read_sf("adm0.json")
+# Limites administratives du Cameroun (GADM v4.1).
+adm0 <- read_sf("../_commons/data/gadm41_CMR_0.json")
 
-# MNT SRTM Cameroun 30 arc-sec (~1 km) — vraies données NASA/USGS
-download.file("/_commons/data/cmr_srtm/srtm_cmr_30s.tif",
-              "srtm_cmr.tif", mode = "wb")
-srtm <- rast("srtm_cmr.tif")
+# MNT = Modele Numerique de Terrain : une image ou chaque pixel = une altitude.
+# SRTM = mission satellite NASA/USGS qui a mesure l'altitude du globe en 2000.
+# rast() ouvre le fichier sans tout charger en RAM (juste un pointeur sur disque).
+srtm <- rast("../_commons/data/cmr_srtm/srtm_cmr_30s.tif")
 names(srtm) <- "elevation_m"
 srtm
 ```
 
-## 2. Inspecter le SpatRaster
+## 3 ter. Inspecter le SpatRaster
 
-```{webr}
+```r
+# Resolution = taille d'un pixel au sol. nlyr = nombre de "couches" (bandes).
+# Pour un MNT, 1 bande suffit (l'altitude) ; une image satellite peut en avoir 13.
 c(resolution = res(srtm)[1],
   nb_cellules = ncell(srtm),
-  nb_bandes = nlyr(srtm),
-  EPSG = crs(srtm, describe = TRUE)$code)
+  nb_bandes   = nlyr(srtm),
+  EPSG        = crs(srtm, describe = TRUE)$code)
 
+# ext() = emprise geographique (xmin, xmax, ymin, ymax) couverte par le raster.
 ext(srtm)
 ```
 
-## 3. Crop + mask sur la silhouette du Cameroun
+## 3 quater. Crop + mask sur la silhouette du Cameroun
 
-Le .tif livré est déjà cropé sur l'emprise pays. On illustre quand même les opérations sur `adm0`.
-
-```{webr}
-srtm_cmr <- crop(srtm, adm0)
+```r
+# crop() = decoupe le raster a l'emprise rectangulaire (bbox) du vecteur.
+# mask() = met NA sur tous les pixels hors des polygones (silhouette pays).
+# On enchaine TOUJOURS crop puis mask : crop reduit la taille, mask nettoie les bords.
+srtm_cmr        <- crop(srtm, adm0)
 srtm_cmr_masked <- mask(srtm_cmr, vect(adm0))
 
-plot(srtm_cmr_masked, main = "SRTM Cameroun (NASA/USGS, agrégé 1 km)")
+plot(srtm_cmr_masked,
+     main = "Altitude (m) — Cameroun",
+     plg  = list(title = "m"),
+     sub  = "Source : NASA SRTM 30 arc-sec · IFORD x GDSG 2026")
 ```
 
-## 4. Algèbre raster : zones de basse altitude
+## 3 quinquies. Algèbre raster — zones de basse altitude
 
-`srtm < 500` produit un raster booléen (1 = vrai, 0 = faux, NA = hors masque).
-
-```{webr}
+```r
+# Algebre raster : on applique une operation a chaque pixel (cellule par cellule).
+# Ici "< 500" renvoie 1 (vrai) si l'altitude est < 500 m, 0 sinon, NA hors masque.
 basse_alt <- srtm_cmr_masked < 500
-plot(basse_alt, main = "Zones < 500 m (TRUE = basse altitude)")
+plot(basse_alt,
+     main = "Zones de basse altitude (< 500 m) — Cameroun",
+     plg  = list(title = "classe"),
+     sub  = "Source : NASA SRTM 30 arc-sec · IFORD x GDSG 2026")
 ```
 
-## 5. Classification multi-niveaux
+## 3 sexies. Classification multi-niveaux
 
-`ifel()` permet une cascade de conditions.
-
-```{webr}
+```r
+# Classification = regrouper les pixels par tranches (ici 4 classes d'altitude).
+# ifel() est l'equivalent raster de if_else() : SI condition ALORS x SINON y.
 zones <- ifel(srtm_cmr_masked < 200, 1,
         ifel(srtm_cmr_masked < 500, 2,
         ifel(srtm_cmr_masked < 1000, 3, 4)))
-plot(zones, main = "1: <200m | 2: 200-500 | 3: 500-1000 | 4: >1000")
+plot(zones,
+     main = "Classes d'altitude — Cameroun",
+     plg  = list(title = "classe (1=<200m, 2=200-500, 3=500-1000, 4=>1000)"),
+     sub  = "Source : NASA SRTM 30 arc-sec · IFORD x GDSG 2026")
 ```
 
-## 6. Statistique globale
+## 3 septies. Statistique globale
 
-```{webr}
+```r
+# global() = statistique calculee sur TOUS les pixels valides du raster.
+# Renvoie un data.frame ; ici on arrondit en m.
 global(srtm_cmr_masked, c("mean", "min", "max", "sd"), na.rm = TRUE) |> round()
 ```
 
-## 7. Extraction zonale par région
+## 3 octies. Extraction zonale par région + choroplèthe
 
-Combiner raster + vecteur pour calculer l'élévation moyenne par région du Cameroun.
+```r
+adm1 <- read_sf("../_commons/data/gadm41_CMR_1.json")
 
-```{webr}
-download.file("/_commons/data/gadm41_CMR_1.json", "adm1.json", mode = "wb")
-adm1 <- read_sf("adm1.json")
-
-# terra::extract retourne un data.frame
+# Extraction zonale = pour chaque polygone (region), on resume les pixels
+# qui tombent dedans (ici la moyenne d'altitude). Pont raster <-> vecteur.
 elev_par_region <- terra::extract(srtm_cmr_masked, vect(adm1),
                                    fun = "mean", na.rm = TRUE)
 elev_par_region$NAME_1 <- adm1$NAME_1
@@ -96,11 +162,8 @@ elev_par_region |>
   select(NAME_1, elev_moy = elevation_m) |>
   mutate(elev_moy = round(elev_moy)) |>
   arrange(desc(elev_moy))
-```
 
-## 8. Carte choroplèthe de l'élévation moyenne par région
-
-```{webr}
+# Choroplethe = carte ou la couleur de chaque polygone code une valeur numerique.
 adm1_elev <- adm1 |>
   mutate(elev_moy = round(elev_par_region$elevation_m))
 
@@ -109,15 +172,63 @@ ggplot(adm1_elev) +
   scale_fill_viridis_c(option = "G", name = "Élévation\nmoyenne (m)") +
   geom_sf_label(aes(label = NAME_1), size = 2.1,
                 color = "white", fontface = "bold") +
-  labs(title = "Élévation moyenne par région — Cameroun",
-       subtitle = "MNT SRTM 30 arc-sec (NASA/USGS) · terra::extract") +
+  labs(title    = "Élévation moyenne par région — Cameroun",
+       subtitle = "MNT SRTM 30 arc-sec (NASA/USGS) · terra::extract",
+       caption  = "Source : NASA SRTM 30 arc-sec · GADM v4.1 · IFORD x GDSG 2026") +
   theme_minimal() +
   theme(axis.text = element_blank(), axis.ticks = element_blank(),
         panel.grid = element_blank())
 ```
 
-## 9. Pour aller plus loin
+## 4. Substitut vecteur — superficie des régions
 
-La version desktop `demo.qmd` ajoute `exactextractr` (précision aux bords des polygones, 5–10× plus rapide), l'agrégation par arrondissement ADM3, et le cas RGPH 4 « arrondissements en basse altitude ». Le devoir individuel Q6 est dans `exercice.qmd`.
+En attendant que terra soit utilisable en WebR, voici l'équivalent vecteur du pattern d'extraction zonale : on calcule une grandeur **par polygone** (ici la superficie) directement avec `sf`.
+
+```{webr}
+# Calcul de la superficie de chaque region en km^2 (operation 100% sf).
+# On reprojete d'abord en UTM 32N (metres) pour mesurer correctement.
+adm1_utm <- st_transform(adm1, 32632)
+adm1_utm$superficie_km2 <- as.numeric(st_area(adm1_utm)) / 1e6
+
+# Classement des regions par superficie decroissante.
+adm1_utm |>
+  st_drop_geometry() |>
+  select(NAME_1, superficie_km2) |>
+  mutate(superficie_km2 = round(superficie_km2)) |>
+  arrange(desc(superficie_km2))
+```
+
+## 5. Carte choroplèthe — superficie des régions
+
+L'équivalent vecteur d'une choroplèthe raster : la couleur encode une valeur calculée par polygone.
+
+```{webr}
+ggplot(adm1_utm) +
+  geom_sf(aes(fill = superficie_km2), color = "white", linewidth = 0.3) +
+  geom_sf_label(aes(label = NAME_1), size = 2.1,
+                color = "white", fontface = "bold",
+                label.padding = unit(0.08, "lines")) +
+  scale_fill_viridis_c(option = "C", name = "Superficie\n(km²)") +
+  labs(title    = "Superficie des régions du Cameroun",
+       subtitle = "Calcul vectoriel (st_area) — préfigure le pattern d'extraction zonale raster",
+       caption  = "Source : GADM v4.1 · IFORD x GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+## 6. Pour la suite
+
+Ouvre `pedagogie/J03_donnees_raster_terra/demo.qmd` dans RStudio desktop pour l'expérience raster **exécutable** :
+
+- **MNT SRTM 30 arc-sec** chargé via `rast()`.
+- **Crop + mask** sur la silhouette du Cameroun.
+- **Algèbre raster** : zones de basse altitude (< 500 m).
+- **Classification multi-niveaux** : 4 tranches d'altitude.
+- **Statistique globale** : moyenne, min, max, écart-type sur les pixels valides.
+- **Extraction zonale** : altitude moyenne par région avec `terra::extract`.
+- **Choroplèthe d'élévation par région** : carte thématique finale.
+
+Le devoir individuel **Q6 raster** est dans `exercice.qmd`, son corrigé dans `corrige.qmd`.
 
 [← Retour à l'accueil](../INDEX.md)

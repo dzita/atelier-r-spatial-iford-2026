@@ -44,11 +44,14 @@ On charge les packages nécessaires et le helper `fetch_data.R` qui résout les 
 
 ```{r}
 #| label: setup
-library(sf)
-library(dplyr)
-library(tibble)
-library(ggplot2)
+# library() : active un package deja installe pour la session R
+library(sf)       # objets spatiaux vectoriels (points, lignes, polygones)
+library(dplyr)    # verbes : filter, mutate, group_by, summarise, join
+library(tibble)   # tableau moderne, affichage plus lisible que data.frame
+library(ggplot2)  # cartes en couches : ggplot() + geom_sf() + labs()
 
+# source() : execute un script externe pour charger ses fonctions
+# fetch_data.R fournit fetch_gadm_cameroon(level) qui resout le chemin local.
 # Chemin relatif depuis le .qmd (pedagogie/JXX_.../) car here::here()
 # peut etre dupe par pedagogie/_quarto.yml et nous proposer
 # pedagogie/pedagogie/_commons/... inexistant.
@@ -65,10 +68,12 @@ GADM v4.1 publie ses limites administratives au format GeoJSON. `read_sf()` dét
 
 ```{r}
 #| label: read-geojson
+# read_sf() : lecture spatiale unifiee (GeoJSON, Shapefile, GeoPackage...)
+# fetch_gadm_cameroon(1) renvoie le chemin local du fichier GADM niveau 1
 adm1 <- read_sf(fetch_gadm_cameroon(1))
-class(adm1)
-nrow(adm1)
-names(adm1)
+class(adm1)   # "sf" + "data.frame" : un tableau avec une colonne geometrie
+nrow(adm1)    # nombre d'entites (10 regions attendues)
+names(adm1)   # colonnes attributaires + "geometry"
 ```
 
 ## Inspecter sans tout charger
@@ -77,6 +82,8 @@ Sur un fichier inconnu, le réflexe est de **lister les couches** avant de lire.
 
 ```{r}
 #| label: st-layers
+# st_layers() : liste les couches disponibles dans un fichier spatial
+# sans charger les geometries en memoire (utile sur GeoPackage / gros Shapefile)
 st_layers(fetch_gadm_cameroon(2))
 ```
 
@@ -86,12 +93,14 @@ Sur un gros fichier (ADM3 = 365 arrondissements), on peut **ne charger qu'une po
 
 ```{r}
 #| label: read-with-query
+# query = : SQL execute par GDAL avant le retour dans R
+# Resultat : on ne charge que les arrondissements de la region Littoral
 litoral <- read_sf(
   fetch_gadm_cameroon(3),
   query = "SELECT * FROM gadm41_CMR_3 WHERE NAME_1 = 'Littoral'"
 )
-nrow(litoral)
-head(litoral$NAME_2, 5)
+nrow(litoral)            # nombre d'arrondissements du Littoral
+head(litoral$NAME_2, 5)  # premiers noms de departement
 ```
 
 ## Écrire en GeoPackage
@@ -101,9 +110,14 @@ head(litoral$NAME_2, 5)
 ```{r}
 #| label: write-gpkg
 #| eval: false
+# here() : construit un chemin a partir de la racine du projet (portable)
 out_path <- here("pedagogie", "J02_sf_CRS_vecteurs", "outputs", "CMR_litoral.gpkg")
+
+# Cree le dossier outputs/ s'il n'existe pas encore
 dir.create(dirname(out_path), showWarnings = FALSE, recursive = TRUE)
 
+# write_sf() : ecriture spatiale unifiee (GeoPackage = .gpkg = format moderne)
+# delete_dsn = TRUE : ecrase un fichier existant (sans, sf refuse pour ta securite)
 write_sf(litoral, out_path,
          layer = "litoral_adm3",
          delete_dsn = TRUE)
@@ -119,12 +133,16 @@ On va reprojeter les 10 régions ADM1 dans trois CRS différents (Lambert Camero
 
 ```{r}
 #| label: trois-crs
-adm1_lambert <- st_transform(adm1, 3119)   # Lambert Cameroun
-adm1_utm32   <- st_transform(adm1, 32632)  # UTM zone 32 N
-adm1_3857    <- st_transform(adm1, 3857)   # Web Mercator
+# CRS = systeme de coordonnees ; chaque code EPSG correspond a une projection
+# st_transform() ne change pas la donnee, il la represente dans un autre repere
+adm1_lambert <- st_transform(adm1, 3119)   # Lambert Cameroun (national)
+adm1_utm32   <- st_transform(adm1, 32632)  # UTM zone 32 N (regional, ouest CMR)
+adm1_3857    <- st_transform(adm1, 3857)   # Web Mercator (fonds web, deforme)
 
+# Helper : superficie totale en km2 (st_area renvoie des m2 avec unite)
 total_km2 <- function(x) sum(as.numeric(st_area(x))) / 1e6
 
+# Comparaison au chiffre officiel 475 442 km2
 tibble(
   CRS      = c("Lambert CMR (3119)", "UTM 32 N (32632)", "Web Mercator (3857)"),
   superficie_km2 = c(total_km2(adm1_lambert),
@@ -144,18 +162,21 @@ On veut sélectionner les régions du nord (latitude > 7°). C'est un filtre **a
 
 ```{r}
 #| label: regle-or
-# Filtrer en WGS 84 (les coordonnees sont en degres)
+# filter() (dplyr) : selection sur attribut, pas besoin de reprojection
+# %in% : appartient a la liste
 regions_nord <- adm1 |>
   filter(NAME_1 %in% c("Nord", "Adamaoua", "Extrême-Nord", "Est"))
 
-# Reprojeter SEULEMENT maintenant pour le calcul de surface
+# Reprojeter SEULEMENT maintenant pour le calcul de surface en metres
 regions_nord_utm <- st_transform(regions_nord, 32632)
+# st_area() : superficie par feature ; on stocke en km2 dans une colonne
 regions_nord_utm$superficie_km2 <- as.numeric(st_area(regions_nord_utm)) / 1e6
 
+# st_drop_geometry() : enleve la colonne geometrie pour un affichage tabulaire
 regions_nord_utm |>
   st_drop_geometry() |>
   select(NAME_1, superficie_km2) |>
-  arrange(desc(superficie_km2))
+  arrange(desc(superficie_km2))   # trier de la plus grande a la plus petite
 ```
 
 # Troisième session — Opérations vectorielles {#sec-operations}
@@ -168,12 +189,16 @@ regions_nord_utm |>
 
 ```{r}
 #| label: buffer-yaounde
+# st_point(c(lon, lat)) puis st_sfc() avec crs = 4326 (WGS84, degres)
 yaounde_pt <- st_sfc(st_point(c(11.5021, 3.8480)), crs = 4326)
+
+# Reprojection en UTM (metres) AVANT le buffer
 yaounde_utm <- st_transform(yaounde_pt, 32632)
 
-buffer_50km <- st_buffer(yaounde_utm, dist = 50000)  # 50 km en metres
+# st_buffer() : zone tampon ; dist exprime dans l'unite du CRS
+buffer_50km <- st_buffer(yaounde_utm, dist = 50000)  # 50 000 m = 50 km
 
-# Verifier le rayon
+# Verification analytique : pour un disque, sqrt(aire / pi) = rayon
 sqrt(as.numeric(st_area(buffer_50km)) / pi) / 1000  # devrait afficher ~50 km
 ```
 
@@ -183,12 +208,14 @@ sqrt(as.numeric(st_area(buffer_50km)) / pi) / 1000  # devrait afficher ~50 km
 
 ```{r}
 #| label: intersection-buffer
+# Chargement ADM3 (arrondissements) + reprojection dans le meme CRS que le buffer
 adm3 <- read_sf(fetch_gadm_cameroon(3))
 adm3_utm <- st_transform(adm3, 32632)
 
+# st_intersection() : decoupe les arrondissements par la zone tampon
 dans_buffer <- st_intersection(buffer_50km, adm3_utm)
-nrow(dans_buffer)
-head(dans_buffer$NAME_3, 10)
+nrow(dans_buffer)               # arrondissements touches par le buffer 50 km
+head(dans_buffer$NAME_3, 10)    # apercu des noms
 ```
 
 ## Union : silhouette du Cameroun
@@ -197,12 +224,16 @@ head(dans_buffer$NAME_3, 10)
 
 ```{r}
 #| label: union-silhouette
+# st_union() : fusionne plusieurs geometries en une seule (frontiere nationale)
 cmr_silhouette <- st_union(adm1)
-class(cmr_silhouette)
+class(cmr_silhouette)   # "sfc_MULTIPOLYGON" (colonne geometrique seule)
+
+# Carte ggplot : un seul polygone, fond gris clair, bordure noire
 ggplot() +
   geom_sf(data = cmr_silhouette, fill = "grey90", color = "black", linewidth = 0.6) +
-  labs(title = "Silhouette du Cameroun",
-       subtitle = "st_union(adm1) — 10 polygones fusionnés en 1") +
+  labs(title    = "Silhouette nationale du Cameroun",
+       subtitle = "CRS : WGS 84 (EPSG:4326) — st_union(adm1), 10 régions fusionnées en 1",
+       caption  = "Source : GADM v4.1 · IFORD × GDSG 2026") +
   theme_minimal()
 ```
 
@@ -212,14 +243,16 @@ Le pattern **dissolve** est central en SIG : agréger une couche fine par identi
 
 ```{r}
 #| label: dissolve-adm3-adm1
+# Pattern dissolve = group_by(attribut commun) + summarise(geom = st_union)
+# Ici on remonte d'ADM3 (arrondissements) vers ADM1 (regions) via NAME_1
 adm1_from_adm3 <- adm3 |>
   group_by(NAME_1) |>
   summarise(n_arrondissements = n(),
             geometry = st_union(geometry),
             .groups = "drop")
 
-nrow(adm1_from_adm3)   # 10 regions
-sum(adm1_from_adm3$n_arrondissements)  # 365 arrondissements
+nrow(adm1_from_adm3)                    # 10 regions reconstituees
+sum(adm1_from_adm3$n_arrondissements)   # 365 arrondissements (controle)
 ```
 
 ## Centroïdes : un point par région
@@ -228,15 +261,19 @@ sum(adm1_from_adm3$n_arrondissements)  # 365 arrondissements
 
 ```{r}
 #| label: centroides
+# st_centroid() : centre geometrique de chaque polygone (un point par feature)
 centroides_adm1 <- st_centroid(adm1)
-class(centroides_adm1)
+class(centroides_adm1)   # sf, mais avec geometries POINT
+
+# Carte : polygones gris en fond + points rouges + etiquettes regions
 ggplot() +
   geom_sf(data = adm1, fill = "grey95", color = "grey60") +
   geom_sf(data = centroides_adm1, color = "red", size = 2) +
   geom_sf_text(data = centroides_adm1, aes(label = NAME_1),
                nudge_y = 0.3, size = 3) +
-  labs(title = "Centroïdes géométriques des 10 régions",
-       subtitle = "À ne pas confondre avec le chef-lieu administratif") +
+  labs(title    = "Centroïdes géométriques des 10 régions du Cameroun",
+       subtitle = "CRS : WGS 84 (EPSG:4326) — st_centroid() — à ne pas confondre avec le chef-lieu",
+       caption  = "Source : GADM v4.1 · IFORD × GDSG 2026") +
   theme_minimal()
 ```
 
@@ -246,6 +283,7 @@ On construit un tibble des **vrais** chefs-lieux régionaux (coordonnées GPS ap
 
 ```{r}
 #| label: voronoi-chefs-lieux
+# tibble() : tableau moderne ; 4 colonnes (region, ville, lon, lat)
 chefs_lieux <- tibble(
   region = c("Adamaoua","Centre","Est","Extrême-Nord","Littoral",
              "Nord","Nord-Ouest","Ouest","Sud","Sud-Ouest"),
@@ -256,10 +294,12 @@ chefs_lieux <- tibble(
   lat = c( 7.3214,  3.8480,  4.5775, 10.5910, 4.0511,
            9.3019,  5.9597,  5.4778,  2.9000, 4.1546)
 ) |>
+  # st_as_sf() : convertit en objet spatial sf, geometrie POINT en WGS84
   st_as_sf(coords = c("lon", "lat"), crs = 4326)
 
 # Construire le Voronoi (st_voronoi attend un MULTIPOINT)
 chefs_pts_union <- st_union(chefs_lieux)
+# st_voronoi() : decoupe le plan en cellules (1 cellule = points les plus proches d'un chef-lieu)
 voronoi_box <- st_voronoi(chefs_pts_union)
 
 # Decouper en cellules individuelles et associer chaque cellule a son chef-lieu
@@ -269,15 +309,16 @@ voronoi_cells <- st_collection_extract(voronoi_box, "POLYGON") |>
 # Intersecter avec la silhouette nationale pour rester dans le Cameroun
 voronoi_cmr <- st_intersection(voronoi_cells, st_union(adm1))
 
+# Carte ggplot : Voronoi + frontieres regionales + points + etiquettes villes
 ggplot() +
   geom_sf(data = voronoi_cmr, fill = NA, color = "grey50", linewidth = 0.4) +
   geom_sf(data = adm1, fill = NA, color = "grey80", linewidth = 0.2) +
   geom_sf(data = chefs_lieux, color = "red", size = 2.5) +
   geom_sf_text(data = chefs_lieux, aes(label = ville),
                nudge_y = 0.25, size = 2.8, fontface = "bold") +
-  labs(title = "Zones d'influence des chefs-lieux régionaux",
-       subtitle = "Diagramme de Voronoï coupé sur la silhouette du Cameroun",
-       caption = "Source : GADM v4.1 · IFORD × GDSG 2026") +
+  labs(title    = "Zones d'influence des chefs-lieux régionaux du Cameroun",
+       subtitle = "Diagramme de Voronoï (CRS : WGS 84 / EPSG:4326) découpé sur la silhouette nationale",
+       caption  = "Source : GADM v4.1 · IFORD × GDSG 2026") +
   theme_minimal()
 ```
 
@@ -291,7 +332,9 @@ ggplot() +
 
 ```{r}
 #| label: validate
+# Reprojection en Lambert Cameroun (EPSG:3119, projection nationale)
 adm3_lambert <- st_transform(adm3, 3119)
+# st_is_valid() : TRUE/FALSE par feature ; table() : compte les TRUE et FALSE
 table(st_is_valid(adm3_lambert))
 ```
 
@@ -301,7 +344,9 @@ Si une géométrie est invalide, `st_make_valid()` la répare en utilisant l'alg
 
 ```{r}
 #| label: make-valid
+# st_make_valid() : repare les geometries invalides via GEOS (silencieux)
 adm3_lambert_clean <- st_make_valid(adm3_lambert)
+# Controle global : toutes les geometries doivent etre valides apres reparation
 all(st_is_valid(adm3_lambert_clean))
 ```
 
@@ -316,15 +361,19 @@ Le format `.gpkg` peut contenir **plusieurs couches** dans un seul fichier. On y
 ```{r}
 #| label: export-multi
 #| eval: false
+# Construction du chemin de sortie + creation du dossier si necessaire
 out_path <- here("pedagogie", "J02_sf_CRS_vecteurs", "outputs",
                  "CMR_admin_lambert.gpkg")
 dir.create(dirname(out_path), showWarnings = FALSE, recursive = TRUE)
 
+# 1ere ecriture : delete_dsn = TRUE ecrase tout le fichier .gpkg existant
 write_sf(st_transform(adm1, 3119), out_path, layer = "adm1", delete_dsn = TRUE)
+# Ecritures suivantes : delete_layer = TRUE remplace uniquement la couche cible
 write_sf(st_transform(adm3, 3119), out_path, layer = "adm3", delete_layer = TRUE)
 write_sf(st_transform(voronoi_cmr, 3119), out_path,
          layer = "voronoi_chefs_lieux", delete_layer = TRUE)
 
+# Verification : les 3 couches doivent apparaitre dans le .gpkg
 st_layers(out_path)
 ```
 

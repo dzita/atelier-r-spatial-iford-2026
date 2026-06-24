@@ -92,13 +92,25 @@ Chaque groupe construit un livrable comportant exactement :
 
 ## Données utilisées
 
-Toutes copiées depuis le matériel formateur d'Edith Darin vers `pedagogie/datasets/cameroun/jour_10/` :
+### Embarqué dans le repo (chargé automatiquement par le runtime WebR)
 
-- `regions_indicateurs_demo.gpkg` — couche régionale avec indicateurs (CRS WGS84, 10 features)
-- `regions_indicateurs_demo_shp/` — équivalent shapefile (pour démontrer la portabilité)
-- `projet_final_indicateurs_demo.csv` — variante tabulaire pour merge
+- `pedagogie/_commons/data/jour_10_extraits/regions_indicateurs_demo.gpkg` — extrait léger des 10 régions avec indicateurs démographiques et sociaux (population, ménages, eau améliorée, alphabétisation, écoles, formations sanitaires), CRS WGS84, < 200 ko. Source : dataset pédagogique préparé par Edith Darin (GDSG/IFORD) à partir de chiffres d'entraînement (à ne pas citer comme statistique officielle ; pour usage réel, mobiliser ECAM 4, MICS, EDS-MICS 2018 ou RGPH).
 
-Helper d'accès : `fetch_indicateurs_regions_demo()` dans `pedagogie/_commons/helpers/fetch_data.R`.
+### Embarqué dans le repo pour la version desktop (commités, légers)
+
+Le même dataset fil rouge est aussi disponible en plusieurs formats dans `pedagogie/datasets/cameroun/jour_10/`, accessible via `fetch_indicateurs_regions_demo(format = ...)` :
+
+- `regions_indicateurs_demo.gpkg` — GeoPackage WGS84, 10 features (format par défaut).
+- `regions_indicateurs_demo_shp/regions_indicateurs_demo.{shp,shx,dbf,prj,cpg}` — équivalent shapefile, pour illustrer la portabilité multi-format.
+- `projet_final_indicateurs_demo.csv` — variante tabulaire (sans géométrie), pour démontrer la jointure attribut.
+
+Source : matériel formateur Edith Darin (GDSG/IFORD), copié depuis son repo Drive vers ce repo via le script bootstrap.
+
+### Script bootstrap
+
+Si les fichiers ne sont pas présents en local (par exemple sur une machine fraîchement clonée du repo formateur d'Edith), lancer : `Rscript pedagogie/J10_workflows_reproductibles/00_copier_datasets_edith_j10.R`.
+
+Ce script copie les trois variantes (gpkg + shp + csv) depuis le repo source d'Edith vers `pedagogie/datasets/cameroun/jour_10/`. Les fichiers sont volontairement commités (légers) pour rendre le mini-projet exécutable sans configuration externe.
 
 ## Crédits
 

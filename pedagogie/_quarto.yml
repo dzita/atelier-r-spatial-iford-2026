@@ -40,11 +40,14 @@ website:
             text: "J5 · Visualisation et cartographie"
           - href: J06_statistiques_spatiales/runtime.qmd
             text: "J6 · Statistiques spatiales (Moran, LISA, KDE)"
+          - href: J07_population_haute_resolution/runtime.qmd
+            text: "J7 · Population haute résolution + bottom-up"
+          - href: J08_teledetection_observation_terre/runtime.qmd
+            text: "J8 · Télédétection + observation de la Terre"
+          - href: J09_applications_spatiales_sciences_sociales/runtime.qmd
+            text: "J9 · Applications sciences sociales (ACLED)"
           - href: J10_workflows_reproductibles/runtime.qmd
             text: "J10 · Reproductibilité + clôture"
-          # J7, J8, J9 seront ajoutes ici au fur et a mesure de leur redaction.
-          # Ne pas re-activer une entree tant que le runtime.qmd correspondant
-          # n'existe pas, sinon Quarto cassera la preview.
 
 format:
   live-html:

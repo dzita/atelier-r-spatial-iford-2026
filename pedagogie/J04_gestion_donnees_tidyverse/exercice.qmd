@@ -24,16 +24,18 @@ Bascule sur DHS Cameroun 2018 réel : Ramesesse Dzita (GDSG/IFORD).
 Les exercices supposent que tu as déjà chargé les deux tables (cf. setup de `demo.qmd`) :
 
 ```r
+# Packages : dplyr/tidyr/readr = tidyverse ; srvyr = enquetes ponderees ; haven = .DTA.
 library(dplyr); library(tidyr); library(readr); library(srvyr); library(haven)
 source("../_commons/helpers/fetch_data.R")
 
-# Option A — desktop, microfichiers .DTA complets
+# Option A : .DTA Stata bruts (5 741 variables HR) — pour PC animateur.
+# toupper() : noms en majuscules pour matcher la doc DHS officielle.
 menages   <- haven::read_dta(fetch_dhs_recode_cmr_2018("HR"))
 personnes <- haven::read_dta(fetch_dhs_recode_cmr_2018("PR"))
 names(menages)   <- toupper(names(menages))
 names(personnes) <- toupper(names(personnes))
 
-# Option B — extraits CSV produits par 00_extraire_dhs_pour_webr.R
+# Option B : extraits CSV legers (~25 variables, noms francais) — pour participants.
 data_dir <- "../_commons/data/dhs_cmr"
 menages   <- read_csv(file.path(data_dir, "dhs_cmr_2018_menages_extrait.csv"))
 personnes <- read_csv(file.path(data_dir, "dhs_cmr_2018_personnes_extrait.csv"))

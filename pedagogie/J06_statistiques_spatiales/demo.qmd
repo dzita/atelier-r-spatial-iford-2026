@@ -47,6 +47,10 @@ Aucune variable simulée dans ce jour. Les analyses statistiques portent sur :
 
 ```{r}
 #| label: setup
+# Librairies chargées une fois pour tout le document.
+# sf : objets spatiaux ; ggplot2 : graphiques ; dplyr : transformation tableaux.
+# spdep : statistiques spatiales (Moran's I, LISA) en version desktop.
+# readr : lecture CSV rapide ; helper IFORD : téléchargement GADM avec cache.
 library(sf)
 library(ggplot2)
 library(dplyr)
@@ -60,12 +64,17 @@ source("../_commons/helpers/fetch_data.R")
 
 ```{r}
 #| label: load
+# Lecture du CSV des facilités OSM extraites par Overpass (script externe).
+# Chaque ligne = un établissement de santé avec longitude/latitude/catégorie.
 etabs <- read_csv(
   "../_commons/data/cmr_sante/etablissements_sante_osm.csv",
   show_col_types = FALSE
 )
 
-adm2 <- read_sf(fetch_gadm_cameroon(2))
+# Polygones administratifs Cameroun niveau département (ADM2) via helper GADM.
+# st_make_valid() repare les vertices dupliques de GADM qui font planter
+# st_join avec "Edge 0 is degenerate" — defense indispensable dès le chargement.
+adm2 <- read_sf(fetch_gadm_cameroon(2)) |> st_make_valid()
 
 cat("Facilités OSM       :", nrow(etabs), "\n")
 cat("Départements ADM2   :", nrow(adm2), "\n")
@@ -84,6 +93,8 @@ OpenStreetMap est une base contribuée. Couverture **très bonne** en zone urbai
 
 ```{r}
 #| label: m1-sf
+# Conversion en objet sf : on indique quelles colonnes contiennent les coordonnées.
+# CRS 4326 = WGS84 (latitude/longitude en degrés), standard mondial.
 points_sf <- st_as_sf(etabs, coords = c("longitude", "latitude"), crs = 4326)
 n <- nrow(points_sf)
 ```
@@ -92,18 +103,22 @@ n <- nrow(points_sf)
 #| label: m1-carte
 #| fig-width: 9
 #| fig-height: 6
-ggplot(points_sf) +
-  geom_sf(aes(color = categorie), alpha = 0.7, size = 0.9) +
-  scale_color_manual(values = c(
+# Carte d'inventaire : fond départements + points colorés par catégorie.
+ggplot() +
+  geom_sf(data = adm2, fill = "grey95", color = "grey70", linewidth = 0.15) +
+  geom_sf(data = points_sf, aes(color = categorie), alpha = 0.7, size = 0.9) +
+  scale_color_manual(name = "Catégorie OSM", values = c(
     "Hopital"          = "#C0392B",
     "Centre/Clinique"  = "#2980B9",
     "Pharmacie"        = "#27AE60",
     "Autre"            = "#7F8C8D"
   )) +
   labs(title = "Facilités de santé du Cameroun (OpenStreetMap)",
-       subtitle = paste0(n, " points OSM extraits via Overpass"),
-       caption = "© OpenStreetMap contributors (ODbL) · IFORD × GDSG 2026") +
-  theme_minimal()
+       subtitle = paste0("Inventaire ponctuel · ", n, " facilités extraites via API Overpass"),
+       caption = "Source : OpenStreetMap Overpass · GADM v4.1 · IFORD x GDSG 2026",
+       x = NULL, y = NULL) +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"))
 ```
 
 ## Distance moyenne au plus proche voisin
@@ -112,16 +127,19 @@ Pour chaque facilité, on cherche la facilité la plus proche et on retient la d
 
 ```{r}
 #| label: m1-R
+# knearneigh / knn2nb / nbdists = trio spdep pour calculer les distances
+# au k plus proche voisin (ici k=1).
 coords <- cbind(etabs$longitude, etabs$latitude)
 
 nn1 <- knearneigh(coords, k = 1)
 nb1 <- knn2nb(nn1)
 dists_voisin <- unlist(nbdists(nb1, coords))
 
+# Distance observée vs attendue sous CSR (distribution complètement aléatoire).
 D_obs    <- mean(dists_voisin)
 aire     <- diff(range(etabs$longitude)) * diff(range(etabs$latitude))
 D_attendu <- 0.5 / sqrt(n / aire)
-R         <- D_obs / D_attendu
+R         <- D_obs / D_attendu   # < 1 = regroupé ; > 1 = dispersé ; ~ 1 = aléatoire
 
 cat("D observé :", round(D_obs, 4), "degrés\n")
 cat("D attendu :", round(D_attendu, 4), "degrés\n")
@@ -141,6 +159,8 @@ cat("Verdict   :", verdict, "\n")
 
 ```{r}
 #| label: m2-h
+# Bandwidth h = largeur du noyau gaussien.
+# Règle de Scott : adapte h à l'échantillon (n et dispersion).
 h_scott <- 1.06 * sd(etabs$longitude) * n^(-1/5)
 cat("Bandwidth Scott :", round(h_scott, 4),
     "degrés ≈", round(h_scott * 111, 1), "km\n")
@@ -148,16 +168,19 @@ cat("Bandwidth Scott :", round(h_scott, 4),
 
 ```{r}
 #| label: m2-kde
+# Grille régulière de 100 x 100 cellules couvrant l'emprise du Cameroun.
 n_grille <- 100
 lon_seq <- seq(min(etabs$longitude) - 0.5, max(etabs$longitude) + 0.5, length.out = n_grille)
 lat_seq <- seq(min(etabs$latitude)  - 0.5, max(etabs$latitude)  + 0.5, length.out = n_grille)
 grille  <- expand.grid(lon = lon_seq, lat = lat_seq)
 
+# Pour chaque cellule, somme des contributions gaussiennes de tous les points.
 kde <- numeric(nrow(grille))
 for (i in seq_len(nrow(grille))) {
   d2 <- (grille$lon[i] - etabs$longitude)^2 + (grille$lat[i] - etabs$latitude)^2
   kde[i] <- sum(exp(-d2 / (2 * h_scott^2)))
 }
+# Normalisation pour obtenir une densité (intégrale = 1).
 grille$densite <- kde / (n * 2 * pi * h_scott^2)
 ```
 
@@ -165,17 +188,21 @@ grille$densite <- kde / (n * 2 * pi * h_scott^2)
 #| label: m2-carte
 #| fig-width: 9
 #| fig-height: 6
+# Palette séquentielle clair -> foncé (densité croissante).
 ggplot() +
   geom_raster(data = grille, aes(x = lon, y = lat, fill = densite), interpolate = TRUE) +
-  scale_fill_gradientn(name = "Densité KDE",
+  geom_sf(data = adm2, fill = NA, color = "grey50", linewidth = 0.12) +
+  scale_fill_gradientn(name = "Densité KDE\n(facilités / deg²)",
                        colors = c("#FFFFF0","#FFEDA0","#FD8D3C","#E31A1C","#800026")) +
   geom_point(data = etabs, aes(x = longitude, y = latitude),
              color = "white", size = 0.5, alpha = 0.7) +
-  labs(title = "Densité par noyau des facilités de santé OSM",
-       subtitle = paste0("Bandwidth Scott h = ",
-                         round(h_scott, 3), " degrés ≈ ", round(h_scott * 111, 0), " km"),
-       caption = "© OpenStreetMap contributors (ODbL) · IFORD × GDSG 2026") +
-  theme_minimal()
+  labs(title = "Densité par noyau (KDE) des facilités de santé OSM",
+       subtitle = paste0("Méthode : Kernel Density Estimation · h_Scott = ",
+                         round(h_scott, 3), " ° (~", round(h_scott * 111, 0), " km)"),
+       caption = "Source : OpenStreetMap Overpass · GADM v4.1 · IFORD x GDSG 2026",
+       x = NULL, y = NULL) +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"))
 ```
 
 # Démo 3 — Agrégation par département {#sec-m3}
@@ -186,23 +213,26 @@ Pour les statistiques d'autocorrélation spatiale (Moran's I), on a besoin d'une
 
 ```{r}
 #| label: m3-aggregate
+# Reprojection vers Lambert Cameroun (EPSG:3119) : système métrique fiable
+# pour les calculs de surface et de distance.
 adm2_lambert <- adm2 |>
   st_transform(3119) |>
   st_make_valid()
 
 points_lambert <- points_sf |> st_transform(3119)
 
-# Jointure spatiale : à quel département appartient chaque facilité ?
+# st_within = test "le point est-il dans le polygone ?".
+# Résultat : chaque facilité hérite du département qui la contient.
 etabs_in_dep <- points_lambert |>
   st_join(adm2_lambert |> select(GID_2, NAME_2, NAME_1), join = st_within)
 
-# Compter les facilités par département
+# Comptage simple : combien de facilités par département (GID_2).
 n_par_dep <- etabs_in_dep |>
   st_drop_geometry() |>
   filter(!is.na(GID_2)) |>
   count(GID_2, NAME_2, NAME_1, name = "n_facilites")
 
-# Joindre les comptages à la couche ADM2
+# Joindre les comptages à la couche ADM2 (NA -> 0) + densité par 100 km².
 adm2_avec_n <- adm2_lambert |>
   left_join(n_par_dep |> select(GID_2, n_facilites), by = "GID_2") |>
   mutate(
@@ -218,16 +248,27 @@ head(adm2_avec_n |> st_drop_geometry() |> arrange(desc(n_facilites)), 10)
 #| label: m3-carte-comptages
 #| fig-width: 9
 #| fig-height: 6
+# Étiquettes des 8 plus gros départements pour repère visuel.
+top_labels <- adm2_avec_n |>
+  arrange(desc(n_facilites)) |>
+  head(8) |>
+  st_centroid()
+
+# Carte choroplèthe : transformation racine pour atténuer l'écart urbain/rural.
 ggplot(adm2_avec_n) +
   geom_sf(aes(fill = n_facilites), color = "white", linewidth = 0.2) +
+  geom_sf_text(data = top_labels, aes(label = NAME_2),
+               size = 2.6, colour = "black", fontface = "bold") +
   scale_fill_viridis_c(option = "B", trans = "sqrt",
-                       name = "Nb facilités\nOSM") +
-  labs(title = "Nombre de facilités de santé OSM par département — Cameroun",
-       subtitle = "Variable de comptage agrégée sur les vraies données OSM",
-       caption = "© OpenStreetMap contributors (ODbL) · GADM v4.1") +
+                       name = "Nb facilités\nOSM (n)") +
+  labs(title = "Offre de soins par département — Cameroun",
+       subtitle = "Méthode : agrégation spatiale (st_join + count) sur facilités OSM",
+       caption = "Source : OpenStreetMap Overpass · GADM v4.1 · IFORD x GDSG 2026",
+       x = NULL, y = NULL) +
   theme_minimal() +
   theme(axis.text = element_blank(), axis.ticks = element_blank(),
-        panel.grid = element_blank())
+        panel.grid = element_blank(),
+        plot.title = element_text(face = "bold"))
 ```
 
 # Démo 4 — Moran's I global {#sec-m4}
@@ -240,6 +281,9 @@ ggplot(adm2_avec_n) +
 
 ```{r}
 #| label: m4-W
+# poly2nb = construction de la liste de voisinage par contiguïté.
+# queen = TRUE : voisin = partage au moins un point (sinon "rook" = arête).
+# nb2listw style "W" : pondération normalisée par ligne (somme = 1).
 adm2_sp <- adm2_avec_n |> filter(!st_is_empty(geometry))
 
 nb_cont <- poly2nb(adm2_sp, queen = TRUE)
@@ -252,6 +296,8 @@ summary(nb_cont)
 
 ```{r}
 #| label: m4-test
+# moran.test = test asymptotique officiel de spdep (calcule I + p-valeur).
+# zero.policy = TRUE : tolère les départements sans voisin (îles).
 moran <- moran.test(adm2_sp$n_facilites, W, zero.policy = TRUE)
 moran
 ```
@@ -278,9 +324,12 @@ cat("Conclusion :", ifelse(p_val < 0.05,
 #| label: m4-diagramme
 #| fig-width: 8
 #| fig-height: 6
+# z_v = valeur centrée-réduite ; z_lag = moyenne des voisins (lag spatial).
+# Le diagramme de Moran trace z_lag vs z_v : la pente est égale au I global.
 z_v   <- as.numeric(scale(adm2_sp$n_facilites))
 z_lag <- as.numeric(lag.listw(W, z_v, zero.policy = TRUE))
 
+# 4 quadrants : HH (haut-haut), LL (bas-bas), HL (haut isolé), LH (bas isolé).
 quadrant <- case_when(
   z_v > 0 & z_lag > 0 ~ "HH",
   z_v < 0 & z_lag < 0 ~ "LL",
@@ -319,6 +368,9 @@ ggplot(data.frame(z = z_v, lag = z_lag, q = quadrant),
 
 ```{r}
 #| label: m5-lisa
+# localmoran = calcule un I local par département + sa p-valeur.
+# Ii positif = département cohérent avec son voisinage (HH ou LL).
+# Ii négatif = département en rupture (HL ou LH).
 lisa <- localmoran(adm2_sp$n_facilites, W, zero.policy = TRUE)
 adm2_sp$lisa_I <- lisa[, "Ii"]
 adm2_sp$lisa_p <- lisa[, "Pr(z != E(Ii))"]
@@ -328,6 +380,8 @@ adm2_sp$lisa_p <- lisa[, "Pr(z != E(Ii))"]
 
 ```{r}
 #| label: m5-quadrants
+# On combine quadrant (signe de z et z_lag) ET significativité (p < 0.05).
+# Seuls les départements significatifs sont classés "cluster".
 adm2_sp$quadrant <- case_when(
   z_v > 0 & z_lag > 0 & adm2_sp$lisa_p < 0.05 ~ "HH – Cluster équipé",
   z_v < 0 & z_lag < 0 & adm2_sp$lisa_p < 0.05 ~ "LL – Désert médical",
@@ -345,21 +399,32 @@ table(adm2_sp$quadrant)
 #| label: m5-carte
 #| fig-width: 9
 #| fig-height: 6
+# Étiquettes des clusters HH et LL significatifs (utiles pour la décision).
+labels_cluster <- adm2_sp |>
+  filter(quadrant %in% c("HH – Cluster équipé", "LL – Désert médical")) |>
+  st_centroid()
+
+# Palette divergente : rouge clusters équipés vs bleu déserts médicaux.
 ggplot(adm2_sp) +
   geom_sf(aes(fill = quadrant), color = "white", linewidth = 0.2) +
-  scale_fill_manual(name = "Quadrant LISA", values = c(
+  geom_sf_text(data = labels_cluster, aes(label = NAME_2),
+               size = 2.4, colour = "black", fontface = "bold") +
+  scale_fill_manual(name = "Quadrant LISA\n(p < 0.05)", values = c(
     "HH – Cluster équipé"  = "#C0392B",
     "LL – Désert médical"  = "#2980B9",
     "HL – Ilot équipé"     = "#E67E22",
     "LH – Carence locale"  = "#8E44AD",
     "Non significatif"     = "#BDC3C7"
   )) +
-  labs(title = "Cartographie LISA — offre de soins OSM par département",
-       subtitle = "Rouge = clusters équipés | Bleu = déserts médicaux confirmés",
-       caption = "© OpenStreetMap contributors (ODbL) · GADM v4.1 · IFORD × GDSG 2026") +
+  labs(title = "Clusters spatiaux LISA — offre de soins OSM par département",
+       subtitle = "Méthode : Local Moran's I · Rouge = clusters équipés · Bleu = déserts médicaux confirmés",
+       caption = "Source : OpenStreetMap Overpass · GADM v4.1 · IFORD x GDSG 2026",
+       x = NULL, y = NULL) +
   theme_minimal() +
   theme(axis.text = element_blank(), axis.ticks = element_blank(),
-        panel.grid = element_blank())
+        panel.grid = element_blank(),
+        plot.title = element_text(face = "bold"),
+        legend.position = "right")
 ```
 
 **Lecture pour la décision publique** :

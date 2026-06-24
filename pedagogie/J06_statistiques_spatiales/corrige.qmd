@@ -27,6 +27,7 @@ construite à partir des points OSM réels.
 
 ```{r}
 #| label: setup
+# Librairies du corrigé : socles spatial + spdep (Moran/LISA) + tibble.
 library(sf)
 library(ggplot2)
 library(dplyr)
@@ -37,18 +38,21 @@ library(tibble)
 
 source("../_commons/helpers/fetch_data.R")
 
+# Lecture des facilités OSM Cameroun (déjà nettoyées).
 etabs <- read_csv(
   "../_commons/data/cmr_sante/etablissements_sante_osm.csv",
   show_col_types = FALSE
 )
 n <- nrow(etabs)
 
+# Reprojection ADM2 + points en Lambert Cameroun (calculs métriques fiables).
 adm2 <- read_sf(fetch_gadm_cameroon(2)) |>
   st_transform(3119) |> st_make_valid()
 points_sf <- st_as_sf(etabs, coords = c("longitude","latitude"), crs = 4326) |>
   st_transform(3119)
 
-# Helper : nombre de facilités par département pour un sous-ensemble
+# Fonction utilitaire : compter les facilités par département pour un sous-ensemble.
+# On la réutilise pour les analyses par sous-catégorie (hôpitaux, pharmacies).
 n_par_dep <- function(points, adm2, var_name = "n_facilites") {
   jointure <- points |>
     st_join(adm2 |> select(GID_2, NAME_2, NAME_1), join = st_within) |>
@@ -65,10 +69,11 @@ n_par_dep <- function(points, adm2, var_name = "n_facilites") {
 
 ```{r}
 #| label: q1
-# Comptages par catégorie
+# Comptages par catégorie OSM (Q1.a).
 table(etabs$categorie)
 
-# Fonction Ratio R sur points
+# Fonction Ratio R réutilisable : calcule R sur un sous-ensemble de points.
+# Renvoie NA si trop peu de points pour un résultat fiable.
 ratio_R <- function(df) {
   cc <- cbind(df$longitude, df$latitude)
   m <- nrow(df); if (m < 5) return(NA)
@@ -82,7 +87,7 @@ ratio_R <- function(df) {
   mean(dn) / (0.5 / sqrt(m / aire))
 }
 
-# Ratio R par catégorie
+# Calcul du ratio R par catégorie (Q1.b et Q1.c).
 etabs |>
   group_by(categorie) |>
   group_modify(\(d, k) tibble(n = nrow(d), R = round(ratio_R(d), 3))) |>
@@ -99,6 +104,7 @@ urbaine), les hôpitaux suivent un maillage hiérarchique de district.
 #| label: q2
 #| fig-width: 14
 #| fig-height: 5
+# Fonction faire_kde : produit une grille de densité pour un bandwidth h donné.
 faire_kde <- function(df, h) {
   m <- nrow(df)
   lon_seq <- seq(min(df$longitude)-0.5, max(df$longitude)+0.5, length.out = 80)
@@ -112,28 +118,40 @@ faire_kde <- function(df, h) {
   g$densite <- kde / (m * 2 * pi * h^2); g
 }
 
+# Bandwidth de référence (règle de Scott).
 h_scott <- 1.06 * sd(etabs$longitude) * n^(-1/5)
 
+# patchwork = juxtaposition de trois cartes (h/2, h, h*2) pour comparer.
 library(patchwork)
 g_petit <- ggplot(faire_kde(etabs, h_scott/2)) +
   geom_raster(aes(lon, lat, fill = densite), interpolate = TRUE) +
   scale_fill_gradientn(colors = c("#FFFFF0","#FD8D3C","#800026")) +
-  labs(title = paste0("h_Scott / 2 = ", round(h_scott/2, 3))) +
-  theme_void() + theme(legend.position = "none")
+  labs(title = paste0("h_Scott / 2 = ", round(h_scott/2, 3)),
+       subtitle = "Sous-lissage : bruit, faux détails") +
+  theme_void() + theme(legend.position = "none",
+                       plot.title = element_text(face = "bold", size = 11))
 
 g_scott <- ggplot(faire_kde(etabs, h_scott)) +
   geom_raster(aes(lon, lat, fill = densite), interpolate = TRUE) +
   scale_fill_gradientn(colors = c("#FFFFF0","#FD8D3C","#800026")) +
-  labs(title = paste0("h_Scott = ", round(h_scott, 3))) +
-  theme_void() + theme(legend.position = "none")
+  labs(title = paste0("h_Scott = ", round(h_scott, 3)),
+       subtitle = "Compromis statistique recommandé") +
+  theme_void() + theme(legend.position = "none",
+                       plot.title = element_text(face = "bold", size = 11))
 
 g_grand <- ggplot(faire_kde(etabs, h_scott*2)) +
   geom_raster(aes(lon, lat, fill = densite), interpolate = TRUE) +
   scale_fill_gradientn(colors = c("#FFFFF0","#FD8D3C","#800026")) +
-  labs(title = paste0("h_Scott × 2 = ", round(h_scott*2, 3))) +
-  theme_void() + theme(legend.position = "none")
+  labs(title = paste0("h_Scott × 2 = ", round(h_scott*2, 3)),
+       subtitle = "Sur-lissage : on perd les détails") +
+  theme_void() + theme(legend.position = "none",
+                       plot.title = element_text(face = "bold", size = 11))
 
-g_petit + g_scott + g_grand
+(g_petit + g_scott + g_grand) +
+  patchwork::plot_annotation(
+    title = "KDE des facilités OSM Cameroun — sensibilité au bandwidth h",
+    caption = "Source : OpenStreetMap Overpass · GADM v4.1 · IFORD x GDSG 2026"
+  )
 ```
 
 **Q2.c** : pour un décideur on garde **h_Scott** (compromis statistique
@@ -149,16 +167,18 @@ la **contiguïté** entre départements.
 
 ```{r}
 #| label: q3
+# Comptage par département pour les deux jeux : toutes facilités vs hôpitaux seuls.
 adm2_all  <- n_par_dep(points_sf,
                        adm2, var_name = "n_facilites")
 adm2_hop  <- n_par_dep(points_sf |>
                          filter(etabs$categorie == "Hopital"),
                        adm2, var_name = "n_hopitaux")
 
-# Matrice de contiguïté
+# Matrice de contiguïté queen + pondération ligne ("W") commune aux deux tests.
 nb_cont <- poly2nb(adm2_all, queen = TRUE)
 W_cont  <- nb2listw(nb_cont, style = "W", zero.policy = TRUE)
 
+# Comparaison des deux Moran's I globaux.
 I_global  <- moran.test(adm2_all$n_facilites, W_cont,
                         zero.policy = TRUE)$estimate["Moran I statistic"]
 I_hop     <- moran.test(adm2_hop$n_hopitaux, W_cont,
@@ -182,14 +202,16 @@ densément agglomérées dans Douala et Yaoundé.
 
 ```{r}
 #| label: q4
-# Centroïdes des départements pour les knn
+# Le centroïde d'un polygone = son "centre géométrique".
+# Sert ici à calculer les distances entre départements pour les k-voisins.
 centroides <- st_centroid(adm2_all) |>
   st_coordinates()
 
-# Contiguïté queen + knn (k = 3, 5, 10)
+# Variante 1 : contiguïté queen (référence).
 W_queen <- nb2listw(poly2nb(adm2_all, queen = TRUE),
                     style = "W", zero.policy = TRUE)
 
+# Variantes 2-4 : k plus proches voisins (knn) avec k = 3, 5, 10.
 mk <- function(k) {
   nb <- knn2nb(knearneigh(centroides, k = k))
   nb2listw(nb, style = "W")
@@ -202,6 +224,7 @@ variantes <- list(
   "k = 10 voisins"   = mk(10)
 )
 
+# Tableau comparatif : I et p pour chaque schéma de voisinage.
 purrr::imap_dfr(variantes, \(W, lab) {
   m <- moran.test(adm2_all$n_facilites, W, zero.policy = TRUE)
   tibble(voisinage = lab,
@@ -221,12 +244,14 @@ toujours documenter la matrice de poids dans une publication et tester la
 
 ```{r}
 #| label: q5
+# Calcul du Moran local + p-valeurs pour chaque département.
 lisa <- localmoran(adm2_all$n_facilites, W_queen, zero.policy = TRUE)
 
 adm2_all$lisa_p <- lisa[, "Pr(z != E(Ii))"]
-z_v   <- as.numeric(scale(adm2_all$n_facilites))
-z_lag <- as.numeric(lag.listw(W_queen, z_v, zero.policy = TRUE))
+z_v   <- as.numeric(scale(adm2_all$n_facilites))           # valeur centrée-réduite
+z_lag <- as.numeric(lag.listw(W_queen, z_v, zero.policy = TRUE)) # moyenne voisins
 
+# Classement final : 4 quadrants significatifs + "Non significatif".
 adm2_all$quadrant <- case_when(
   z_v > 0 & z_lag > 0 & adm2_all$lisa_p < 0.05 ~ "HH – Cluster équipé",
   z_v < 0 & z_lag < 0 & adm2_all$lisa_p < 0.05 ~ "LL – Désert médical",
@@ -235,7 +260,7 @@ adm2_all$quadrant <- case_when(
   TRUE                                          ~ "Non significatif"
 )
 
-# Liste des déserts médicaux confirmés
+# Liste à transmettre : déserts médicaux confirmés statistiquement (LL).
 adm2_all |>
   st_drop_geometry() |>
   filter(quadrant == "LL – Désert médical") |>
@@ -256,22 +281,24 @@ On reconstruit `n_pharmacies` par département puis on rejoue Moran + LISA.
 
 ```{r}
 #| label: q6-pharm
+# Sous-jeu : pharmacies uniquement.
 pharm_sf <- points_sf |>
   st_as_sf() |>
   filter(etabs$categorie == "Pharmacie")
 
 cat("Pharmacies OSM Cameroun :", nrow(pharm_sf), "\n")
 
+# Agrégation par département (helper défini en setup).
 adm2_pharm <- n_par_dep(pharm_sf, adm2, var_name = "n_pharmacies")
 
-# Stats descriptives
+# Top 10 départements les plus pharmaceuticalisés.
 adm2_pharm |>
   st_drop_geometry() |>
   arrange(desc(n_pharmacies)) |>
   select(NAME_1, NAME_2, n_pharmacies) |>
   head(10)
 
-# Moran's I sur n_pharmacies (même matrice que Q3)
+# Moran's I sur n_pharmacies (contiguïté queen, comme Q3 pour comparaison).
 nb_p <- poly2nb(adm2_pharm, queen = TRUE)
 W_p  <- nb2listw(nb_p, style = "W", zero.policy = TRUE)
 m_pharm <- moran.test(adm2_pharm$n_pharmacies, W_p, zero.policy = TRUE)
@@ -285,11 +312,13 @@ cat("Moran's I (n_pharmacies par dep.) :",
 #| label: q6-lisa-pharm
 #| fig-width: 9
 #| fig-height: 7
+# Pipeline LISA complet sur n_pharmacies.
 lisa_p <- localmoran(adm2_pharm$n_pharmacies, W_p, zero.policy = TRUE)
 adm2_pharm$lisa_p <- lisa_p[, "Pr(z != E(Ii))"]
 z_v   <- as.numeric(scale(adm2_pharm$n_pharmacies))
 z_lag <- as.numeric(lag.listw(W_p, z_v, zero.policy = TRUE))
 
+# Classement 4 quadrants × significativité (mêmes codes que démos).
 adm2_pharm$quadrant <- case_when(
   z_v > 0 & z_lag > 0 & adm2_pharm$lisa_p < 0.05 ~ "HH",
   z_v < 0 & z_lag < 0 & adm2_pharm$lisa_p < 0.05 ~ "LL",
@@ -298,16 +327,25 @@ adm2_pharm$quadrant <- case_when(
   TRUE                                            ~ "NS"
 )
 
+# Carte LISA dédiée pharmacies : palette divergente identique à Q5.
 ggplot(adm2_pharm) +
   geom_sf(aes(fill = quadrant), color = "white", linewidth = 0.2) +
-  scale_fill_manual(values = c(HH="#C0392B", LL="#2980B9",
-                                HL="#E67E22", LH="#8E44AD", NS="#BDC3C7")) +
-  labs(title = "LISA — pharmacies OSM par département",
-       subtitle = "Comparaison avec Q5 : déserts pharmaceutiques ≠ déserts médicaux ?",
-       caption = "© OpenStreetMap (ODbL) · GADM v4.1") +
+  scale_fill_manual(name = "Quadrant LISA\n(p < 0.05)",
+                    values = c(HH="#C0392B", LL="#2980B9",
+                                HL="#E67E22", LH="#8E44AD", NS="#BDC3C7"),
+                    labels = c(HH="HH - Cluster pharmaceutique",
+                               LL="LL - Désert pharmaceutique",
+                               HL="HL - Ilot pharmaceutique",
+                               LH="LH - Carence pharmaceutique",
+                               NS="Non significatif")) +
+  labs(title = "Clusters LISA des pharmacies OSM par département",
+       subtitle = "Méthode : Local Moran's I sur n_pharmacies · Comparaison avec Q5 (toutes facilités)",
+       caption = "Source : OpenStreetMap Overpass · GADM v4.1 · IFORD x GDSG 2026",
+       x = NULL, y = NULL) +
   theme_minimal() +
   theme(axis.text = element_blank(), axis.ticks = element_blank(),
-        panel.grid = element_blank())
+        panel.grid = element_blank(),
+        plot.title = element_text(face = "bold"))
 ```
 
 ## Lecture pour le MINSANTÉ

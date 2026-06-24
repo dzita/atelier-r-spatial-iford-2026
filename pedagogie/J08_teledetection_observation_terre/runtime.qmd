@@ -2,6 +2,16 @@
 title: "J8 — Télédétection et observation de la Terre"
 subtitle: "Code R exécutable dans le navigateur — Yagoua EMSR772"
 engine: knitr
+webr:
+  packages:
+    - sf
+    - dplyr
+    - ggplot2
+    - scales
+  resources:
+    - ../_commons/data/jour_08_extraits/aoi01_yagoua.geojson
+    - ../_commons/data/jour_08_extraits/flood01_yagoua.geojson
+    - ../_commons/data/jour_08_extraits/batiments_yagoua.geojson
 ---
 
 ::: {.iford-callout}
@@ -18,21 +28,25 @@ engine: knitr
 
 ```{webr}
 #| autorun: true
+# sf = vecteurs spatiaux ; dplyr = manipulation tableaux ;
+# ggplot2 = graphiques ; scales = formatage des nombres dans les axes.
 library(sf)
 library(dplyr)
 library(ggplot2)
 library(scales)
 
-# Charger le polygone AOI01 (zone d'intérêt Yagoua)
-download.file("../_commons/data/jour_08_extraits/aoi01_yagoua.geojson",
-              "aoi01.geojson", mode = "wb")
-# Charger les polygones d'inondation
-download.file("../_commons/data/jour_08_extraits/flood01_yagoua.geojson",
-              "flood01.geojson", mode = "wb")
+# La télédétection (= mesure depuis satellite, sans contact au sol) fournit
+# ici deux couches Copernicus EMS pour l'activation EMSR772 (inondations
+# Yagoua, nord-Cameroun, octobre 2024) : la zone d'analyse (AOI01) et les
+# polygones d'inondation classés par profondeur.
+# st_make_valid() répare les géométries invalides (vertices dupliqués),
+# fréquentes dans les shapefiles Copernicus livrés en urgence.
+aoi01   <- read_sf("_commons/data/jour_08_extraits/aoi01_yagoua.geojson") |>
+  st_make_valid()
+flood01 <- read_sf("_commons/data/jour_08_extraits/flood01_yagoua.geojson") |>
+  st_make_valid()
 
-aoi01   <- read_sf("aoi01.geojson")   |> st_make_valid()
-flood01 <- read_sf("flood01.geojson") |> st_make_valid()
-
+# st_area() retourne la surface en m² → division par 1e6 pour passer en km².
 cat("AOI01 (Yagoua) :\n")
 cat("  Surface AOI    :", round(as.numeric(st_area(aoi01)) / 1e6, 1), "km²\n")
 cat("  Surface inondée :",
@@ -44,17 +58,24 @@ print(table(flood01$value))
 ## 2. Visualiser zone et inondation
 
 ```{webr}
+# Deux couches geom_sf empilées : (1) contour AOI en bleu transparent,
+# (2) polygones d'inondation coloriés selon la tranche de profondeur.
+# Palette YlOrRd (jaune→orange→rouge) = standard pour les aléas
+# d'intensité croissante (recommandé par ColorBrewer pour les phénomènes
+# climatiques séquentiels).
 ggplot() +
   geom_sf(data = aoi01, fill = "lightblue", alpha = 0.3,
           colour = "steelblue", linewidth = 1) +
   geom_sf(data = flood01, aes(fill = value),
           colour = NA, alpha = 0.85) +
   scale_fill_brewer(palette = "YlOrRd", name = "Profondeur (m)") +
-  labs(title    = "EMSR772 AOI01 — Yagoua, profondeurs d'inondation",
-       subtitle = "Source : Copernicus Emergency Management Service") +
+  labs(title    = "Profondeurs d'inondation — AOI01 Yagoua (oct. 2024)",
+       subtitle = "EMSR772 v2 · Copernicus Emergency Management Service",
+       caption  = "Source : Copernicus EMSR772 v2 · IFORD x GDSG 2026") +
   theme_minimal() +
   theme(axis.text = element_blank(), axis.ticks = element_blank(),
-        panel.grid = element_blank())
+        panel.grid = element_blank(),
+        plot.title = element_text(face = "bold"))
 ```
 
 ## 3. Charger l'extrait de bâtiments Open Buildings
@@ -63,10 +84,11 @@ L'extrait Open Buildings restreint à la zone Yagoua (~5 000-15 000 bâtiments) 
 
 ```{webr}
 #| autorun: true
-download.file("../_commons/data/jour_08_extraits/batiments_yagoua.geojson",
-              "batiments.geojson", mode = "wb")
-
-batiments <- read_sf("batiments.geojson")
+# Google Open Buildings v3 (Sirko et al. 2021) : empreintes de bâtiments
+# détectées par un modèle de machine learning sur l'imagerie haute
+# résolution (~50 cm). Le seuil confidence >= 0.7 est le filtre standard
+# recommandé pour usage statistique (rejette les faux positifs).
+batiments <- read_sf("_commons/data/jour_08_extraits/batiments_yagoua.geojson")
 cat("Bâtiments dans la zone (confidence >= 0.7) :",
     format(nrow(batiments), big.mark = " "), "\n")
 ```
@@ -74,11 +96,15 @@ cat("Bâtiments dans la zone (confidence >= 0.7) :",
 ## 4. Bâtiments dans la zone AOI01
 
 ```{webr}
-# Reprojeter au CRS d'aoi01 si nécessaire
+# Règle de base SIG : pour comparer ou croiser deux couches, elles doivent
+# être dans le même système de coordonnées (CRS). On reprojette donc les
+# bâtiments dans le CRS de l'AOI Copernicus.
 if (st_crs(batiments) != st_crs(aoi01)) {
   batiments <- st_transform(batiments, st_crs(aoi01))
 }
 
+# st_filter() = intersection spatiale : garde de x les éléments qui
+# touchent y. Ici, on ne conserve que les bâtiments situés dans l'AOI01.
 batiments_aoi01 <- st_filter(batiments, aoi01)
 cat("Bâtiments dans AOI01 :",
     format(nrow(batiments_aoi01), big.mark = " "), "\n")
@@ -87,6 +113,9 @@ cat("Bâtiments dans AOI01 :",
 ## 5. Estimation de la population dans AOI01
 
 ```{webr}
+# Estimation rapide population = nb bâtiments × taille moyenne ménage.
+# 5 pers./bâtiment est calibré sur la DHS Cameroun 2018 (taille moyenne
+# de ménage ~5,5 personnes au niveau national).
 pers_par_batiment <- 5
 pop_aoi01 <- nrow(batiments_aoi01) * pers_par_batiment
 
@@ -100,6 +129,8 @@ cat("  (hypothèse : 5 personnes par bâtiment, calibrée DHS 2018)\n")
 `st_filter(batiments_aoi01, flood01)` garde les bâtiments dont la géométrie intersecte au moins un polygone d'inondation.
 
 ```{webr}
+# Deuxième st_filter() pour ne retenir que les bâtiments qui intersectent
+# au moins un polygone d'inondation : ce sont les bâtiments exposés.
 batiments_inondes <- st_filter(batiments_aoi01, flood01)
 pop_inondee <- nrow(batiments_inondes) * pers_par_batiment
 
@@ -122,6 +153,9 @@ bilan
 ## 7. Carte combinée — bâtiments + inondation
 
 ```{webr}
+# Superposition de 4 couches : contour AOI, polygones flood colorés,
+# tous les bâtiments en gris, puis bâtiments exposés en rouge par-dessus.
+# Le sous-titre dynamique donne directement le chiffre clé au lecteur.
 ggplot() +
   geom_sf(data = aoi01, fill = NA, colour = "steelblue", linewidth = 1) +
   geom_sf(data = flood01, aes(fill = value),
@@ -131,19 +165,25 @@ ggplot() +
   geom_sf(data = batiments_inondes, colour = "red",
           size = 0.4, alpha = 0.8) +
   scale_fill_brewer(palette = "YlOrRd", name = "Profondeur (m)") +
-  labs(title    = "Yagoua AOI01 — Bâtiments exposés aux inondations",
-       subtitle = paste("Rouge :", format(nrow(batiments_inondes), big.mark = " "),
-                        "bâtiments touchés sur",
-                        format(nrow(batiments_aoi01), big.mark = " "), "total"),
-       caption  = "Sources : Copernicus EMSR772 · Google Open Buildings") +
+  labs(title    = "Bâtiments exposés aux inondations — AOI01 Yagoua, 2024",
+       subtitle = paste0(
+         "EMSR772 v2 + Open Buildings v3 · Rouge : ",
+         format(nrow(batiments_inondes), big.mark = " "),
+         " bâtiments touchés / ",
+         format(nrow(batiments_aoi01), big.mark = " "), " total"),
+       caption  = "Sources : Copernicus EMSR772 v2 · Google Open Buildings v3 · IFORD x GDSG 2026") +
   theme_minimal() +
   theme(axis.text = element_blank(), axis.ticks = element_blank(),
-        panel.grid = element_blank())
+        panel.grid = element_blank(),
+        plot.title = element_text(face = "bold"))
 ```
 
 ## 8. Ventilation par classe de profondeur
 
 ```{webr}
+# st_join() = jointure spatiale : récupère, pour chaque bâtiment touché,
+# la classe de profondeur du polygone d'inondation qui le contient.
+# Permet ensuite de ventiler la population estimée par tranche de risque.
 batiments_inondes_depth <- st_join(batiments_inondes, flood01["value"])
 
 batiments_inondes_depth |>

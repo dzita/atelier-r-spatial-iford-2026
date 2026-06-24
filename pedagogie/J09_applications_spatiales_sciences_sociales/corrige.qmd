@@ -25,6 +25,9 @@ Conception pédagogique complète : Edith Darin (GDSG/IFORD). Bascule convention
 
 ```{r}
 #| label: setup
+# sf = vecteurs (points ACLED, polygones GADM), dplyr/tidyr = manipulation,
+# ggplot2 = graphiques, tmap = cartes, terra = raster ERA5 NetCDF,
+# exactextractr = stats zonales pour agreger raster -> polygones.
 library(sf); library(dplyr); library(tidyr); library(ggplot2); library(readr)
 library(tmap); library(scales); library(terra); library(exactextractr); library(tibble)
 
@@ -38,6 +41,10 @@ annee_min      <- annee_courante - 10
 
 ```{r}
 #| label: q1
+# ACLED = Armed Conflict Location & Event Data Project. Base mondiale
+# d'evenements de conflit (1 ligne = 1 evenement GEOCODE en lat/lon).
+# glimpse() = aperçu vertical : 1 ligne par colonne avec son type
+# (chr, dbl, date) et les premieres valeurs.
 acled_brut <- read_csv(fetch_acled_cmr(), show_col_types = FALSE)
 glimpse(acled_brut)
 ```
@@ -51,6 +58,8 @@ glimpse(acled_brut)
 
 ```{r}
 #| label: q2
+# Conversion explicite des types (CSV ACLED arrive en texte) puis
+# filtre des lignes sans coordonnees (impossibles a cartographier).
 acled_clean <- acled_brut |>
   mutate(
     event_date = as.Date(event_date),
@@ -94,10 +103,17 @@ acled_clean |> count(admin1, sort = TRUE, name = "n_evenements")
 #| label: q4-annuel
 #| fig-width: 9
 #| fig-height: 5
+# AGREGATION TEMPORELLE annuelle : 1 ligne par couple (annee, event_type).
 resume_annuel <- acled_clean |> count(annee, event_type, name = "n_evenements")
 ggplot(resume_annuel, aes(x = annee, y = n_evenements, fill = event_type)) +
   geom_col() + scale_fill_brewer(palette = "Set2") + theme_minimal() +
-  labs(title = "Evolution annuelle des conflits Cameroun", fill = "Type")
+  labs(title    = "Evolution annuelle des conflits - Cameroun",
+       subtitle = paste0("Source ACLED ", min(resume_annuel$annee), "-",
+                         max(resume_annuel$annee),
+                         " - agregation annuelle par type d'evenement"),
+       x = "Annee", y = "Nombre d'evenements (n)",
+       fill = "Type d'evenement",
+       caption = "Source : ACLED Project - IFORD x GDSG 2026")
 ```
 
 **Réponses** :
@@ -109,12 +125,15 @@ ggplot(resume_annuel, aes(x = annee, y = n_evenements, fill = event_type)) +
 
 ```{r}
 #| label: q5
+# GEOCODAGE : conversion data.frame -> sf via st_as_sf, CRS EPSG:4326
+# (WGS84 lat/lon, natif ACLED). GADM v4.1 : ADM0 = pays, ADM1 = regions.
 acled_pts <- st_as_sf(acled_clean,
                       coords = c("longitude", "latitude"),
                       crs = 4326, remove = FALSE)
 cmr0 <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_0", quiet = TRUE)
 cmr1 <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_1", quiet = TRUE)
 
+# AGREGATION SPATIALE ADM1 par jointure spatiale st_within.
 resume_par_region <- acled_pts |>
   st_join(cmr1[c("NAME_1")], join = st_within) |>
   st_drop_geometry() |>
@@ -159,9 +178,13 @@ write_csv(resume_par_region, file.path(out_dir, "jour09_acled_resume.csv"))
 ```{r}
 #| label: q8
 #| eval: false
+# ERA5 = reanalyse climatique Copernicus livree au format NetCDF (.nc).
+# terra::rast() lit le fichier en STACK MULTI-COUCHES (1 couche = 1 mois).
 era5_brut <- rast(fetch_era5_t2m_cmr())
 cat("Couches :", nlyr(era5_brut), "\n")
 cat("Résolution :", paste(res(era5_brut), collapse = " × "), "\n")
+# ERA5 publie en KELVIN : conversion en °C par soustraction de 273.15
+# (0 K = -273.15 °C = zero absolu, l'absence totale d'agitation thermique).
 era5_celsius <- era5_brut - 273.15
 ```
 

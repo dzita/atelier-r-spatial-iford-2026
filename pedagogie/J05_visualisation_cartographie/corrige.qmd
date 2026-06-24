@@ -23,6 +23,8 @@ Si tu n'as pas tenté l'exercice : ferme ce fichier.
 
 ```{r}
 #| label: setup
+# Bloc setup identique à demo.qmd : on reconstruit adm1_indic
+# (polygones GADM ADM1 + indicateurs DHS 2018 joints par clé normalisée).
 library(sf)
 library(dplyr)
 library(tibble)
@@ -35,6 +37,7 @@ source("../_commons/helpers/fetch_data.R")
 source("../_commons/helpers/theme_iford.R")
 setup_tmap_iford()
 
+# Polygones ADM1 + CSV DHS produits par srvyr.
 adm1 <- read_sf(fetch_gadm_cameroon(1))
 
 dhs <- read_csv(
@@ -42,6 +45,7 @@ dhs <- read_csv(
   show_col_types = FALSE
 )
 
+# Long -> wide + renommage des codes techniques DHS.
 dhs_wide <- dhs |>
   select(region, indicateur, valeur) |>
   pivot_wider(names_from = indicateur, values_from = valeur) |>
@@ -53,11 +57,13 @@ dhs_wide <- dhs |>
     taille_menage    = HC_HHSZ_H_AVG
   )
 
+# Normalisation pour jointure : retire accents et ponctuation.
 norm <- function(x) {
   x |> iconv(from = "UTF-8", to = "ASCII//TRANSLIT") |>
        tolower() |>
        gsub("[^a-z0-9]", "", x = _)
 }
+# Cas spéciaux anglais -> français.
 dict <- c(northwest="nordouest", southwest="sudouest", farnorth="extremenord",
           north="nord", south="sud", east="est", west="ouest",
           centre="centre", littoral="littoral",
@@ -67,6 +73,7 @@ normalize <- function(x) {
   ifelse(v %in% names(dict), dict[v], v)
 }
 
+# Clé commune dans les deux tables puis jointure en projection Lambert.
 adm1$region_key     <- normalize(adm1$NAME_1)
 dhs_wide$region_key <- normalize(dhs_wide$region)
 
@@ -83,16 +90,24 @@ adm1_indic <- adm1 |>
 #| label: q1
 #| fig-width: 8
 #| fig-height: 6
+# Palette Blues séquentielle : cohérence sémiotique (bleu = eau).
+# Jenks 5 classes : standard pour variables continues sans rupture forte.
 tm_shape(adm1_indic) +
   tm_polygons(
     fill = "tx_eau_ameliore",
     fill.scale = tm_scale_intervals(style = "jenks", n = 5, values = "brewer.blues"),
-    fill.legend = tm_legend("% ménages\neau améliorée"),
+    fill.legend = tm_legend("% ménages\neau améliorée (%)"),
     col = "white", lwd = 0.3
   ) +
   tm_text("NAME_1", size = 0.55, col = "grey20", fontface = "bold") +
-  tm_title("Accès à l'eau améliorée par région — Cameroun 2018 (EDS-MICS)",
-           position = c("left", "top"))
+  tm_compass(type = "arrow", position = c("right", "top"), size = 1) +
+  tm_scalebar(position = c("left", "bottom"), breaks = c(0, 100, 200)) +
+  tm_title("Accès des ménages à l'eau améliorée par région — Cameroun 2018",
+           position = c("left", "top")) +
+  tm_credits(paste("Source : EDS-MICS Cameroun 2018 (DHS Program) ·",
+                   "GADM v4.1 · classification Jenks ·",
+                   "projection Lambert EPSG:3119 · IFORD x GDSG 2026"),
+             position = c("right", "bottom"), size = 0.45)
 ```
 
 **Lecture critique** : sur le vrai EDS-MICS 2018, le Littoral (Douala) et le Centre (Yaoundé) sont en tête (>85 %), l'Extrême-Nord et l'Est ferment la marche (<55 %). Conforme aux gradients de développement humain camerounais documentés par l'INS et l'UNICEF.
@@ -103,21 +118,25 @@ tm_shape(adm1_indic) +
 #| label: q2
 #| fig-width: 14
 #| fig-height: 6
+# Helper compact : 3 cartes "taille_menage" avec 3 méthodes de classification.
+# Palette Greens séquentielle = variable continue ascendante.
 faire <- function(style, titre) {
   tm_shape(adm1_indic) +
     tm_polygons(
       fill = "taille_menage",
       fill.scale = tm_scale_intervals(style = style, n = 4, values = "brewer.greens"),
-      fill.legend = tm_legend("pers/ménage"),
+      fill.legend = tm_legend("pers/ménage\n(ratio)"),
       col = "white", lwd = 0.3
     ) +
+    tm_text("NAME_1", size = 0.4, col = "grey20") +
     tm_title(titre, position = c("left", "top"), size = 0.9)
 }
 
+# 3 colonnes : permet de balayer rapidement les différences inter-méthodes.
 tmap_arrange(
-  faire("equal",    "Intervalles égaux"),
-  faire("quantile", "Quantiles"),
-  faire("jenks",    "Jenks"),
+  faire("equal",    "a. Intervalles égaux"),
+  faire("quantile", "b. Quantiles"),
+  faire("jenks",    "c. Jenks (Fisher)"),
   ncol = 3
 )
 ```
@@ -130,9 +149,12 @@ tmap_arrange(
 #| label: q3
 #| fig-width: 8
 #| fig-height: 6
+# On crée d'abord la variable d'écart (valeur - moyenne du pays).
+# Variable centrée sur 0 -> palette DIVERGENTE (rouge négatif / bleu positif).
 adm1_indic <- adm1_indic |>
   mutate(ecart_alpha = tx_alpha_femmes - mean(tx_alpha_femmes, na.rm = TRUE))
 
+# midpoint = 0 garantit que la couleur neutre s'aligne sur l'absence d'écart.
 tm_shape(adm1_indic) +
   tm_polygons(
     fill = "ecart_alpha",
@@ -141,12 +163,18 @@ tm_shape(adm1_indic) +
       values = "brewer.rd_bu",
       midpoint = 0
     ),
-    fill.legend = tm_legend("Écart à la\nmoyenne nat. (%)"),
+    fill.legend = tm_legend("Écart à la\nmoyenne nat. (points %)"),
     col = "white", lwd = 0.3
   ) +
   tm_text("NAME_1", size = 0.55, col = "grey20", fontface = "bold") +
-  tm_title("Alphabétisation femmes : écart à la moyenne nationale (Cameroun 2018)",
-           position = c("left", "top"))
+  tm_compass(type = "arrow", position = c("right", "top"), size = 1) +
+  tm_scalebar(position = c("left", "bottom"), breaks = c(0, 100, 200)) +
+  tm_title("Alphabétisation des femmes 15-49 ans : écart à la moyenne nationale",
+           position = c("left", "top")) +
+  tm_credits(paste("Source : EDS-MICS Cameroun 2018 (DHS Program) ·",
+                   "GADM v4.1 · palette divergente RdBu centrée sur 0 ·",
+                   "IFORD x GDSG 2026"),
+             position = c("right", "bottom"), size = 0.45)
 ```
 
 **Quand utiliser la palette divergente** : quand la variable s'interprète comme un **écart à un centre sémantiquement chargé** (moyenne nationale, seuil réglementaire, valeur de référence). Le centre 0 est neutre, le rouge / bleu indique le sens et l'amplitude.
@@ -156,13 +184,15 @@ tm_shape(adm1_indic) +
 ```{r}
 #| label: q4
 #| eval: false
+# Mode interactif Leaflet. popup.vars liste les attributs affichés au clic.
+# tm_basemap fixe le fond de carte (OSM ici, voir tmaptools::providers pour la liste).
 tmap_mode("view")
 
 carte_int <- tm_shape(adm1_indic) +
   tm_polygons(
     fill = "tx_alpha_femmes",
     fill.scale = tm_scale_intervals(style = "jenks", n = 5, values = "brewer.yl_or_rd"),
-    fill_alpha = 0.7,
+    fill_alpha = 0.7,  # transparence pour voir OSM sous les polygones.
     popup.vars = c(
       "Région" = "NAME_1",
       "% femmes alpha." = "tx_alpha_femmes",
@@ -176,6 +206,7 @@ carte_int <- tm_shape(adm1_indic) +
 
 carte_int
 
+# IMPORTANT : revenir en mode plot, sinon les cartes suivantes seront interactives.
 tmap_mode("plot")
 ```
 
@@ -187,17 +218,20 @@ Zoom Littoral / Extrême-Nord : OSM révèle Douala dense (port, axes routiers, 
 #| label: q5
 #| fig-width: 9
 #| fig-height: 7
+# ggspatial fournit ce qui manque à ggplot2 natif : flèche du nord + barre d'échelle.
 library(ggspatial)
 
 ggplot(adm1_indic) +
   geom_sf(aes(fill = tx_alpha_femmes), color = "white", linewidth = 0.3) +
-  scale_fill_viridis_c(option = "D", name = "% femmes\nalphabétisées") +
-  geom_sf_label(aes(label = NAME_1), size = 2.3,
-                color = "white", fontface = "bold") +
+  scale_fill_viridis_c(option = "D", name = "% femmes\nalphabétisées (%)") +
+  geom_sf_label(aes(label = NAME_1), size = 2.3, colour = "black",
+                fill = scales::alpha("white", 0.75), label.size = 0,
+                fontface = "bold", label.padding = unit(0.1, "lines")) +
   annotation_north_arrow(location = "tr", style = north_arrow_minimal()) +
   annotation_scale(location = "bl") +
-  labs(title = "Alphabétisation femmes 15-49 ans — Cameroun 2018",
-       subtitle = "EDS-MICS 2018, projection Lambert (EPSG:3119)") +
+  labs(title = "Alphabétisation des femmes 15-49 ans par région — Cameroun 2018",
+       subtitle = "ggplot2 + ggspatial · palette viridis · projection Lambert EPSG:3119",
+       caption = "Source : EDS-MICS Cameroun 2018 (DHS Program) · GADM v4.1 · IFORD x GDSG 2026") +
   theme_minimal() +
   theme(axis.text = element_blank(), axis.ticks = element_blank(),
         panel.grid = element_blank())
@@ -209,20 +243,29 @@ ggplot(adm1_indic) +
 #| label: q6
 #| fig-width: 9
 #| fig-height: 7
+# Carte de production complète : les SEPT éléments d'habillage obligatoires.
+# 1. fill séquentiel Blues (cohérence sémiotique : eau).
+# 2. Classification quantile (distribution resserrée 55-88 %).
+# 3. Contours blancs : lisibilité des frontières.
+# 4. Étiquettes des régions.
+# 5. Flèche du nord + 6. Barre d'échelle.
+# 7. Titre question + crédits sourcés.
 ma_carte <- tm_shape(adm1_indic) +
   tm_polygons(
     fill        = "tx_eau_ameliore",
     fill.scale  = tm_scale_intervals(style = "quantile", n = 5, values = "brewer.blues"),
-    fill.legend = tm_legend("% ménages\neau améliorée"),
+    fill.legend = tm_legend("% ménages\neau améliorée (%)"),
     col = "white", lwd = 0.4
   ) +
   tm_text("NAME_1", size = 0.55, col = "grey20", fontface = "bold") +
   tm_compass(type = "arrow", position = c("right", "top"), size = 1.2) +
-  tm_scalebar(position = c("left", "bottom")) +
-  tm_title("Quel est le taux d'accès à l'eau améliorée par région ?",
+  tm_scalebar(position = c("left", "bottom"), breaks = c(0, 100, 200)) +
+  tm_title("Quel est le taux d'accès à l'eau améliorée par région au Cameroun en 2018 ?",
            position = c("left", "top")) +
-  tm_credits("EDS-MICS Cameroun 2018 (DHS StatCompiler) | Classification quantile | GADM v4.1\nIFORD × GDSG 2026 — CC-BY 4.0",
-             position = c("right", "bottom"), size = 0.45)
+  tm_credits(paste("Source : EDS-MICS Cameroun 2018 (DHS Program) ·",
+                   "GADM v4.1 · classification quantile (5 classes) ·",
+                   "projection Lambert EPSG:3119 · IFORD x GDSG 2026 (CC-BY 4.0)"),
+             position = c("right", "bottom"), size = 0.4)
 
 ma_carte
 ```
@@ -230,6 +273,7 @@ ma_carte
 ```{r}
 #| label: q6-export
 #| eval: false
+# Triple export : PNG 300 dpi pour PowerPoint, PDF vectoriel pour publication.
 out_dir <- here("pedagogie", "J05_visualisation_cartographie", "outputs")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 

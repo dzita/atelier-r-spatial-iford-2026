@@ -33,6 +33,17 @@ On charge les packages du jour, le helper IFORD pour les chemins de fichiers, et
 
 ```{r}
 #| label: setup
+# Pile complete J9 :
+#   sf            = couches vectorielles (points ACLED, polygones GADM)
+#   dplyr/tidyr   = manipulation de tableaux (filter, mutate, pivot_longer)
+#   ggplot2       = graphiques et cartes (geom_sf, geom_col, geom_line)
+#   readr         = lecture rapide et stricte des CSV (read_csv)
+#   tmap          = cartes thematiques (mode "plot" PNG, ou "view" leaflet)
+#   scales        = formatage des axes (separateur de milliers, %, dates)
+#   terra         = raster (rast pour lire les NetCDF ERA5, crop, mask)
+#   exactextractr = statistiques zonales pour agreger un raster sur des
+#                   polygones (moyenne, somme, max ponderes par surface)
+#   tibble        = tableaux modernes du tidyverse
 library(sf)
 library(dplyr)
 library(tidyr)
@@ -103,6 +114,14 @@ Pour l'atelier, on utilise l'**export CSV** déjà déposé par Edith (qui couvr
 
 ```{r}
 #| label: ex1-load
+# ACLED = Armed Conflict Location & Event Data Project : base mondiale
+# de reference (academique + humanitaire) sur les evenements de conflit
+# arme. Chaque ligne = 1 evenement GEOCODE (latitude/longitude en degres
+# decimaux), avec sa date, son type, ses acteurs et le nombre de deces.
+#
+# fetch_acled_cmr() = helper IFORD qui retourne le chemin du CSV ACLED
+# (telecharge depuis le Drive partage si absent en local, sinon reutilise
+# la copie deja presente). Permet un code portable d'un poste a l'autre.
 acled_brut <- read_csv(fetch_acled_cmr(), show_col_types = FALSE)
 
 cat("Dimensions ACLED :", nrow(acled_brut), "lignes ×",
@@ -118,11 +137,13 @@ ACLED publie tout en chaînes de caractères dans le CSV. Conversion explicite d
 
 ```{r}
 #| label: ex2-clean
+# Conversion explicite des types (le CSV ACLED arrive en colonnes texte)
+# puis suppression des lignes sans coordonnees (impossibles a cartographier).
 acled_clean <- acled_brut |>
   mutate(
     event_date = as.Date(event_date),
     annee      = as.integer(year),
-    mois       = format(event_date, "%Y-%m"),
+    mois       = format(event_date, "%Y-%m"),   # cle d'agregation mensuelle
     fatalities = as.numeric(fatalities),
     longitude  = as.numeric(longitude),
     latitude   = as.numeric(latitude)
@@ -149,12 +170,20 @@ if (min(acled_clean$annee) <= annee_min) {
 
 ```{r}
 #| label: ex3-explorer
+# event_type = typologie ACLED standardisee a 6 categories :
+#   - Battles                       : affrontements armes entre groupes
+#   - Violence against civilians    : exactions contre des civils
+#   - Riots                         : emeutes violentes
+#   - Protests                      : manifestations pacifiques
+#   - Strategic developments        : declarations, mouvements de troupes
+#   - Explosions / Remote violence  : bombes, drones, artillerie
 acled_clean |>
   count(event_type, sort = TRUE, name = "n_evenements")
 ```
 
 ```{r}
 #| label: ex3-admin1
+# admin1 = niveau region dans ACLED (aligne avec ADM1 GADM Cameroun).
 acled_clean |>
   count(admin1, sort = TRUE, name = "n_evenements")
 ```
@@ -173,6 +202,9 @@ Les régions septentrionales (Extrême-Nord) dominent en raison de **Boko Haram*
 #| label: ex4a-annuel
 #| fig-width: 10
 #| fig-height: 6
+# AGREGATION TEMPORELLE = on resume des evenements ponctuels (1 ligne =
+# 1 evenement avec sa date) en serie agregee. Ici grain ANNUEL + ventile
+# par type : 1 ligne par couple (annee, event_type) avec son comptage.
 resume_annuel <- acled_clean |>
   count(annee, event_type, name = "n_evenements")
 
@@ -183,9 +215,12 @@ ggplot(resume_annuel,
     breaks = seq(min(resume_annuel$annee), max(resume_annuel$annee), by = 1)
   ) +
   scale_fill_brewer(palette = "Set2") +
-  labs(title    = "Évolution annuelle des conflits au Cameroun",
-       subtitle = "Source : ACLED",
-       x = "Année", y = "Nombre d'événements", fill = "Type") +
+  labs(title    = "Evolution annuelle des conflits au Cameroun",
+       subtitle = paste0("Source ACLED ", min(resume_annuel$annee), "-",
+                         max(resume_annuel$annee),
+                         " - agregation annuelle par type d'evenement"),
+       x = "Annee", y = "Nombre d'evenements (n)", fill = "Type d'evenement",
+       caption  = "Source : ACLED Project - IFORD x GDSG 2026") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
@@ -196,6 +231,8 @@ ggplot(resume_annuel,
 #| label: ex4b-mensuel
 #| fig-width: 12
 #| fig-height: 5
+# Agregation temporelle mensuelle (cle "YYYY-MM") : grain plus fin pour
+# detecter les pics saisonniers ou les flambees ponctuelles.
 resume_mensuel <- acled_clean |>
   count(mois, event_type, name = "n_evenements")
 
@@ -203,8 +240,13 @@ ggplot(resume_mensuel,
        aes(x = mois, y = n_evenements, fill = event_type)) +
   geom_col() +
   scale_fill_brewer(palette = "Set2") +
-  labs(title = "Évolution mensuelle des conflits au Cameroun",
-       x = "Mois", y = "Nombre d'événements", fill = "Type") +
+  labs(title    = "Evolution mensuelle des conflits au Cameroun",
+       subtitle = paste0("Source ACLED ", min(resume_mensuel$mois), " a ",
+                         max(resume_mensuel$mois),
+                         " - agregation mensuelle par type"),
+       x = "Mois (YYYY-MM)", y = "Nombre d'evenements (n)",
+       fill = "Type d'evenement",
+       caption = "Source : ACLED Project - IFORD x GDSG 2026") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 7))
 ```
@@ -215,6 +257,8 @@ ggplot(resume_mensuel,
 #| label: ex4c-deces
 #| fig-width: 8
 #| fig-height: 5
+# Cumul annuel des deces declares (sum sur fatalities). Comparer avec la
+# courbe d'evenements : massacre unique vs nombreux evenements moins letaux.
 resume_deces <- acled_clean |>
   group_by(annee) |>
   summarise(deces = sum(fatalities, na.rm = TRUE), .groups = "drop")
@@ -225,8 +269,12 @@ ggplot(resume_deces, aes(x = annee, y = deces)) +
   scale_x_continuous(
     breaks = seq(min(resume_deces$annee), max(resume_deces$annee), by = 1)
   ) +
-  labs(title = "Décès liés aux conflits au Cameroun (source : ACLED)",
-       x = "Année", y = "Nombre de décès") +
+  labs(title    = "Deces lies aux conflits au Cameroun",
+       subtitle = paste0("Source ACLED ", min(resume_deces$annee), "-",
+                         max(resume_deces$annee),
+                         " - somme annuelle des deces declares"),
+       x = "Annee", y = "Nombre de deces (n)",
+       caption = "Source : ACLED Project - IFORD x GDSG 2026") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
@@ -243,6 +291,11 @@ Sur quelles années les pics de **décès** sont-ils les plus marqués ? Coïnci
 
 ```{r}
 #| label: ex5-conversion
+# GEOCODAGE : chaque evenement ACLED a une paire (latitude, longitude)
+# en degres decimaux. st_as_sf transforme ce data.frame classique en
+# couche spatiale sf (qu'on peut cartographier et croiser geometriquement).
+# CRS = Coordinate Reference System. EPSG:4326 = WGS84 (lat/lon en
+# degres decimaux) = CRS standard du GPS et CRS natif des donnees ACLED.
 acled_pts <- st_as_sf(
   acled_clean,
   coords = c("longitude", "latitude"),
@@ -250,6 +303,10 @@ acled_pts <- st_as_sf(
   remove = FALSE
 )
 
+# GADM = Global ADMinistrative areas, base mondiale gratuite des decoupages
+# administratifs. ADM0 = frontiere nationale (1 polygone), ADM1 = regions
+# (10 pour le Cameroun), ADM2 = departements. On charge les 2 niveaux
+# depuis le GeoPackage GADM v4.1 pour habiller les cartes.
 cmr0 <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_0", quiet = TRUE)
 cmr1 <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_1", quiet = TRUE)
 ```
@@ -260,20 +317,33 @@ cmr1 <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_1", quiet = TRUE)
 #| label: ex5-points
 #| fig-width: 9
 #| fig-height: 8
+# tmap_mode("plot") = carte statique PNG (vs "view" = leaflet interactif).
+# Empilage de couches : regions ADM1 (contours fins) + etiquettes NAME_1
+# + points ACLED colores par type + contour national gras. Palette Set2
+# qualitative pastel pour distinguer les 6 categories event_type.
 tmap_mode("plot")
 
 tm_shape(cmr1) +
   tm_borders(col = "grey50", lwd = 0.8) +
+  tm_text("NAME_1", size = 0.5, col = "grey30", fontface = "bold") +
   tm_shape(acled_pts) +
   tm_dots(
     fill        = "event_type",
     size        = 0.04,
-    alpha       = 0.6,
-    fill.legend = tm_legend(title = "Type d'événement")
+    fill_alpha  = 0.6,
+    fill.legend = tm_legend(title = "Type d'evenement (ACLED)")
   ) +
   tm_shape(cmr0) +
   tm_borders(col = "grey20", lwd = 1.8) +
-  tm_title("Conflits armés au Cameroun (source : ACLED)") +
+  tm_title(
+    paste0("Conflits armes au Cameroun - localisation des evenements (",
+           format(min(acled_clean$event_date), "%Y"), "-",
+           format(max(acled_clean$event_date), "%Y"),
+           ", 1 point = 1 evenement geocode lat/lon)")
+  ) +
+  tm_credits(paste("Sources : ACLED Project (evenements) - GADM v4.1 (ADM0/ADM1) -",
+                   "IFORD x GDSG 2026"),
+             position = c("left", "bottom"), size = 0.6) +
   tm_layout(legend.outside = TRUE)
 ```
 
@@ -285,6 +355,10 @@ tm_shape(cmr1) +
 #| label: ex5-regions
 #| fig-width: 8
 #| fig-height: 8
+# AGREGATION SPATIALE ADM1 = on resume des points (evenements ACLED)
+# au niveau d'une unite administrative (region). La jointure spatiale
+# st_within attache a chaque point le polygone qui le CONTIENT
+# geometriquement. Ensuite on compte + on somme par region.
 resume_par_region <- acled_pts |>
   st_join(cmr1[c("NAME_1")], join = st_within) |>
   st_drop_geometry() |>
@@ -296,6 +370,8 @@ resume_par_region <- acled_pts |>
     .groups      = "drop"
   )
 
+# left_join pour reattacher a la couche polygonale, replace_na pour les
+# regions sans evenement (sinon trous blancs sur la carte).
 cmr1_acled <- cmr1 |>
   left_join(resume_par_region, by = "NAME_1") |>
   mutate(
@@ -303,14 +379,27 @@ cmr1_acled <- cmr1 |>
     deces        = replace_na(deces, 0)
   )
 
+# CHOROPLETHE = carte polygonale ou la couleur du polygone est
+# proportionnelle a la valeur affichee (ici nombre d'evenements). Palette
+# YlOrRd (jaune-orange-rouge) = sequentielle Brewer, conventionnelle
+# pour les intensites croissantes (peu vers beaucoup d'evenements).
 tm_shape(cmr1_acled) +
   tm_polygons(
     fill        = "n_evenements",
-    fill.scale  = tm_scale_continuous(values = "brewer.reds"),
-    fill.legend = tm_legend(title = "Nb d'événements")
+    fill.scale  = tm_scale_continuous(values = "brewer.yl_or_rd"),
+    fill.legend = tm_legend(title = "Nombre d'evenements (n)")
   ) +
   tm_borders(col = "white", lwd = 0.6) +
-  tm_title("Conflits par région — Cameroun (source : ACLED)") +
+  tm_text("NAME_1", size = 0.55, col = "grey20", fontface = "bold") +
+  tm_title(
+    paste0("Conflits par region administrative - Cameroun (",
+           format(min(acled_clean$event_date), "%Y"), "-",
+           format(max(acled_clean$event_date), "%Y"),
+           ", agregation ADM1 par jointure spatiale st_within)")
+  ) +
+  tm_credits(paste("Sources : ACLED Project (evenements) - GADM v4.1 (ADM1) -",
+                   "IFORD x GDSG 2026"),
+             position = c("left", "bottom"), size = 0.6) +
   tm_layout(legend.outside = TRUE)
 ```
 
@@ -340,7 +429,9 @@ write_csv(resume_par_region,
 
 ## Bloc B — Présentation d'ERA5 et du package ecmwfr
 
-ERA5 est la **cinquième réanalyse atmosphérique de l'ECMWF**, distribuée gratuitement via le Copernicus Climate Data Store (CDS). Pour ce TD on utilise *ERA5 Single Levels Monthly Means*, variable `2m_temperature`, sur une bbox Cameroun et 10 ans.
+ERA5 est la **cinquième réanalyse atmosphérique de l'ECMWF**, distribuée gratuitement via le Copernicus Climate Data Store (CDS). Une **réanalyse climatique** combine modèle physique de l'atmosphère + assimilation de toutes les observations historiques (stations, satellites, ballons) pour produire une grille mondiale homogène à pas de temps régulier. Pour ce TD on utilise *ERA5 Single Levels Monthly Means*, variable `2m_temperature` (température de l'air à 2 m au-dessus de la surface), sur une bbox Cameroun et 10 ans.
+
+Le format de stockage est **NetCDF** (`.nc`) — un format binaire scientifique multidimensionnel (x = longitude, y = latitude, z = pression/altitude si applicable, t = temps). Le package R `terra` lit directement les NetCDF via `rast()` ; chaque pas de temps devient une **couche** du raster.
 
 Le package R **`ecmwfr`** automatise les requêtes API. Workflow :
 
@@ -395,20 +486,32 @@ if (nzchar(cds_user) && nzchar(cds_key) &&
 ```{r}
 #| label: ex8-netcdf
 #| eval: false
+# NetCDF (.nc) = format binaire scientifique multidimensionnel utilise
+# en climato/oceano. Un fichier ERA5 = grille (x = longitude, y = latitude)
+# repetee dans le temps (z = mois). terra::rast() le lit en STACK MULTI-
+# COUCHES : chaque pas de temps devient une COUCHE du raster (ici 120
+# couches pour 10 ans x 12 mois).
 era5_brut <- rast(fetch_era5_t2m_cmr())
 
 cat("Nombre de couches :", nlyr(era5_brut), "(soit ~120 pour 10 ans × 12 mois)\n")
 cat("Résolution :", paste(res(era5_brut), collapse = " × "), "° (~31 km)\n")
 cat("CRS :", crs(era5_brut, describe = TRUE)$name, "\n")
 
+# time() extrait la dimension temporelle stockee dans le NetCDF.
+# 1 date par couche : permet de connaitre le mois represente par chacune.
 dates_era5 <- as.Date(time(era5_brut))
 cat("Période :", format(min(dates_era5), "%Y-%m"), "→",
     format(max(dates_era5), "%Y-%m"), "\n")
 
-# Conversion Kelvin → Celsius
+# ERA5 publie les temperatures en KELVIN (echelle absolue : 0 K = -273.15 °C
+# = zero absolu). Conversion en degres Celsius par soustraction de 273.15
+# pour avoir des valeurs lisibles (sinon les ~300 K seraient absurdes en °C).
 era5_celsius <- era5_brut - 273.15
 
-# Rogner + masquer sur le contour Cameroun
+# crop = decoupe RECTANGULAIRE du raster selon l'emprise (bbox) du polygone.
+# mask = met les pixels hors polygone a NA (donne une carte qui epouse
+# proprement le contour du pays). Les 2 operations sont enchaainees pour
+# obtenir un raster final limite au territoire camerounais.
 cmr0_vect <- vect(st_transform(cmr0, crs(era5_celsius)))
 era5_cmr  <- mask(crop(era5_celsius, cmr0_vect), cmr0_vect)
 print(era5_cmr)
@@ -427,9 +530,16 @@ La conversion `- 273.15` est **non-négociable** : sans elle, les températures 
 ```{r}
 #| label: ex9-extract
 #| eval: false
+# Reprojeter les polygones dans le CRS du raster avant extraction
+# (sinon exact_extract refuse le calcul).
 cmr1_proj   <- st_transform(cmr1, crs(era5_cmr))
+# exact_extract = statistique zonale ponderee par la surface (un pixel
+# coupe a 30 % par le polygone ne pese que 30 % dans la moyenne).
 t2m_extrait <- exact_extract(era5_cmr, cmr1_proj, "mean")
 
+# Passage en format long : 1 ligne = 1 region x 1 mois (au lieu de
+# 1 ligne = 1 region avec 120 colonnes mean.1, mean.2, ..., mean.120).
+# Indispensable pour ggplot, dplyr group_by(date), etc.
 t2m_long <- cmr1 |>
   st_drop_geometry() |>
   select(NAME_1) |>
@@ -456,17 +566,23 @@ glimpse(t2m_long)
 #| eval: false
 #| fig-width: 10
 #| fig-height: 5
+# Agregation temporelle : moyenne nationale par mois (toutes regions confondues).
 t2m_national <- t2m_long |>
   group_by(date, annee, mois) |>
   summarise(t2m_moy = mean(t2m_celsius, na.rm = TRUE), .groups = "drop")
 
+# loess = lissage local : fait emerger la tendance derriere la saisonnalite.
 ggplot(t2m_national, aes(x = date, y = t2m_moy)) +
   geom_line(colour = "#2171B5", linewidth = 0.7) +
   geom_smooth(method = "loess", se = FALSE,
               colour = "#CB181D", linetype = "dashed", linewidth = 0.9) +
-  labs(title    = "Évolution de la température 2m au Cameroun",
-       subtitle = "Moyenne mensuelle nationale. Ligne rouge : tendance lissée (loess). Source : ERA5.",
-       x = "Date", y = "Température (°C)") +
+  labs(title    = "Evolution de la temperature 2m au Cameroun",
+       subtitle = paste0("Moyenne mensuelle nationale ERA5-Land - ",
+                         format(min(t2m_national$date), "%Y-%m"), " a ",
+                         format(max(t2m_national$date), "%Y-%m"),
+                         " (ligne rouge : tendance loess)"),
+       x = "Date", y = "Temperature 2m (degC)",
+       caption = "Source : Copernicus ERA5-Land - IFORD x GDSG 2026") +
   theme_minimal()
 ```
 
@@ -477,15 +593,19 @@ ggplot(t2m_national, aes(x = date, y = t2m_moy)) +
 #| eval: false
 #| fig-width: 10
 #| fig-height: 6
+# Agregation annuelle par region (moyenne des 12 mois de chaque annee).
 t2m_region_annee <- t2m_long |>
   group_by(NAME_1, annee) |>
   summarise(t2m_moy = mean(t2m_celsius, na.rm = TRUE), .groups = "drop")
 
 ggplot(t2m_region_annee, aes(x = annee, y = t2m_moy, colour = NAME_1)) +
   geom_line(linewidth = 0.8) +
-  labs(title    = "Température annuelle moyenne par région — Cameroun",
-       subtitle = "Source : ERA5",
-       x = "Année", y = "Température (°C)", colour = "Région") +
+  labs(title    = "Temperature annuelle moyenne par region - Cameroun",
+       subtitle = paste0("Moyennes ERA5-Land ", min(t2m_region_annee$annee),
+                         "-", max(t2m_region_annee$annee),
+                         " - 10 regions ADM1"),
+       x = "Annee", y = "Temperature 2m (degC)", colour = "Region (ADM1)",
+       caption = "Source : Copernicus ERA5-Land - IFORD x GDSG 2026") +
   theme_minimal()
 ```
 
@@ -498,6 +618,8 @@ ggplot(t2m_region_annee, aes(x = annee, y = t2m_moy, colour = NAME_1)) +
 #| eval: false
 #| fig-width: 8
 #| fig-height: 5
+# Agregation par mois calendaire (toutes annees confondues) : on calcule
+# moyenne, min et max pour visualiser le cycle annuel et son enveloppe.
 t2m_saisonnalite <- t2m_long |>
   group_by(mois) |>
   summarise(
@@ -512,9 +634,10 @@ ggplot(t2m_saisonnalite, aes(x = mois, y = t2m_moy)) +
               fill = "#FDBB84", alpha = 0.4) +
   geom_line(colour = "#D94801", linewidth = 1) +
   scale_x_continuous(breaks = 1:12, labels = month.abb) +
-  labs(title    = "Saisonnalité de la température 2m — Cameroun",
-       subtitle = "Moyenne, min et max mensuels sur la période (ERA5)",
-       x = "Mois", y = "Température (°C)") +
+  labs(title    = "Saisonnalite de la temperature 2m - Cameroun",
+       subtitle = "Cycle mensuel moyen ERA5-Land (ligne = moyenne, ruban = min-max sur la periode)",
+       x = "Mois", y = "Temperature 2m (degC)",
+       caption = "Source : Copernicus ERA5-Land - IFORD x GDSG 2026") +
   theme_minimal()
 ```
 
@@ -531,17 +654,30 @@ Le ruban (min-max) est large dans les **mois secs** et étroit dans les **mois p
 #| eval: false
 #| fig-width: 8
 #| fig-height: 8
+# mean() applique a un raster multi-couches calcule la moyenne PIXEL PAR
+# PIXEL sur l'ensemble des couches (ici 120 mois) : on obtient 1 raster
+# 1-couche dont chaque pixel = temperature moyenne 10 ans.
 t2m_moy_rast <- mean(era5_cmr)
 
+# Palette rd_yl_bu (Brewer rouge-jaune-bleu) inversee = chaud rouge,
+# froid bleu : code couleur climatologique conventionnel pour la lecture
+# intuitive d'une carte de temperature absolue.
 tm_shape(t2m_moy_rast) +
   tm_raster(
     col.scale  = tm_scale_continuous(values  = "brewer.rd_yl_bu",
                                      reverse = TRUE),
-    col.legend = tm_legend(title = "T°C")
+    col.legend = tm_legend(title = "Temperature 2m (°C)")
   ) +
   tm_shape(cmr1) + tm_borders(col = "grey40", lwd = 0.8) +
+  tm_text("NAME_1", size = 0.5, col = "grey20", fontface = "bold") +
   tm_shape(cmr0) + tm_borders(col = "grey10", lwd = 1.8) +
-  tm_title(paste0("Température 2m moyenne — Cameroun")) +
+  tm_title(paste0("Temperature 2 m moyenne sur 10 ans - Cameroun (",
+                  format(min(dates_era5), "%Y"), "-",
+                  format(max(dates_era5), "%Y"),
+                  ", moyenne pixel a pixel des couches mensuelles ERA5)")) +
+  tm_credits(paste("Sources : Copernicus ERA5 Single Levels Monthly Means (T2m) -",
+                   "GADM v4.1 (ADM0/ADM1) - IFORD x GDSG 2026"),
+             position = c("left", "bottom"), size = 0.6) +
   tm_layout(legend.outside = TRUE)
 ```
 
@@ -554,6 +690,15 @@ Palette **divergente** centrée sur 0 : rouge = réchauffement, bleu = refroidis
 #| eval: false
 #| fig-width: 8
 #| fig-height: 8
+# ANOMALIE = ecart a une moyenne de reference. Ici on calcule la
+# difference entre la moyenne de la DERNIERE annee et celle de la
+# PREMIERE annee de la serie (mesure simple de l'evolution sur la
+# periode). Palette divergente rd_bu inversee centree sur 0 :
+#   - bleu  = anomalie negative (refroidissement local)
+#   - blanc = pas de changement (zero)
+#   - rouge = anomalie positive (rechauffement local)
+# Le midpoint = 0 force le blanc sur la valeur neutre : lecture
+# immediate du SIGNE et de l'AMPLITUDE.
 annees_dans_donnees <- sort(unique(format(dates_era5, "%Y")))
 if (length(annees_dans_donnees) >= 2) {
   pa  <- annees_dans_donnees[1]
@@ -569,11 +714,17 @@ if (length(annees_dans_donnees) >= 2) {
         reverse  = TRUE,
         midpoint = 0
       ),
-      col.legend = tm_legend(title = "ΔT°C")
+      col.legend = tm_legend(title = "Anomalie T2m (°C)")
     ) +
     tm_shape(cmr1) + tm_borders(col = "grey40", lwd = 0.8) +
-    tm_title(paste0("Anomalie de température 2m : ", da, " vs ", pa,
-                    " (ERA5)")) +
+    tm_text("NAME_1", size = 0.5, col = "grey20", fontface = "bold") +
+    tm_shape(cmr0) + tm_borders(col = "grey10", lwd = 1.8) +
+    tm_title(paste0("Anomalie de temperature 2 m - Cameroun (",
+                    da, " moins ", pa,
+                    ", palette divergente centree sur 0)")) +
+    tm_credits(paste("Sources : Copernicus ERA5 Single Levels Monthly Means (T2m) -",
+                     "GADM v4.1 (ADM0/ADM1) - IFORD x GDSG 2026"),
+               position = c("left", "bottom"), size = 0.6) +
     tm_layout(legend.outside = TRUE)
 }
 ```

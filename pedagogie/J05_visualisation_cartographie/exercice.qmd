@@ -109,11 +109,15 @@ Sept éléments obligatoires :
 ## Étape 5 — Exporter en trois formats
 
 ```r
+# Dossier de sortie cohérent avec l'arborescence du projet IFORD.
+# recursive = TRUE crée la chaîne entière de dossiers si elle n'existe pas.
 out_dir <- here("pedagogie", "J05_visualisation_cartographie", "outputs")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
+# PNG 300 dpi : qualité diapositive PowerPoint / impression A4.
 tmap_save(ma_carte, file.path(out_dir, "ma_carte_dhs2018.png"),
           dpi = 300, width = 9, height = 7)
+# PDF vectoriel : aucune perte au zoom, format publication scientifique.
 tmap_save(ma_carte, file.path(out_dir, "ma_carte_dhs2018.pdf"),
           width = 9, height = 7)
 ```

@@ -6,6 +6,9 @@
 # Donnees : ACLED (conflits) + ERA5 (temperature) Cameroun
 # =====================================================================
 
+# sf = vecteurs, dplyr/tidyr = manipulation, ggplot2 = graphiques,
+# tmap = cartes thematiques, terra = raster (NetCDF ERA5),
+# exactextractr = stats zonales raster -> polygones.
 library(sf)
 library(dplyr)
 library(tidyr)
@@ -46,10 +49,15 @@ dir.create(out_dir, showWarnings = FALSE)
 # ====================================================================
 
 # Ex 1 : Chargement ACLED
+# ACLED = Armed Conflict Location & Event Data Project. Base mondiale de
+# reference des evenements de conflit arme. Chaque ligne = 1 evenement
+# GEOCODE (lat/lon en degres decimaux, CRS EPSG:4326), avec date, type
+# (event_type), acteurs et nombre de deces (fatalities).
 acled_brut <- read_csv(fetch_acled_cmr(), show_col_types = FALSE)
 cat("ACLED :", nrow(acled_brut), "lignes x", ncol(acled_brut), "colonnes\n")
 
 # Ex 2 : Nettoyage et filtrage
+# Conversion des types (CSV ACLED = texte) + filtre coordonnees valides.
 acled_clean <- acled_brut |>
   mutate(
     event_date = as.Date(event_date),
@@ -70,7 +78,8 @@ cat("Apres filtre :", nrow(acled_clean), "evenements\n")
 acled_clean |> count(event_type, sort = TRUE, name = "n_evenements") |> print()
 acled_clean |> count(admin1, sort = TRUE, name = "n_evenements") |> print()
 
-# Ex 4a : Annuelle par type
+# Ex 4a : AGREGATION TEMPORELLE annuelle par type (1 ligne par couple
+# annee x event_type avec le nombre d'evenements) puis histogramme empile.
 resume_annuel <- acled_clean |> count(annee, event_type, name = "n_evenements")
 graphe_annuel <- ggplot(resume_annuel,
                         aes(x = annee, y = n_evenements, fill = event_type)) +
@@ -78,14 +87,17 @@ graphe_annuel <- ggplot(resume_annuel,
   scale_x_continuous(breaks = seq(min(resume_annuel$annee),
                                   max(resume_annuel$annee), by = 1)) +
   scale_fill_brewer(palette = "Set2") +
-  labs(title = "Evolution annuelle des conflits au Cameroun",
-       subtitle = "Source: ACLED",
-       x = "Annee", y = "Nombre d'evenements", fill = "Type") +
+  labs(title    = "Evolution annuelle des conflits au Cameroun",
+       subtitle = paste0("Source ACLED ", min(resume_annuel$annee), "-",
+                         max(resume_annuel$annee),
+                         " - agregation annuelle par type"),
+       x = "Annee", y = "Nombre d'evenements (n)", fill = "Type d'evenement",
+       caption = "Source : ACLED Project - IFORD x GDSG 2026") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 print(graphe_annuel)
 
-# Ex 4c : Deces annuels
+# Ex 4c : Deces annuels (somme de fatalities, decorrele du nombre d'evts).
 resume_deces <- acled_clean |>
   group_by(annee) |>
   summarise(deces = sum(fatalities, na.rm = TRUE), .groups = "drop")
@@ -94,35 +106,53 @@ graphe_deces <- ggplot(resume_deces, aes(x = annee, y = deces)) +
   geom_point(colour = "#CB181D", size = 2.5) +
   scale_x_continuous(breaks = seq(min(resume_deces$annee),
                                   max(resume_deces$annee), by = 1)) +
-  labs(title = "Deces lies aux conflits au Cameroun (source: ACLED)",
-       x = "Annee", y = "Nombre de deces") +
+  labs(title    = "Deces lies aux conflits au Cameroun",
+       subtitle = paste0("Source ACLED ", min(resume_deces$annee), "-",
+                         max(resume_deces$annee),
+                         " - somme annuelle"),
+       x = "Annee", y = "Nombre de deces (n)",
+       caption = "Source : ACLED Project - IFORD x GDSG 2026") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 print(graphe_deces)
 
-# Ex 5 : Cartographie
+# Ex 5 : Cartographie. GEOCODAGE : transformation du data.frame ACLED en
+# couche spatiale sf grace a st_as_sf. CRS EPSG:4326 = WGS84 (lat/lon
+# en degres decimaux), standard GPS et CRS natif d'ACLED.
 acled_pts <- st_as_sf(acled_clean,
                       coords = c("longitude", "latitude"),
                       crs = 4326, remove = FALSE)
 
+# GADM v4.1 = base mondiale gratuite des decoupages administratifs.
+# ADM0 = frontiere nationale, ADM1 = regions (10 pour le Cameroun).
 cmr0 <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_0", quiet = TRUE)
 cmr1 <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_1", quiet = TRUE)
 
 tmap_mode("plot")
 
-# Carte points par type
+# Carte de LOCALISATION : 1 point = 1 evenement, couleur = event_type.
+# Etiquettes ADM1 ajoutees pour reperer chaque region.
 carte_types <- tm_shape(cmr1) +
   tm_borders(col = "grey50", lwd = 0.8) +
+  tm_text("NAME_1", size = 0.5, col = "grey30", fontface = "bold") +
   tm_shape(acled_pts) +
-  tm_dots(fill = "event_type", size = 0.04, alpha = 0.6,
-          fill.legend = tm_legend(title = "Type d'evenement")) +
+  tm_dots(fill = "event_type", size = 0.04, fill_alpha = 0.6,
+          fill.legend = tm_legend(title = "Type d'evenement (ACLED)")) +
   tm_shape(cmr0) +
   tm_borders(col = "grey20", lwd = 1.8) +
-  tm_title("Conflits armes au Cameroun (source: ACLED)") +
+  tm_title(paste0("Conflits armes au Cameroun - localisation des evenements (",
+                  format(min(acled_clean$event_date), "%Y"), "-",
+                  format(max(acled_clean$event_date), "%Y"),
+                  ", 1 point = 1 evenement geocode lat/lon)")) +
+  tm_credits(paste("Sources : ACLED Project (evenements) -",
+                   "GADM v4.1 (ADM0/ADM1) - IFORD x GDSG 2026"),
+             position = c("left", "bottom"), size = 0.6) +
   tm_layout(legend.outside = TRUE)
 print(carte_types)
 
-# Choropleth par region via st_within
+# AGREGATION SPATIALE par region (ADM1) via la jointure spatiale
+# st_within ("le point tombe-t-il dans le polygone ?"). Pour chaque
+# region : nombre d'evenements + somme des deces.
 resume_par_region <- acled_pts |>
   st_join(cmr1[c("NAME_1")], join = st_within) |>
   st_drop_geometry() |>
@@ -137,12 +167,22 @@ cmr1_acled <- cmr1 |>
   mutate(n_evenements = replace_na(n_evenements, 0L),
          deces = replace_na(deces, 0))
 
+# CHOROPLETHE : couleur du polygone proportionnelle a la valeur affichee.
+# Palette YlOrRd (jaune-orange-rouge) sequentielle Brewer = standard pour
+# une intensite croissante de conflits.
 carte_regions <- tm_shape(cmr1_acled) +
   tm_polygons(fill = "n_evenements",
-              fill.scale = tm_scale_continuous(values = "brewer.reds"),
-              fill.legend = tm_legend(title = "Nb d'evenements")) +
+              fill.scale = tm_scale_continuous(values = "brewer.yl_or_rd"),
+              fill.legend = tm_legend(title = "Nombre d'evenements (n)")) +
   tm_borders(col = "white", lwd = 0.6) +
-  tm_title("Conflits par region - Cameroun (source: ACLED)") +
+  tm_text("NAME_1", size = 0.55, col = "grey20", fontface = "bold") +
+  tm_title(paste0("Conflits par region administrative - Cameroun (",
+                  format(min(acled_clean$event_date), "%Y"), "-",
+                  format(max(acled_clean$event_date), "%Y"),
+                  ", agregation ADM1 par jointure spatiale st_within)")) +
+  tm_credits(paste("Sources : ACLED Project (evenements) -",
+                   "GADM v4.1 (ADM1) - IFORD x GDSG 2026"),
+             position = c("left", "bottom"), size = 0.6) +
   tm_layout(legend.outside = TRUE)
 print(carte_regions)
 
@@ -157,14 +197,28 @@ write_csv(resume_par_region,
 # ====================================================================
 # PARTIE II - ERA5 (temperature) - eval interactif uniquement
 # ====================================================================
-# Necessite token CDS + NetCDF telecharge. Decommenter pour la salle.
+# Necessite token CDS personnel + NetCDF telecharge. Decommenter pour la salle.
+#
+# ERA5 = 5e REANALYSE atmospherique de l'ECMWF, distribuee gratuitement
+# via le Copernicus Climate Data Store (CDS). Une reanalyse combine un
+# modele physique de l'atmosphere et toutes les observations historiques
+# (stations, satellites, ballons) pour produire une grille mondiale
+# HOMOGENE a pas de temps regulier (~31 km, mensuel pour ce TD).
+#
+# NetCDF (.nc) = format binaire scientifique MULTIDIMENSIONNEL (x = lon,
+# y = lat, z = altitude/pression si applicable, t = temps). terra::rast()
+# le lit en STACK MULTI-COUCHES (1 couche = 1 pas de temps mensuel).
+#
+# AGREGATION TEMPORELLE des rasters ERA5 : moyenne pixel a pixel des 120
+# couches mensuelles -> 1 carte de temperature moyenne sur 10 ans.
 
 # nc_path  <- fetch_era5_t2m_cmr()
-# era5_brut <- rast(nc_path)
-# dates_era5 <- as.Date(time(era5_brut))
-# era5_celsius <- era5_brut - 273.15
+# era5_brut <- rast(nc_path)                # stack 120 couches mensuelles
+# dates_era5 <- as.Date(time(era5_brut))    # dimension t du NetCDF
+# era5_celsius <- era5_brut - 273.15        # Kelvin -> Celsius (0 K = -273.15 °C)
 # cmr0_vect <- vect(st_transform(cmr0, crs(era5_celsius)))
-# era5_cmr  <- mask(crop(era5_celsius, cmr0_vect), cmr0_vect)
+# era5_cmr  <- mask(crop(era5_celsius, cmr0_vect), cmr0_vect)  # decoupe Cameroun
+#                                           # crop = bbox, mask = NA hors polygone
 #
 # # Ex 9 : Extraction par region
 # cmr1_proj   <- st_transform(cmr1, crs(era5_cmr))

@@ -27,7 +27,7 @@ source("pedagogie/_commons/data/dhs_cmr/00_telecharger_dhs_indicateurs.R")
 
 ## Stratégie de calcul des indicateurs agrégés
 
-Plutôt que d'interroger l'API DHS StatCompiler en ligne (ce que faisait la première version du script via `rdhs`), on **calcule nous-mêmes les indicateurs** à partir du microfichier local avec `srvyr` :
+Plutôt que d'interroger l'API DHS StatCompiler en ligne (via `rdhs`), on **calcule nous-mêmes les indicateurs** à partir du microfichier local avec `srvyr` :
 
 - Plan de sondage stratifié à deux degrés (PSU = `HV001/V001/MV001`, strates = `HV022/V022/MV022`)
 - Poids ménage / femme / homme divisés par 10⁶

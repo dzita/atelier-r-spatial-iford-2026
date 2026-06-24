@@ -2,6 +2,15 @@
 title: "J2 — sf et CRS"
 subtitle: "Code R exécutable dans le navigateur"
 engine: knitr
+webr:
+  packages:
+    - sf
+    - dplyr
+    - tibble
+    - ggplot2
+  resources:
+    - ../_commons/data/gadm41_CMR_1.json
+    - ../_commons/data/gadm41_CMR_3.json
 ---
 
 ::: {.iford-callout}
@@ -10,21 +19,23 @@ engine: knitr
 
 ## 1. Charger les données GADM Cameroun
 
-On récupère les limites administratives ADM1 et ADM3 directement depuis le site, on les lit avec `sf::read_sf()`.
+Les limites administratives ADM1 et ADM3 sont pré-chargées dans la VM WebR au démarrage de la page. On les lit directement avec `sf::read_sf()` — aucun téléchargement runtime.
 
 ```{webr}
 #| autorun: true
+# library() : rend disponibles les fonctions du package
+# sf = "simple features", standard pour manipuler des donnees vectorielles
 library(sf)
-library(dplyr)
-library(tibble)
-library(ggplot2)
+library(dplyr)    # verbes de manipulation : filter, group_by, summarise
+library(tibble)   # tableaux de donnees modernes (alternative a data.frame)
+library(ggplot2)  # cartes et graphiques par couches
 
-download.file("/_commons/data/gadm41_CMR_1.json", "adm1.json", mode = "wb")
-download.file("/_commons/data/gadm41_CMR_3.json", "adm3.json", mode = "wb")
+# read_sf() : lit un fichier spatial (GeoJSON, Shapefile, GeoPackage...)
+# adm1 = 10 regions (niveau 1) ; adm3 = 365 arrondissements (niveau 3)
+adm1 <- read_sf("_commons/data/gadm41_CMR_1.json")
+adm3 <- read_sf("_commons/data/gadm41_CMR_3.json")
 
-adm1 <- read_sf("adm1.json")
-adm3 <- read_sf("adm3.json")
-
+# Verification rapide du nombre de lignes (= entites geographiques)
 c(adm1 = nrow(adm1), adm3 = nrow(adm3))
 ```
 
@@ -33,12 +44,21 @@ c(adm1 = nrow(adm1), adm3 = nrow(adm3))
 Le même objet `adm1` dans trois CRS différents donne trois superficies différentes. Lambert Cameroun (3119) est le plus fidèle au chiffre officiel (475 442 km²).
 
 ```{webr}
+# CRS = Coordinate Reference System (systeme de coordonnees)
+# st_transform() : change le CRS d'un objet sf, sans modifier la donnee
+# EPSG:3119 = Lambert Cameroun, projection nationale officielle
+# EPSG:32632 = UTM zone 32 N, projection regionale en metres
+# EPSG:3857 = Web Mercator, projection des fonds Google/OSM (deforme les aires)
 adm1_lambert <- st_transform(adm1, 3119)
 adm1_utm32   <- st_transform(adm1, 32632)
 adm1_3857    <- st_transform(adm1, 3857)
 
+# Petite fonction utilitaire : superficie totale en km2
+# st_area() retourne des m2 (avec unite), on convertit en numeric puis en km2
 total_km2 <- function(x) sum(as.numeric(st_area(x))) / 1e6
 
+# Comparaison : 475 442 km2 est la superficie officielle du Cameroun
+# Lambert est le plus fidele ; Web Mercator gonfle les aires en zone tropicale
 tibble(
   CRS      = c("Lambert CMR", "UTM 32 N", "Web Mercator"),
   superficie_km2 = round(c(total_km2(adm1_lambert),
@@ -55,21 +75,30 @@ tibble(
 `st_buffer(x, dist = 50000)` exige des coordonnées **en mètres** — d'où la reprojection en UTM 32 N avant l'appel.
 
 ```{webr}
+# st_point() : cree un point (longitude, latitude)
+# st_sfc() : empaquette en colonne geometrique avec un CRS (4326 = WGS84, degres)
 yaounde_pt  <- st_sfc(st_point(c(11.5021, 3.8480)), crs = 4326)
+
+# Passage en UTM (metres) : indispensable avant un buffer en distance metrique
 yaounde_utm <- st_transform(yaounde_pt, 32632)
+
+# st_buffer() : zone tampon ; dist = 50000 metres = 50 km
 buffer_50km <- st_buffer(yaounde_utm, dist = 50000)
 
-# Verification : sqrt(aire/pi) doit retourner ~50 km
+# Verification : pour un disque, sqrt(aire/pi) = rayon ; doit retourner ~50 km
 sqrt(as.numeric(st_area(buffer_50km)) / pi) / 1000
 ```
 
 ## 4. Intersection : quels arrondissements dans le buffer ?
 
 ```{webr}
+# On reprojette adm3 dans le meme CRS que le buffer (sinon erreur sf)
 adm3_utm <- st_transform(adm3, 32632)
+
+# st_intersection() : garde uniquement la partie d'adm3_utm contenue dans le buffer
 dans_buffer <- st_intersection(buffer_50km, adm3_utm)
-nrow(dans_buffer)
-head(dans_buffer$NAME_3, 10)
+nrow(dans_buffer)                     # nombre d'arrondissements touches
+head(dans_buffer$NAME_3, 10)          # les 10 premiers noms d'arrondissement
 ```
 
 ## 5. Dissolve : reconstituer les régions depuis les arrondissements
@@ -77,12 +106,16 @@ head(dans_buffer$NAME_3, 10)
 Le pattern `group_by + summarise(geometry = st_union(geometry))` est l'opération **dissolve** classique en SIG.
 
 ```{webr}
+# "dissolve" en SIG = regrouper des polygones fins selon un attribut commun
+# group_by(NAME_1) : regroupe les arrondissements par region
+# st_union(geometry) : fusionne leurs geometries en une seule par groupe
 adm1_from_adm3 <- adm3 |>
   group_by(NAME_1) |>
   summarise(n_arrondissements = n(),
             geometry = st_union(geometry),
             .groups = "drop")
 
+# Verification : 10 regions reconstituees a partir des 365 arrondissements
 c(n_regions = nrow(adm1_from_adm3),
   total_arrondissements = sum(adm1_from_adm3$n_arrondissements))
 ```
@@ -90,6 +123,7 @@ c(n_regions = nrow(adm1_from_adm3),
 ## 6. Voronoï des 10 chefs-lieux régionaux
 
 ```{webr}
+# Tibble manuel : 10 chefs-lieux regionaux avec coordonnees GPS approximatives
 chefs_lieux <- tibble(
   region = c("Adamaoua","Centre","Est","Extrême-Nord","Littoral",
              "Nord","Nord-Ouest","Ouest","Sud","Sud-Ouest"),
@@ -100,33 +134,48 @@ chefs_lieux <- tibble(
   lat = c( 7.3214,  3.8480,  4.5775, 10.5910, 4.0511,
            9.3019,  5.9597,  5.4778,  2.9000, 4.1546)
 ) |>
+  # st_as_sf() : convertit un tableau en objet spatial sf a partir de lon/lat
   st_as_sf(coords = c("lon", "lat"), crs = 4326)
 
+# st_voronoi() attend un MULTIPOINT : on fusionne les 10 points
 chefs_pts_union <- st_union(chefs_lieux)
+
+# Voronoi : decoupe le plan en cellules autour de chaque point
+# (chaque cellule = ensemble des points les plus proches d'un chef-lieu)
 voronoi_box     <- st_voronoi(chefs_pts_union)
+
+# st_collection_extract() : separe la sortie en polygones individuels
 voronoi_cells   <- st_collection_extract(voronoi_box, "POLYGON") |>
                    st_sf(crs = 4326)
+
+# On limite les cellules a la silhouette du Cameroun
 voronoi_cmr     <- st_intersection(voronoi_cells, st_union(adm1))
 
+# Carte ggplot : superposition de 3 couches (cellules, regions, points)
 ggplot() +
   geom_sf(data = voronoi_cmr, fill = NA, color = "grey50", linewidth = 0.4) +
   geom_sf(data = adm1, fill = NA, color = "grey80", linewidth = 0.2) +
   geom_sf(data = chefs_lieux, color = "red", size = 2.5) +
   geom_sf_text(data = chefs_lieux, aes(label = ville),
                nudge_y = 0.25, size = 2.6, fontface = "bold") +
-  labs(title = "Zones d'influence des chefs-lieux régionaux",
-       subtitle = "Diagramme de Voronoï coupé sur la silhouette du Cameroun") +
+  labs(title    = "Zones d'influence des chefs-lieux régionaux du Cameroun",
+       subtitle = "Diagramme de Voronoï (CRS : WGS 84 / EPSG:4326) découpé sur la silhouette nationale",
+       caption  = "Source : GADM v4.1 · IFORD × GDSG 2026") +
   theme_minimal()
 ```
 
 ## 7. Validation des géométries après reprojection
 
 ```{webr}
+# Reprojection en Lambert Cameroun : peut introduire des geometries pincees
 adm3_lambert <- st_transform(adm3, 3119)
+
+# st_is_valid() : verifie chaque polygone (TRUE/FALSE)
 table(st_is_valid(adm3_lambert))
 
+# st_make_valid() : repare les polygones invalides via l'algorithme GEOS
 adm3_lambert_clean <- st_make_valid(adm3_lambert)
-all(st_is_valid(adm3_lambert_clean))
+all(st_is_valid(adm3_lambert_clean))  # doit retourner TRUE
 ```
 
 ## 8. Pour aller plus loin

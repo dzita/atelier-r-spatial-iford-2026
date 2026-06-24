@@ -1,82 +1,121 @@
 ---
 title: "J7 — Cartographie de la population à haute résolution"
-subtitle: "Code R exécutable dans le navigateur"
+subtitle: "Code R exécutable dans le navigateur — vecteur + raster lecture seule"
 engine: knitr
+webr:
+  packages:
+    - sf
+    - dplyr
+    - ggplot2
+    - readr
+    - scales
+    - tibble
+  resources:
+    - ../_commons/data/jour_07_extraits/admpop_adm1_2025.csv
+    - ../_commons/data/jour_07_extraits/gadm41_CMR_adm1.geojson
 ---
 
 ::: {.iford-callout}
-**Mode d'emploi.** Cliquez **Run code** dans chaque cellule. WebR charge `sf` et `terra` au premier appel (~25 s la première fois). Tout tourne dans votre navigateur — aucune installation locale.
+**Mode d'emploi.** Les cellules **Run code** (cellules bleues `{webr}`) tournent dans le navigateur — clique pour exécuter. Les blocs `r` simples (non bleus) sont en **lecture seule** : ils montrent le code raster à étudier et à exécuter dans RStudio desktop.
 
-**Note technique** : `tmap` mode `view`, `mapedit` et `exactextractr` ne sont pas portables sur WebR. Le runtime utilise `ggplot2 + geom_sf` et `tidyterra::geom_spatraster` (ou directement `terra::plot`). Pour l'expérience complète (mosaïque GHSL, dessin de zone interactive avec mapedit, agrégation `exactextractr`, comparaison WorldPop vs GHSL), voir la version desktop dans `demo.qmd` (à exécuter sous RStudio).
+**Pourquoi cette séparation ?** Le package R `terra` (raster + GDAL/PROJ/GEOS compilés en WASM, ~15 Mo) déclenche une régression connue de WebR 0.6 : `TypeError: resolved is not a function` au moment du téléchargement. Tant que ce bug amont n'est pas corrigé, **la partie raster (WorldPop Mfoundi) ne peut pas s'exécuter dans le navigateur** — mais les lignes restent visibles pour la lecture et la copie vers desktop.
 
-**Données 100 % réelles** : extraits WorldPop constrained R2025A pour le département du Mfoundi (Yaoundé), produits par le script `pedagogie/_commons/data/jour_07_extraits/00_extraire_pop_pour_webr.R` côté animateur à partir des microdonnées d'Edith Darin (Drive `workshop_material/jour_07`). Aucun raster simulé.
+**Note technique** : `tmap` mode `view`, `mapedit` et `exactextractr` ne sont pas portables sur WebR non plus. Pour l'expérience complète (mosaïque GHSL, dessin de zone interactive, agrégation exactextractr, comparaison WorldPop vs GHSL), voir `demo.qmd` desktop.
+
+**Données 100 % réelles** : OCHA COD-PS Cameroun 2025 (table officielle population par région) + GADM v4.1 ADM1 + extraits WorldPop constrained R2025A pour le Mfoundi (Yaoundé). Aucun raster simulé.
 
 **Conception pédagogique** : Edith Darin (GDSG/IFORD). **Intégration runtime** : Ramesesse Dzita.
 :::
 
 ## 1. Charger le CSV admin-pop et la couche ADM1
 
+On combine deux fichiers : un **CSV tabulaire** OCHA COD-PS (la population officielle par région) et un **GeoJSON GADM** (les contours géographiques des 10 régions). Pour cartographier la population, il faut **joindre** les deux ; cette première cellule se contente de les charger et de vérifier que les volumes correspondent.
+
 ```{webr}
 #| autorun: true
+# `sf` lit/ecrit les couches vectorielles. terra (raster) est en lecture seule
+# plus bas pour des raisons de portabilite WebR.
 library(sf)
 library(dplyr)
 library(ggplot2)
 library(readr)
 library(scales)
 
-# CSV de population administrative (OCHA COD-PS, 2025)
-download.file("../_commons/data/jour_07_extraits/admpop_adm1_2025.csv",
-              "admpop.csv", mode = "wb")
-# GADM ADM1 extrait léger (GeoJSON)
-download.file("../_commons/data/jour_07_extraits/gadm41_CMR_adm1.geojson",
-              "adm1.geojson", mode = "wb")
+# CSV admin-pop OCHA COD-PS 2025 = table officielle de population par region.
+# GADM = base mondiale de limites administratives (v4.1, mise a jour 2022).
+pop_adm1 <- read_csv("_commons/data/jour_07_extraits/admpop_adm1_2025.csv",
+                     show_col_types = FALSE)
+cmr1     <- read_sf("_commons/data/jour_07_extraits/gadm41_CMR_adm1.geojson")
 
-pop_adm1 <- read_csv("admpop.csv", show_col_types = FALSE)
-cmr1     <- read_sf("adm1.geojson")
-
+# Verification rapide : 10 regions dans le CSV doivent matcher 10 polygones GADM.
 c(regions_csv = nrow(pop_adm1), polygones = nrow(cmr1))
+# T_TL = Total Tous Les ages ; F_TL = femmes ; M_TL = hommes (nomenclature COD-PS).
 glimpse(pop_adm1[, c("ADM1_EN", "ADM1_FR", "T_TL", "F_TL", "M_TL")])
 ```
 
 ## 2. Choroplèthe de la population totale par région (Exercice 0)
 
-GADM utilise les noms français pour le Cameroun → clé `ADM1_FR`. La jointure doit retourner 0 NA si toutes les régions matchent.
+Un **choroplèthe** est une carte ou la couleur du polygone code la valeur d'une variable. Ici on colore chaque region selon sa population totale. GADM utilise les noms français pour le Cameroun → clé `ADM1_FR`. La jointure doit retourner 0 NA si toutes les régions matchent.
 
 ```{webr}
+# left_join garde TOUTES les regions de cmr1 et ajoute les colonnes du CSV.
+# Cle = nom de region : a gauche "NAME_1" (GADM), a droite "ADM1_FR" (CSV).
 cmr1_pop <- cmr1 |>
   left_join(pop_adm1 |> select(ADM1_FR, T_TL, F_TL, M_TL),
             by = c("NAME_1" = "ADM1_FR"))
 
+# Compteur de NA = controle qualite de la jointure. 0 = parfait.
 cat("Régions sans match (NA T_TL) :", sum(is.na(cmr1_pop$T_TL)), "\n")
 
+# geom_sf trace les polygones ; aes(fill = T_TL) mappe la couleur sur la population.
+# Etiquettes : noir sur fond blanc semi-transparent pour rester lisibles
+# quelle que soit la palette de fond (sequentielle, divergente, etc.).
 ggplot(cmr1_pop) +
   geom_sf(aes(fill = T_TL), colour = "white", linewidth = 0.3) +
-  scale_fill_viridis_c(option = "plasma", labels = comma) +
-  labs(title = "Population par région — Cameroun 2025",
-       subtitle = "Source : OCHA COD-PS Cameroun",
-       fill  = "Population") +
-  theme_minimal()
+  geom_sf_label(aes(label = NAME_1), size = 2.2, colour = "black",
+                fill = alpha("white", 0.75), label.size = 0,
+                label.padding = unit(0.1, "lines")) +
+  scale_fill_viridis_c(option = "plasma", labels = comma,
+                       name = "Population\n(habitants)") +
+  labs(title    = "Population totale par région — Cameroun, 2025",
+       subtitle = "Choroplèthe administratif · 10 régions ADM1",
+       caption  = "Source : OCHA COD-PS Cameroun 2025 · GADM v4.1 · IFORD x GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
 ```
 
 ## 3. Variable dérivée : ratio F/H (Exercice 0b)
 
-`mutate(ratio_fm = F_TL / M_TL)` crée une nouvelle colonne. La palette divergente `scale_fill_gradient2(midpoint = 1)` centre sur l'équilibre démographique.
+Une **variable derivee** est calculee a partir d'autres colonnes. Ici `ratio_fm = F_TL / M_TL` : > 1 = plus de femmes, < 1 = plus d'hommes. Une **palette divergente** est centree sur une valeur pivot (ici 1, l'equilibre demographique) et utilise deux teintes opposees pour les ecarts.
 
 ```{webr}
+# mutate ajoute une nouvelle colonne sans toucher aux existantes.
 cmr1_pop <- cmr1_pop |> mutate(ratio_fm = F_TL / M_TL)
 
+# gradient2 = palette a 3 couleurs (low/mid/high) pivotee sur midpoint.
+# Bleu = deficit de femmes, blanc = parite, rouge = surplus de femmes.
 ggplot(cmr1_pop) +
   geom_sf(aes(fill = ratio_fm), colour = "white", linewidth = 0.3) +
+  geom_sf_label(aes(label = NAME_1), size = 2.2, colour = "black",
+                fill = alpha("white", 0.75), label.size = 0,
+                label.padding = unit(0.1, "lines")) +
   scale_fill_gradient2(low = "#2166AC", mid = "white", high = "#B2182B",
-                       midpoint = 1) +
-  labs(title = "Ratio femmes / hommes par région — Cameroun 2025",
-       fill = "F/H") +
-  theme_minimal()
+                       midpoint = 1, name = "Ratio F/H\n(sans unité)") +
+  labs(title    = "Ratio femmes / hommes par région — Cameroun, 2025",
+       subtitle = "Palette divergente centrée sur l'équilibre démographique (F/H = 1)",
+       caption  = "Source : OCHA COD-PS Cameroun 2025 · GADM v4.1 · IFORD x GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
 ```
 
 ## 4. Part de la population jeune (Exercice 0c)
 
+Le CSV COD-PS contient une **pyramide des ages** complete (`T_00_04`, `T_05_09`, ...). On somme les trois premieres classes (0-14 ans) puis on rapporte au total pour obtenir une **part en %**. Indicateur cle pour les politiques de scolarisation.
+
 ```{webr}
+# On enrichit pop_adm1 avec deux nouvelles colonnes (jeunes + part) avant la jointure.
 cmr1_pop <- cmr1_pop |>
   left_join(
     pop_adm1 |>
@@ -86,51 +125,95 @@ cmr1_pop <- cmr1_pop |>
     by = c("NAME_1" = "ADM1_FR")
   )
 
+# Palette "magma" = sequentielle perceptuellement uniforme, bonne pour un %.
 ggplot(cmr1_pop) +
   geom_sf(aes(fill = part_jeunes_pct), colour = "white", linewidth = 0.3) +
-  scale_fill_viridis_c(option = "magma") +
-  labs(title = "Part des moins de 15 ans — Cameroun 2025",
-       fill = "% 0-14 ans") +
-  theme_minimal()
+  geom_sf_label(aes(label = NAME_1), size = 2.2, colour = "black",
+                fill = alpha("white", 0.75), label.size = 0,
+                label.padding = unit(0.1, "lines")) +
+  scale_fill_viridis_c(option = "magma", name = "% 0-14 ans") +
+  labs(title    = "Part des moins de 15 ans par région — Cameroun, 2025",
+       subtitle = "Indicateur de jeunesse démographique (somme T_00_04 + T_05_09 + T_10_14)",
+       caption  = "Source : OCHA COD-PS Cameroun 2025 · GADM v4.1 · IFORD x GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
 ```
 
-## 5. Charger un raster WorldPop (extrait Mfoundi)
+## 5. Densité par région avec échelle log (Exercice 6)
 
-Les TIF WorldPop complets pèsent ~25 Mo chacun — trop lourd pour WebR. On charge un **extrait** sur le département du Mfoundi (Yaoundé), recadré et compressé à ~1 Mo.
+La **densite** (hab/km²) normalise la population par la surface : indispensable pour comparer des régions de tailles inégales (Extrême-Nord ~34 000 km² vs Est ~109 000 km²). Quand le facteur de variation est grand (>10x), l'**échelle log** révèle les contrastes que l'échelle linéaire écraserait.
 
 ```{webr}
-#| autorun: true
+# st_area retourne des m2 (sf detecte la colonne geometrie automatiquement).
+# Pour mesurer des surfaces realistes au Cameroun, l'EPSG:32632 (UTM zone 32N)
+# serait plus precis ; ici en WGS84 l'approximation reste correcte pour visualiser.
+cmr1_pop$surface_km2     <- as.numeric(st_area(cmr1_pop)) / 1e6
+cmr1_pop$densite_hab_km2 <- cmr1_pop$T_TL / cmr1_pop$surface_km2
+
+# trans = "log10" applique la transformation logarithmique sur la palette.
+ggplot(cmr1_pop) +
+  geom_sf(aes(fill = densite_hab_km2), colour = "white", linewidth = 0.3) +
+  geom_sf_label(aes(label = NAME_1), size = 2.2, colour = "black",
+                fill = alpha("white", 0.75), label.size = 0,
+                label.padding = unit(0.1, "lines")) +
+  scale_fill_viridis_c(option = "inferno", trans = "log10",
+                       labels = comma, name = "hab/km²\n(échelle log)") +
+  labs(title    = "Densité de population par région — Cameroun, 2025",
+       subtitle = "Échelle logarithmique (contraste ~10x entre régions extrêmes)",
+       caption  = "Source : OCHA COD-PS Cameroun 2025 · GADM v4.1 · IFORD x GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+## 6. Pipeline raster WorldPop (lecture seule)
+
+Les sections **6 bis** à **6 sexies** ci-dessous présentent le pipeline raster `terra` à reproduire dans RStudio desktop. Le code y est commenté ligne à ligne. Sur un poste avec R installé, ouvrir `demo.qmd` du même dossier exécute ce pipeline en direct.
+
+## 6 bis. Charger un raster WorldPop (extrait Mfoundi)
+
+Un **raster de population** (population grid) est une grille régulière où chaque cellule porte une estimation du nombre d'habitants. **WorldPop** (université de Southampton) utilise la méthode **top-down** (Stevens et al. 2015) : on part d'un total officiel par unité administrative puis on **redistribue** les habitants pixel par pixel selon des covariables (bâtiment, routes, lumières nocturnes…). La version **constrained R2025A** (dernière release 2024) contraint la redistribution aux pixels réellement bâtis.
+
+Les TIF WorldPop complets pèsent ~25 Mo chacun. On charge un **extrait** sur le département du Mfoundi (Yaoundé), recadré et compressé à ~1 Mo.
+
+```r
+# terra remplace l'ancien `raster` : plus rapide, plus moderne, base C++.
 library(terra)
 
-download.file("../_commons/data/jour_07_extraits/pop_2025_mfoundi.tif",
-              "pop_2025_mfoundi.tif", mode = "wb")
-download.file("../_commons/data/jour_07_extraits/pop_2015_mfoundi.tif",
-              "pop_2015_mfoundi.tif", mode = "wb")
-download.file("../_commons/data/jour_07_extraits/pop_2030_mfoundi.tif",
-              "pop_2030_mfoundi.tif", mode = "wb")
+# rast() ouvre le GeoTIFF SANS charger tous les pixels en RAM (pointeur disque).
+pop_2025 <- rast("../_commons/data/jour_07_extraits/pop_2025_mfoundi.tif")
+pop_2015 <- rast("../_commons/data/jour_07_extraits/pop_2015_mfoundi.tif")
+pop_2030 <- rast("../_commons/data/jour_07_extraits/pop_2030_mfoundi.tif")
 
-pop_2025 <- rast("pop_2025_mfoundi.tif")
-pop_2015 <- rast("pop_2015_mfoundi.tif")
-pop_2030 <- rast("pop_2030_mfoundi.tif")
-
+# print() affiche les metadonnees : dimensions, CRS, etendue, resolution.
 print(pop_2025)
+# Resolution WorldPop = 0.000833 deg ~ 92.5 m a l'equateur (on parle de "100 m").
 cat("Résolution (degrés) :", res(pop_2025), "\n")
 cat("Cellules non-NA :", sum(!is.na(values(pop_2025))), "\n")
 ```
 
-## 6. Visualiser la grille Mfoundi 2025 (Exercice 1+2)
+## 6 ter. Visualiser la grille Mfoundi 2025
 
-`terra::plot` est rapide et léger sur WebR.
+`terra::plot` est rapide et léger. La valeur d'une cellule = **habitants/pixel** (1 pixel = 100m x 100m ~ 1 hectare).
 
-```{webr}
+```r
+# hcl.colors() = palette HCL perceptuellement uniforme, rev=TRUE inverse l'ordre.
 plot(pop_2025,
-     main = "WorldPop 2025 — Département du Mfoundi (Yaoundé)",
+     main = "WorldPop constrained R2025A — Mfoundi (Yaoundé) — 2025",
+     sub  = "Méthode top-down · unité : hab/pixel (100m x 100m)",
      col  = hcl.colors(20, "YlOrRd", rev = TRUE))
+# Caption manuel (terra n'a pas d'option caption native) :
+mtext("Source : WorldPop R2025A constrained 100m · IFORD x GDSG 2026",
+      side = 1, line = 4, cex = 0.7, adj = 1)
 ```
 
-## 7. Calculer l'effectif total (Exercice 2)
+## 6 quater. Calculer l'effectif total
 
-```{webr}
+`global(raster, "sum")` somme TOUTES les cellules non-NA. Comme chaque cellule contient déjà un nombre d'habitants (pas une densité), la somme donne directement l'effectif total estimé.
+
+```r
+# Sur l'extrait Mfoundi : pas besoin de crop+mask, le raster est deja recadre.
 pop_yaounde_2025 <- global(pop_2025, "sum", na.rm = TRUE)$sum
 pop_yaounde_2015 <- global(pop_2015, "sum", na.rm = TRUE)$sum
 pop_yaounde_2030 <- global(pop_2030, "sum", na.rm = TRUE)$sum
@@ -143,11 +226,14 @@ cat("Croissance 2015-2025 :",
     "%\n")
 ```
 
-## 8. Trajectoire 2015-2030 (Exercice 4b)
+## 6 quinquies. Trajectoire 2015-2030
 
-```{webr}
+On construit un tibble à 3 lignes (une par année) et on calcule la **croissance relative** par rapport à 2015 (année de référence). Les projections WorldPop 2030 reposent sur des scénarios SSP du GIEC adaptés à l'Afrique.
+
+```r
 library(tibble)
 
+# population[1] = valeur de la premiere ligne (2015). C'est notre baseline.
 evol <- tibble(
   annee      = c(2015, 2025, 2030),
   population = c(round(pop_yaounde_2015),
@@ -157,62 +243,50 @@ evol <- tibble(
   mutate(croissance_vs_2015 = round(100 * (population - population[1]) /
                                     population[1], 1))
 
-evol
-```
+print(evol)
 
-```{webr}
+# Graphique en ligne : geom_line + geom_point pour bien voir les 3 jalons.
 ggplot(evol, aes(x = annee, y = population)) +
   geom_line(colour = "#2C7FB8", linewidth = 1) +
   geom_point(colour = "#2C7FB8", size = 3) +
   scale_y_continuous(labels = comma) +
   scale_x_continuous(breaks = c(2015, 2025, 2030)) +
-  labs(title    = "Évolution de la population à Yaoundé (Mfoundi)",
-       subtitle = "WorldPop constrained R2025A · 2015, 2025, 2030",
-       x = "Année", y = "Population estimée") +
+  labs(title    = "Évolution de la population à Yaoundé (Mfoundi) — 2015 / 2025 / 2030",
+       subtitle = "Top-down WorldPop constrained R2025A · projection SSP pour 2030",
+       caption  = "Source : WorldPop R2025A constrained 100m · IFORD x GDSG 2026",
+       x = "Année", y = "Population estimée (habitants)") +
   theme_minimal()
 ```
 
-## 9. Carte des 3 époques côte-à-côte
+## 6 sexies. Carte des 3 époques côte-à-côte
 
-Avec `terra::plot` sur les trois rasters avec une **plage de valeurs commune** pour rendre la comparaison visuelle juste.
+**Règle d'or** : pour comparer deux cartes raster temporelles, il faut une **plage de valeurs commune** (sinon l'œil interprète des couleurs identiques comme des valeurs identiques alors que les bornes diffèrent). On calcule `range` sur les 3 rasters concaténés.
 
-```{webr}
-# Trouver l'étendue commune des valeurs
+```r
+# range() retourne min et max ; on l'applique a la concatenation des 3 rasters.
 rg <- range(c(values(pop_2015), values(pop_2025), values(pop_2030)), na.rm = TRUE)
 
+# par(mfrow = c(1,3)) = grille graphique 1 ligne x 3 colonnes pour les juxtaposer.
 par(mfrow = c(1, 3))
-plot(pop_2015, main = "2015", col = hcl.colors(20, "YlOrRd", rev = TRUE),
-     range = rg)
-plot(pop_2025, main = "2025", col = hcl.colors(20, "YlOrRd", rev = TRUE),
-     range = rg)
-plot(pop_2030, main = "2030 (projection)",
+plot(pop_2015, main = "Mfoundi 2015",
+     col = hcl.colors(20, "YlOrRd", rev = TRUE), range = rg)
+plot(pop_2025, main = "Mfoundi 2025",
+     col = hcl.colors(20, "YlOrRd", rev = TRUE), range = rg)
+plot(pop_2030, main = "Mfoundi 2030 (projection)",
      col = hcl.colors(20, "YlOrRd", rev = TRUE), range = rg)
 par(mfrow = c(1, 1))
+# Caption global sous la grille de cartes.
+mtext("WorldPop R2025A constrained · hab/pixel · échelle commune · IFORD x GDSG 2026",
+      side = 1, line = -2, outer = TRUE, cex = 0.7)
 ```
 
-## 10. Densité par région avec échelle log (Exercice 6)
+## 7. Pour aller plus loin
 
-```{webr}
-# Aire en km² (sf détecte automatiquement la colonne géométrie)
-cmr1_pop$surface_km2     <- as.numeric(st_area(cmr1_pop)) / 1e6
-cmr1_pop$densite_hab_km2 <- cmr1_pop$T_TL / cmr1_pop$surface_km2
-
-ggplot(cmr1_pop) +
-  geom_sf(aes(fill = densite_hab_km2), colour = "white", linewidth = 0.3) +
-  scale_fill_viridis_c(option = "inferno", trans = "log10",
-                       labels = comma, name = "hab/km² (log)") +
-  labs(title    = "Densité de population — Cameroun 2025",
-       subtitle = "Échelle logarithmique") +
-  theme_minimal()
-```
-
-## 11. Pour aller plus loin
-
-La version desktop `demo.qmd` ajoute (à exécuter sous RStudio) :
+La version desktop `demo.qmd` ajoute :
 
 - **Exercice 5** : zone personnalisée dessinée à la main avec `mapedit::editMap()` (interactif, non portable WebR).
 - **Exercice 5b** : comparaison de 5 villes (Douala, Yaoundé, Bafoussam, Bamenda, Garoua) via `lapply` + `bind_rows`.
-- **Exercice 7** : distribution par âge entre 2 régions (`pivot_longer + geom_col`) — réalisable ici aussi sur `pop_adm1`.
+- **Exercice 7** : distribution par âge entre 2 régions (`pivot_longer + geom_col`).
 - **Exercice 8** : pipeline complet GHSL (7 tuiles ZIP Mollweide → `sprc` → `mosaic` → `project` vers WGS84 → `mask` Cameroun → comparaison WorldPop vs GHSL). Lourd à exécuter (~1 min), non portable WebR.
 - **Carte interactive Leaflet** via `tmap_mode("view")` avec fond satellite Esri.
 

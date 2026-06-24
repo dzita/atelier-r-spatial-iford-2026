@@ -2,6 +2,16 @@
 title: "J5 — Visualisation et cartographie"
 subtitle: "Code R exécutable dans le navigateur — vraies données EDS-MICS 2018"
 engine: knitr
+webr:
+  packages:
+    - sf
+    - dplyr
+    - tibble
+    - tidyr
+    - ggplot2
+  resources:
+    - ../_commons/data/gadm41_CMR_1.json
+    - ../_commons/data/dhs_cmr/indicateurs_dhs_cmr_2018.csv
 ---
 
 ::: {.iford-callout}
@@ -16,18 +26,21 @@ engine: knitr
 
 ```{webr}
 #| autorun: true
+# On charge les 5 paquets clés du jour : sf pour le spatial,
+# dplyr/tibble/tidyr pour manipuler les tableaux, ggplot2 pour cartographier.
 library(sf)
 library(dplyr)
 library(tibble)
 library(tidyr)
 library(ggplot2)
 
-download.file("../_commons/data/gadm41_CMR_1.json", "adm1.json", mode = "wb")
-download.file("../_commons/data/dhs_cmr/indicateurs_dhs_cmr_2018.csv", "dhs.csv", mode = "wb")
+# read_sf lit un fichier vectoriel (ici un GeoJSON des régions GADM).
+# read.csv charge le tableau d'indicateurs DHS calculés en amont.
+adm1 <- read_sf("_commons/data/gadm41_CMR_1.json")
+dhs  <- read.csv("_commons/data/dhs_cmr/indicateurs_dhs_cmr_2018.csv",
+                 stringsAsFactors = FALSE)
 
-adm1 <- read_sf("adm1.json")
-dhs  <- read.csv("dhs.csv", stringsAsFactors = FALSE)
-
+# Petit aperçu pour vérifier que la table contient bien les indicateurs attendus.
 cat("Indicateurs DHS Cameroun 2018 :", nrow(dhs), "lignes\n")
 head(dhs, 6)
 ```
@@ -35,6 +48,8 @@ head(dhs, 6)
 ## 2. Passer en format wide et joindre à GADM
 
 ```{webr}
+# pivot_wider transforme une ligne par couple région × indicateur
+# en une ligne par région avec une colonne par indicateur (format "carte-prêt").
 dhs_wide <- dhs |>
   select(region, indicateur, valeur) |>
   pivot_wider(names_from = indicateur, values_from = valeur) |>
@@ -46,12 +61,14 @@ dhs_wide <- dhs |>
     taille_menage    = HC_HHSZ_H_AVG
   )
 
-# Normaliser les noms de régions pour la jointure
+# Les noms de régions diffèrent entre GADM (français, accents) et DHS (anglais).
+# La fonction norm() retire accents et caractères spéciaux pour comparer simplement.
 norm <- function(x) {
   x |> iconv(from = "UTF-8", to = "ASCII//TRANSLIT") |>
        tolower() |>
        gsub("[^a-z0-9]", "", x = _)
 }
+# Dictionnaire pour les cas où la translitération ne suffit pas (northwest -> nordouest).
 dict <- c(northwest="nordouest", southwest="sudouest", farnorth="extremenord",
           north="nord", south="sud", east="est", west="ouest",
           centre="centre", littoral="littoral",
@@ -61,14 +78,18 @@ normalize <- function(x) {
   ifelse(v %in% names(dict), dict[v], v)
 }
 
+# On crée une clé commune région_key dans les deux tables pour pouvoir les joindre.
 adm1$region_key     <- normalize(adm1$NAME_1)
 dhs_wide$region_key <- normalize(dhs_wide$region)
 
+# left_join garde toutes les régions GADM et ajoute les colonnes DHS correspondantes.
+# adm1_indic est notre objet sf "tout prêt" pour faire des cartes.
 adm1_indic <- adm1 |>
   left_join(dhs_wide |> select(region_key, tx_eau_ameliore, tx_electricite,
                                tx_alpha_femmes, tx_alpha_hommes, taille_menage),
             by = "region_key")
 
+# st_drop_geometry retire la colonne géométrique pour un affichage tabulaire lisible.
 adm1_indic |>
   st_drop_geometry() |>
   select(NAME_1, tx_alpha_femmes, tx_electricite, tx_eau_ameliore) |>
@@ -78,6 +99,9 @@ adm1_indic |>
 ## 3. Choroplèthe minimale `ggplot2`
 
 ```{webr}
+# La grammaire ggplot2 : ggplot(data) + geom_sf(aes(...)) trace les polygones,
+# aes(fill = ...) mappe une variable à la couleur de remplissage.
+# theme_minimal() retire le fond gris par défaut.
 ggplot(adm1_indic) +
   geom_sf(aes(fill = tx_alpha_femmes)) +
   theme_minimal()
@@ -86,14 +110,20 @@ ggplot(adm1_indic) +
 ## 4. Choroplèthe publiable avec décorations
 
 ```{webr}
+# Une carte "publiable" empile sept éléments : géométrie colorée, palette nommée,
+# étiquettes des régions, titre, sous-titre méthodologique, caption (source + date),
+# et un thème qui retire les axes (inutiles pour une carte).
 ggplot(adm1_indic) +
   geom_sf(aes(fill = tx_alpha_femmes), color = "white", linewidth = 0.3) +
-  scale_fill_viridis_c(option = "D", name = "% femmes\nalphabétisées") +
-  geom_sf_label(aes(label = NAME_1), size = 2.2, color = "white",
+  # Palette viridis = séquentielle, perceptuellement uniforme, daltonien-friendly.
+  scale_fill_viridis_c(option = "D", name = "% femmes\nalphabétisées (%)") +
+  # geom_sf_label place le nom de chaque région au centroïde du polygone.
+  geom_sf_label(aes(label = NAME_1), size = 2.2, colour = "black",
+                fill = scales::alpha("white", 0.75), label.size = 0,
                 fontface = "bold", label.padding = unit(0.08, "lines")) +
-  labs(title = "Alphabétisation des femmes 15-49 ans — Cameroun 2018",
-       subtitle = "Source : EDS-MICS Cameroun 2018 (DHS StatCompiler)",
-       caption = "GADM v4.1 · IFORD × GDSG 2026") +
+  labs(title = "Alphabétisation des femmes 15-49 ans par région — Cameroun 2018",
+       subtitle = "EDS-MICS 2018 · agrégation régionale srvyr · 10 régions ADM1",
+       caption = "Source : EDS-MICS Cameroun 2018 (DHS Program) · GADM v4.1 · IFORD x GDSG 2026") +
   theme_minimal() +
   theme(axis.text = element_blank(),
         axis.ticks = element_blank(),
@@ -105,21 +135,26 @@ ggplot(adm1_indic) +
 Au lieu de `tmap_arrange()`, on utilise les facettes `ggplot2` après avoir restructuré la table en format long avec `tidyr::pivot_longer()`.
 
 ```{webr}
+# pivot_longer empile les deux indicateurs dans une seule colonne valeur
+# avec une colonne indicateur qui dit lequel : c'est ce qui permet le facet_wrap.
 adm1_long <- adm1_indic |>
   select(NAME_1, tx_alpha_femmes, tx_electricite, geometry) |>
   pivot_longer(c(tx_alpha_femmes, tx_electricite),
                names_to = "indicateur", values_to = "valeur")
 
+# facet_wrap(~ var) génère un panneau par valeur unique de var.
+# labeller transforme les noms techniques en libellés lisibles.
 ggplot(adm1_long) +
   geom_sf(aes(fill = valeur), color = "white", linewidth = 0.2) +
-  scale_fill_viridis_c(option = "D") +
+  scale_fill_viridis_c(option = "D", name = "Taux (%)") +
   facet_wrap(~ indicateur, ncol = 2,
              labeller = as_labeller(c(
-               tx_alpha_femmes = "% femmes alphabétisées",
-               tx_electricite  = "% ménages électrifiés"
+               tx_alpha_femmes = "a. % femmes alphabétisées",
+               tx_electricite  = "b. % ménages électrifiés"
              ))) +
-  labs(title = "Alphabétisation femmes × Électricité — Cameroun 2018",
-       caption = "Source : EDS-MICS Cameroun 2018 (DHS StatCompiler)") +
+  labs(title = "Alphabétisation des femmes x accès à l'électricité — Cameroun 2018",
+       subtitle = "Deux indicateurs DHS sur la même base ADM1 · palette viridis commune",
+       caption = "Source : EDS-MICS Cameroun 2018 (DHS Program) · GADM v4.1 · IFORD x GDSG 2026") +
   theme_minimal() +
   theme(axis.text = element_blank(), axis.ticks = element_blank(),
         panel.grid = element_blank(),
@@ -129,20 +164,28 @@ ggplot(adm1_long) +
 ## 6. Choix de palette : viridis vs ColorBrewer
 
 ```{webr}
+# scale_fill_viridis_c = échelle continue (gradient lisse) avec la palette viridis.
 ggplot(adm1_indic) +
   geom_sf(aes(fill = tx_alpha_femmes), color = "white", linewidth = 0.2) +
-  scale_fill_viridis_c(option = "D") +
-  labs(title = "Palette viridis (perceptuellement uniforme)") +
+  scale_fill_viridis_c(option = "D", name = "% femmes\nalphabétisées (%)") +
+  labs(title = "Alphabétisation des femmes 15-49 ans — palette viridis",
+       subtitle = "Échelle continue · perceptuellement uniforme · daltonien-friendly",
+       caption = "Source : EDS-MICS Cameroun 2018 (DHS Program) · GADM v4.1 · IFORD x GDSG 2026") +
   theme_minimal() +
   theme(axis.text = element_blank(), axis.ticks = element_blank(),
         panel.grid = element_blank())
 ```
 
 ```{webr}
+# scale_fill_fermenter = palette ColorBrewer DISCRÉTISÉE en n classes
+# (utile quand on veut faire correspondre la légende à des seuils interprétables).
 ggplot(adm1_indic) +
   geom_sf(aes(fill = tx_alpha_femmes), color = "white", linewidth = 0.2) +
-  scale_fill_fermenter(palette = "YlOrRd", direction = 1, n.breaks = 5) +
-  labs(title = "Palette ColorBrewer YlOrRd (5 classes Jenks-like)") +
+  scale_fill_fermenter(palette = "YlOrRd", direction = 1, n.breaks = 5,
+                       name = "% femmes\nalphabétisées (%)") +
+  labs(title = "Alphabétisation des femmes 15-49 ans — palette ColorBrewer YlOrRd",
+       subtitle = "Échelle discrétisée en 5 classes (équivalent Jenks visuel)",
+       caption = "Source : EDS-MICS Cameroun 2018 (DHS Program) · GADM v4.1 · IFORD x GDSG 2026") +
   theme_minimal() +
   theme(axis.text = element_blank(), axis.ticks = element_blank(),
         panel.grid = element_blank())

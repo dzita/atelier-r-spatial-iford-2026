@@ -64,28 +64,37 @@
 - `scales` — formatage des étiquettes (recyclage J5)
 - **`mapedit`** + `leaflet` — édition interactive de polygones (nouveau du jour)
 
-## Données mobilisées (100 % réelles, conçues par Edith Darin)
+## Données utilisées
 
-| Élément | Description | Localisation |
-|---|---|---|
-| `cmr_admpop_adm1_2025.csv` | Population administrative par région — source : OCHA COD-PS Cameroun (T_TL, F_TL, M_TL, T_00_04, …, T_80Plus, ADM1_EN, ADM1_FR, ADM1_PCODE) | `pedagogie/datasets/cameroun/jour_07_population/` (commité) |
-| `gadm41_CMR.gpkg` | GADM v4.1 unifié en GeoPackage (couches `ADM_ADM_0`, `ADM_ADM_1`, `ADM_ADM_2`) | idem |
-| `gadm41_CMR_shp.zip` | Variante Shapefile (fallback) | idem |
-| `cmr_pop_2015_CN_100m_R2025A_v1.tif` | WorldPop constrained 2015, 100 m, Release 2025A v1 — Univ. Southampton | idem (raster `.tif`, **exclu Git**) |
-| `cmr_pop_2025_CN_100m_R2025A_v1.tif` | WorldPop constrained 2025 | idem |
-| `cmr_pop_2030_CN_100m_R2025A_v1.tif` | Projection WorldPop 2030 | idem |
-| `GHS-POP/*.zip` | 7 tuiles GHS-POP R2023A Mollweide (R7_C20, R8_C19, R8_C21, R9_C19/20/21, R10_C20) couvrant le Cameroun — JRC Commission européenne | idem (sous-dossier **exclu Git**) |
-| `DATA_ECOLE.zip` | Bonus pédagogique d'Edith (à explorer dans le module 8 ou en autonomie) | idem (commité) |
+Conception des datasets et choix méthodologiques : **Edith Darin** (Senior Researcher, ex-WorldPop/Université d'Oxford, GDSG/IFORD).
 
-**Stratégie Git** : les rasters TIF + ZIP GHS-POP totalisent ~225 Mo et sont **exclus du repo** via `.gitignore` (resteront en local sur la machine de l'animateur). Les CSV, GeoPackage et `DATA_ECOLE.zip` (< 8 Mo total) sont commités. Le runtime WebR consomme des extraits Mfoundi/Yaoundé produits par `pedagogie/_commons/data/jour_07_extraits/00_extraire_pop_pour_webr.R`.
+### Embarqué dans le repo (chargé automatiquement par le runtime WebR)
 
-**Helpers de chargement** dans `pedagogie/_commons/helpers/fetch_data.R` :
+Extraits Mfoundi/Yaoundé produits par `pedagogie/J07_population_haute_resolution/00_extraire_pop_pour_webr.R` (ou son équivalent sous `_commons/data/jour_07_extraits/`) à partir des sources lourdes ci-dessous :
 
-- `fetch_worldpop_constrained_cmr(year)` — résout les TIF WorldPop pour 2015, 2025, 2030
-- `fetch_gadm_cmr_gpkg()` — résout le GeoPackage GADM unifié
-- `fetch_admpop_adm1_cmr_2025()` — résout le CSV de population administrative
-- `fetch_ghspop_tuiles_dir()` — résout le dossier des tuiles GHS-POP
-- `fetch_data_ecole_cmr()` — résout le bonus DATA_ECOLE
+- `pedagogie/_commons/data/jour_07_extraits/admpop_adm1_2025.csv` — copie légère du CSV OCHA COD-PS Cameroun, ~20 Ko (10 régions × T_TL, F_TL, M_TL, T_00_04…T_80Plus, ADM1_EN, ADM1_FR, ADM1_PCODE).
+- `pedagogie/_commons/data/jour_07_extraits/gadm41_CMR_adm1.geojson` — limites ADM1 extraites du GeoPackage GADM v4.1, ~80 Ko.
+- `pedagogie/_commons/data/jour_07_extraits/gadm41_CMR_adm2_mfoundi.geojson` — département du Mfoundi (focus Yaoundé), < 10 Ko.
+- `pedagogie/_commons/data/jour_07_extraits/pop_2015_mfoundi.tif` — raster WorldPop constrained 2015 croppé sur Mfoundi, ~1 Mo.
+- `pedagogie/_commons/data/jour_07_extraits/pop_2025_mfoundi.tif` — idem 2025.
+- `pedagogie/_commons/data/jour_07_extraits/pop_2030_mfoundi.tif` — idem projection 2030.
+
+### À télécharger manuellement (utilisé par demo.qmd / demo.R / exercice.qmd en mode RStudio desktop, trop lourd pour le repo)
+
+| Fichier | Emplacement attendu | Source | Taille | Comment l'obtenir |
+|---|---|---|---|---|
+| `cmr_admpop_adm1_2025.csv` | `pedagogie/datasets/cameroun/jour_07_population/` | OCHA COD-PS Cameroun | ~20 Ko | <https://data.humdata.org/dataset/cod-ps-cmr> (commité dans le repo, helper `fetch_admpop_adm1_cmr_2025()`) |
+| `gadm41_CMR.gpkg` (couches ADM0/1/2) | `pedagogie/datasets/cameroun/jour_07_population/` | GADM v4.1 | ~3 Mo | <https://geodata.ucdavis.edu/gadm/gadm4.1/gpkg/gadm41_CMR.gpkg> (commité, helper `fetch_gadm_cmr_gpkg()`) |
+| `gadm41_CMR_shp.zip` (fallback Shapefile) | idem | GADM v4.1 | ~2 Mo | <https://geodata.ucdavis.edu/gadm/gadm4.1/shp/gadm41_CMR_shp.zip> (commité) |
+| `cmr_pop_2015_CN_100m_R2025A_v1.tif` | idem | WorldPop, University of Southampton — Release 2025A v1 constrained | ~25 Mo | <https://hub.worldpop.org> (filtre Cameroun, 100 m, constrained, 2015) — **exclu Git**, helper `fetch_worldpop_constrained_cmr(2015)` |
+| `cmr_pop_2025_CN_100m_R2025A_v1.tif` | idem | WorldPop Release 2025A v1 constrained, année 2025 | ~25 Mo | idem 2025 — **exclu Git**, helper `fetch_worldpop_constrained_cmr(2025)` |
+| `cmr_pop_2030_CN_100m_R2025A_v1.tif` | idem | WorldPop Release 2025A v1 constrained, projection 2030 | ~25 Mo | idem 2030 — **exclu Git**, helper `fetch_worldpop_constrained_cmr(2030)` |
+| `GHS-POP/*.zip` (7 tuiles Mollweide R2023A : R7_C20, R8_C19, R8_C21, R9_C19, R9_C20, R9_C21, R10_C20) | `pedagogie/datasets/cameroun/jour_07_population/GHS-POP/` | JRC Commission européenne — GHSL | ~7 × 15 Mo = ~105 Mo | <https://human-settlement.emergency.copernicus.eu/download.php?ds=pop> (sélectionner R2023A, 100 m, Mollweide, tuiles couvrant le Cameroun) — **exclu Git**, helper `fetch_ghspop_tuiles_dir()` |
+| `DATA_ECOLE.zip` (bonus pédagogique Edith) | `pedagogie/datasets/cameroun/jour_07_population/` | Edith Darin, dossier `workshop_material/jour_07` Google Drive partagé | variable | commité — helper `fetch_data_ecole_cmr()` |
+
+Pour régénérer les extraits WebR à partir des sources lourdes locales : `Rscript pedagogie/J07_population_haute_resolution/00_extraire_pop_pour_webr.R`.
+
+**Helpers de chargement** dans `pedagogie/_commons/helpers/fetch_data.R` : `fetch_worldpop_constrained_cmr(year)`, `fetch_gadm_cmr_gpkg()`, `fetch_admpop_adm1_cmr_2025()`, `fetch_ghspop_tuiles_dir()`, `fetch_data_ecole_cmr()`.
 
 ## Pré-requis
 

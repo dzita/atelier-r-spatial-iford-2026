@@ -36,20 +36,18 @@
 - `ggplot2` — cartes et graphiques
 - `spdep` — autocorrélation spatiale (`knearneigh`, `nb2listw`, `moran.test`, `localmoran`, `lag.listw`)
 
-## Données mobilisées (100 % réelles)
+## Données utilisées
 
-| Élément | Description |
-|---|---|
-| `etablissements_sante_osm.csv` | Facilités de santé OpenStreetMap du Cameroun (téléchargement Overpass : `amenity ∈ {hospital, clinic, doctors, pharmacy}` + `healthcare = *`). Colonnes : `osm_id`, `nom`, `type`, `operateur`, `ville`, `region_osm`, `longitude`, `latitude`, `categorie ∈ {Hopital, Centre/Clinique, Pharmacie, Autre}`. |
-| `gadm41_CMR_2.json` | Polygones GADM v4.1 des départements (ADM2) du Cameroun, utilisés pour l'agrégation spatiale. |
+### Embarqué dans le repo (chargé automatiquement par le runtime WebR)
 
-**Pipeline de production** : `00_telecharger_osm_sante.R` (à exécuter UNE
-fois sur la machine de l'animateur, puis commit du CSV produit). Aucune
-variable simulée : la variable d'analyse statistique (Moran, LISA) est
-`n_facilites` par département, **comptée par jointure spatiale** entre les
-points OSM et les polygones ADM2. Le runtime WebR charge directement le
-CSV et le JSON (osmdata et spdep n'étant pas portables sur WebR, la
-matrice de contiguïté est recodée à la main avec `st_touches()`).
+- `pedagogie/_commons/data/cmr_sante/etablissements_sante_osm.csv` — établissements de santé OpenStreetMap du Cameroun extraits via l'API Overpass (`amenity ∈ {hospital, clinic, doctors, pharmacy}` + `healthcare = *`). Format CSV (~800 lignes, < 100 Ko). Colonnes : `osm_id`, `nom`, `type`, `operateur`, `ville`, `region_osm`, `longitude`, `latitude`, `categorie ∈ {Hopital, Centre/Clinique, Pharmacie}` (la catégorie « Autre » est filtrée à la production). Source : OpenStreetMap contributeurs, licence ODbL 1.0 (<https://www.openstreetmap.org>, API <https://overpass-api.de>).
+- `pedagogie/_commons/data/gadm41_CMR_2.json` — polygones GADM v4.1 des départements (ADM2) du Cameroun pour l'agrégation spatiale et la matrice de contiguïté (`st_touches()` côté WebR car `spdep` n'est pas portable navigateur). Format GeoJSON, ~600 Ko. Source : <https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_CMR_2.json> (helper `fetch_gadm_cameroon(2)` dans `pedagogie/_commons/helpers/fetch_data.R`).
+
+### À télécharger manuellement
+
+Aucun dataset lourd spécifique à J6. Les deux fichiers ci-dessus sont commités et suffisent à la démo, à l'exercice, au corrigé et au runtime WebR.
+
+Pour régénérer le CSV OSM (rare, déjà commité) : `Rscript pedagogie/_commons/data/cmr_sante/00_telecharger_osm_sante.R`. La variable d'analyse `n_facilites` par département est **comptée par jointure spatiale** entre les points OSM et les polygones ADM2 — aucune simulation.
 
 ## Pré-requis
 

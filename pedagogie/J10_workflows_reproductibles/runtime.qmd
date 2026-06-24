@@ -2,12 +2,22 @@
 title: "J10 — Flux reproductibles et mini-projet"
 subtitle: "Code R exécutable dans le navigateur — indicateurs régionaux"
 engine: knitr
+webr:
+  packages:
+    - sf
+    - dplyr
+    - tibble
+    - ggplot2
+    - scales
+    - purrr
+  resources:
+    - ../_commons/data/jour_10_extraits/regions_indicateurs_demo.gpkg
 ---
 
 ::: {.iford-callout}
-**Mode d'emploi.** Cliquez **Run code** dans chaque cellule. WebR charge `sf`, `dplyr`, `purrr`, `tmap` au premier appel (~30 s la première fois). Tout tourne dans votre navigateur — aucune installation locale.
+**Mode d'emploi.** Cliquez **Run code** dans chaque cellule. WebR charge `sf`, `dplyr`, `ggplot2`, `purrr` au boot. Tout tourne dans votre navigateur — aucune installation locale.
 
-**Limitation technique** : le runtime WebR couvre les **sections 1, 3, 5 et 6** de `demo.qmd` (chargement projet + tmap plot/view + automatisation purrr + métadonnées FAIR). Les sections **2 (Quarto multi-format render)** et **4 (Git init/commit/push)** exigent un terminal système et ne tournent pas dans WebR — voir `demo.qmd` desktop.
+**Limitation technique** : le runtime WebR couvre les **sections 1, 3, 5 et 6** de `demo.qmd` (chargement projet + cartes statiques + automatisation purrr + métadonnées FAIR). Les sections **2 (Quarto multi-format render)** et **4 (Git init/commit/push)** exigent un terminal système et ne tournent pas dans WebR. La distinction `tmap_mode("plot")` vs `tmap_mode("view")` n'est pas non plus disponible ici (`tmap` n'est pas portable WebR) — voir `demo.qmd` desktop pour ces 3 points.
 
 **Données 100 % réelles** : `regions_indicateurs_demo.gpkg` préparé par Edith Darin (10 régions du Cameroun, indicateurs démographiques et sociaux). Aucune simulation.
 
@@ -18,14 +28,15 @@ engine: knitr
 
 ```{webr}
 #| autorun: true
+# sf = format spatial vectoriel (polygones de regions) ; dplyr = manipulation tableaux ;
+# tibble = tableau moderne. Ces 3 packages forment la base J10.
 library(sf); library(dplyr); library(tibble)
 
-# Telecharger le GeoPackage des indicateurs regionaux (10 features)
-download.file("../_commons/data/jour_10_extraits/regions_indicateurs_demo.gpkg",
-              "regions.gpkg", mode = "wb")
+# Reproductibilite computationnelle : meme chemin -> meme resultat, sur toute machine.
+# Ici WebR a pre-charge le .gpkg dans la VM du navigateur (chemin relatif fonctionne).
+regions <- sf::read_sf("_commons/data/jour_10_extraits/regions_indicateurs_demo.gpkg")
 
-regions <- sf::read_sf("regions.gpkg")
-
+# Diagnostic minimal : nombre d'objets, systeme de coordonnees, colonnes disponibles.
 cat("Nombre de regions :", nrow(regions), "\n")
 cat("CRS               :", sf::st_crs(regions)$input, "\n")
 cat("Colonnes          :", paste(names(regions), collapse = ", "), "\n")
@@ -34,6 +45,8 @@ cat("Colonnes          :", paste(names(regions), collapse = ", "), "\n")
 ## 2. Inspecter le tableau d'indicateurs
 
 ```{webr}
+# st_drop_geometry() = on retire la colonne geometrie pour ne voir que les attributs.
+# select() = on garde 7 colonnes utiles ; arrange(desc(...)) = tri par population decroissante.
 regions |>
   sf::st_drop_geometry() |>
   dplyr::select(region, population, menages, eau_amelioree_pct,
@@ -43,44 +56,65 @@ regions |>
 
 ## 3. Carte statique de l'accès à l'eau améliorée
 
-```{webr}
-library(tmap)
-tmap_mode("plot")
-
-tm_shape(regions) +
-  tm_polygons(
-    fill        = "eau_amelioree_pct",
-    fill.scale  = tm_scale_intervals(style = "quantile", values = "viridis"),
-    fill.legend = tm_legend(title = "Eau amelioree (%)")
-  ) +
-  tm_text("region", size = 0.5) +
-  tm_title("Acces a l'eau amelioree par region",
-           position = tm_pos_in("left", "top"))
-```
-
-## 4. La même carte en mode interactif
-
-`tmap_mode("view")` bascule en Leaflet. Pan, zoom, popup au survol — tout fonctionne dans le navigateur. C'est la démonstration directe de la Section 3 de `demo.qmd`.
+Carte choroplethe : la couleur de chaque region encode le pourcentage de menages ayant acces a une source d'eau amelioree (forage, robinet, borne-fontaine).
 
 ```{webr}
-tmap_mode("view")
+# ggplot2 = grammaire des graphiques ; scales = utilitaires (transparence, format).
+# On utilise ggplot2 ici (et non tmap) car tmap n'est pas portable WebR.
+library(ggplot2)
+library(scales)
 
-tm_shape(regions) +
-  tm_polygons(
-    fill        = "eau_amelioree_pct",
-    fill.scale  = tm_scale_intervals(style = "quantile", values = "viridis"),
-    fill.legend = tm_legend(title = "Eau amelioree (%)")
-  ) +
-  tm_text("region", size = 0.5)
+# geom_sf trace les polygones ; aes(fill=...) lie la variable a la couleur ;
+# geom_sf_label pose le nom de chaque region. Palette viridis = lisible daltoniens.
+ggplot(regions) +
+  geom_sf(aes(fill = eau_amelioree_pct), colour = "white", linewidth = 0.3) +
+  geom_sf_label(aes(label = region), size = 2.2, colour = "black",
+                fill = scales::alpha("white", 0.7),
+                label.padding = unit(0.1, "lines")) +
+  scale_fill_viridis_c(name = "Eau amelioree (% menages)", option = "viridis") +
+  labs(title = "Acces a l'eau amelioree par region - Cameroun",
+       subtitle = "Source dataset Edith Darin - indicateurs d'entrainement (10 regions ADM1)",
+       caption = "Source : regions_indicateurs_demo (Edith Darin, GDSG) - IFORD x GDSG 2026 - Donnees d'entrainement, non officielles") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
 ```
+
+## 4. Comparer un deuxième indicateur — l'alphabétisation
+
+Même dataset, même code, on change juste la variable cartographiée. C'est l'idée de l'automatisation par paramètre : la même fonction génère N cartes pour N indicateurs.
+
+```{webr}
+# Meme structure de code que carte precedente : seule la variable fill change.
+# Palette magma (jaune -> noir) pour distinguer visuellement de la carte eau.
+ggplot(regions) +
+  geom_sf(aes(fill = alphabetisation_pct), colour = "white", linewidth = 0.3) +
+  geom_sf_label(aes(label = region), size = 2.2, colour = "black",
+                fill = scales::alpha("white", 0.7),
+                label.padding = unit(0.1, "lines")) +
+  scale_fill_viridis_c(name = "Alphabetisation (% adultes)", option = "magma") +
+  labs(title = "Taux d'alphabetisation des adultes par region - Cameroun",
+       subtitle = "Source dataset Edith Darin - indicateurs d'entrainement (10 regions ADM1)",
+       caption = "Source : regions_indicateurs_demo (Edith Darin, GDSG) - IFORD x GDSG 2026 - Donnees d'entrainement, non officielles") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+::: {.iford-callout}
+**À noter** : la démo `tmap_mode("view")` (carte interactive Leaflet) de la version desktop `demo.qmd` n'est pas reproduisible ici parce que `tmap` n'est pas portable sur WebR. La leçon « plot vs view » est vue en classe sur RStudio.
+:::
 
 ## 5. Automatisation par boucle régionale
 
 Fonction unitaire qui calcule densité + taille de ménage + FOSA/10k pour une région donnée.
 
 ```{webr}
+# purrr = programmation fonctionnelle (alternative aux boucles for).
 library(purrr)
 
+# Fonction "unitaire" : un nom de region -> un tibble d'une ligne.
+# Pattern reutilisable : on encapsule le calcul, on l'appellera N fois ensuite.
 resumer_region <- function(nom) {
   r <- regions |> dplyr::filter(region == nom)
   if (nrow(r) == 0) {
@@ -88,23 +122,28 @@ resumer_region <- function(nom) {
                           taille_menage = NA_real_,
                           fosa_pour_10k = NA_real_))
   }
+  # st_area renvoie des m^2 ; /1e6 convertit en km^2.
   surface_km2 <- as.numeric(sf::st_area(r)) / 1e6
   tibble::tibble(
     region        = nom,
     pop_2024      = r$population,
     surface_km2   = round(surface_km2, 0),
-    densite       = round(r$population / surface_km2, 1),
-    taille_menage = round(r$population / r$menages, 2),
-    fosa_pour_10k = round(r$formations_sanitaires / r$population * 1e4, 2)
+    densite       = round(r$population / surface_km2, 1),    # hab/km^2
+    taille_menage = round(r$population / r$menages, 2),      # personnes/menage
+    fosa_pour_10k = round(r$formations_sanitaires / r$population * 1e4, 2)  # FOSA pour 10k hab
   )
 }
 
+# Test unitaire avant de boucler : on verifie sur une seule region.
 resumer_region("Adamaoua")
 ```
 
 ## 6. Appliquer aux 10 régions en une commande
 
 ```{webr}
+# map_dfr = "map data-frame row-bind" : applique la fonction a chaque element du
+# vecteur et empile les resultats en un seul tibble. Equivalent fonctionnel d'un
+# for + bind_rows, mais plus court, plus lisible, et type (verifie les colonnes).
 tableau_regions <- purrr::map_dfr(regions$region, resumer_region) |>
   dplyr::arrange(dplyr::desc(densite))
 
@@ -143,6 +182,9 @@ mon_indicateur <- function(nom) {
 Voici la grille à coller dans chaque export FAIR (Section 6 de `demo.qmd`).
 
 ```{webr}
+# Principes FAIR (2016) : Findable - Accessible - Interoperable - Reusable.
+# Les 7 elements ci-dessous sont la traduction concrete minimale pour un livrable
+# geospatial : sans eux, ton .gpkg/.csv n'est pas reutilisable (R du FAIR).
 metadonnees_livrable <- tibble::tribble(
   ~`#`, ~`Element`,           ~`Valeur exemple`,
   1L,   "Titre",              "Mon indicateur compose par region",

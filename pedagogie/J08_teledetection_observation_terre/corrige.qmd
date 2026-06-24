@@ -31,6 +31,7 @@ Conception pédagogique complète : Edith Darin (GDSG/IFORD). Intégration conve
 library(sf); library(terra)
 source("../_commons/helpers/fetch_data.R")
 
+# Trois niveaux administratifs Cameroun : 0 = pays, 1 = regions, 2 = departements.
 cmr0 <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_0", quiet = TRUE)
 cmr1 <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_1", quiet = TRUE)
 cmr2 <- st_read(fetch_gadm_cmr_gpkg(), layer = "ADM_ADM_2", quiet = TRUE)
@@ -82,10 +83,14 @@ cat("ADM0:", nrow(cmr0), "| ADM1:", nrow(cmr1), "| ADM2:", nrow(cmr2), "\n")
 
 ```{r}
 #| label: q7
+# st_make_valid() repare les vertices dupliques typiques des shapefiles
+# Copernicus livres en urgence (sinon plantage de st_area ou st_filter).
 aoi01 <- st_read("...areaOfInterestA_v1.shp", quiet = TRUE) |> st_make_valid()
 flood01 <- st_read("...floodDepthA_v2.shp", quiet = TRUE) |> st_make_valid()
+# Surface en m² -> division par 1e6 pour passer en km².
 cat("AOI01 surface :", round(as.numeric(st_area(aoi01)) / 1e6, 1), "km²\n")
 cat("Surface inondée :", round(sum(as.numeric(st_area(flood01))) / 1e6, 2), "km²\n")
+# La colonne value contient les tranches de profondeur en metres.
 table(flood01$value)
 ```
 
@@ -126,6 +131,10 @@ table(flood01$value)
 
 ```{r}
 #| label: q12-fonction
+# Fonction generique : meme pipeline reapplique sur n'importe quelle AOI.
+# Argument zone_pattern = "AOI01", "AOI02" ou "AOI03" -> matche les fichiers
+# par expression reguliere ; recursive = TRUE pour absorber les differences
+# de structure de ZIP (AOI01 dans un sous-dossier vs AOI02/03 a la racine).
 analyser_inondation <- function(emsr_root, zone_pattern, batiments_sf, pers_par_bat = 5) {
   shp_aoi <- list.files(emsr_root,
     pattern = paste0(zone_pattern, ".*areaOfInterestA.*\\.shp$"),
@@ -133,11 +142,13 @@ analyser_inondation <- function(emsr_root, zone_pattern, batiments_sf, pers_par_
   shp_flood <- list.files(emsr_root,
     pattern = paste0(zone_pattern, ".*floodDepthA.*\\.shp$"),
     full.names = TRUE, recursive = TRUE)[1]
+  # Lecture + reparation systematique des geometries Copernicus.
   aoi   <- st_read(shp_aoi,   quiet = TRUE) |> st_make_valid()
   flood <- st_read(shp_flood, quiet = TRUE) |> st_make_valid()
   if (st_crs(batiments_sf) != st_crs(aoi)) {
     batiments_sf <- st_transform(batiments_sf, st_crs(aoi))
   }
+  # Deux filtres spatiaux en cascade : dans l'AOI, puis dans la zone inondee.
   bat_aoi     <- st_filter(batiments_sf, aoi)
   bat_inondes <- st_filter(bat_aoi, flood)
   tibble::tibble(zone = zone_pattern,

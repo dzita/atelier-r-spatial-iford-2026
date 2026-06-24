@@ -2,6 +2,17 @@
 title: "J9 — Applications spatiales et sciences sociales"
 subtitle: "Code R exécutable dans le navigateur — Partie I ACLED"
 engine: knitr
+webr:
+  packages:
+    - sf
+    - dplyr
+    - ggplot2
+    - readr
+    - scales
+    - tidyr
+  resources:
+    - ../_commons/data/jour_09_extraits/ACLED_Data.csv
+    - ../_commons/data/jour_07_extraits/gadm41_CMR_adm1.geojson
 ---
 
 ::: {.iford-callout}
@@ -18,39 +29,62 @@ engine: knitr
 
 ```{webr}
 #| autorun: true
+# 4 packages pour ce TD : sf (vecteurs = points / polygones / lignes),
+# dplyr (manipulation de tableaux : filter, mutate, group_by, summarise),
+# ggplot2 (graphiques et cartes statiques via geom_sf),
+# readr (lecture CSV plus rapide et plus stricte que read.csv de base R).
 library(sf)
 library(dplyr)
 library(ggplot2)
 library(readr)
 
-# Export ACLED Cameroun (déposé dans le repo, ~quelques milliers de lignes)
-download.file("../_commons/data/jour_09_extraits/ACLED_Data.csv",
-              "acled.csv", mode = "wb")
-# GADM ADM1 extrait léger (GeoJSON, partagé avec J7)
-download.file("../_commons/data/jour_07_extraits/gadm41_CMR_adm1.geojson",
-              "adm1.geojson", mode = "wb")
+# ACLED = Armed Conflict Location & Event Data Project. Base mondiale de
+# reference (academique + humanitaire) pour les evenements de conflit
+# arme. Chaque ligne = 1 evenement GEOCODE = pourvu d'une paire (latitude,
+# longitude) en degres decimaux. Mise a jour hebdomadaire, gratuite apres
+# inscription sur acleddata.com. Variables cles : event_date (date),
+# event_type (categorie de violence), actor1/actor2, fatalities (deces),
+# admin1/admin2 (region/departement).
+#
+# GADM = Global ADMinistrative areas, base mondiale des decoupages
+# administratifs. ADM0 = pays, ADM1 = regions (10 pour le Cameroun),
+# ADM2 = departements. On charge ici uniquement l'ADM1 pour cartographier
+# les conflits a l'echelle regionale.
+acled_brut <- read_csv("_commons/data/jour_09_extraits/ACLED_Data.csv",
+                       show_col_types = FALSE)
+cmr1       <- read_sf("_commons/data/jour_07_extraits/gadm41_CMR_adm1.geojson")
 
-acled_brut <- read_csv("acled.csv", show_col_types = FALSE)
-cmr1       <- read_sf("adm1.geojson")
-
+# Premier diagnostic : combien d'evenements dans le CSV ACLED, et combien
+# de regions ADM1 dans GADM (attendu : 10 pour le Cameroun).
 c(evenements = nrow(acled_brut), regions = nrow(cmr1))
+# glimpse = vue verticale compacte du tableau : 1 ligne par colonne, avec
+# son type R (chr, dbl, date) et les premieres valeurs. Indispensable
+# AVANT toute analyse pour reperer les colonnes mal typees.
 glimpse(acled_brut)
 ```
 
 ## 2. Nettoyage et conversion (Exercice 2)
 
 ```{webr}
+# ACLED publie son CSV avec toutes les colonnes en TEXTE (meme les dates
+# et les nombres). On convertit explicitement chaque colonne dans son
+# vrai type R avant calcul. Le champ "mois" cree avec format("%Y-%m")
+# servira de cle d'AGREGATION TEMPORELLE mensuelle (ex : "2025-03" = mars
+# 2025), pour regrouper tous les evenements d'un meme mois en une ligne.
+# Filtre final : on retire les lignes sans coordonnees (impossibles a
+# placer sur une carte).
 acled_clean <- acled_brut |>
   mutate(
     event_date = as.Date(event_date),
     annee      = as.integer(year),
-    mois       = format(event_date, "%Y-%m"),
+    mois       = format(event_date, "%Y-%m"),   # cle d'agregation mensuelle
     fatalities = as.numeric(fatalities),
     longitude  = as.numeric(longitude),
     latitude   = as.numeric(latitude)
   ) |>
   filter(!is.na(longitude), !is.na(latitude))
 
+# Verification : combien d'evenements valides et quelle periode couverte ?
 cat("Evenements valides :", nrow(acled_clean), "\n")
 cat("Periode :", format(min(acled_clean$event_date), "%Y-%m-%d"), "\n         ",
     format(max(acled_clean$event_date), "%Y-%m-%d"), "\n")
@@ -59,11 +93,24 @@ cat("Periode :", format(min(acled_clean$event_date), "%Y-%m-%d"), "\n         ",
 ## 3. Exploration : types et régions (Exercice 3)
 
 ```{webr}
+# event_type = typologie ACLED standardisee a 6 categories :
+#   - Battles                        : affrontements armes entre groupes
+#   - Violence against civilians     : exactions contre des civils
+#   - Riots                          : emeutes violentes (rues)
+#   - Protests                       : manifestations pacifiques
+#   - Strategic developments         : declarations, mouvements de troupes
+#   - Explosions / Remote violence   : bombes, drones, artillerie
+# count(sort = TRUE) = raccourci dplyr equivalent a
+# group_by(event_type) |> tally() |> arrange(desc(n)).
 acled_clean |>
   count(event_type, sort = TRUE, name = "n_evenements")
 ```
 
 ```{webr}
+# admin1 = niveau region dans la nomenclature ACLED (aligne sur l'ADM1
+# GADM pour le Cameroun : Extreme-Nord, Nord-Ouest, Sud-Ouest, etc.).
+# Classement des regions par intensite des conflits enregistres :
+# permet d'identifier rapidement les zones de concentration.
 acled_clean |>
   count(admin1, sort = TRUE, name = "n_evenements")
 ```
@@ -73,9 +120,16 @@ acled_clean |>
 ```{webr}
 library(scales)
 
+# AGREGATION TEMPORELLE = operation cle des sciences sociales : on
+# resume les evenements ponctuels (1 ligne = 1 evenement, date precise)
+# en serie agregee (1 ligne = 1 periode + 1 type avec son comptage).
+# Ici grain ANNUEL + ventilation par event_type : 1 ligne par couple
+# (annee, event_type) avec le nombre d'evenements correspondants.
 resume_annuel <- acled_clean |>
   count(annee, event_type, name = "n_evenements")
 
+# Histogramme empile : la hauteur totale = tous les types confondus,
+# les couleurs permettent de voir la composition (battles, violence...).
 ggplot(resume_annuel,
        aes(x = annee, y = n_evenements, fill = event_type)) +
   geom_col() +
@@ -83,9 +137,12 @@ ggplot(resume_annuel,
     breaks = seq(min(resume_annuel$annee), max(resume_annuel$annee), by = 1)
   ) +
   scale_fill_brewer(palette = "Set2") +
-  labs(title = "Évolution annuelle des conflits au Cameroun",
-       subtitle = "Source : ACLED",
-       x = "Année", y = "Nombre d'événements", fill = "Type") +
+  labs(title    = "Evolution annuelle des conflits au Cameroun",
+       subtitle = paste0("Source ACLED ", min(resume_annuel$annee), "-",
+                         max(resume_annuel$annee),
+                         " - agregation annuelle par type d'evenement"),
+       x = "Annee", y = "Nombre d'evenements", fill = "Type d'evenement",
+       caption = "Source : ACLED Project - IFORD x GDSG 2026") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
@@ -93,6 +150,10 @@ ggplot(resume_annuel,
 ## 5. Décès annuels (Exercice 4c)
 
 ```{webr}
+# Cette fois on somme `fatalities` au lieu de compter les evenements :
+# 1 evenement peut entrainer 0 ou plusieurs deces. La courbe deces est
+# souvent decouplee de la courbe evenements (massacre unique vs nombreux
+# evenements de faible intensite).
 resume_deces <- acled_clean |>
   group_by(annee) |>
   summarise(deces = sum(fatalities, na.rm = TRUE), .groups = "drop")
@@ -103,14 +164,28 @@ ggplot(resume_deces, aes(x = annee, y = deces)) +
   scale_x_continuous(
     breaks = seq(min(resume_deces$annee), max(resume_deces$annee), by = 1)
   ) +
-  labs(title = "Décès liés aux conflits au Cameroun (source : ACLED)",
-       x = "Année", y = "Nombre de décès") +
+  labs(title    = "Deces lies aux conflits au Cameroun",
+       subtitle = paste0("Source ACLED ", min(resume_deces$annee), "-",
+                         max(resume_deces$annee),
+                         " - somme annuelle des deces declares"),
+       x = "Annee", y = "Nombre de deces (n)",
+       caption = "Source : ACLED Project - IFORD x GDSG 2026") +
   theme_minimal()
 ```
 
 ## 6. Conversion en couche sf (Exercice 5a)
 
 ```{webr}
+# GEOCODAGE = chaque evenement ACLED est livre avec une paire
+# (latitude, longitude) en degres decimaux. st_as_sf transforme ce
+# tableau classique en objet SPATIAL (couche sf) que R sait afficher
+# en carte et croiser avec d'autres couches geographiques.
+# - coords = noms des colonnes lon/lat dans le tableau source
+# - crs = 4326 = EPSG:4326 = WGS84 (lat/lon decimaux). C'est le CRS
+#   (Coordinate Reference System) standard du GPS et le CRS natif
+#   utilise par ACLED.
+# - remove = FALSE : on garde les colonnes longitude/latitude dans la
+#   table d'attributs (utile pour exporter en CSV plus tard).
 acled_pts <- st_as_sf(
   acled_clean,
   coords = c("longitude", "latitude"),
@@ -127,13 +202,24 @@ cat("Couche sf :", nrow(acled_pts), "points, CRS :",
 Sur WebR on utilise `ggplot2 + geom_sf` à la place de `tmap` (qui n'est pas portable).
 
 ```{webr}
+# Carte de LOCALISATION : 1 point = 1 evenement, couleur = event_type.
+# Fond gris clair = polygones ADM1 du Cameroun (contexte geographique).
+# Etiquettes NAME_1 ajoutees en gris pour situer chaque region.
+# alpha = 0.6 attenue la superposition dans les zones tres denses.
+# Palette Set2 = qualitative pastel (8 couleurs distinctes, accessible).
 ggplot() +
   geom_sf(data = cmr1, fill = "grey95", colour = "grey50", linewidth = 0.4) +
   geom_sf(data = acled_pts, aes(colour = event_type),
           size = 1, alpha = 0.6) +
+  geom_sf_text(data = cmr1, aes(label = NAME_1),
+               size = 2.2, colour = "grey30", fontface = "bold") +
   scale_colour_brewer(palette = "Set2") +
-  labs(title = "Conflits armés au Cameroun (source : ACLED)",
-       colour = "Type d'événement") +
+  labs(title    = "Conflits armes au Cameroun - localisation des evenements",
+       subtitle = paste0("ACLED ", format(min(acled_clean$event_date), "%Y"),
+                         "-", format(max(acled_clean$event_date), "%Y"),
+                         " - 1 point = 1 evenement geocode (lat/lon, CRS EPSG:4326)"),
+       colour   = "Type d'evenement (ACLED)",
+       caption  = "Sources : ACLED Project (evenements) - GADM v4.1 (regions ADM1) - IFORD x GDSG 2026") +
   theme_minimal() +
   theme(axis.text = element_blank(), axis.ticks = element_blank(),
         panel.grid = element_blank())
@@ -144,10 +230,16 @@ ggplot() +
 ```{webr}
 library(tidyr)
 
+# AGREGATION SPATIALE = on resume des donnees ponctuelles (points
+# ACLED) au niveau d'une unite administrative (ici ADM1 = region). La
+# jointure spatiale st_within repond a la question : "le point tombe-t-il
+# dans tel polygone ?". Pour chaque point on recupere le NAME_1 de la
+# region qui le contient, puis on compte les evenements et on somme les
+# deces par region.
 resume_par_region <- acled_pts |>
   st_join(cmr1[c("NAME_1")], join = st_within) |>
   st_drop_geometry() |>
-  filter(!is.na(NAME_1)) |>
+  filter(!is.na(NAME_1)) |>     # ecarte les points hors Cameroun (frontiere)
   group_by(NAME_1) |>
   summarise(
     n_evenements = n(),
@@ -155,6 +247,8 @@ resume_par_region <- acled_pts |>
     .groups      = "drop"
   )
 
+# left_join reattache les comptages a la couche polygonale GADM.
+# replace_na = on remplit a 0 les regions sans evenement (sinon NA cartes).
 cmr1_acled <- cmr1 |>
   left_join(resume_par_region, by = "NAME_1") |>
   mutate(
@@ -171,14 +265,22 @@ cmr1_acled |>
 ## 9. Carte choroplèthe par région
 
 ```{webr}
+# CHOROPLETHE = carte polygonale ou la COULEUR du polygone traduit une
+# valeur quantitative (ici : nombre d'evenements par region). Palette
+# YlOrRd (jaune-orange-rouge) = sequentielle Brewer, conventionnelle
+# pour representer une INTENSITE croissante de conflits.
+# Etiquettes ADM1 ajoutees pour identifier chaque region sans confusion.
 ggplot(cmr1_acled) +
   geom_sf(aes(fill = n_evenements), colour = "white", linewidth = 0.4) +
-  scale_fill_distiller(palette = "Reds", direction = 1) +
+  scale_fill_distiller(palette = "YlOrRd", direction = 1,
+                       name = "Nombre d'evenements (n)") +
   geom_sf_label(aes(label = NAME_1), size = 2.2, color = "grey20",
                 fontface = "bold", label.padding = unit(0.1, "lines")) +
-  labs(title    = "Conflits par région — Cameroun",
-       subtitle = "Source : ACLED",
-       fill     = "Nb d'événements") +
+  labs(title    = "Conflits par region administrative - Cameroun",
+       subtitle = paste0("ACLED ", format(min(acled_clean$event_date), "%Y"),
+                         "-", format(max(acled_clean$event_date), "%Y"),
+                         " - agregation ADM1 par jointure spatiale st_within"),
+       caption  = "Sources : ACLED Project (evenements) - GADM v4.1 (regions ADM1) - IFORD x GDSG 2026") +
   theme_minimal() +
   theme(axis.text = element_blank(), axis.ticks = element_blank(),
         panel.grid = element_blank())
@@ -187,13 +289,21 @@ ggplot(cmr1_acled) +
 ## 10. Carte des décès par région
 
 ```{webr}
+# Meme principe que la carte precedente, mais on cartographie ici
+# l'intensite LETALE (cumul des deces) au lieu du simple comptage des
+# evenements. La meme palette YlOrRd preserve la coherence visuelle.
 ggplot(cmr1_acled) +
   geom_sf(aes(fill = deces), colour = "white", linewidth = 0.4) +
-  scale_fill_distiller(palette = "OrRd", direction = 1,
-                       labels = comma) +
-  labs(title    = "Décès liés aux conflits par région — Cameroun",
-       subtitle = "Source : ACLED",
-       fill     = "Nb de décès") +
+  scale_fill_distiller(palette = "YlOrRd", direction = 1,
+                       labels = comma,
+                       name = "Nombre de deces (n)") +
+  geom_sf_label(aes(label = NAME_1), size = 2.2, color = "grey20",
+                fontface = "bold", label.padding = unit(0.1, "lines")) +
+  labs(title    = "Deces lies aux conflits par region administrative - Cameroun",
+       subtitle = paste0("ACLED ", format(min(acled_clean$event_date), "%Y"),
+                         "-", format(max(acled_clean$event_date), "%Y"),
+                         " - somme des deces declares par region ADM1"),
+       caption  = "Sources : ACLED Project (deces declares) - GADM v4.1 (regions ADM1) - IFORD x GDSG 2026") +
   theme_minimal() +
   theme(axis.text = element_blank(), axis.ticks = element_blank(),
         panel.grid = element_blank())

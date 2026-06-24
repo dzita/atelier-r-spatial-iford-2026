@@ -22,6 +22,8 @@ Conception pédagogique complète : Edith Darin. Intégration convention atelier
 
 # Setup commun
 
+Packages : `sf` (vecteurs spatiaux), `terra` (rasters), `exactextractr` (extraction zonale **exacte** = sommation pondérée par la fraction de pixel couverte), `tmap` (cartes thématiques en mode statique ou interactif), `ggplot2` (graphiques généraux).
+
 ```r
 library(sf); library(dplyr); library(tidyr); library(ggplot2); library(readr)
 library(terra); library(tmap); library(exactextractr); library(scales); library(tibble)
@@ -30,6 +32,8 @@ source("../_commons/helpers/fetch_data.R")
 ```
 
 # Partie I — GHSL Built-Up
+
+> **Concepts à mobiliser** : **GHSL Built-Up** (Global Human Settlement Layer, JRC Commission européenne) mesure la surface bâtie à partir d'images Sentinel-2 et Landsat (télédétection optique). Le produit est en **projection Mollweide ESRI:54009** (mondiale, equal-area, en mètres) → toujours reprojeter les polygones administratifs dans ce CRS avant `crop`, `mask` ou `exact_extract`. Une **mosaïque de tuiles raster** (`terra::mosaic`) est nécessaire car la couverture mondiale est découpée en tuiles de 10° × 10°.
 
 ## Q1 — Inspection des données {#sec-q1}
 
@@ -82,6 +86,8 @@ source("../_commons/helpers/fetch_data.R")
 3. **c.** Exporte `regions_chg`, `regions_typo` et `departements_chg` en CSV. Vérifie que les colonnes sont bien typées (numeric et character).
 
 # Partie II — Inondations EMSR772
+
+> **Concepts à mobiliser** : le **Copernicus Emergency Management Service (CEMS)** délivre, en moins de 24 h après une catastrophe, des couches géographiques (shapefiles) qui décrivent la zone d'analyse (`areaOfInterestA`) et l'aléa lui-même (ici `floodDepthA`, polygones de profondeur d'inondation). L'**activation EMSR772** a été déclenchée suite aux **inondations de Yagoua (nord Cameroun, octobre 2024)** et couvre 3 AOI (Yagoua centre, deux zones rurales). Les shapefiles peuvent contenir des géométries invalides (vertices dupliqués) → utiliser `st_make_valid()` après `st_read()`. **Google Open Buildings v3** (Sirko et al. 2021) fournit l'inventaire des bâtiments détectés par machine learning ; le **filtre standard est `confidence >= 0.7`** pour rejeter les faux positifs.
 
 ## Q7 — Explorer les couches Copernicus EMS {#sec-q7}
 

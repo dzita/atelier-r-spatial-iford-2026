@@ -16,6 +16,19 @@ format:
 
 Les 12 exercices d'Edith Darin (GDSG/IFORD) sont à suivre **dans l'ordre** : ils s'enchaînent et chaque exercice réutilise les objets construits aux précédents. La **Partie I ACLED** (Ex 1-6) est faisable en autonomie à partir du CSV fourni dans le repo. La **Partie II ERA5** (Ex 7-12) nécessite un compte CDS + un NetCDF téléchargé via `ecmwfr` — on peut la suivre en démo collective.
 
+::: {.callout-note title="Rappel des notions du jour"}
+- **ACLED** = *Armed Conflict Location & Event Data Project* : base mondiale de référence (académique + humanitaire) sur les événements de conflit armé. Chaque ligne = 1 événement **géocodé** (latitude / longitude) avec date, type, acteurs, décès. Mise à jour hebdomadaire, gratuite après inscription.
+- **`event_type`** = typologie ACLED standardisée à 6 catégories : *Battles* (affrontements armés), *Violence against civilians* (exactions contre des civils), *Riots* (émeutes), *Protests* (manifestations pacifiques), *Strategic developments* (déclarations, mouvements de troupes), *Explosions / Remote violence* (bombes, drones, artillerie).
+- **Géocodage** = chaque événement vient avec une paire (latitude, longitude) en degrés décimaux, CRS **EPSG:4326 = WGS84** (système standard du GPS).
+- **Agrégation temporelle** = on regroupe les événements ponctuels par mois (`format(event_date, "%Y-%m")`) ou par année pour passer d'un journal d'événements à une série chronologique observable.
+- **Agrégation spatiale** = on attache chaque événement à son polygone administratif via `st_within` (jointure « le point tombe-t-il dans le polygone ? ») pour cartographier la densité par région ADM1 ou ADM2.
+- **GADM v4.1** = base mondiale gratuite des découpages administratifs. ADM0 = pays, ADM1 = régions (10 pour le Cameroun), ADM2 = départements.
+- **ERA5** = 5ᵉ **réanalyse** atmosphérique de l'ECMWF (Copernicus). Une réanalyse combine un modèle physique de l'atmosphère et toutes les observations historiques (stations, satellites, ballons) pour produire une grille mondiale homogène à pas régulier (~31 km, mensuel).
+- **NetCDF (.nc)** = format binaire scientifique multidimensionnel (x = longitude, y = latitude, z = altitude si applicable, t = temps). Lu par `terra::rast()` qui produit un **stack multi-couches** (1 couche = 1 pas de temps).
+- **Température 2 m** = température de l'air à 2 m au-dessus de la surface (variable météorologique standard). ERA5 la publie en **Kelvin** : conversion `- 273.15` pour passer en °C (0 K = -273,15 °C = zéro absolu).
+- **Anomalie** = écart à une moyenne de référence (ici, moyenne de la dernière année moins moyenne de la première année). Représentée avec une palette **divergente** (bleu-blanc-rouge) centrée sur 0.
+:::
+
 Les questions encadrées Q1 à Q12 sont à discuter en plénière ou à rédiger en commentaire dans ton script. Le devoir final Q-final synthétise. Solutions complètes dans `corrige.qmd` — à n'ouvrir qu'**après** ta tentative.
 
 Conception pédagogique complète : Edith Darin. Intégration convention atelier IFORD : Ramesesse Dzita.

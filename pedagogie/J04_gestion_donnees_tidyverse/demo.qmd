@@ -47,27 +47,31 @@ Pour le runtime WebR (cellules exécutables dans le navigateur), `haven` ne char
 
 ```{r}
 #| label: setup
-library(dplyr)
-library(tidyr)
-library(readr)
-library(ggplot2)
+# Tidyverse = ecosysteme coherent pour la science des donnees en R.
+library(dplyr)     # verbes de manipulation : filter, select, mutate, group_by, summarise
+library(tidyr)     # restructuration : pivot_longer, pivot_wider, drop_na
+library(readr)     # lecture rapide de fichiers texte (csv, tsv)
+library(ggplot2)   # graphiques par grammaire en couches
 
-# Chemins relatifs depuis le .qmd
+# fetch_data.R contient les helpers fetch_dhs_recode_cmr_2018() et fetch_gadm_cameroon().
 source("../_commons/helpers/fetch_data.R")
 
 # CSV pédagogiques produits par 00_extraire_dhs_pour_webr.R
 data_dir <- "../_commons/data/dhs_cmr"
 
+# HR (Household Recode) = une ligne par menage enquete.
 menages <- read_csv(
   file.path(data_dir, "dhs_cmr_2018_menages_extrait.csv"),
   show_col_types = FALSE
 )
 
+# PR (Person Recode) = une ligne par membre habituel + visiteurs du menage.
 personnes <- read_csv(
   file.path(data_dir, "dhs_cmr_2018_personnes_extrait.csv"),
   show_col_types = FALSE
 )
 
+# Sanity check : nombres de lignes proches des references DHS.
 c(menages = nrow(menages), personnes = nrow(personnes))
 ```
 
@@ -93,15 +97,16 @@ Le bloc suivant compte les ménages urbains. Sans pipe, il faut lire **de l'int�
 
 ```{r}
 #| label: m1-pipe
-# Sans pipe — ordre d'écriture inverse de l'ordre d'exécution
+# Sans pipe : il faut lire de l'interieur vers l'exterieur, dur a suivre.
 sans_pipe <- nrow(filter(select(menages, milieu, region), milieu == "urban"))
 
-# Avec pipe — lecture orale : « prendre menages, puis sélectionner, puis filtrer, puis compter »
+# Avec pipe |> : enchainement gauche-droite naturel, lisible comme une phrase.
 avec_pipe <- menages |>
   select(milieu, region) |>
   filter(milieu == "urban") |>
   nrow()
 
+# Verification : les deux donnent EXACTEMENT le meme resultat.
 c(sans_pipe = sans_pipe, avec_pipe = avec_pipe)
 ```
 
@@ -113,12 +118,13 @@ Note : les modalités de `milieu` sont en anglais (`urban` / `rural`) parce que 
 
 ```{r}
 #| label: m1-select
-# Sélection nommée
+# Selection nommee : on liste les colonnes a garder ; head(3) montre les 3 premieres lignes.
 menages |>
   select(cluster_id, menage_id, region, milieu, taille_menage) |>
   head(3)
 
-# Sélection par motif : tous les équipements (radio, television, refrigerateur, velo, moto, voiture)
+# Sur le .DTA brut on aurait : select(starts_with("hv2")) pour tous les equipements.
+# Ici nos colonnes sont deja renommees en francais : on les liste explicitement.
 menages |>
   select(menage_id, radio, television, refrigerateur, velo, moto, voiture) |>
   head(3)
@@ -130,11 +136,11 @@ menages |>
 
 ```{r}
 #| label: m1-filter
-# Comptages simples par milieu
+# filter() garde les lignes ou la condition est TRUE.
 cat("Urbains :", nrow(menages |> filter(milieu == "urban")), "\n")
 cat("Ruraux  :", nrow(menages |> filter(milieu == "rural")), "\n")
 
-# Combinaison ET : ménages urbains du Centre ou du Littoral
+# Virgule = ET logique. %in% teste l'appartenance a une liste de valeurs.
 menages |>
   filter(milieu == "urban", region %in% c("centre", "littoral")) |>
   nrow()
@@ -150,20 +156,23 @@ menages |>
 
 ```{r}
 #| label: m1-mutate
+# mutate() ajoute/modifie une colonne. case_when() : conditions evaluees DANS L'ORDRE.
 menages <- menages |>
   mutate(
     taille_cat = case_when(
       taille_menage <= 3 ~ "Petit (1-3)",
       taille_menage <= 6 ~ "Moyen (4-6)",
       taille_menage <= 9 ~ "Grand (7-9)",
-      TRUE               ~ "Très grand (10+)"
+      TRUE               ~ "Très grand (10+)"    # TRUE = clause par defaut
     ),
     # Coercion explicite : "yes"/"no" devient 1/0 pour les calculs de moyenne
     chef_femme_bin = as.integer(sexe_chef == "female"),
     electricite_bin = as.integer(electricite == "yes")
   )
 
+# count(taille_cat) = effectif par modalite. Outil de verification systematique.
 menages |> count(taille_cat)
+# Sur une variable binaire (0/1), mean() * 100 donne directement le pourcentage.
 menages |>
   summarise(pct_chef_femme = round(mean(chef_femme_bin) * 100, 1),
             pct_electricite = round(mean(electricite_bin) * 100, 1))
@@ -175,6 +184,8 @@ C'est le cœur de l'analyse. `group_by()` partitionne le tibble par modalité ; 
 
 ```{r}
 #| label: m1-summarise
+# group_by() declare les groupes, summarise() reduit chaque groupe a UNE ligne.
+# na.rm = TRUE = exclure les NA du calcul (sinon mean() renvoie NA des qu'il y en a un).
 menages |>
   group_by(region) |>
   summarise(
@@ -184,7 +195,7 @@ menages |>
     pct_electricite = round(mean(electricite == "yes") * 100, 1),
     .groups = "drop"
   ) |>
-  arrange(desc(pct_electricite))
+  arrange(desc(pct_electricite))   # ordre decroissant pour ranger les regions
 ```
 
 Lecture : sans surprise, Centre (Yaoundé) et Littoral (Douala) sortent en tête de l'électrification (>80 %), Extrême-Nord et Est ferment la marche (<25 %). Le gradient nord/sud est de l'ordre de 4×. Ce résultat est **non-pondéré** — voir Module 4 pour l'application correcte des poids d'enquête.
@@ -195,6 +206,8 @@ Lecture : sans surprise, Centre (Yaoundé) et Littoral (Douala) sortent en tête
 
 ```{r}
 #| label: m1-weighted
+# Convention DHS : le poids menage HV005 est multiplie par 1e6 dans le .DTA -> on divise.
+# weighted.mean(x, w) = moyenne ponderee, indispensable sur une enquete stratifiee.
 menages |>
   mutate(poids = poids_menage / 1e6) |>
   group_by(region) |>
@@ -204,7 +217,7 @@ menages |>
     ecart_pts   = round(tx_eau_pond - tx_eau_brut, 2),
     .groups = "drop"
   ) |>
-  arrange(desc(abs(ecart_pts)))
+  arrange(desc(abs(ecart_pts)))   # plus grand ecart en haut : qui est mal estime sans poids ?
 ```
 
 L'écart est faible ici (~1 point) parce que la sur-pondération régionale de l'EDS-MICS est limitée. Mais on traitera la pondération **proprement avec le plan de sondage complet** au Module 4, pas en hack `weighted.mean`.
@@ -215,14 +228,15 @@ Les données arrivent souvent en format **large** (une ligne par unité, une col
 
 ```{r}
 #| label: m1-pivot
-# Wide : régions en lignes, milieux en colonnes
+# pivot_wider() : etaler une variable categorielle en colonnes (une ligne par region).
 tab_large <- menages |>
   group_by(region, milieu) |>
   summarise(n = n(), .groups = "drop") |>
   pivot_wider(names_from = milieu, values_from = n, values_fill = 0)
 tab_large
 
-# Long : pour ggplot facets
+# pivot_longer() : inverse, on empile plusieurs colonnes en deux : nom + valeur.
+# Indispensable pour ggplot2 quand on veut une facette par indicateur.
 menages |>
   group_by(region) |>
   summarise(
@@ -245,13 +259,15 @@ La structure du DHS est **hiérarchique** : chaque ligne de PR (personne) réfé
 
 ```{r}
 #| label: m2-cles
-# Vérifier l'unicité de la clé HR
+# Diagnostic 1 : la cle HR doit etre unique sur (cluster_id, menage_id).
+# Si > 0 lignes, il y a des doublons -> impossible de joindre proprement.
 menages |>
   count(cluster_id, menage_id) |>
   filter(n > 1) |>
   nrow()
 
-# Vérifier l'unicité de la clé PR (cluster_id, menage_id, ligne)
+# Diagnostic 2 : la cle PR doit etre unique sur (cluster_id, menage_id, ligne).
+# La variable "ligne" identifie chaque personne dans son menage (HVIDX du DHS).
 personnes |>
   count(cluster_id, menage_id, ligne) |>
   filter(n > 1) |>
@@ -266,7 +282,8 @@ Zéro dans les deux cas : nos clés sont propres.
 
 ```{r}
 #| label: m2-left
-# Joindre les caractéristiques ménage à chaque personne
+# left_join(x, y) = on garde toutes les lignes de x ; on ajoute les colonnes de y
+# quand la cle matche, NA sinon. Astuce : selectionner d'abord les colonnes de y utiles.
 personnes_enrichies <- personnes |>
   left_join(
     menages |> select(cluster_id, menage_id, milieu, region,
@@ -274,6 +291,7 @@ personnes_enrichies <- personnes |>
     by = c("cluster_id", "menage_id")
   )
 
+# Triple controle apres jointure : meme nb de lignes, 0 NA sur les colonnes ajoutees.
 c(personnes        = nrow(personnes),
   enrichies        = nrow(personnes_enrichies),
   na_sur_milieu    = sum(is.na(personnes_enrichies$milieu)))
@@ -287,11 +305,13 @@ Avant toute jointure importante, **quantifier les non-appariés**. C'est le réf
 
 ```{r}
 #| label: m2-anti
-# Y a-t-il des personnes orphelines (PR sans HR parent) ?
+# anti_join() retourne UNIQUEMENT les lignes de gauche QUI N'ONT PAS de correspondance.
+# Indispensable AVANT chaque jointure : on quantifie ce qu'on va perdre/laisser de cote.
 personnes_orphelines <- personnes |>
   anti_join(menages, by = c("cluster_id", "menage_id")) |>
   nrow()
 
+# message() = info ; warning() = alerte non bloquante ; stop() = erreur bloquante.
 if (personnes_orphelines == 0) {
   message("✓ Toutes les personnes ont un ménage parent dans HR.")
 } else {
@@ -305,13 +325,15 @@ Conserve uniquement les lignes appariées **des deux côtés**. À utiliser avec
 
 ```{r}
 #| label: m2-inner
-# Ménages avec au moins un enfant <5 ans (calculé depuis PR)
+# Pipeline : filtrer enfants <5 ans, garder les paires uniques (cluster_id, menage_id)
+# avec distinct(), puis joindre les caracteristiques menage (inner_join = intersection).
 menages_avec_enfant <- personnes |>
   filter(age < 5) |>
   distinct(cluster_id, menage_id) |>
   inner_join(menages |> select(cluster_id, menage_id, region, milieu),
              by = c("cluster_id", "menage_id"))
 
+# Pourcentage de menages avec au moins un enfant de moins de 5 ans : indicateur clef en demographie.
 c(total_menages         = nrow(menages),
   menages_avec_enfant   = nrow(menages_avec_enfant),
   pct                   = round(nrow(menages_avec_enfant)/nrow(menages)*100, 1))
@@ -323,15 +345,17 @@ Utile pour identifier les clusters dont certains ménages n'ont aucune personne 
 
 ```{r}
 #| label: m2-full
-# Compter les personnes par ménage et joindre à HR (full pour voir les deux côtés)
+# count(..., name = "x") = compter et nommer la colonne resultat "x".
 n_personnes <- personnes |>
   count(cluster_id, menage_id, name = "n_personnes_pr")
 
+# full_join = garder TOUTES les lignes des deux cotes, NA quand pas de matching.
+# Outil de reconciliation de deux sources : on voit exactement les ecarts.
 verif <- menages |>
   select(cluster_id, menage_id, taille_menage) |>
   full_join(n_personnes, by = c("cluster_id", "menage_id"))
 
-# Cohérence : taille_menage déclarée vs nombre réel d'individus PR
+# Trois indicateurs de diagnostic : taux de coherence + NA cote HR + NA cote PR.
 verif |>
   mutate(coherent = taille_menage == n_personnes_pr) |>
   summarise(pct_coherent = round(mean(coherent, na.rm = TRUE) * 100, 1),
@@ -345,7 +369,9 @@ L'écart `taille_menage` (déclarée) vs `n_personnes_pr` (comptée) peut existe
 
 ```{r}
 #| label: m2-pieges
-# Piège 1 : oublier que cluster_id est une partie de la clé
+# Piege 1 : oublier cluster_id. Sans cle complete, dplyr detecte du many-to-many
+# et duplique. On lui dit explicitement (relationship = ...) pour eviter l'erreur,
+# mais le resultat est faux.
 faux_join_n <- personnes |>
   left_join(menages |> select(menage_id, milieu),
             by = "menage_id",
@@ -356,12 +382,11 @@ c(faux_n = faux_join_n, vrai_n = vrai_join_n,
   duplication_ratio = round(faux_join_n / vrai_join_n, 1))
 # Avec la fausse clé, chaque personne est dupliquée des dizaines de fois !
 
-# Piège 2 : types incompatibles (character vs integer)
+# Piege 2 : types incompatibles. left_join() exige les MEMES types des deux cotes.
 menages_str <- menages |> mutate(menage_id = as.character(menage_id))
 # Solution : harmoniser AVANT la jointure (mutate explicite)
 
-# Piège 3 : doublons à droite -> explosion des lignes
-# Diagnostic systématique
+# Piege 3 : doublons cote droit = explosion combinatoire. A diagnostiquer systematiquement.
 menages |> count(cluster_id, menage_id) |> filter(n > 1) |> nrow()
 ```
 
@@ -375,6 +400,9 @@ Synthèse en une chaîne `dplyr` : `summarise(across(everything(), ~ sum(is.na(.
 
 ```{r}
 #| label: m3-detection
+# across(everything(), ~ f(.)) = appliquer f a TOUTES les colonnes.
+# Le tilde ~ definit une fonction anonyme ; "." est l'argument courant (la colonne).
+# pivot_longer + filter ne garde que les variables avec au moins un NA.
 resume_na <- menages |>
   summarise(across(everything(), ~ sum(is.na(.)))) |>
   pivot_longer(everything(), names_to = "variable", values_to = "n_na") |>
@@ -403,6 +431,8 @@ Si les NA sont **concentrés dans certaines régions ou milieux**, c'est un sign
 
 ```{r}
 #| label: m3-localiser
+# Si le % de NA differe selon region x milieu, le mecanisme est MAR (pas MCAR).
+# mean(is.na(x)) = proportion de NA dans le groupe (TRUE = 1).
 menages |>
   group_by(region, milieu) |>
   summarise(
@@ -434,6 +464,7 @@ Acceptable pour **< 5 % MCAR**. On crée toujours une copie nettoyée plutôt qu
 
 ```{r}
 #| label: m3-drop
+# drop_na(col) supprime les lignes ou col est NA. On documente toujours la perte.
 menages_age_ok <- menages |> drop_na(age_chef)
 c(avant = nrow(menages), apres = nrow(menages_age_ok),
   perte_pct = round((nrow(menages) - nrow(menages_age_ok)) / nrow(menages) * 100, 2))
@@ -445,9 +476,9 @@ Pour `age_chef`, on impute par la **médiane du couple `region × milieu`**. Imp
 
 ```{r}
 #| label: m3-impute
-# Note pédagogique : dplyr::if_else() est strict sur les types
-# (contrairement à base::ifelse()). On passe age_chef en numeric explicitement
-# et on utilise la même classe pour la valeur imputée.
+# Strategie : pour chaque (region x milieu), remplacer les NA d'age_chef par
+# la mediane du groupe. group_by + mutate (et non summarise) garde toutes les lignes.
+# if_else() teste la condition ligne par ligne ; on garde l'original si non-NA.
 menages <- menages |>
   mutate(age_chef_num = as.numeric(age_chef)) |>
   group_by(region, milieu) |>
@@ -458,7 +489,7 @@ menages <- menages |>
       age_chef_num
     )
   ) |>
-  ungroup()
+  ungroup()    # toujours degrouper apres mutate par groupe
 
 c(original_NA = sum(is.na(menages$age_chef)),
   impute_NA   = sum(is.na(menages$age_chef_imp)))
@@ -470,15 +501,16 @@ Pour une variable catégorielle, on impute par la **modalité la plus fréquente
 
 ```{r}
 #| label: m3-mode
+# R n'a pas de fonction mode() statistique : on l'ecrit en 3 lignes.
+# table(x) compte les frequences, sort(..., decreasing = TRUE) trie, on prend [1].
 mode_stat <- function(x) {
   x <- x[!is.na(x)]
   if (length(x) == 0) return(NA_character_)
   names(sort(table(x), decreasing = TRUE))[1]
 }
 
-# Exemple sur `type_toilette` (catégorielle, qui peut avoir des NA)
-# On garantit que les deux branches de if_else sont character pour éviter
-# les erreurs de type vues dans m3-impute.
+# Imputation par le mode du groupe pour les variables categorielles.
+# Les deux branches de if_else doivent etre du MEME type (ici character).
 menages <- menages |>
   mutate(type_toilette_chr = as.character(type_toilette)) |>
   group_by(region, milieu) |>
@@ -501,14 +533,17 @@ Sur `personnes`, `annees_ecole` peut être 0 (jamais scolarisé) ou NA (informat
 
 ```{r}
 #| label: m3-structurel
+# Approche naive : tous les ages confondus -> on melange enfants/adultes.
 moyenne_brute <- mean(personnes$annees_ecole, na.rm = TRUE)
 
-# Calcul correct : population adulte 25+ ans (éducation terminée)
+# Approche correcte : ne garder que la population cible (adultes 25+ ans).
+# pull() extrait UNE colonne sous forme de vecteur (pratique apres summarise).
 moyenne_adultes <- personnes |>
   filter(age >= 25, !is.na(annees_ecole)) |>
   summarise(m = mean(annees_ecole)) |>
   pull(m)
 
+# tibble() = data.frame moderne (du tidyverse).
 tibble(
   methode  = c("BRUTE (tous âges)", "CORRECT (25+ ans)"),
   annees   = round(c(moyenne_brute, moyenne_adultes), 2)
@@ -533,16 +568,18 @@ Sans ces corrections, on biaise les estimations et on sous-estime la variance de
 
 ```{r}
 #| label: m4-srvyr
+# srvyr = interface tidyverse au package survey (statistiques d'enquetes ponderees).
 library(srvyr)
 
-# Déclaration du design : PSU + strate + poids
+# Etape obligatoire : declarer le design d'enquete (PSU + strate + poids).
+# Une fois declare, dhs_design se manipule comme un data.frame avec les memes verbes.
 dhs_design <- menages |>
   mutate(poids = poids_menage / 1e6) |>
   as_survey_design(
-    ids     = cluster_id,   # PSU
-    strata  = strate,
-    weights = poids,
-    nest    = TRUE          # PSU emboîtées dans strates
+    ids     = cluster_id,   # PSU : unite primaire de sondage (grappe)
+    strata  = strate,       # variable de stratification (HV022)
+    weights = poids,        # poids d'echantillonnage
+    nest    = TRUE          # cluster emboite dans strate (cas DHS)
   )
 
 dhs_design
@@ -552,7 +589,7 @@ dhs_design
 
 ```{r}
 #| label: m4-compare
-# Brut
+# Cote BRUT : mean() classique sans tenir compte du plan de sondage.
 brut <- menages |>
   group_by(region) |>
   summarise(
@@ -560,13 +597,15 @@ brut <- menages |>
     .groups = "drop"
   )
 
-# Pondéré (avec srvyr) — l'intervalle de confiance vient gratuitement
+# Cote PONDERE : survey_mean() applique poids + variance correcte du plan.
+# vartype = "ci" ajoute borne basse (_low) et haute (_upp) de l'IC 95%.
 pondere <- dhs_design |>
   group_by(region) |>
   summarise(
     tx_elec    = round(survey_mean(electricite == "yes", vartype = "ci") * 100, 1)
   )
 
+# Joindre les deux pour comparer cote a cote. suffix distingue les colonnes homonymes.
 inner_join(brut, pondere, by = "region", suffix = c("_brut", "_pond")) |>
   arrange(desc(tx_elec_brut))
 ```
@@ -581,6 +620,8 @@ Les valeurs pondérées sont accompagnées de `tx_elec_low` / `tx_elec_upp` (IC 
 
 ```{r}
 #| label: m5-menages
+# unweighted(n()) = effectif non pondere (taille d'echantillon brute), utile pour le n.
+# survey_mean(x) sur un test logique renvoie la proportion ponderee.
 indic_menages <- dhs_design |>
   group_by(region) |>
   summarise(
@@ -592,7 +633,7 @@ indic_menages <- dhs_design |>
     pct_radio        = round(survey_mean(radio == "yes") * 100, 1),
     pct_chef_femme   = round(survey_mean(sexe_chef == "female") * 100, 1)
   ) |>
-  # On garde la valeur centrale, on jette les colonnes _se
+  # ends_with("_se") = colonnes d'erreur-type ajoutees par survey_mean ; on les jette.
   select(-ends_with("_se"))
 
 indic_menages
@@ -604,8 +645,9 @@ Pour les indicateurs individus, on construit un **design séparé** parce que la
 
 ```{r}
 #| label: m5-individus
-# On attache TOUT (poids + strate + région) depuis HR à chaque personne PR
-# AVANT de créer le design. Ainsi group_by(region) marche directement.
+# Etape 1 : joindre HR -> PR pour avoir poids + strate + region sur chaque personne.
+# Etape 2 : creer alpha_bin (0 = aucune educ, 1 = au moins prescolaire+).
+# Etape 3 : declarer le design sur les personnes.
 personnes_design <- personnes |>
   left_join(
     menages |> select(cluster_id, menage_id, strate, poids_menage, region),
@@ -613,7 +655,7 @@ personnes_design <- personnes |>
   ) |>
   mutate(
     poids = poids_menage / 1e6,
-    # Indicateur binaire : a au moins suivi le primaire
+    # 0L / 1L / NA_integer_ : suffixe L = entier ; coherence de type obligatoire.
     alpha_bin = case_when(
       niveau_educ == "no education, preschool" ~ 0L,
       !is.na(niveau_educ)                       ~ 1L,
@@ -628,14 +670,14 @@ personnes_design <- personnes |>
     nest    = TRUE
   )
 
-# Indicateur alphabétisation pondéré par région
+# Calcul de l'indicateur sur la population cible : 25+ ans, alpha_bin non-NA.
 indic_individus <- personnes_design |>
   filter(age >= 25, !is.na(alpha_bin)) |>
   group_by(region) |>
   summarise(
     pct_alpha_25plus = round(survey_mean(alpha_bin) * 100, 1)
   ) |>
-  # survey_mean ajoute une colonne _se ; on garde la valeur centrale
+  # On nettoie les colonnes d'erreur-type pour avoir une table d'indicateurs propre.
   select(-ends_with("_se"))
 
 indic_individus
@@ -647,6 +689,8 @@ Note : ici on a directement `group_by(region)` parce qu'on a attaché la région
 
 ```{r}
 #| label: m5-fusion
+# Sortie finale du module : une ligne par region, plusieurs indicateurs.
+# C'est ce tableau qui devient l'entree de la cartographie J5.
 indicateurs_region <- indic_menages |>
   left_join(indic_individus, by = "region")
 
@@ -658,6 +702,8 @@ indicateurs_region
 ```{r}
 #| label: m5-export
 #| eval: false
+# here::here() construit un chemin absolu depuis la racine du projet (portable).
+# dir.create(..., recursive = TRUE) cree les dossiers parents si necessaire.
 out_dir <- here::here("pedagogie", "J04_gestion_donnees_tidyverse", "outputs")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 write_csv(indicateurs_region, file.path(out_dir, "indicateurs_region_dhs2018.csv"))
@@ -673,10 +719,12 @@ GADM utilise des noms français/anglais hétérogènes (`Centre`, `Far North`, `
 
 ```{r}
 #| label: m6-normaliser
+# sf = "simple features" : standard pour le vectoriel spatial dans R.
 library(sf)
 adm1 <- read_sf(fetch_gadm_cameroon(1))
 
-# Fonction de normalisation (lowercase, sans accent, sans tiret/espace)
+# norm() : 3 etapes pour eviter tout decalage de chaine de caracteres.
+# iconv ASCII//TRANSLIT enleve les accents ; gsub() supprime tout sauf lettres+chiffres.
 norm <- function(x) {
   x |>
     iconv(from = "UTF-8", to = "ASCII//TRANSLIT") |>
@@ -684,7 +732,7 @@ norm <- function(x) {
     gsub("[^a-z0-9]", "", x = _)
 }
 
-# Dictionnaire de correspondance (regroupe les variantes EN/FR)
+# Le dictionnaire mappe les variantes anglaises (DHS) vers les noms francais (FR).
 dict <- c(
   northwest    = "nordouest",
   southwest    = "sudouest",
@@ -699,16 +747,17 @@ dict <- c(
   adamaoua     = "adamaoua"
 )
 
+# Wrapper : normalise puis traduit via le dictionnaire si correspondance.
 normalize_region <- function(x) {
   v <- norm(x)
   ifelse(v %in% names(dict), dict[v], v)
 }
 
-# Tester sur les deux jeux
+# Inspection avant/apres : on doit obtenir DEUX listes identiques apres normalisation.
 unique(adm1$NAME_1) |> sort()
 unique(indicateurs_region$region) |> sort()
 
-# Clés normalisées
+# Ajout de la cle normalisee aux deux jeux pour la jointure.
 adm1$region_key                <- normalize_region(adm1$NAME_1)
 indicateurs_region$region_key  <- normalize_region(indicateurs_region$region)
 
@@ -720,6 +769,7 @@ sort(unique(indicateurs_region$region_key))
 
 ```{r}
 #| label: m6-join
+# left_join sur un sf garde la geometrie cote gauche : adm1_indic reste un sf.
 adm1_indic <- adm1 |>
   left_join(
     indicateurs_region |>
@@ -728,10 +778,10 @@ adm1_indic <- adm1 |>
     by = "region_key"
   )
 
-# Vérifier qu'aucun polygone n'a perdu son indicateur
+# Controle final : 0 NA = chaque polygone a recupere ses indicateurs.
 sum(is.na(adm1_indic$pct_electricite))
 
-# Aperçu
+# st_drop_geometry() = vue tabulaire pure (la geometrie reste dans l'objet original).
 adm1_indic |>
   st_drop_geometry() |>
   select(NAME_1, n_menages, pct_electricite, pct_alpha_25plus) |>
@@ -748,14 +798,19 @@ Si la jointure est complète (0 NA), on est prêt pour J5. Sinon, vérifier le d
 #| label: m6-carte
 #| fig-width: 9
 #| fig-height: 7
+# Choroplethe = polygones colores selon une variable quantitative.
+# geom_sf lit la geometrie ; viridis = palette accessible aux daltoniens.
 ggplot(adm1_indic) +
   geom_sf(aes(fill = pct_electricite), color = "white", linewidth = 0.3) +
-  scale_fill_viridis_c(option = "D", name = "% ménages\nélectrifiés") +
-  geom_sf_label(aes(label = NAME_1), size = 2.3,
-                color = "white", fontface = "bold") +
-  labs(title = "Accès à l'électricité par région — Cameroun 2018",
-       subtitle = "EDS-MICS Cameroun 2018 (DHS Program), pondéré par plan de sondage",
-       caption = "Sources : DHS Program · GADM v4.1 · IFORD × GDSG 2026") +
+  scale_fill_viridis_c(option = "D",
+                       name = "% ménages\nélectrifiés\n(pondéré)") +
+  # Etiquettes des regions superposees au centre des polygones.
+  geom_sf_label(aes(label = NAME_1), size = 2.3, colour = "black",
+                fill = scales::alpha("white", 0.75), label.size = 0,
+                fontface = "bold", label.padding = unit(0.1, "lines")) +
+  labs(title    = "Accès à l'électricité par région — Cameroun 2018",
+       subtitle = "EDS-MICS Cameroun 2018 (DHS Program) · pourcentage de ménages électrifiés (estimation pondérée par plan de sondage)",
+       caption  = "Source : EDS-MICS Cameroun 2018 (DHS Program) · IFORD × GDSG 2026") +
   theme_minimal() +
   theme(axis.text = element_blank(), axis.ticks = element_blank(),
         panel.grid = element_blank())

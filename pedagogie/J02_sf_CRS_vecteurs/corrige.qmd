@@ -23,14 +23,16 @@ Si tu n'as pas encore tenté l'exercice : **ferme ce fichier et lance-toi d'abor
 
 ```{r}
 #| label: setup
-library(sf)
-library(dplyr)
-library(tibble)
-library(ggplot2)
+# Packages utilises dans tout le corrige
+library(sf)       # objets spatiaux vectoriels
+library(dplyr)    # filter, group_by, summarise, left_join
+library(tibble)   # tableaux modernes
+library(ggplot2)  # cartes en couches
 
 # Chemin relatif depuis le .qmd (cf. demo.qmd pour le commentaire detaille).
 source("../_commons/helpers/fetch_data.R")
 
+# Chargement des 3 niveaux administratifs GADM (regions, departements, arrondissements)
 adm1 <- read_sf(fetch_gadm_cameroon(1))
 adm2 <- read_sf(fetch_gadm_cameroon(2))
 adm3 <- read_sf(fetch_gadm_cameroon(3))
@@ -42,6 +44,7 @@ adm3 <- read_sf(fetch_gadm_cameroon(3))
 
 ```{r}
 #| label: q1a
+# nrow() : nombre de lignes = nombre d'entites administratives
 nrow(adm2)
 ```
 
@@ -51,6 +54,7 @@ Le Cameroun compte officiellement 58 départements (chiffre stable depuis 2008).
 
 ```{r}
 #| label: q1b
+# names() : liste les colonnes (attributs + geometry)
 names(adm2)
 ```
 
@@ -60,11 +64,12 @@ Pour la démographie : `NAME_2` (nom du département), `NAME_1` (région), `GID_
 
 ```{r}
 #| label: q1c
+# query = : SQL execute par GDAL avant retour dans R (filtre a la source)
 centre_dep <- read_sf(
   fetch_gadm_cameroon(2),
   query = "SELECT * FROM gadm41_CMR_2 WHERE NAME_1 = 'Centre'"
 )
-nrow(centre_dep)
+nrow(centre_dep)   # nombre de departements de la region Centre
 ```
 
 La région du Centre compte 10 départements. Le filtre SQL est exécuté **par GDAL** avant que R reçoive les données — pratique sur de gros volumes.
@@ -75,6 +80,7 @@ La région du Centre compte 10 départements. Le filtre SQL est exécuté **par 
 
 ```{r}
 #| label: q2a
+# filter() dplyr : ne garde que la ligne ou NAME_1 == "Nord-Ouest"
 nord_ouest <- adm1 |> filter(NAME_1 == "Nord-Ouest")
 ```
 
@@ -82,8 +88,10 @@ nord_ouest <- adm1 |> filter(NAME_1 == "Nord-Ouest")
 
 ```{r}
 #| label: q2b
+# Petit helper : aire en km2 (st_area retourne des m2 avec unite)
 total_km2 <- function(x) as.numeric(st_area(x)) / 1e6
 
+# Une seule region : aire calculee dans 3 CRS pour comparer la distorsion
 tibble(
   CRS = c("Lambert (3119)", "UTM 32N (32632)", "Web Mercator (3857)"),
   superficie_km2 = c(total_km2(st_transform(nord_ouest, 3119)),
@@ -98,10 +106,11 @@ La superficie officielle du Nord-Ouest est ∼17 300 km². Lambert et UTM sont t
 
 ```{r}
 #| label: q2c
+# Ecart relatif Web Mercator vs Lambert : ~ 1 / cos^2(latitude)
 lambert <- total_km2(st_transform(nord_ouest, 3119))
 mercator <- total_km2(st_transform(nord_ouest, 3857))
 ecart_pct <- (mercator - lambert) / lambert * 100
-round(ecart_pct, 2)
+round(ecart_pct, 2)   # quelques %, coherent avec la latitude 6 N
 ```
 
 À 6° N, le facteur de distorsion d'aire Web Mercator est environ `1/cos²(6°)` = 1.011. Donc un écart d'environ +1 %. C'est cohérent.
@@ -114,6 +123,7 @@ round(ecart_pct, 2)
 
 ```{r}
 #| label: q3a
+# Pipeline : tibble -> sf (WGS84) -> reprojection UTM 32 N
 chefs_lieux <- tibble(
   region = c("Adamaoua","Centre","Est","Extrême-Nord","Littoral",
              "Nord","Nord-Ouest","Ouest","Sud","Sud-Ouest"),
@@ -124,14 +134,15 @@ chefs_lieux <- tibble(
   lat = c( 7.3214,  3.8480,  4.5775, 10.5910, 4.0511,
            9.3019,  5.9597,  5.4778,  2.9000, 4.1546)
 ) |>
-  st_as_sf(coords = c("lon", "lat"), crs = 4326) |>
-  st_transform(32632)
+  st_as_sf(coords = c("lon", "lat"), crs = 4326) |>   # tableau -> sf POINT
+  st_transform(32632)                                 # WGS84 -> UTM 32 N (metres)
 ```
 
 ## Q3.b — Buffer 10 km
 
 ```{r}
 #| label: q3b
+# st_buffer() : un buffer par point ; 10 000 m = 10 km (CRS = UTM, en metres)
 buffers_10km <- st_buffer(chefs_lieux, dist = 10000)
 ```
 
@@ -139,10 +150,12 @@ buffers_10km <- st_buffer(chefs_lieux, dist = 10000)
 
 ```{r}
 #| label: q3c
+# Selection du buffer relatif a Yaounde + reprojection adm3 dans le meme CRS
 buf_yaounde <- buffers_10km |> filter(ville == "Yaoundé")
 adm3_utm <- st_transform(adm3, 32632)
 
-# st_contains retourne une liste d'index ; on aplatit
+# st_contains() : strict ; renvoie un matrice TRUE/FALSE (sparse=FALSE)
+# On selectionne les arrondissements integralement inclus dans le buffer
 dans_buffer_yde <- adm3_utm[st_contains(buf_yaounde, adm3_utm, sparse = FALSE), ]
 nrow(dans_buffer_yde)
 head(dans_buffer_yde$NAME_3, 10)
@@ -156,19 +169,22 @@ head(dans_buffer_yde$NAME_3, 10)
 
 ```{r}
 #| label: q4a
+# Dissolve a 2 niveaux : on garde NAME_1 (region) ET NAME_2 (departement)
+# Resultat : un polygone par departement, avec compte d'arrondissements
 adm2_from_adm3 <- adm3 |>
   group_by(NAME_1, NAME_2) |>
   summarise(n_arrondissements = n(),
             geometry = st_union(geometry),
             .groups = "drop")
 
-nrow(adm2_from_adm3)
+nrow(adm2_from_adm3)   # nombre de departements reconstitues
 ```
 
 ## Q4.b — Comparaison avec ADM2 direct
 
 ```{r}
 #| label: q4b
+# Comparaison rapide : ADM2 direct vs ADM2 reconstitue depuis ADM3
 c(adm2_directement = nrow(adm2),
   adm2_dissous = nrow(adm2_from_adm3))
 ```
@@ -179,8 +195,10 @@ Les deux nombres devraient être proches (∼58). Petite différence possible si
 
 ```{r}
 #| label: q4c
+# Pour comparer des aires : reprojection en Lambert Cameroun (EPSG:3119)
 sup_directement <- sum(as.numeric(st_area(st_transform(adm2, 3119)))) / 1e6
 sup_dissous     <- sum(as.numeric(st_area(st_transform(adm2_from_adm3, 3119)))) / 1e6
+# Difference attendue : < 0.1 % (effets de generalisation des contours)
 c(directement = round(sup_directement),
   dissous = round(sup_dissous),
   ecart_pct = round((sup_dissous - sup_directement) / sup_directement * 100, 3))
@@ -194,6 +212,7 @@ L'écart est < 0.1 % en général. Il vient de la **généralisation** des conto
 
 ```{r}
 #| label: q5a
+# Silhouette = fusion (st_union) des trois regions du nord
 nord_union <- adm1 |>
   filter(NAME_1 %in% c("Nord","Adamaoua","Extrême-Nord")) |>
   st_union()
@@ -205,6 +224,7 @@ nord_union <- adm1 |>
 #| label: q5b
 #| fig-width: 8
 #| fig-height: 6
+# On reconstruit chefs_lieux en WGS84 (ici on reste en degres pour le Voronoi)
 chefs_lieux_4326 <- tibble(
   region = c("Adamaoua","Centre","Est","Extrême-Nord","Littoral",
              "Nord","Nord-Ouest","Ouest","Sud","Sud-Ouest"),
@@ -217,17 +237,24 @@ chefs_lieux_4326 <- tibble(
 ) |>
   st_as_sf(coords = c("lon", "lat"), crs = 4326)
 
+# Voronoi national, puis intersection avec la silhouette du nord
 pts_union <- st_union(chefs_lieux_4326)
 voronoi_complet <- st_collection_extract(st_voronoi(pts_union), "POLYGON") |> st_sf(crs = 4326)
 voronoi_nord <- st_intersection(voronoi_complet, nord_union)
 
+# Carte ggplot : 3 couches (cellules, silhouette nord, points des 3 chefs-lieux)
 ggplot() +
   geom_sf(data = voronoi_nord, fill = NA, color = "grey50") +
   geom_sf(data = nord_union, fill = NA, color = "black", linewidth = 0.5) +
   geom_sf(data = chefs_lieux_4326 |>
             filter(region %in% c("Nord","Adamaoua","Extrême-Nord")),
           color = "red", size = 3) +
-  labs(title = "Voronoï des chefs-lieux limité au nord du Cameroun") +
+  geom_sf_text(data = chefs_lieux_4326 |>
+                 filter(region %in% c("Nord","Adamaoua","Extrême-Nord")),
+               aes(label = ville), nudge_y = 0.25, size = 3, fontface = "bold") +
+  labs(title    = "Zones d'influence des chefs-lieux du nord Cameroun",
+       subtitle = "Voronoï (CRS : WGS 84 / EPSG:4326) découpé sur la silhouette des 3 régions du nord",
+       caption  = "Source : GADM v4.1 · IFORD × GDSG 2026") +
   theme_minimal()
 ```
 
@@ -243,21 +270,24 @@ Les cellules ainsi obtenues délimitent les **zones d'influence** des trois chef
 
 ```{r}
 #| label: q6-prep
+# 1. Reprojection en Lambert Cameroun + validation systematique
 adm1_lambert <- st_transform(adm1, 3119) |> st_make_valid()
 adm2_lambert <- st_transform(adm2, 3119) |> st_make_valid()
 adm3_lambert <- st_transform(adm3, 3119) |> st_make_valid()
 
-# Calculer les superficies
+# 2. Calculer les superficies (en km2) dans chaque couche
 adm1_lambert$superficie_km2 <- as.numeric(st_area(adm1_lambert)) / 1e6
 adm2_lambert$superficie_km2 <- as.numeric(st_area(adm2_lambert)) / 1e6
 adm3_lambert$superficie_km2 <- as.numeric(st_area(adm3_lambert)) / 1e6
 
-# Pour ADM2, ajouter n_arrondissements via dissolve depuis ADM3
+# 3. Pour ADM2 : ajouter le nombre d'arrondissements par departement
+# st_drop_geometry() : on retire la geometry, simple agregation tabulaire
 n_arr_par_dep <- adm3_lambert |>
   st_drop_geometry() |>
   group_by(NAME_1, NAME_2) |>
   summarise(n_arrondissements = n(), .groups = "drop")
 
+# left_join() : on greffe le compte sur la couche ADM2 (cle : region + departement)
 adm2_lambert <- adm2_lambert |>
   left_join(n_arr_par_dep, by = c("NAME_1", "NAME_2"))
 ```
@@ -267,14 +297,18 @@ adm2_lambert <- adm2_lambert |>
 ```{r}
 #| label: q6-write
 #| eval: false
+# Chemin de sortie + creation du dossier outputs/ si absent
 out_path <- here("pedagogie", "J02_sf_CRS_vecteurs", "outputs",
                  "CMR_admin_lambert.gpkg")
 dir.create(dirname(out_path), showWarnings = FALSE, recursive = TRUE)
 
+# 1ere couche : delete_dsn = TRUE ecrase le fichier entier
 write_sf(adm1_lambert, out_path, layer = "adm1", delete_dsn = TRUE)
+# Couches suivantes : delete_layer = TRUE remplace seulement la couche cible
 write_sf(adm2_lambert, out_path, layer = "adm2", delete_layer = TRUE)
 write_sf(adm3_lambert, out_path, layer = "adm3", delete_layer = TRUE)
 
+# st_layers() : verifier que les 3 couches sont bien presentes
 st_layers(out_path)
 ```
 
@@ -283,8 +317,10 @@ st_layers(out_path)
 ```{r}
 #| label: q6-readback
 #| eval: false
+# Relecture cible : on charge UNE seule couche (layer = "adm2") du .gpkg
 adm2_relu <- read_sf(out_path, layer = "adm2")
 
+# Trois indicateurs de controle : nb departements, somme arrondissements, superficie
 c(n_dep = nrow(adm2_relu),
   total_arrondissements = sum(adm2_relu$n_arrondissements, na.rm = TRUE),
   superficie_totale_km2 = sum(adm2_relu$superficie_km2) |> round())

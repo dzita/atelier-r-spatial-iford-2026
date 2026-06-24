@@ -176,6 +176,8 @@ cat("Croissance 2015-2025 :",
 
 # Q9 — WorldPop vs CSV officiel
 
+`exact_extract` est l'outil standard pour l'**agregation pixel → ADM** : il exploite la fraction exacte de chaque pixel qui tombe dans le polygone (5-10x plus rapide que `terra::extract`).
+
 ```{r}
 #| label: q9
 pop_2025_par_region <- exact_extract(pop_2025,
@@ -192,6 +194,37 @@ cat("Total WorldPop 2025 :", format(total_wp,  big.mark = " "), "\n")
 cat("Total CSV officiel  :", format(total_csv, big.mark = " "), "\n")
 cat("Écart relatif       :", round(100 * (total_wp - total_csv) / total_csv, 2),
     "%\n")
+```
+
+## Carte de la variation 2015-2025 (palette divergente)
+
+Pour visualiser **la croissance**, on utilise une palette **divergente** centree sur 0 (pas de variation). Positif = gain de population (rouge), negatif = perte (bleu).
+
+```{r}
+#| label: q9-variation
+#| fig-width: 8
+#| fig-height: 7
+pop_2015_par_region <- exact_extract(pop_2015,
+                                     st_transform(cmr1, crs(pop_2015)), "sum")
+
+cmr1_var <- cmr1 |>
+  mutate(pop_2015      = round(pop_2015_par_region),
+         pop_2025      = round(pop_2025_par_region),
+         gain_absolu   = pop_2025 - pop_2015,
+         gain_relatif  = 100 * (pop_2025 - pop_2015) / pop_2015)
+
+ggplot(cmr1_var) +
+  geom_sf(aes(fill = gain_relatif), colour = "white", linewidth = 0.3) +
+  geom_sf_label(aes(label = NAME_1), size = 2.5, colour = "black",
+                fill = scales::alpha("white", 0.75), label.size = 0,
+                label.padding = unit(0.12, "lines")) +
+  scale_fill_gradient2(low = "#2166AC", mid = "white", high = "#B2182B",
+                       midpoint = 0,
+                       name = "Gain relatif\n2015-2025 (%)") +
+  labs(title    = "Variation de la population par region - Cameroun, 2015-2025",
+       subtitle = "Top-down WorldPop constrained R2025A · palette divergente centree sur 0",
+       caption  = "Source : WorldPop R2025A constrained 100m · GADM v4.1 · IFORD x GDSG 2026") +
+  theme_minimal()
 ```
 
 **Réponses** :
@@ -300,8 +333,10 @@ pop_age <- pop_adm1 |>
 ggplot(pop_age, aes(x = groupe_age, y = population, fill = ADM1_EN)) +
   geom_col(position = "dodge") +
   scale_y_continuous(labels = comma) +
-  labs(title = "Littoral (urbain) vs Far North (rural)",
-       x = "Groupe d'âge", y = "Population", fill = "Région") +
+  labs(title    = "Structure par age - Littoral (urbain) vs Far North (rural) - Cameroun, 2025",
+       subtitle = "Contraste maximal entre une region a forte fecondite et une region a transition demographique avancee",
+       caption  = "Source : OCHA COD-PS Cameroun 2025 · IFORD x GDSG 2026",
+       x = "Groupe d'age", y = "Population (habitants)", fill = "Region") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```

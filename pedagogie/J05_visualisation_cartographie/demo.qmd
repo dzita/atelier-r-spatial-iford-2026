@@ -43,6 +43,9 @@ On charge les packages et **uniquement des données réelles** : les polygones G
 
 ```{r}
 #| label: setup
+# sf : objets vectoriels spatiaux. dplyr/tidyr : manipulation des tables.
+# ggplot2 + tmap : les deux moteurs graphiques du jour.
+# RColorBrewer + viridisLite : palettes scientifiques.
 library(sf)
 library(dplyr)
 library(tibble)
@@ -58,6 +61,7 @@ library(viridisLite)
 source("../_commons/helpers/fetch_data.R")
 source("../_commons/helpers/theme_iford.R")
 
+# fetch_gadm_cameroon(1) télécharge (ou lit en cache) les polygones GADM ADM1.
 adm1 <- read_sf(fetch_gadm_cameroon(1))
 ```
 
@@ -67,11 +71,15 @@ Le CSV `indicateurs_dhs_cmr_2018.csv` est calculé directement depuis le **micro
 
 ```{r}
 #| label: load-dhs
+# read_csv lit le CSV produit par srvyr depuis le microfichier DHS.
+# show_col_types = FALSE masque les diagnostics de typage des colonnes.
 dhs <- read_csv(
   "../_commons/data/dhs_cmr/indicateurs_dhs_cmr_2018.csv",
   show_col_types = FALSE
 )
 
+# count vérifie combien de fois chaque code indicateur apparaît
+# (un par région = 10 lignes attendues).
 dhs |> count(indicateur)
 head(dhs, 10)
 ```
@@ -82,6 +90,9 @@ Les indicateurs DHS arrivent en format **long** (une ligne par couple région ×
 
 ```{r}
 #| label: dhs-wide
+# pivot_wider : une ligne par région, une colonne par indicateur.
+# Format "carte-prêt" (chaque variable est une colonne mappable à fill).
+# rename : renommer les codes techniques DHS en noms parlants.
 dhs_wide <- dhs |>
   select(region, indicateur, valeur) |>
   pivot_wider(names_from = indicateur, values_from = valeur) |>
@@ -102,6 +113,8 @@ Les noms GADM utilisent les accents français (`Extrême-Nord`, `Nord-Ouest`) ; 
 
 ```{r}
 #| label: join-adm
+# norm_name : enlève accents + ponctuation + met en minuscules
+# pour comparer "Extrême-Nord" et "Extreme Nord" sur un pied d'égalité.
 norm_name <- function(x) {
   x |>
     iconv(from = "UTF-8", to = "ASCII//TRANSLIT") |>
@@ -129,10 +142,12 @@ normalize <- function(x) {
   ifelse(v %in% names(dict_region), dict_region[v], v)
 }
 
+# On ajoute la clé normalisée aux deux tables (DHS et GADM).
 dhs_wide <- dhs_wide |> mutate(region_key = normalize(region))
 adm1     <- adm1     |> mutate(region_key = normalize(NAME_1))
 
-# Vérification : tous les noms DHS retrouvent leur polygone GADM ?
+# anti_join garde les lignes DHS SANS correspondance dans GADM.
+# nrow doit valoir 0 sinon il y a des régions DHS perdues à la jointure.
 manquants <- dhs_wide |> anti_join(adm1, by = "region_key")
 cat("Régions DHS sans correspondance GADM :", nrow(manquants), "\n")
 if (nrow(manquants) > 0) print(manquants$region)
@@ -142,6 +157,10 @@ if (nrow(manquants) > 0) print(manquants$region)
 
 ```{r}
 #| label: adm-indic
+# st_transform reprojette en Lambert Cameroun (EPSG:3119) :
+# meilleures distances/aires que le WGS84 d'origine.
+# st_make_valid répare les éventuelles erreurs topologiques.
+# st_area renvoie l'aire en mètres² → /1e6 pour avoir des km².
 adm1_indic <- adm1 |>
   st_transform(3119) |>           # Lambert Cameroun
   st_make_valid() |>
@@ -152,7 +171,8 @@ adm1_indic <- adm1 |>
     by = "region_key"
   )
 
-# Aperçu
+# Aperçu trié par taux d'alphabétisation femme décroissant : utile pour
+# anticiper visuellement le dégradé qu'on s'apprête à cartographier.
 adm1_indic |>
   st_drop_geometry() |>
   select(NAME_1, tx_alpha_femmes, tx_electricite, tx_eau_ameliore, taille_menage) |>
@@ -171,8 +191,12 @@ Trois lignes `tmap` pour une choroplèthe lisible : `tm_shape` charge la couche,
 
 ```{r}
 #| label: choro-minimal
+# setup_tmap_iford() applique le thème IFORD (police, marges, fond) à toutes
+# les cartes tmap qui suivent dans la session.
 setup_tmap_iford()
 
+# Squelette tmap : tm_shape() charge la couche, puis on empile des couches
+# graphiques avec +. tm_polygons("var") = choroplèthe automatique.
 tm_shape(adm1_indic) +
   tm_polygons("tx_alpha_femmes") +
   tm_text("NAME_1", size = 0.6)
@@ -188,22 +212,28 @@ On ajoute classification Jenks, palette séquentielle, contours blancs, titres, 
 #| label: choro-publishable
 #| fig-width: 9
 #| fig-height: 7
+# tm_scale_intervals(style = "jenks", n = 5) : 5 classes optimales (Jenks/Fisher).
+# values = "brewer.yl_or_rd" : palette ColorBrewer séquentielle jaune-orange-rouge.
+# tm_compass + tm_scalebar : flèche du nord + barre d'échelle (obligatoires).
+# tm_title + tm_credits : titre informatif et source en pied de carte.
 tm_shape(adm1_indic) +
   tm_polygons(
     fill        = "tx_alpha_femmes",
     fill.scale  = tm_scale_intervals(style = "jenks", n = 5,
                                      values = "brewer.yl_or_rd"),
-    fill.legend = tm_legend("% femmes\nalphabétisées"),
+    fill.legend = tm_legend("% femmes\nalphabétisées (%)"),
     col         = "white",
     lwd         = 0.4
   ) +
   tm_text("NAME_1", size = 0.55, col = "grey20", fontface = "bold") +
   tm_compass(type = "arrow", position = c("right", "top"), size = 1.2) +
-  tm_scalebar(position = c("left", "bottom")) +
+  tm_scalebar(position = c("left", "bottom"), breaks = c(0, 100, 200)) +
   tm_title("Alphabétisation des femmes 15-49 ans par région — Cameroun 2018",
            position = c("left", "top")) +
-  tm_credits("Source : EDS-MICS Cameroun 2018 (DHS StatCompiler) · GADM v4.1 · IFORD × GDSG 2026",
-             position = c("right", "bottom"), size = 0.5)
+  tm_credits(paste("Source : EDS-MICS Cameroun 2018 (DHS Program) ·",
+                   "GADM v4.1 · classification Jenks (5 classes) ·",
+                   "projection Lambert Cameroun EPSG:3119 · IFORD x GDSG 2026"),
+             position = c("right", "bottom"), size = 0.45)
 ```
 
 # Deuxième session — Comparaison de classifications {#sec-classifications}
@@ -216,13 +246,16 @@ On produit quatre versions de la même choroplèthe avec quatre méthodes de cla
 
 ```{r}
 #| label: classif-utility
+# Fonction utilitaire : on lui passe le style de classification et un titre,
+# elle renvoie une carte tmap prête à être combinée à d'autres.
+# Évite la duplication de code (Don't Repeat Yourself).
 carte_avec_style <- function(style_str, titre) {
   tm_shape(adm1_indic) +
     tm_polygons(
       fill        = "tx_alpha_femmes",
       fill.scale  = tm_scale_intervals(style = style_str, n = 5,
                                        values = "brewer.yl_or_rd"),
-      fill.legend = tm_legend("% femmes alpha."),
+      fill.legend = tm_legend("% femmes alpha. (%)"),
       col         = "white", lwd = 0.3
     ) +
     tm_title(titre, position = c("left", "top"), size = 0.9)
@@ -237,20 +270,23 @@ carte_avec_style <- function(style_str, titre) {
 #| label: classif-grid
 #| fig-width: 14
 #| fig-height: 10
-c_equal   <- carte_avec_style("equal",    "Intervalles égaux")
-c_quant   <- carte_avec_style("quantile", "Quantiles")
-c_jenks   <- carte_avec_style("jenks",    "Jenks (Fisher)")
+# On crée 4 cartes individuelles avec la même variable mais des découpages différents.
+c_equal   <- carte_avec_style("equal",    "a. Intervalles égaux")
+c_quant   <- carte_avec_style("quantile", "b. Quantiles")
+c_jenks   <- carte_avec_style("jenks",    "c. Jenks (Fisher)")
+# Cas manuel : on définit explicitement les bornes (lisibles politiquement).
 c_manual  <- tm_shape(adm1_indic) +
   tm_polygons(
     fill        = "tx_alpha_femmes",
     fill.scale  = tm_scale_intervals(breaks = c(0, 10, 50, 100, 200, 400),
                                      values = "brewer.yl_or_rd"),
-    fill.legend = tm_legend("% femmes alpha."),
+    fill.legend = tm_legend("% femmes alpha. (%)"),
     col         = "white", lwd = 0.3
   ) +
-  tm_title("Manuel : 0 / 10 / 50 / 100 / 200 / 400",
+  tm_title("d. Manuel : 0 / 10 / 50 / 100 / 200 / 400",
            position = c("left", "top"), size = 0.9)
 
+# tmap_arrange empile plusieurs cartes en une grille — ncol = colonnes.
 tmap_arrange(c_equal, c_quant, c_jenks, c_manual, ncol = 2)
 ```
 
@@ -264,25 +300,27 @@ tmap_arrange(c_equal, c_quant, c_jenks, c_manual, ncol = 2)
 #| label: palettes
 #| fig-width: 14
 #| fig-height: 6
+# Même variable, même classification : SEULE la palette change.
+# Permet de comparer la lisibilité de YlOrRd (chaud) vs viridis (froid/vert).
 c_brewer <- tm_shape(adm1_indic) +
   tm_polygons(
     fill = "tx_alpha_femmes",
     fill.scale = tm_scale_intervals(style = "jenks", n = 5,
                                     values = "brewer.yl_or_rd"),
-    fill.legend = tm_legend("% femmes alpha."),
+    fill.legend = tm_legend("% femmes alpha. (%)"),
     col = "white", lwd = 0.3
   ) +
-  tm_title("Palette ColorBrewer YlOrRd", position = c("left", "top"))
+  tm_title("a. Palette ColorBrewer YlOrRd", position = c("left", "top"))
 
 c_viridis <- tm_shape(adm1_indic) +
   tm_polygons(
     fill = "tx_alpha_femmes",
     fill.scale = tm_scale_intervals(style = "jenks", n = 5,
                                     values = "viridis"),
-    fill.legend = tm_legend("% femmes alpha."),
+    fill.legend = tm_legend("% femmes alpha. (%)"),
     col = "white", lwd = 0.3
   ) +
-  tm_title("Palette viridis", position = c("left", "top"))
+  tm_title("b. Palette viridis", position = c("left", "top"))
 
 tmap_arrange(c_brewer, c_viridis, ncol = 2)
 ```
@@ -299,27 +337,38 @@ Question pédagogique : « les régions avec la meilleure alphabétisation fémi
 #| label: alpha-vs-elec
 #| fig-width: 14
 #| fig-height: 8
+# Deux cartes côte à côte, MÊME base administrative, palettes différentes
+# (chaud pour alphabétisation, froid pour électricité = code couleur intuitif).
 c_alpha <- tm_shape(adm1_indic) +
   tm_polygons(
     fill        = "tx_alpha_femmes",
     fill.scale  = tm_scale_intervals(style = "jenks", n = 5,
                                      values = "brewer.yl_or_rd"),
-    fill.legend = tm_legend("% femmes\nalphabétisées"),
+    fill.legend = tm_legend("% femmes\nalphabétisées (%)"),
     col = "white", lwd = 0.3
   ) +
   tm_text("NAME_1", size = 0.45, col = "grey20") +
-  tm_title("a. Alphabétisation femmes 15-49", position = c("left", "top"))
+  tm_compass(type = "arrow", position = c("right", "top"), size = 0.8) +
+  tm_scalebar(position = c("left", "bottom")) +
+  tm_title("a. Alphabétisation des femmes 15-49 ans",
+           position = c("left", "top"), size = 0.9)
 
 c_elec <- tm_shape(adm1_indic) +
   tm_polygons(
     fill        = "tx_electricite",
     fill.scale  = tm_scale_intervals(style = "jenks", n = 5,
                                      values = "brewer.blues"),
-    fill.legend = tm_legend("% ménages\nélectrifiés"),
+    fill.legend = tm_legend("% ménages\nélectrifiés (%)"),
     col = "white", lwd = 0.3
   ) +
   tm_text("NAME_1", size = 0.45, col = "grey20") +
-  tm_title("b. Accès à l'électricité", position = c("left", "top"))
+  tm_compass(type = "arrow", position = c("right", "top"), size = 0.8) +
+  tm_scalebar(position = c("left", "bottom")) +
+  tm_title("b. Accès des ménages à l'électricité",
+           position = c("left", "top"), size = 0.9) +
+  tm_credits(paste("Source : EDS-MICS Cameroun 2018 (DHS Program) ·",
+                   "GADM v4.1 · IFORD x GDSG 2026"),
+             position = c("right", "bottom"), size = 0.4)
 
 tmap_arrange(c_alpha, c_elec, ncol = 2)
 ```
@@ -337,6 +386,8 @@ tmap_arrange(c_alpha, c_elec, ncol = 2)
 ```{r}
 #| label: tmap-view
 #| eval: false
+# tmap_mode("view") bascule en sortie Leaflet HTML interactive.
+# Le MÊME code tmap fonctionne, seul le rendu change. Magie tmap.
 tmap_mode("view")
 
 tm_shape(adm1_indic) +
@@ -344,11 +395,13 @@ tm_shape(adm1_indic) +
     fill = "tx_alpha_femmes",
     fill.scale = tm_scale_intervals(style = "jenks", n = 5,
                                     values = "brewer.yl_or_rd"),
-    fill.legend = tm_legend("% femmes\nalphabétisées"),
-    fill_alpha = 0.7
+    fill.legend = tm_legend("% femmes\nalphabétisées (%)"),
+    fill_alpha = 0.7  # opacité 70 % pour voir le fond OSM dessous.
   )
 
-tmap_mode("plot")  # revenir au statique apres
+# Toujours revenir en mode plot après, sinon les cartes suivantes
+# du document seront aussi interactives (souvent indésirable pour le PDF).
+tmap_mode("plot")
 ```
 
 Au survol : popup avec les attributs. Au clic : zoom adaptatif. Le fond de carte est OpenStreetMap par défaut, modifiable avec `tm_basemap("Esri.WorldImagery")` par exemple.
@@ -365,17 +418,21 @@ Quand on a besoin d'intégrer la carte à un layout multi-panneaux comprenant de
 #| label: ggplot-version
 #| fig-width: 9
 #| fig-height: 7
+# Même carte en ggplot2 : geom_sf trace les polygones, aes(fill = ...) la couleur.
+# scale_fill_viridis_c : palette viridis option B (inferno) en continu.
+# trans = "sqrt" : étire les bas pour mieux différencier les régions à faible taux.
 ggplot(adm1_indic) +
   geom_sf(aes(fill = tx_alpha_femmes), color = "white", linewidth = 0.3) +
   scale_fill_viridis_c(option = "B", trans = "sqrt",
-                       name = "% femmes\nalphabétisées") +
+                       name = "% femmes\nalphabétisées (%)") +
   geom_sf_label(aes(label = NAME_1),
-                size = 2.3, color = "white", fontface = "bold",
-                label.padding = unit(0.1, "lines")) +
+                size = 2.3, colour = "black",
+                fill = scales::alpha("white", 0.75), label.size = 0,
+                fontface = "bold", label.padding = unit(0.1, "lines")) +
   labs(
-    title    = "Alphabétisation des femmes 15-49 ans — Cameroun 2018",
-    subtitle = "Projection Lambert Cameroun (EPSG:3119) · Échelle racine carrée",
-    caption  = "Source : EDS-MICS Cameroun 2018 (DHS StatCompiler), GADM v4.1 · IFORD × GDSG 2026"
+    title    = "Alphabétisation des femmes 15-49 ans par région — Cameroun 2018",
+    subtitle = "Projection Lambert Cameroun (EPSG:3119) · échelle racine carrée · palette inferno",
+    caption  = "Source : EDS-MICS Cameroun 2018 (DHS Program) · GADM v4.1 · IFORD x GDSG 2026"
   ) +
   theme_minimal() +
   theme(axis.text = element_blank(),
@@ -392,13 +449,19 @@ ggplot(adm1_indic) +
 ```{r}
 #| label: ggspatial
 #| eval: false
+# ggspatial ajoute deux annotations que ggplot2 n'a pas en natif :
+# annotation_north_arrow (flèche du nord) et annotation_scale (barre d'échelle).
 library(ggspatial)
 
 ggplot(adm1_indic) +
   geom_sf(aes(fill = tx_alpha_femmes), color = "white") +
-  scale_fill_viridis_c(option = "B", trans = "sqrt") +
+  scale_fill_viridis_c(option = "B", trans = "sqrt",
+                       name = "% femmes\nalphabétisées (%)") +
   annotation_north_arrow(location = "tr", style = north_arrow_minimal()) +
   annotation_scale(location = "bl") +
+  labs(title = "Alphabétisation des femmes 15-49 ans — Cameroun 2018",
+       subtitle = "ggplot2 + ggspatial · flèche nord + barre d'échelle",
+       caption = "Source : EDS-MICS Cameroun 2018 (DHS Program) · GADM v4.1 · IFORD x GDSG 2026") +
   theme_minimal()
 ```
 
@@ -411,9 +474,12 @@ ggplot(adm1_indic) +
 ```{r}
 #| label: export-png
 #| eval: false
+# here() reconstruit un chemin absolu robuste depuis la racine du projet.
+# dir.create avec recursive = TRUE crée toute la chaîne de dossiers si besoin.
 out_dir <- here("pedagogie", "J05_visualisation_cartographie", "outputs")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
+# tmap_save = export d'un objet tmap. dpi = 300 = qualité impression.
 tmap_save(c_alpha,
           filename = file.path(out_dir, "alpha_femmes_jenks.png"),
           dpi = 300, width = 9, height = 7)
@@ -424,6 +490,7 @@ tmap_save(c_alpha,
 ```{r}
 #| label: export-pdf
 #| eval: false
+# PDF = format vectoriel : zoom infini sans pixellisation, idéal pour la publication.
 tmap_save(c_alpha,
           filename = file.path(out_dir, "alpha_femmes_jenks.pdf"),
           width = 9, height = 7)
@@ -434,6 +501,8 @@ tmap_save(c_alpha,
 ```{r}
 #| label: export-html
 #| eval: false
+# popup.vars définit ce qui s'affiche au clic dans la carte interactive.
+# Le HTML produit est autonome : on peut le partager par email, ouvrir hors ligne.
 tmap_mode("view")
 carte_interactive <- tm_shape(adm1_indic) +
   tm_polygons(fill = "tx_alpha_femmes",
@@ -445,7 +514,7 @@ carte_interactive <- tm_shape(adm1_indic) +
                              "% électricité" = "tx_electricite",
                              "% eau améliorée" = "tx_eau_ameliore"))
 tmap_save(carte_interactive, filename = file.path(out_dir, "alpha_femmes_interactive.html"))
-tmap_mode("plot")
+tmap_mode("plot")  # rebascule importante.
 ```
 
 # Synthèse et devoir {#sec-wrap-up}

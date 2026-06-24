@@ -2,6 +2,16 @@
 title: "J1 — Intro R + pensée spatiale"
 subtitle: "Code R exécutable dans le navigateur"
 engine: knitr
+webr:
+  packages:
+    - sf
+    - ggplot2
+    - dplyr
+    - tidyr
+    - tibble
+  resources:
+    - ../_commons/data/gadm41_CMR_1.json
+    - ../_commons/data/dhs_cmr/indicateurs_dhs_cmr_2018.csv
 ---
 
 ::: {.iford-callout}
@@ -12,15 +22,17 @@ engine: knitr
 
 ```{webr}
 #| autorun: true
-# Les 10 régions du Cameroun et leur population estimée
+# Un *vecteur* est une séquence ordonnée de valeurs de même type.
+# On le crée avec c() (= "combine"). Ici un vecteur de chaînes de caractères.
 regions <- c("Adamaoua", "Centre", "Est", "Extrême-Nord", "Littoral",
              "Nord", "Nord-Ouest", "Ouest", "Sud", "Sud-Ouest")
+# Vecteur numérique parallèle : 1 valeur par région, dans le MÊME ordre.
 pop_est <- c(1340000, 4400000, 870000, 4200000, 3400000,
              2700000, 2000000, 2000000, 800000, 1700000)
 
-length(regions)
-sum(pop_est)
-mean(pop_est)
+length(regions)   # nombre d'éléments
+sum(pop_est)      # somme totale (population du Cameroun)
+mean(pop_est)     # moyenne arithmétique par région
 ```
 
 **À essayer :** changez les valeurs de `pop_est`, ou ajoutez une 11ᵉ région imaginaire — puis relancez.
@@ -28,20 +40,21 @@ mean(pop_est)
 ## 2. Vecteurs et opérations vectorielles
 
 ```{webr}
-# Conversion en millions
+# R vectorise : on divise les 10 valeurs d'un coup, pas besoin de boucle.
 pop_millions <- pop_est / 1e6
-round(pop_millions, 2)
+round(pop_millions, 2)   # arrondi à 2 décimales
 
-# Régions de plus de 3 millions
+# Indexation booléenne : on garde les noms là où la condition est vraie.
 regions[pop_est > 3e6]
 ```
 
 ## 3. Tibble : la table de données moderne
 
 ```{webr}
-library(tibble)
-library(dplyr)
+library(tibble)   # tibble = tableau moderne, affichage plus lisible
+library(dplyr)    # verbes de manipulation : filter, mutate, select...
 
+# On crée un tibble : un tableau où chaque colonne est un vecteur de même longueur.
 tbl_cmr <- tibble(
   region   = regions,
   pop_2019 = pop_est,
@@ -49,25 +62,28 @@ tbl_cmr <- tibble(
                "Garoua", "Bamenda", "Bafoussam", "Ebolowa", "Buea")
 )
 
-tbl_cmr
+tbl_cmr   # afficher le tableau
 ```
 
 ## 4. Les verbes dplyr en pratique démographique
 
 ```{webr}
+# Le pipe |> se lit "puis". On enchaîne les verbes dplyr de haut en bas.
 tbl_cmr |>
-  mutate(
+  mutate(                                # mutate = ajouter / modifier une colonne
     pop_millions = pop_2019 / 1e6,
-    classe = case_when(
+    classe = case_when(                  # case_when = IF / ELSE IF / ELSE lisible
       pop_2019 < 1e6 ~ "Moins de 1M",
       pop_2019 < 3e6 ~ "1 à 3M",
-      TRUE           ~ "Plus de 3M"
+      TRUE           ~ "Plus de 3M"      # TRUE = clause par défaut
     )
   ) |>
-  arrange(desc(pop_2019))
+  arrange(desc(pop_2019))                # tri décroissant par population
 ```
 
 ```{webr}
+# filter = garder certaines LIGNES (selon une condition).
+# select = garder certaines COLONNES (par leur nom).
 tbl_cmr |>
   filter(pop_2019 > 3e6) |>
   select(region, capitale, pop_2019)
@@ -75,20 +91,21 @@ tbl_cmr |>
 
 ## 5. Indicateurs DHS Cameroun 2018 (vraies données)
 
-On charge directement le CSV agrégé par région issu de l'API DHS StatCompiler (`rdhs::dhs_data`). Format long pivoté en wide.
+On charge directement le CSV agrégé par région issu de l'API DHS StatCompiler (`rdhs::dhs_data`). Le fichier a été pré-chargé dans la VM WebR au démarrage de la page (déclaré dans `webr.resources` du YAML) — pas de téléchargement runtime, ça marche en ligne **et** hors-ligne en preview locale.
 
 ```{webr}
-library(tidyr)
+library(tidyr)   # pivot_wider / pivot_longer pour réorganiser un tableau
 
-download.file("/_commons/data/dhs_cmr/indicateurs_dhs_cmr_2018.csv",
-              "dhs.csv", mode = "wb")
-dhs <- read.csv("dhs.csv")
+# Lecture du CSV pré-chargé dans le runtime WebR (pas de réseau ici).
+dhs <- read.csv("_commons/data/dhs_cmr/indicateurs_dhs_cmr_2018.csv")
 
+# Le CSV est en format LONG (1 ligne = 1 indicateur d'1 région).
+# pivot_wider transforme en format LARGE (1 ligne = 1 région, 1 col par indicateur).
 dhs_wide <- dhs |>
   select(region, indicateur, valeur) |>
   pivot_wider(names_from = indicateur, values_from = valeur) |>
-  rename(tx_eau_ameliore = WS_SRCE_H_IMP,
-         tx_electricite  = HC_ELEC_H_ELC,
+  rename(tx_eau_ameliore = WS_SRCE_H_IMP,   # on renomme les codes DHS
+         tx_electricite  = HC_ELEC_H_ELC,   # en noms parlants en français
          tx_alpha_femmes = ED_LITR_W_LIT,
          tx_alpha_hommes = ED_LITR_M_LIT,
          taille_menage   = HC_HHSZ_H_AVG)
@@ -96,6 +113,7 @@ dhs_wide
 ```
 
 ```{webr}
+# On crée un indicateur dérivé (écart H-F) puis on classe par électrification.
 dhs_wide |>
   mutate(ecart_alpha_hf = round(tx_alpha_hommes - tx_alpha_femmes, 1)) |>
   arrange(desc(tx_electricite)) |>
@@ -109,41 +127,44 @@ dhs_wide |>
 
 ## 6. Première carte — vraies limites GADM Cameroun
 
-Les fichiers GADM v4.1 du Cameroun sont servis par le même site que ce runtime. On les télécharge depuis le navigateur dans la machine virtuelle de WebR avec `download.file()`, puis on les lit avec `sf::read_sf()`. Premier téléchargement ~1 à 2 secondes selon le wifi, ensuite c'est en cache.
+Le fichier GADM v4.1 du Cameroun (10 régions, ~190 Ko) est pré-chargé dans la VM WebR au démarrage de la page. On l'ouvre directement avec `sf::read_sf()` — pas de réseau au runtime, ça marche aussi quand tu n'as pas internet.
 
 ```{webr}
 #| autorun: true
-library(sf)
-library(ggplot2)
+library(sf)        # sf = "simple features" : objets spatiaux vectoriels
+library(ggplot2)   # grammaire graphique de référence en R
 library(dplyr)
 
-# Telecharge GADM v4.1 ADM1 (10 regions, ~190 Ko)
-download.file("/_commons/data/gadm41_CMR_1.json", "adm1.json", mode = "wb")
-adm1 <- read_sf("adm1.json")
+# read_sf() lit un fichier SIG (ici GeoJSON) et renvoie un objet sf =
+# un data.frame + une colonne "geometry" attachée à chaque ligne.
+adm1 <- read_sf("_commons/data/gadm41_CMR_1.json")
 
-# Inspection rapide
-nrow(adm1)
-st_crs(adm1)$epsg
-head(adm1$NAME_1)
+nrow(adm1)              # nombre d'entités spatiales (10 régions attendues)
+st_crs(adm1)$epsg       # code EPSG du système de coordonnées (4326 = WGS 84)
+head(adm1$NAME_1)       # quelques noms de régions
 ```
 
 Et maintenant la vraie carte des 10 régions du Cameroun, avec les contours administratifs officiels :
 
 ```{webr}
 ggplot(adm1) +
+  # geom_sf dessine la géométrie ; fill = NAME_1 attribue 1 couleur par région.
   geom_sf(aes(fill = NAME_1), color = "white", linewidth = 0.3, show.legend = FALSE) +
+  # geom_sf_label pose une étiquette au centroïde de chaque polygone.
   geom_sf_label(aes(label = NAME_1),
-                size = 2.4, color = "white", fontface = "bold",
-                label.padding = unit(0.1, "lines")) +
+                size = 2.4, colour = "black",
+                fill = scales::alpha("white", 0.75), label.size = 0,
+                fontface = "bold", label.padding = unit(0.1, "lines")) +
+  # Palette viridis discrète : daltonien-friendly, lisible en N&B.
   scale_fill_viridis_d(option = "G") +
   labs(title = "Les 10 régions du Cameroun",
        subtitle = "Limites administratives ADM1 — GADM v4.1",
        caption = "Source : GADM v4.1 · Atelier IFORD × GDSG 2026") +
-  theme_minimal()
+  theme_minimal()   # retire les axes/grille parasites
 ```
 
 ::: {.iford-callout}
-**À essayer :** charge maintenant ADM2 (départements) avec `download.file("/_commons/data/gadm41_CMR_2.json", "adm2.json")` puis trace une carte par département. Tu verras un découpage 5 à 10 fois plus fin.
+**À essayer :** ajoute `../_commons/data/gadm41_CMR_2.json` à la liste `webr.resources` du YAML, recharge la page, puis dans une cellule fais `adm2 <- read_sf("_commons/data/gadm41_CMR_2.json")` et trace une carte par département. Tu verras un découpage 5 à 10 fois plus fin.
 :::
 
 ## 6 bis. Choroplèthe densité — carte thématique complète
@@ -151,23 +172,28 @@ ggplot(adm1) +
 On combine la géométrie ADM1 avec le tibble de population créé en section 3, on calcule la densité (habitants par km²), et on colore.
 
 ```{webr}
-# Reprojection en UTM 32N pour mesurer correctement les superficies
+# Une projection (CRS) "plane" en mètres est NÉCESSAIRE pour mesurer surfaces
+# et distances. EPSG:32632 = UTM zone 32N, adapté à l'ouest du Cameroun.
 adm1_utm <- st_transform(adm1, 32632)
+
+# st_area renvoie une surface en m² (unité du CRS) ; on convertit en km².
 adm1_utm$superficie_km2 <- as.numeric(st_area(adm1_utm)) / 1e6
 
-# Verification : superficie totale ~475 000 km2 (CMR officiel)
+# Contrôle de cohérence : total attendu ~475 000 km² (superficie officielle CMR).
 sum(adm1_utm$superficie_km2) |> round()
 ```
 
 ```{webr}
-# Jointure attributaire avec la table population
+# On bâtit une table population minimale (clé = nom de région).
 pop_tbl <- tibble::tibble(NAME_1 = regions, pop_2019 = pop_est)
 
+# left_join = jointure SQL "à gauche" : on garde toutes les régions de adm1_utm
+# et on attache la population correspondante via la clé commune NAME_1.
 adm1_pop <- adm1_utm |>
   left_join(pop_tbl, by = "NAME_1") |>
-  mutate(densite = pop_2019 / superficie_km2)
+  mutate(densite = pop_2019 / superficie_km2)   # densité = hab / km²
 
-# Tableau trie par densite decroissante
+# st_drop_geometry : on retire la colonne géométrie pour avoir un tableau pur.
 adm1_pop |>
   st_drop_geometry() |>
   select(NAME_1, pop_2019, superficie_km2, densite) |>
@@ -176,15 +202,20 @@ adm1_pop |>
 
 ```{webr}
 ggplot(adm1_pop) +
+  # Carte choroplèthe : la couleur du polygone encode la VALEUR (ici densité).
   geom_sf(aes(fill = densite), color = "white", linewidth = 0.3) +
   geom_sf_label(aes(label = NAME_1),
-                size = 2.2, color = "white", fontface = "bold",
-                label.padding = unit(0.08, "lines")) +
+                size = 2.2, colour = "black",
+                fill = scales::alpha("white", 0.75), label.size = 0,
+                fontface = "bold", label.padding = unit(0.08, "lines")) +
+  # Palette continue + transformation racine carrée pour aplatir les écarts
+  # extrêmes (Littoral et Centre écrasent sinon toutes les autres régions).
   scale_fill_viridis_c(option = "B",
                        name = "Densité\n(hab/km²)",
                        trans = "sqrt") +
   labs(title = "Densité de population par région — Cameroun (estim. 2019)",
-       caption = "Source : BUCREP (estimations), GADM v4.1 · IFORD × GDSG 2026") +
+       subtitle = "Choroplèthe — échelle racine carrée pour visibilité",
+       caption = "Source : BUCREP (estim.), GADM v4.1 · IFORD × GDSG 2026") +
   theme_minimal()
 ```
 
@@ -193,14 +224,19 @@ ggplot(adm1_pop) +
 ```{webr}
 library(sf)
 
+# st_point(c(lon, lat)) crée 1 point ; st_sfc l'enveloppe dans une "simple
+# feature collection" étiquetée par un CRS. 4326 = WGS 84 (degrés GPS).
 yaounde <- st_sfc(st_point(c(11.5021, 3.8480)), crs = 4326)
 douala  <- st_sfc(st_point(c(9.7679,  4.0511)), crs = 4326)
 
-# Distance correcte (en mètres) — st_distance gère la sphère
+# st_distance détecte que le CRS est géographique et calcule la distance
+# géodésique sur l'ellipsoïde (en mètres). Aucun besoin de reprojeter ici.
 dist_m <- st_distance(yaounde, douala)
 dist_m
 
-# Comparaison avec une distance "naïve" sur les degrés (FAUSSE)
+# Comparaison avec un calcul "naïf" type Pythagore sur les degrés.
+# C'EST FAUX : un degré de longitude ne mesure pas la même chose qu'un degré
+# de latitude (et ça dépend en plus de la latitude).
 cat("Distance naïve (degrés - sans dimension):",
     round(sqrt((11.5021-9.7679)^2 + (3.8480-4.0511)^2), 4), "\n")
 cat("Distance correcte (km):", round(as.numeric(dist_m) / 1000, 1), "km\n")

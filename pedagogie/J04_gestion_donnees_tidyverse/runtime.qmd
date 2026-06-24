@@ -2,6 +2,17 @@
 title: "J4 — Gestion des données pour l'analyse spatiale"
 subtitle: "Code R exécutable dans le navigateur"
 engine: knitr
+webr:
+  packages:
+    - dplyr
+    - tidyr
+    - readr
+    - sf
+    - ggplot2
+  resources:
+    - ../_commons/data/dhs_cmr/dhs_cmr_2018_menages_extrait.csv
+    - ../_commons/data/dhs_cmr/dhs_cmr_2018_personnes_extrait.csv
+    - ../_commons/data/gadm41_CMR_1.json
 ---
 
 ::: {.iford-callout}
@@ -18,26 +29,30 @@ engine: knitr
 
 ```{webr}
 #| autorun: true
+# Le tidyverse est une collection de packages qui partagent une grammaire commune.
+# dplyr = manipuler les tables, tidyr = restructurer, readr = lire des fichiers.
 library(dplyr)
 library(tidyr)
 library(readr)
 
-# HR : Household Recode (~11 700 ménages × 24 vars pédagogiques)
-download.file("/_commons/data/dhs_cmr/dhs_cmr_2018_menages_extrait.csv",
-              "menages.csv", mode = "wb")
-menages <- read_csv("menages.csv", show_col_types = FALSE)
+# HR : Household Recode (~11 700 menages x 24 vars) - pre-charge dans la VM
+# Un recode est un sous-fichier thematique du DHS : ici une ligne par menage.
+menages <- read_csv("_commons/data/dhs_cmr/dhs_cmr_2018_menages_extrait.csv",
+                    show_col_types = FALSE)
 
-# PR : Person Recode (~60 700 personnes × 12 vars pédagogiques)
-download.file("/_commons/data/dhs_cmr/dhs_cmr_2018_personnes_extrait.csv",
-              "personnes.csv", mode = "wb")
-personnes <- read_csv("personnes.csv", show_col_types = FALSE)
+# PR : Person Recode (~60 700 personnes x 12 vars) - idem
+# Une ligne par membre de menage : age, sexe, education.
+personnes <- read_csv("_commons/data/dhs_cmr/dhs_cmr_2018_personnes_extrait.csv",
+                      show_col_types = FALSE)
 
+# c() concatene en vecteur nomme : on verifie le nombre de lignes de chaque table.
 c(menages = nrow(menages), personnes = nrow(personnes))
 ```
 
 Aperçu des premières lignes de chaque table :
 
 ```{webr}
+# glimpse() = vue verticale de la table : chaque variable, son type, et un apercu.
 cat("--- HR (ménages) ---\n")
 glimpse(menages)
 cat("\n--- PR (personnes) ---\n")
@@ -49,7 +64,8 @@ glimpse(personnes)
 ### Le pipe `|>` se lit « puis »
 
 ```{webr}
-# Compter les ménages urbains en lecture orale naturelle
+# Le pipe |> envoie le resultat de gauche comme 1er argument de la fonction de droite.
+# Lecture orale : "prendre menages, PUIS filtrer les urbains, PUIS compter les lignes".
 menages |>
   filter(milieu == "urban") |>
   nrow()
@@ -58,7 +74,8 @@ menages |>
 ### `select` + `filter` + `count`
 
 ```{webr}
-# Combien de ménages par région et milieu ?
+# count() compte les lignes par combinaison de variables (raccourci de group_by + summarise).
+# pivot_wider() etale une variable en colonnes : ici "urban" et "rural" deviennent 2 colonnes.
 menages |>
   count(region, milieu) |>
   pivot_wider(names_from = milieu, values_from = n, values_fill = 0)
@@ -67,14 +84,15 @@ menages |>
 ### `mutate` + `case_when`
 
 ```{webr}
-# Catégoriser la taille du ménage
+# mutate() ajoute une colonne calculee. case_when() = IF/ELSE IF lisible :
+# les conditions sont evaluees DANS L'ORDRE, la premiere qui matche gagne.
 menages |>
   mutate(
     taille_cat = case_when(
       taille_menage <= 3 ~ "Petit (1-3)",
       taille_menage <= 6 ~ "Moyen (4-6)",
       taille_menage <= 9 ~ "Grand (7-9)",
-      TRUE               ~ "Très grand (10+)"
+      TRUE               ~ "Très grand (10+)"   # cas par defaut (sinon)
     )
   ) |>
   count(taille_cat)
@@ -83,7 +101,9 @@ menages |>
 ### `group_by + summarise` : agrégation
 
 ```{webr}
-# Taux d'équipements par région (non pondéré)
+# group_by() declare les groupes ; summarise() reduit chaque groupe a UNE ligne.
+# Astuce : mean(x == "yes") sur un test logique = proportion (TRUE compte pour 1).
+# .groups = "drop" supprime le regroupement residuel apres summarise (bonne pratique).
 menages |>
   group_by(region) |>
   summarise(
@@ -94,7 +114,7 @@ menages |>
     pct_tv          = round(mean(television == "yes") * 100, 1),
     .groups = "drop"
   ) |>
-  arrange(desc(pct_electricite))
+  arrange(desc(pct_electricite))   # tri decroissant sur l'electrification
 ```
 
 ::: {.takeaway}
@@ -108,7 +128,8 @@ menages |>
 Chaque personne PR référence un ménage HR via cette double clé. Ne jamais joindre sur `menage_id` seul (un même numéro de ménage existe dans plusieurs clusters).
 
 ```{webr}
-# Vérification : la clé est-elle unique ?
+# Diagnostic d'integrite : on compte chaque paire (cluster_id, menage_id).
+# Si la cle est unique, AUCUNE paire n'apparait plus d'une fois -> resultat = 0.
 menages |>
   count(cluster_id, menage_id) |>
   filter(n > 1) |>
@@ -118,13 +139,16 @@ menages |>
 ### `left_join` : enrichir PR avec les caractéristiques du ménage
 
 ```{webr}
+# left_join() = garder TOUTES les lignes de gauche (personnes), ajouter les colonnes
+# de droite quand la cle matche. C'est la jointure par defaut en analyse.
 personnes_enrichies <- personnes |>
   left_join(
     menages |> select(cluster_id, menage_id,
                       milieu, region, electricite, quintile),
-    by = c("cluster_id", "menage_id")
+    by = c("cluster_id", "menage_id")   # double cle obligatoire pour DHS
   )
 
+# Controle qualite : memes lignes a gauche + zero NA = jointure parfaite.
 c(personnes       = nrow(personnes),
   enrichies       = nrow(personnes_enrichies),
   na_sur_milieu   = sum(is.na(personnes_enrichies$milieu)))
@@ -135,7 +159,8 @@ Le nombre de lignes doit être identique, et zéro NA sur les colonnes ajoutées
 ### `anti_join` : règle d'or de diagnostic
 
 ```{webr}
-# Personnes orphelines (sans ménage HR parent) ?
+# anti_join() = inverse de l'inner_join : il garde les lignes de gauche QUI N'ONT PAS
+# de correspondance a droite. Outil de diagnostic essentiel avant tout left_join.
 personnes |>
   anti_join(menages, by = c("cluster_id", "menage_id")) |>
   nrow()
@@ -146,7 +171,7 @@ personnes |>
 La pondération propre par plan de sondage stratifié est dans `demo.qmd` desktop avec `srvyr`. Ici, version brute pour illustrer le pipeline.
 
 ```{webr}
-# Indicateurs ménages par région
+# Etape 1 : indicateurs construits sur la table HR (un menage = une ligne).
 indic_menages <- menages |>
   group_by(region) |>
   summarise(
@@ -159,7 +184,8 @@ indic_menages <- menages |>
     .groups = "drop"
   )
 
-# Indicateur alphabétisation (proxy : a au moins suivi le primaire)
+# Etape 2 : indicateurs construits sur PR (un individu = une ligne).
+# Proxy alphabetisation = a depasse le prescolaire. On cible les 25+ ans (education terminee).
 indic_alpha <- personnes_enrichies |>
   filter(age >= 25, !is.na(niveau_educ)) |>
   mutate(alpha = niveau_educ != "no education, preschool") |>
@@ -169,7 +195,7 @@ indic_alpha <- personnes_enrichies |>
     .groups = "drop"
   )
 
-# Fusion
+# Etape 3 : fusion des deux tables d'indicateurs en une seule, cle = region.
 indicateurs_region <- indic_menages |>
   left_join(indic_alpha, by = "region")
 
@@ -182,13 +208,15 @@ indicateurs_region
 
 ```{webr}
 #| autorun: true
+# sf = vectoriel spatial ; ggplot2 = grammaire de cartes/graphiques.
 library(sf)
 library(ggplot2)
 
-download.file("/_commons/data/gadm41_CMR_1.json", "adm1.json", mode = "wb")
-adm1 <- read_sf("adm1.json")
+# GADM = base mondiale de limites administratives. ADM1 = 1er niveau (regions au Cameroun).
+adm1 <- read_sf("_commons/data/gadm41_CMR_1.json")
 
 # Normaliser les noms (DHS: "far-north", GADM: "Far North" — incompatibles)
+# norm() = minuscules + sans accent + sans tiret/espace : "Far North" -> "farnorth".
 norm <- function(x) {
   x |>
     iconv(from = "UTF-8", to = "ASCII//TRANSLIT") |>
@@ -215,17 +243,26 @@ normalize_region <- function(x) {
   ifelse(v %in% names(dict), dict[v], v)
 }
 
+# On cree une colonne "cle propre" dans chacune des deux tables, pour la jointure.
 adm1$region_key                <- normalize_region(adm1$NAME_1)
 indicateurs_region$region_key  <- normalize_region(indicateurs_region$region)
 
-# Aperçu des correspondances
-data.frame(adm1 = sort(unique(adm1$region_key)),
-           dhs  = sort(unique(indicateurs_region$region_key)))
+# Diagnostic de correspondance des cles entre les deux tables.
+# union() = toutes les cles vues d'au moins un cote. %in% teste la presence
+# dans chaque source. Si toutes les colonnes "presente_..." sont TRUE, on est
+# bon ; un FALSE = cle manquante d'un cote, jointure incomplete a corriger.
+toutes_les_cles <- sort(unique(c(adm1$region_key, indicateurs_region$region_key)))
+data.frame(
+  region_key       = toutes_les_cles,
+  presente_adm1    = toutes_les_cles %in% adm1$region_key,
+  presente_dhs     = toutes_les_cles %in% indicateurs_region$region_key
+)
 ```
 
 ### Jointure
 
 ```{webr}
+# Jointure attributaire : on ajoute les indicateurs DHS aux polygones GADM via region_key.
 adm1_indic <- adm1 |>
   left_join(
     indicateurs_region |>
@@ -234,7 +271,7 @@ adm1_indic <- adm1 |>
     by = "region_key"
   )
 
-# Vérifier l'absence de NA après jointure
+# st_drop_geometry() = enlever la colonne spatiale pour afficher un tableau lisible.
 adm1_indic |>
   st_drop_geometry() |>
   select(NAME_1, n_menages, pct_electricite, pct_alpha_25plus)
@@ -243,14 +280,20 @@ adm1_indic |>
 ## 6. Carte choroplèthe par région
 
 ```{webr}
+# Choroplethe = polygones colores selon une variable quantitative.
+# geom_sf() lit la geometrie sf ; aes(fill = ...) mappe la variable a la couleur.
 ggplot(adm1_indic) +
   geom_sf(aes(fill = pct_electricite), color = "white", linewidth = 0.3) +
-  scale_fill_viridis_c(option = "D", name = "% ménages\nélectrifiés") +
-  geom_sf_label(aes(label = NAME_1), size = 2.3,
-                color = "white", fontface = "bold") +
-  labs(title = "Accès à l'électricité par région — Cameroun 2018",
-       subtitle = "EDS-MICS Cameroun 2018 (DHS Program), version non pondérée",
-       caption = "Sources : DHS Program · GADM v4.1 · IFORD × GDSG 2026") +
+  # viridis = palette sequentielle perceptuellement uniforme, daltonien-friendly.
+  scale_fill_viridis_c(option = "D",
+                       name = "% ménages\nélectrifiés\n(non pondéré)") +
+  # Etiquettes regions superposees sur les polygones.
+  geom_sf_label(aes(label = NAME_1), size = 2.3, colour = "black",
+                fill = scales::alpha("white", 0.75), label.size = 0,
+                fontface = "bold", label.padding = unit(0.1, "lines")) +
+  labs(title    = "Accès à l'électricité par région — Cameroun 2018",
+       subtitle = "EDS-MICS Cameroun 2018 (DHS Program) · pourcentage de ménages électrifiés (non pondéré)",
+       caption  = "Source : EDS-MICS Cameroun 2018 (DHS Program) · IFORD × GDSG 2026") +
   theme_minimal() +
   theme(axis.text = element_blank(), axis.ticks = element_blank(),
         panel.grid = element_blank())
