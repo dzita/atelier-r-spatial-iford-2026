@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>J9 — Applications spatiales et sciences sociales – Runtime IFORD × GDSG 2026</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-cbfcc28fdddbba26d4008a6ad21285bb.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-a672a304ec539e01fc8e93f6badf0741.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/live-runtime/live-runtime.js" type="module"></script>
+<link href="../site_libs/quarto-contrib/live-runtime/live-runtime.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script type="module" src="../site_libs/quarto-ojs/quarto-ojs-runtime.js"></script>
+<link href="../site_libs/quarto-ojs/quarto-ojs.css" rel="stylesheet">
+
+
+</head>
+
+<body class="floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="INDEX.md" class="navbar-brand navbar-brand-logo">
+    <img src="../_commons/img/logo-iford.jpg" alt="IFORD" class="navbar-logo light-content">
+    <img src="../_commons/img/logo-iford.jpg" alt="IFORD" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="INDEX.md">
+    <span class="navbar-title">Runtime IFORD × GDSG 2026</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../INDEX.html"> 
+<span class="menu-text">Accueil</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-modules" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Modules</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-modules">    
+        <li>
+    <a class="dropdown-item" href="../J01_intro_R_pensee_spatiale/runtime.html">
+ <span class="dropdown-text">J1 · Intro R + pensée spatiale</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J02_sf_CRS_vecteurs/runtime.html">
+ <span class="dropdown-text">J2 · Données vectorielles sf</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J03_donnees_raster_terra/runtime.html">
+ <span class="dropdown-text">J3 · Données raster terra</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J04_gestion_donnees_tidyverse/runtime.html">
+ <span class="dropdown-text">J4 · Gestion des données (tidyverse)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J05_visualisation_cartographie/runtime.html">
+ <span class="dropdown-text">J5 · Visualisation et cartographie</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J06_statistiques_spatiales/runtime.html">
+ <span class="dropdown-text">J6 · Statistiques spatiales (Moran, LISA, KDE)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J07_population_haute_resolution/runtime.html">
+ <span class="dropdown-text">J7 · Population haute résolution + bottom-up</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J08_teledetection_observation_terre/runtime.html">
+ <span class="dropdown-text">J8 · Télédétection + observation de la Terre</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J09_applications_spatiales_sciences_sociales/runtime.html">
+ <span class="dropdown-text">J9 · Applications sciences sociales (ACLED)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J10_workflows_reproductibles/runtime.html">
+ <span class="dropdown-text">J10 · Reproductibilité + clôture</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul class="collapse">
+  <li><a href="#charger-le-csv-acled-gadm-adm1" id="toc-charger-le-csv-acled-gadm-adm1" class="nav-link active" data-scroll-target="#charger-le-csv-acled-gadm-adm1">1. Charger le CSV ACLED + GADM ADM1</a></li>
+  <li><a href="#nettoyage-et-conversion-exercice-2" id="toc-nettoyage-et-conversion-exercice-2" class="nav-link" data-scroll-target="#nettoyage-et-conversion-exercice-2">2. Nettoyage et conversion (Exercice 2)</a></li>
+  <li><a href="#exploration-types-et-régions-exercice-3" id="toc-exploration-types-et-régions-exercice-3" class="nav-link" data-scroll-target="#exploration-types-et-régions-exercice-3">3. Exploration : types et régions (Exercice 3)</a></li>
+  <li><a href="#évolution-annuelle-par-type-exercice-4a" id="toc-évolution-annuelle-par-type-exercice-4a" class="nav-link" data-scroll-target="#évolution-annuelle-par-type-exercice-4a">4. Évolution annuelle par type (Exercice 4a)</a></li>
+  <li><a href="#décès-annuels-exercice-4c" id="toc-décès-annuels-exercice-4c" class="nav-link" data-scroll-target="#décès-annuels-exercice-4c">5. Décès annuels (Exercice 4c)</a></li>
+  <li><a href="#conversion-en-couche-sf-exercice-5a" id="toc-conversion-en-couche-sf-exercice-5a" class="nav-link" data-scroll-target="#conversion-en-couche-sf-exercice-5a">6. Conversion en couche sf (Exercice 5a)</a></li>
+  <li><a href="#carte-des-points-par-type-exercice-5b" id="toc-carte-des-points-par-type-exercice-5b" class="nav-link" data-scroll-target="#carte-des-points-par-type-exercice-5b">7. Carte des points par type (Exercice 5b)</a></li>
+  <li><a href="#choroplèthe-par-région-via-st_within-exercice-5c" id="toc-choroplèthe-par-région-via-st_within-exercice-5c" class="nav-link" data-scroll-target="#choroplèthe-par-région-via-st_within-exercice-5c">8. Choroplèthe par région via st_within (Exercice 5c)</a></li>
+  <li><a href="#carte-choroplèthe-par-région" id="toc-carte-choroplèthe-par-région" class="nav-link" data-scroll-target="#carte-choroplèthe-par-région">9. Carte choroplèthe par région</a></li>
+  <li><a href="#carte-des-décès-par-région" id="toc-carte-des-décès-par-région" class="nav-link" data-scroll-target="#carte-des-décès-par-région">10. Carte des décès par région</a></li>
+  <li><a href="#à-essayer" id="toc-à-essayer" class="nav-link" data-scroll-target="#à-essayer">11. À essayer</a></li>
+  <li><a href="#pour-aller-plus-loin" id="toc-pour-aller-plus-loin" class="nav-link" data-scroll-target="#pour-aller-plus-loin">12. Pour aller plus loin</a></li>
+  </ul>
+</nav>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">J9 — Applications spatiales et sciences sociales</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<p class="subtitle lead">Code R exécutable dans le navigateur — Partie I ACLED</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="iford-callout">
+<p><strong>Mode d’emploi.</strong> Cliquez <strong>Run code</strong> dans chaque cellule. WebR charge <code>sf</code> et <code>dplyr</code> au premier appel (~25 s la première fois). Tout tourne dans votre navigateur — aucune installation locale.</p>
+<p><strong>Limitation technique</strong> : ce runtime ne couvre que la <strong>Partie I — ACLED</strong> (conflits armés). La <strong>Partie II — ERA5</strong> (température, package <code>ecmwfr</code> + NetCDF) nécessite un fichier <code>.nc</code> de plusieurs Mo + token Copernicus + le package <code>ncdf4</code> non portable sur WebR. Voir <code>demo.qmd</code> desktop pour l’expérience ERA5 complète.</p>
+<p><strong>Données 100 % réelles</strong> : export ACLED Explorer pour le Cameroun (déposé par Edith Darin dans le Drive <code>workshop_material/jour_09_*</code>). Aucune simulation.</p>
+<p><strong>Conception pédagogique</strong> : Edith Darin (GDSG/IFORD). <strong>Intégration runtime</strong> : Ramesesse Dzita.</p>
+</div>
+<section id="charger-le-csv-acled-gadm-adm1" class="level2">
+<h2 class="anchored" data-anchor-id="charger-le-csv-acled-gadm-adm1">1. Charger le CSV ACLED + GADM ADM1</h2>
+<div class="cell" data-autorun="true">
+<div>
+<div id="webr-1" class="exercise-cell">
+
+</div>
+<script type="webr-1-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyA0IHBhY2thZ2VzIHBvdXIgY2UgVEQgOiBzZiAodmVjdGV1cnMgPSBwb2ludHMgLyBwb2x5Z29uZXMgLyBsaWduZXMpLFxuIyBkcGx5ciAobWFuaXB1bGF0aW9uIGRlIHRhYmxlYXV4IDogZmlsdGVyLCBtdXRhdGUsIGdyb3VwX2J5LCBzdW1tYXJpc2UpLFxuIyBnZ3Bsb3QyIChncmFwaGlxdWVzIGV0IGNhcnRlcyBzdGF0aXF1ZXMgdmlhIGdlb21fc2YpLFxuIyByZWFkciAobGVjdHVyZSBDU1YgcGx1cyByYXBpZGUgZXQgcGx1cyBzdHJpY3RlIHF1ZSByZWFkLmNzdiBkZSBiYXNlIFIpLlxubGlicmFyeShzZilcbmxpYnJhcnkoZHBseXIpXG5saWJyYXJ5KGdncGxvdDIpXG5saWJyYXJ5KHJlYWRyKVxuXG4jIEFDTEVEID0gQXJtZWQgQ29uZmxpY3QgTG9jYXRpb24gJiBFdmVudCBEYXRhIFByb2plY3QuIEJhc2UgbW9uZGlhbGUgZGVcbiMgcmVmZXJlbmNlIChhY2FkZW1pcXVlICsgaHVtYW5pdGFpcmUpIHBvdXIgbGVzIGV2ZW5lbWVudHMgZGUgY29uZmxpdFxuIyBhcm1lLiBDaGFxdWUgbGlnbmUgPSAxIGV2ZW5lbWVudCBHRU9DT0RFID0gcG91cnZ1IGQndW5lIHBhaXJlIChsYXRpdHVkZSxcbiMgbG9uZ2l0dWRlKSBlbiBkZWdyZXMgZGVjaW1hdXguIE1pc2UgYSBqb3VyIGhlYmRvbWFkYWlyZSwgZ3JhdHVpdGUgYXByZXNcbiMgaW5zY3JpcHRpb24gc3VyIGFjbGVkZGF0YS5jb20uIFZhcmlhYmxlcyBjbGVzIDogZXZlbnRfZGF0ZSAoZGF0ZSksXG4jIGV2ZW50X3R5cGUgKGNhdGVnb3JpZSBkZSB2aW9sZW5jZSksIGFjdG9yMS9hY3RvcjIsIGZhdGFsaXRpZXMgKGRlY2VzKSxcbiMgYWRtaW4xL2FkbWluMiAocmVnaW9uL2RlcGFydGVtZW50KS5cbiNcbiMgR0FETSA9IEdsb2JhbCBBRE1pbmlzdHJhdGl2ZSBhcmVhcywgYmFzZSBtb25kaWFsZSBkZXMgZGVjb3VwYWdlc1xuIyBhZG1pbmlzdHJhdGlmcy4gQURNMCA9IHBheXMsIEFETTEgPSByZWdpb25zICgxMCBwb3VyIGxlIENhbWVyb3VuKSxcbiMgQURNMiA9IGRlcGFydGVtZW50cy4gT24gY2hhcmdlIGljaSB1bmlxdWVtZW50IGwnQURNMSBwb3VyIGNhcnRvZ3JhcGhpZXJcbiMgbGVzIGNvbmZsaXRzIGEgbCdlY2hlbGxlIHJlZ2lvbmFsZS5cbmFjbGVkX2JydXQgPC0gcmVhZF9jc3YoXCJfY29tbW9ucy9kYXRhL2pvdXJfMDlfZXh0cmFpdHMvQUNMRURfRGF0YS5jc3ZcIixcbiAgICAgICAgICAgICAgICAgICAgICAgc2hvd19jb2xfdHlwZXMgPSBGQUxTRSlcbmNtcjEgICAgICAgPC0gcmVhZF9zZihcIl9jb21tb25zL2RhdGEvam91cl8wN19leHRyYWl0cy9nYWRtNDFfQ01SX2FkbTEuZ2VvanNvblwiKVxuXG4jIFByZW1pZXIgZGlhZ25vc3RpYyA6IGNvbWJpZW4gZCdldmVuZW1lbnRzIGRhbnMgbGUgQ1NWIEFDTEVELCBldCBjb21iaWVuXG4jIGRlIHJlZ2lvbnMgQURNMSBkYW5zIEdBRE0gKGF0dGVuZHUgOiAxMCBwb3VyIGxlIENhbWVyb3VuKS5cbmMoZXZlbmVtZW50cyA9IG5yb3coYWNsZWRfYnJ1dCksIHJlZ2lvbnMgPSBucm93KGNtcjEpKVxuIyBnbGltcHNlID0gdnVlIHZlcnRpY2FsZSBjb21wYWN0ZSBkdSB0YWJsZWF1IDogMSBsaWduZSBwYXIgY29sb25uZSwgYXZlY1xuIyBzb24gdHlwZSBSIChjaHIsIGRibCwgZGF0ZSkgZXQgbGVzIHByZW1pZXJlcyB2YWxldXJzLiBJbmRpc3BlbnNhYmxlXG4jIEFWQU5UIHRvdXRlIGFuYWx5c2UgcG91ciByZXBlcmVyIGxlcyBjb2xvbm5lcyBtYWwgdHlwZWVzLlxuZ2xpbXBzZShhY2xlZF9icnV0KSJ9
+</script>
+</div>
+</div>
+</section>
+<section id="nettoyage-et-conversion-exercice-2" class="level2">
+<h2 class="anchored" data-anchor-id="nettoyage-et-conversion-exercice-2">2. Nettoyage et conversion (Exercice 2)</h2>
+<div class="cell">
+<div>
+<div id="webr-2" class="exercise-cell">
+
+</div>
+<script type="webr-2-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBBQ0xFRCBwdWJsaWUgc29uIENTViBhdmVjIHRvdXRlcyBsZXMgY29sb25uZXMgZW4gVEVYVEUgKG1lbWUgbGVzIGRhdGVzXG4jIGV0IGxlcyBub21icmVzKS4gT24gY29udmVydGl0IGV4cGxpY2l0ZW1lbnQgY2hhcXVlIGNvbG9ubmUgZGFucyBzb25cbiMgdnJhaSB0eXBlIFIgYXZhbnQgY2FsY3VsLiBMZSBjaGFtcCBcIm1vaXNcIiBjcmVlIGF2ZWMgZm9ybWF0KFwiJVktJW1cIilcbiMgc2VydmlyYSBkZSBjbGUgZCdBR1JFR0FUSU9OIFRFTVBPUkVMTEUgbWVuc3VlbGxlIChleCA6IFwiMjAyNS0wM1wiID0gbWFyc1xuIyAyMDI1KSwgcG91ciByZWdyb3VwZXIgdG91cyBsZXMgZXZlbmVtZW50cyBkJ3VuIG1lbWUgbW9pcyBlbiB1bmUgbGlnbmUuXG4jIEZpbHRyZSBmaW5hbCA6IG9uIHJldGlyZSBsZXMgbGlnbmVzIHNhbnMgY29vcmRvbm5lZXMgKGltcG9zc2libGVzIGFcbiMgcGxhY2VyIHN1ciB1bmUgY2FydGUpLlxuYWNsZWRfY2xlYW4gPC0gYWNsZWRfYnJ1dCB8PlxuICBtdXRhdGUoXG4gICAgZXZlbnRfZGF0ZSA9IGFzLkRhdGUoZXZlbnRfZGF0ZSksXG4gICAgYW5uZWUgICAgICA9IGFzLmludGVnZXIoeWVhciksXG4gICAgbW9pcyAgICAgICA9IGZvcm1hdChldmVudF9kYXRlLCBcIiVZLSVtXCIpLCAgICMgY2xlIGQnYWdyZWdhdGlvbiBtZW5zdWVsbGVcbiAgICBmYXRhbGl0aWVzID0gYXMubnVtZXJpYyhmYXRhbGl0aWVzKSxcbiAgICBsb25naXR1ZGUgID0gYXMubnVtZXJpYyhsb25naXR1ZGUpLFxuICAgIGxhdGl0dWRlICAgPSBhcy5udW1lcmljKGxhdGl0dWRlKVxuICApIHw+XG4gIGZpbHRlcighaXMubmEobG9uZ2l0dWRlKSwgIWlzLm5hKGxhdGl0dWRlKSlcblxuIyBWZXJpZmljYXRpb24gOiBjb21iaWVuIGQnZXZlbmVtZW50cyB2YWxpZGVzIGV0IHF1ZWxsZSBwZXJpb2RlIGNvdXZlcnRlID9cbmNhdChcIkV2ZW5lbWVudHMgdmFsaWRlcyA6XCIsIG5yb3coYWNsZWRfY2xlYW4pLCBcIlxcblwiKVxuY2F0KFwiUGVyaW9kZSA6XCIsIGZvcm1hdChtaW4oYWNsZWRfY2xlYW4kZXZlbnRfZGF0ZSksIFwiJVktJW0tJWRcIiksIFwiXFxuICAgICAgICAgXCIsXG4gICAgZm9ybWF0KG1heChhY2xlZF9jbGVhbiRldmVudF9kYXRlKSwgXCIlWS0lbS0lZFwiKSwgXCJcXG5cIikifQ==
+</script>
+</div>
+</div>
+</section>
+<section id="exploration-types-et-régions-exercice-3" class="level2">
+<h2 class="anchored" data-anchor-id="exploration-types-et-régions-exercice-3">3. Exploration : types et régions (Exercice 3)</h2>
+<div class="cell">
+<div>
+<div id="webr-3" class="exercise-cell">
+
+</div>
+<script type="webr-3-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBldmVudF90eXBlID0gdHlwb2xvZ2llIEFDTEVEIHN0YW5kYXJkaXNlZSBhIDYgY2F0ZWdvcmllcyA6XG4jICAgLSBCYXR0bGVzICAgICAgICAgICAgICAgICAgICAgICAgOiBhZmZyb250ZW1lbnRzIGFybWVzIGVudHJlIGdyb3VwZXNcbiMgICAtIFZpb2xlbmNlIGFnYWluc3QgY2l2aWxpYW5zICAgICA6IGV4YWN0aW9ucyBjb250cmUgZGVzIGNpdmlsc1xuIyAgIC0gUmlvdHMgICAgICAgICAgICAgICAgICAgICAgICAgIDogZW1ldXRlcyB2aW9sZW50ZXMgKHJ1ZXMpXG4jICAgLSBQcm90ZXN0cyAgICAgICAgICAgICAgICAgICAgICAgOiBtYW5pZmVzdGF0aW9ucyBwYWNpZmlxdWVzXG4jICAgLSBTdHJhdGVnaWMgZGV2ZWxvcG1lbnRzICAgICAgICAgOiBkZWNsYXJhdGlvbnMsIG1vdXZlbWVudHMgZGUgdHJvdXBlc1xuIyAgIC0gRXhwbG9zaW9ucyAvIFJlbW90ZSB2aW9sZW5jZSAgIDogYm9tYmVzLCBkcm9uZXMsIGFydGlsbGVyaWVcbiMgY291bnQoc29ydCA9IFRSVUUpID0gcmFjY291cmNpIGRwbHlyIGVxdWl2YWxlbnQgYVxuIyBncm91cF9ieShldmVudF90eXBlKSB8PiB0YWxseSgpIHw+IGFycmFuZ2UoZGVzYyhuKSkuXG5hY2xlZF9jbGVhbiB8PlxuICBjb3VudChldmVudF90eXBlLCBzb3J0ID0gVFJVRSwgbmFtZSA9IFwibl9ldmVuZW1lbnRzXCIpIn0=
+</script>
+</div>
+</div>
+<div class="cell">
+<div>
+<div id="webr-4" class="exercise-cell">
+
+</div>
+<script type="webr-4-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBhZG1pbjEgPSBuaXZlYXUgcmVnaW9uIGRhbnMgbGEgbm9tZW5jbGF0dXJlIEFDTEVEIChhbGlnbmUgc3VyIGwnQURNMVxuIyBHQURNIHBvdXIgbGUgQ2FtZXJvdW4gOiBFeHRyZW1lLU5vcmQsIE5vcmQtT3Vlc3QsIFN1ZC1PdWVzdCwgZXRjLikuXG4jIENsYXNzZW1lbnQgZGVzIHJlZ2lvbnMgcGFyIGludGVuc2l0ZSBkZXMgY29uZmxpdHMgZW5yZWdpc3RyZXMgOlxuIyBwZXJtZXQgZCdpZGVudGlmaWVyIHJhcGlkZW1lbnQgbGVzIHpvbmVzIGRlIGNvbmNlbnRyYXRpb24uXG5hY2xlZF9jbGVhbiB8PlxuICBjb3VudChhZG1pbjEsIHNvcnQgPSBUUlVFLCBuYW1lID0gXCJuX2V2ZW5lbWVudHNcIikifQ==
+</script>
+</div>
+</div>
+</section>
+<section id="évolution-annuelle-par-type-exercice-4a" class="level2">
+<h2 class="anchored" data-anchor-id="évolution-annuelle-par-type-exercice-4a">4. Évolution annuelle par type (Exercice 4a)</h2>
+<div class="cell">
+<div>
+<div id="webr-5" class="exercise-cell">
+
+</div>
+<script type="webr-5-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoibGlicmFyeShzY2FsZXMpXG5cbiMgQUdSRUdBVElPTiBURU1QT1JFTExFID0gb3BlcmF0aW9uIGNsZSBkZXMgc2NpZW5jZXMgc29jaWFsZXMgOiBvblxuIyByZXN1bWUgbGVzIGV2ZW5lbWVudHMgcG9uY3R1ZWxzICgxIGxpZ25lID0gMSBldmVuZW1lbnQsIGRhdGUgcHJlY2lzZSlcbiMgZW4gc2VyaWUgYWdyZWdlZSAoMSBsaWduZSA9IDEgcGVyaW9kZSArIDEgdHlwZSBhdmVjIHNvbiBjb21wdGFnZSkuXG4jIEljaSBncmFpbiBBTk5VRUwgKyB2ZW50aWxhdGlvbiBwYXIgZXZlbnRfdHlwZSA6IDEgbGlnbmUgcGFyIGNvdXBsZVxuIyAoYW5uZWUsIGV2ZW50X3R5cGUpIGF2ZWMgbGUgbm9tYnJlIGQnZXZlbmVtZW50cyBjb3JyZXNwb25kYW50cy5cbnJlc3VtZV9hbm51ZWwgPC0gYWNsZWRfY2xlYW4gfD5cbiAgY291bnQoYW5uZWUsIGV2ZW50X3R5cGUsIG5hbWUgPSBcIm5fZXZlbmVtZW50c1wiKVxuXG4jIEhpc3RvZ3JhbW1lIGVtcGlsZSA6IGxhIGhhdXRldXIgdG90YWxlID0gdG91cyBsZXMgdHlwZXMgY29uZm9uZHVzLFxuIyBsZXMgY291bGV1cnMgcGVybWV0dGVudCBkZSB2b2lyIGxhIGNvbXBvc2l0aW9uIChiYXR0bGVzLCB2aW9sZW5jZS4uLikuXG5nZ3Bsb3QocmVzdW1lX2FubnVlbCxcbiAgICAgICBhZXMoeCA9IGFubmVlLCB5ID0gbl9ldmVuZW1lbnRzLCBmaWxsID0gZXZlbnRfdHlwZSkpICtcbiAgZ2VvbV9jb2woKSArXG4gIHNjYWxlX3hfY29udGludW91cyhcbiAgICBicmVha3MgPSBzZXEobWluKHJlc3VtZV9hbm51ZWwkYW5uZWUpLCBtYXgocmVzdW1lX2FubnVlbCRhbm5lZSksIGJ5ID0gMSlcbiAgKSArXG4gIHNjYWxlX2ZpbGxfYnJld2VyKHBhbGV0dGUgPSBcIlNldDJcIikgK1xuICBsYWJzKHRpdGxlICAgID0gXCJFdm9sdXRpb24gYW5udWVsbGUgZGVzIGNvbmZsaXRzIGF1IENhbWVyb3VuXCIsXG4gICAgICAgc3VidGl0bGUgPSBwYXN0ZTAoXCJTb3VyY2UgQUNMRUQgXCIsIG1pbihyZXN1bWVfYW5udWVsJGFubmVlKSwgXCItXCIsXG4gICAgICAgICAgICAgICAgICAgICAgICAgbWF4KHJlc3VtZV9hbm51ZWwkYW5uZWUpLFxuICAgICAgICAgICAgICAgICAgICAgICAgIFwiIC0gYWdyZWdhdGlvbiBhbm51ZWxsZSBwYXIgdHlwZSBkJ2V2ZW5lbWVudFwiKSxcbiAgICAgICB4ID0gXCJBbm5lZVwiLCB5ID0gXCJOb21icmUgZCdldmVuZW1lbnRzXCIsIGZpbGwgPSBcIlR5cGUgZCdldmVuZW1lbnRcIixcbiAgICAgICBjYXB0aW9uID0gXCJTb3VyY2UgOiBBQ0xFRCBQcm9qZWN0IC0gSUZPUkQgeCBHRFNHIDIwMjZcIikgK1xuICB0aGVtZV9taW5pbWFsKCkgK1xuICB0aGVtZShheGlzLnRleHQueCA9IGVsZW1lbnRfdGV4dChhbmdsZSA9IDQ1LCBoanVzdCA9IDEpKSJ9
+</script>
+</div>
+</div>
+</section>
+<section id="décès-annuels-exercice-4c" class="level2">
+<h2 class="anchored" data-anchor-id="décès-annuels-exercice-4c">5. Décès annuels (Exercice 4c)</h2>
+<div class="cell">
+<div>
+<div id="webr-6" class="exercise-cell">
+
+</div>
+<script type="webr-6-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBDZXR0ZSBmb2lzIG9uIHNvbW1lIGBmYXRhbGl0aWVzYCBhdSBsaWV1IGRlIGNvbXB0ZXIgbGVzIGV2ZW5lbWVudHMgOlxuIyAxIGV2ZW5lbWVudCBwZXV0IGVudHJhaW5lciAwIG91IHBsdXNpZXVycyBkZWNlcy4gTGEgY291cmJlIGRlY2VzIGVzdFxuIyBzb3V2ZW50IGRlY291cGxlZSBkZSBsYSBjb3VyYmUgZXZlbmVtZW50cyAobWFzc2FjcmUgdW5pcXVlIHZzIG5vbWJyZXV4XG4jIGV2ZW5lbWVudHMgZGUgZmFpYmxlIGludGVuc2l0ZSkuXG5yZXN1bWVfZGVjZXMgPC0gYWNsZWRfY2xlYW4gfD5cbiAgZ3JvdXBfYnkoYW5uZWUpIHw+XG4gIHN1bW1hcmlzZShkZWNlcyA9IHN1bShmYXRhbGl0aWVzLCBuYS5ybSA9IFRSVUUpLCAuZ3JvdXBzID0gXCJkcm9wXCIpXG5cbmdncGxvdChyZXN1bWVfZGVjZXMsIGFlcyh4ID0gYW5uZWUsIHkgPSBkZWNlcykpICtcbiAgZ2VvbV9saW5lKGNvbG91ciA9IFwiI0NCMTgxRFwiLCBsaW5ld2lkdGggPSAxLjIpICtcbiAgZ2VvbV9wb2ludChjb2xvdXIgPSBcIiNDQjE4MURcIiwgc2l6ZSA9IDIuNSkgK1xuICBzY2FsZV94X2NvbnRpbnVvdXMoXG4gICAgYnJlYWtzID0gc2VxKG1pbihyZXN1bWVfZGVjZXMkYW5uZWUpLCBtYXgocmVzdW1lX2RlY2VzJGFubmVlKSwgYnkgPSAxKVxuICApICtcbiAgbGFicyh0aXRsZSAgICA9IFwiRGVjZXMgbGllcyBhdXggY29uZmxpdHMgYXUgQ2FtZXJvdW5cIixcbiAgICAgICBzdWJ0aXRsZSA9IHBhc3RlMChcIlNvdXJjZSBBQ0xFRCBcIiwgbWluKHJlc3VtZV9kZWNlcyRhbm5lZSksIFwiLVwiLFxuICAgICAgICAgICAgICAgICAgICAgICAgIG1heChyZXN1bWVfZGVjZXMkYW5uZWUpLFxuICAgICAgICAgICAgICAgICAgICAgICAgIFwiIC0gc29tbWUgYW5udWVsbGUgZGVzIGRlY2VzIGRlY2xhcmVzXCIpLFxuICAgICAgIHggPSBcIkFubmVlXCIsIHkgPSBcIk5vbWJyZSBkZSBkZWNlcyAobilcIixcbiAgICAgICBjYXB0aW9uID0gXCJTb3VyY2UgOiBBQ0xFRCBQcm9qZWN0IC0gSUZPUkQgeCBHRFNHIDIwMjZcIikgK1xuICB0aGVtZV9taW5pbWFsKCkifQ==
+</script>
+</div>
+</div>
+</section>
+<section id="conversion-en-couche-sf-exercice-5a" class="level2">
+<h2 class="anchored" data-anchor-id="conversion-en-couche-sf-exercice-5a">6. Conversion en couche sf (Exercice 5a)</h2>
+<div class="cell">
+<div>
+<div id="webr-7" class="exercise-cell">
+
+</div>
+<script type="webr-7-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBHRU9DT0RBR0UgPSBjaGFxdWUgZXZlbmVtZW50IEFDTEVEIGVzdCBsaXZyZSBhdmVjIHVuZSBwYWlyZVxuIyAobGF0aXR1ZGUsIGxvbmdpdHVkZSkgZW4gZGVncmVzIGRlY2ltYXV4LiBzdF9hc19zZiB0cmFuc2Zvcm1lIGNlXG4jIHRhYmxlYXUgY2xhc3NpcXVlIGVuIG9iamV0IFNQQVRJQUwgKGNvdWNoZSBzZikgcXVlIFIgc2FpdCBhZmZpY2hlclxuIyBlbiBjYXJ0ZSBldCBjcm9pc2VyIGF2ZWMgZCdhdXRyZXMgY291Y2hlcyBnZW9ncmFwaGlxdWVzLlxuIyAtIGNvb3JkcyA9IG5vbXMgZGVzIGNvbG9ubmVzIGxvbi9sYXQgZGFucyBsZSB0YWJsZWF1IHNvdXJjZVxuIyAtIGNycyA9IDQzMjYgPSBFUFNHOjQzMjYgPSBXR1M4NCAobGF0L2xvbiBkZWNpbWF1eCkuIEMnZXN0IGxlIENSU1xuIyAgIChDb29yZGluYXRlIFJlZmVyZW5jZSBTeXN0ZW0pIHN0YW5kYXJkIGR1IEdQUyBldCBsZSBDUlMgbmF0aWZcbiMgICB1dGlsaXNlIHBhciBBQ0xFRC5cbiMgLSByZW1vdmUgPSBGQUxTRSA6IG9uIGdhcmRlIGxlcyBjb2xvbm5lcyBsb25naXR1ZGUvbGF0aXR1ZGUgZGFucyBsYVxuIyAgIHRhYmxlIGQnYXR0cmlidXRzICh1dGlsZSBwb3VyIGV4cG9ydGVyIGVuIENTViBwbHVzIHRhcmQpLlxuYWNsZWRfcHRzIDwtIHN0X2FzX3NmKFxuICBhY2xlZF9jbGVhbixcbiAgY29vcmRzID0gYyhcImxvbmdpdHVkZVwiLCBcImxhdGl0dWRlXCIpLFxuICBjcnMgICAgPSA0MzI2LFxuICByZW1vdmUgPSBGQUxTRVxuKVxuXG5jYXQoXCJDb3VjaGUgc2YgOlwiLCBucm93KGFjbGVkX3B0cyksIFwicG9pbnRzLCBDUlMgOlwiLFxuICAgIHN0X2NycyhhY2xlZF9wdHMpJGlucHV0LCBcIlxcblwiKSJ9
+</script>
+</div>
+</div>
+</section>
+<section id="carte-des-points-par-type-exercice-5b" class="level2">
+<h2 class="anchored" data-anchor-id="carte-des-points-par-type-exercice-5b">7. Carte des points par type (Exercice 5b)</h2>
+<p>Sur WebR on utilise <code>ggplot2 + geom_sf</code> à la place de <code>tmap</code> (qui n’est pas portable).</p>
+<div class="cell">
+<div>
+<div id="webr-8" class="exercise-cell">
+
+</div>
+<script type="webr-8-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBDYXJ0ZSBkZSBMT0NBTElTQVRJT04gOiAxIHBvaW50ID0gMSBldmVuZW1lbnQsIGNvdWxldXIgPSBldmVudF90eXBlLlxuIyBGb25kIGdyaXMgY2xhaXIgPSBwb2x5Z29uZXMgQURNMSBkdSBDYW1lcm91biAoY29udGV4dGUgZ2VvZ3JhcGhpcXVlKS5cbiMgRXRpcXVldHRlcyBOQU1FXzEgYWpvdXRlZXMgZW4gZ3JpcyBwb3VyIHNpdHVlciBjaGFxdWUgcmVnaW9uLlxuIyBhbHBoYSA9IDAuNiBhdHRlbnVlIGxhIHN1cGVycG9zaXRpb24gZGFucyBsZXMgem9uZXMgdHJlcyBkZW5zZXMuXG4jIFBhbGV0dGUgU2V0MiA9IHF1YWxpdGF0aXZlIHBhc3RlbCAoOCBjb3VsZXVycyBkaXN0aW5jdGVzLCBhY2Nlc3NpYmxlKS5cbmdncGxvdCgpICtcbiAgZ2VvbV9zZihkYXRhID0gY21yMSwgZmlsbCA9IFwiZ3JleTk1XCIsIGNvbG91ciA9IFwiZ3JleTUwXCIsIGxpbmV3aWR0aCA9IDAuNCkgK1xuICBnZW9tX3NmKGRhdGEgPSBhY2xlZF9wdHMsIGFlcyhjb2xvdXIgPSBldmVudF90eXBlKSxcbiAgICAgICAgICBzaXplID0gMSwgYWxwaGEgPSAwLjYpICtcbiAgZ2VvbV9zZl90ZXh0KGRhdGEgPSBjbXIxLCBhZXMobGFiZWwgPSBOQU1FXzEpLFxuICAgICAgICAgICAgICAgc2l6ZSA9IDIuMiwgY29sb3VyID0gXCJncmV5MzBcIiwgZm9udGZhY2UgPSBcImJvbGRcIikgK1xuICBzY2FsZV9jb2xvdXJfYnJld2VyKHBhbGV0dGUgPSBcIlNldDJcIikgK1xuICBsYWJzKHRpdGxlICAgID0gXCJDb25mbGl0cyBhcm1lcyBhdSBDYW1lcm91biAtIGxvY2FsaXNhdGlvbiBkZXMgZXZlbmVtZW50c1wiLFxuICAgICAgIHN1YnRpdGxlID0gcGFzdGUwKFwiQUNMRUQgXCIsIGZvcm1hdChtaW4oYWNsZWRfY2xlYW4kZXZlbnRfZGF0ZSksIFwiJVlcIiksXG4gICAgICAgICAgICAgICAgICAgICAgICAgXCItXCIsIGZvcm1hdChtYXgoYWNsZWRfY2xlYW4kZXZlbnRfZGF0ZSksIFwiJVlcIiksXG4gICAgICAgICAgICAgICAgICAgICAgICAgXCIgLSAxIHBvaW50ID0gMSBldmVuZW1lbnQgZ2VvY29kZSAobGF0L2xvbiwgQ1JTIEVQU0c6NDMyNilcIiksXG4gICAgICAgY29sb3VyICAgPSBcIlR5cGUgZCdldmVuZW1lbnQgKEFDTEVEKVwiLFxuICAgICAgIGNhcHRpb24gID0gXCJTb3VyY2VzIDogQUNMRUQgUHJvamVjdCAoZXZlbmVtZW50cykgLSBHQURNIHY0LjEgKHJlZ2lvbnMgQURNMSkgLSBJRk9SRCB4IEdEU0cgMjAyNlwiKSArXG4gIHRoZW1lX21pbmltYWwoKSArXG4gIHRoZW1lKGF4aXMudGV4dCA9IGVsZW1lbnRfYmxhbmsoKSwgYXhpcy50aWNrcyA9IGVsZW1lbnRfYmxhbmsoKSxcbiAgICAgICAgcGFuZWwuZ3JpZCA9IGVsZW1lbnRfYmxhbmsoKSkifQ==
+</script>
+</div>
+</div>
+</section>
+<section id="choroplèthe-par-région-via-st_within-exercice-5c" class="level2">
+<h2 class="anchored" data-anchor-id="choroplèthe-par-région-via-st_within-exercice-5c">8. Choroplèthe par région via st_within (Exercice 5c)</h2>
+<div class="cell">
+<div>
+<div id="webr-9" class="exercise-cell">
+
+</div>
+<script type="webr-9-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoibGlicmFyeSh0aWR5cilcblxuIyBBR1JFR0FUSU9OIFNQQVRJQUxFID0gb24gcmVzdW1lIGRlcyBkb25uZWVzIHBvbmN0dWVsbGVzIChwb2ludHNcbiMgQUNMRUQpIGF1IG5pdmVhdSBkJ3VuZSB1bml0ZSBhZG1pbmlzdHJhdGl2ZSAoaWNpIEFETTEgPSByZWdpb24pLiBMYVxuIyBqb2ludHVyZSBzcGF0aWFsZSBzdF93aXRoaW4gcmVwb25kIGEgbGEgcXVlc3Rpb24gOiBcImxlIHBvaW50IHRvbWJlLXQtaWxcbiMgZGFucyB0ZWwgcG9seWdvbmUgP1wiLiBQb3VyIGNoYXF1ZSBwb2ludCBvbiByZWN1cGVyZSBsZSBOQU1FXzEgZGUgbGFcbiMgcmVnaW9uIHF1aSBsZSBjb250aWVudCwgcHVpcyBvbiBjb21wdGUgbGVzIGV2ZW5lbWVudHMgZXQgb24gc29tbWUgbGVzXG4jIGRlY2VzIHBhciByZWdpb24uXG5yZXN1bWVfcGFyX3JlZ2lvbiA8LSBhY2xlZF9wdHMgfD5cbiAgc3Rfam9pbihjbXIxW2MoXCJOQU1FXzFcIildLCBqb2luID0gc3Rfd2l0aGluKSB8PlxuICBzdF9kcm9wX2dlb21ldHJ5KCkgfD5cbiAgZmlsdGVyKCFpcy5uYShOQU1FXzEpKSB8PiAgICAgIyBlY2FydGUgbGVzIHBvaW50cyBob3JzIENhbWVyb3VuIChmcm9udGllcmUpXG4gIGdyb3VwX2J5KE5BTUVfMSkgfD5cbiAgc3VtbWFyaXNlKFxuICAgIG5fZXZlbmVtZW50cyA9IG4oKSxcbiAgICBkZWNlcyAgICAgICAgPSBzdW0oZmF0YWxpdGllcywgbmEucm0gPSBUUlVFKSxcbiAgICAuZ3JvdXBzICAgICAgPSBcImRyb3BcIlxuICApXG5cbiMgbGVmdF9qb2luIHJlYXR0YWNoZSBsZXMgY29tcHRhZ2VzIGEgbGEgY291Y2hlIHBvbHlnb25hbGUgR0FETS5cbiMgcmVwbGFjZV9uYSA9IG9uIHJlbXBsaXQgYSAwIGxlcyByZWdpb25zIHNhbnMgZXZlbmVtZW50IChzaW5vbiBOQSBjYXJ0ZXMpLlxuY21yMV9hY2xlZCA8LSBjbXIxIHw+XG4gIGxlZnRfam9pbihyZXN1bWVfcGFyX3JlZ2lvbiwgYnkgPSBcIk5BTUVfMVwiKSB8PlxuICBtdXRhdGUoXG4gICAgbl9ldmVuZW1lbnRzID0gcmVwbGFjZV9uYShuX2V2ZW5lbWVudHMsIDBMKSxcbiAgICBkZWNlcyAgICAgICAgPSByZXBsYWNlX25hKGRlY2VzLCAwKVxuICApXG5cbmNtcjFfYWNsZWQgfD5cbiAgc3RfZHJvcF9nZW9tZXRyeSgpIHw+XG4gIGFycmFuZ2UoZGVzYyhuX2V2ZW5lbWVudHMpKSB8PlxuICBzZWxlY3QoTkFNRV8xLCBuX2V2ZW5lbWVudHMsIGRlY2VzKSJ9
+</script>
+</div>
+</div>
+</section>
+<section id="carte-choroplèthe-par-région" class="level2">
+<h2 class="anchored" data-anchor-id="carte-choroplèthe-par-région">9. Carte choroplèthe par région</h2>
+<div class="cell">
+<div>
+<div id="webr-10" class="exercise-cell">
+
+</div>
+<script type="webr-10-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBDSE9ST1BMRVRIRSA9IGNhcnRlIHBvbHlnb25hbGUgb3UgbGEgQ09VTEVVUiBkdSBwb2x5Z29uZSB0cmFkdWl0IHVuZVxuIyB2YWxldXIgcXVhbnRpdGF0aXZlIChpY2kgOiBub21icmUgZCdldmVuZW1lbnRzIHBhciByZWdpb24pLiBQYWxldHRlXG4jIFlsT3JSZCAoamF1bmUtb3JhbmdlLXJvdWdlKSA9IHNlcXVlbnRpZWxsZSBCcmV3ZXIsIGNvbnZlbnRpb25uZWxsZVxuIyBwb3VyIHJlcHJlc2VudGVyIHVuZSBJTlRFTlNJVEUgY3JvaXNzYW50ZSBkZSBjb25mbGl0cy5cbiMgRXRpcXVldHRlcyBBRE0xIGFqb3V0ZWVzIHBvdXIgaWRlbnRpZmllciBjaGFxdWUgcmVnaW9uIHNhbnMgY29uZnVzaW9uLlxuZ2dwbG90KGNtcjFfYWNsZWQpICtcbiAgZ2VvbV9zZihhZXMoZmlsbCA9IG5fZXZlbmVtZW50cyksIGNvbG91ciA9IFwid2hpdGVcIiwgbGluZXdpZHRoID0gMC40KSArXG4gIHNjYWxlX2ZpbGxfZGlzdGlsbGVyKHBhbGV0dGUgPSBcIllsT3JSZFwiLCBkaXJlY3Rpb24gPSAxLFxuICAgICAgICAgICAgICAgICAgICAgICBuYW1lID0gXCJOb21icmUgZCdldmVuZW1lbnRzIChuKVwiKSArXG4gIGdlb21fc2ZfbGFiZWwoYWVzKGxhYmVsID0gTkFNRV8xKSwgc2l6ZSA9IDIuMiwgY29sb3IgPSBcImdyZXkyMFwiLFxuICAgICAgICAgICAgICAgIGZvbnRmYWNlID0gXCJib2xkXCIsIGxhYmVsLnBhZGRpbmcgPSB1bml0KDAuMSwgXCJsaW5lc1wiKSkgK1xuICBsYWJzKHRpdGxlICAgID0gXCJDb25mbGl0cyBwYXIgcmVnaW9uIGFkbWluaXN0cmF0aXZlIC0gQ2FtZXJvdW5cIixcbiAgICAgICBzdWJ0aXRsZSA9IHBhc3RlMChcIkFDTEVEIFwiLCBmb3JtYXQobWluKGFjbGVkX2NsZWFuJGV2ZW50X2RhdGUpLCBcIiVZXCIpLFxuICAgICAgICAgICAgICAgICAgICAgICAgIFwiLVwiLCBmb3JtYXQobWF4KGFjbGVkX2NsZWFuJGV2ZW50X2RhdGUpLCBcIiVZXCIpLFxuICAgICAgICAgICAgICAgICAgICAgICAgIFwiIC0gYWdyZWdhdGlvbiBBRE0xIHBhciBqb2ludHVyZSBzcGF0aWFsZSBzdF93aXRoaW5cIiksXG4gICAgICAgY2FwdGlvbiAgPSBcIlNvdXJjZXMgOiBBQ0xFRCBQcm9qZWN0IChldmVuZW1lbnRzKSAtIEdBRE0gdjQuMSAocmVnaW9ucyBBRE0xKSAtIElGT1JEIHggR0RTRyAyMDI2XCIpICtcbiAgdGhlbWVfbWluaW1hbCgpICtcbiAgdGhlbWUoYXhpcy50ZXh0ID0gZWxlbWVudF9ibGFuaygpLCBheGlzLnRpY2tzID0gZWxlbWVudF9ibGFuaygpLFxuICAgICAgICBwYW5lbC5ncmlkID0gZWxlbWVudF9ibGFuaygpKSJ9
+</script>
+</div>
+</div>
+</section>
+<section id="carte-des-décès-par-région" class="level2">
+<h2 class="anchored" data-anchor-id="carte-des-décès-par-région">10. Carte des décès par région</h2>
+<div class="cell">
+<div>
+<div id="webr-11" class="exercise-cell">
+
+</div>
+<script type="webr-11-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBNZW1lIHByaW5jaXBlIHF1ZSBsYSBjYXJ0ZSBwcmVjZWRlbnRlLCBtYWlzIG9uIGNhcnRvZ3JhcGhpZSBpY2lcbiMgbCdpbnRlbnNpdGUgTEVUQUxFIChjdW11bCBkZXMgZGVjZXMpIGF1IGxpZXUgZHUgc2ltcGxlIGNvbXB0YWdlIGRlc1xuIyBldmVuZW1lbnRzLiBMYSBtZW1lIHBhbGV0dGUgWWxPclJkIHByZXNlcnZlIGxhIGNvaGVyZW5jZSB2aXN1ZWxsZS5cbmdncGxvdChjbXIxX2FjbGVkKSArXG4gIGdlb21fc2YoYWVzKGZpbGwgPSBkZWNlcyksIGNvbG91ciA9IFwid2hpdGVcIiwgbGluZXdpZHRoID0gMC40KSArXG4gIHNjYWxlX2ZpbGxfZGlzdGlsbGVyKHBhbGV0dGUgPSBcIllsT3JSZFwiLCBkaXJlY3Rpb24gPSAxLFxuICAgICAgICAgICAgICAgICAgICAgICBsYWJlbHMgPSBjb21tYSxcbiAgICAgICAgICAgICAgICAgICAgICAgbmFtZSA9IFwiTm9tYnJlIGRlIGRlY2VzIChuKVwiKSArXG4gIGdlb21fc2ZfbGFiZWwoYWVzKGxhYmVsID0gTkFNRV8xKSwgc2l6ZSA9IDIuMiwgY29sb3IgPSBcImdyZXkyMFwiLFxuICAgICAgICAgICAgICAgIGZvbnRmYWNlID0gXCJib2xkXCIsIGxhYmVsLnBhZGRpbmcgPSB1bml0KDAuMSwgXCJsaW5lc1wiKSkgK1xuICBsYWJzKHRpdGxlICAgID0gXCJEZWNlcyBsaWVzIGF1eCBjb25mbGl0cyBwYXIgcmVnaW9uIGFkbWluaXN0cmF0aXZlIC0gQ2FtZXJvdW5cIixcbiAgICAgICBzdWJ0aXRsZSA9IHBhc3RlMChcIkFDTEVEIFwiLCBmb3JtYXQobWluKGFjbGVkX2NsZWFuJGV2ZW50X2RhdGUpLCBcIiVZXCIpLFxuICAgICAgICAgICAgICAgICAgICAgICAgIFwiLVwiLCBmb3JtYXQobWF4KGFjbGVkX2NsZWFuJGV2ZW50X2RhdGUpLCBcIiVZXCIpLFxuICAgICAgICAgICAgICAgICAgICAgICAgIFwiIC0gc29tbWUgZGVzIGRlY2VzIGRlY2xhcmVzIHBhciByZWdpb24gQURNMVwiKSxcbiAgICAgICBjYXB0aW9uICA9IFwiU291cmNlcyA6IEFDTEVEIFByb2plY3QgKGRlY2VzIGRlY2xhcmVzKSAtIEdBRE0gdjQuMSAocmVnaW9ucyBBRE0xKSAtIElGT1JEIHggR0RTRyAyMDI2XCIpICtcbiAgdGhlbWVfbWluaW1hbCgpICtcbiAgdGhlbWUoYXhpcy50ZXh0ID0gZWxlbWVudF9ibGFuaygpLCBheGlzLnRpY2tzID0gZWxlbWVudF9ibGFuaygpLFxuICAgICAgICBwYW5lbC5ncmlkID0gZWxlbWVudF9ibGFuaygpKSJ9
+</script>
+</div>
+</div>
+</section>
+<section id="à-essayer" class="level2">
+<h2 class="anchored" data-anchor-id="à-essayer">11. À essayer</h2>
+<div class="iford-callout">
+<p>Modifie la requête <code>filter(annee &gt;= ...)</code> pour ne garder que les 3 dernières années. Refais le pipeline jusqu’à la carte. Quelle évolution observes-tu ? Une région prend-elle plus d’importance récemment ?</p>
+<p>Tu peux aussi filtrer sur un <code>event_type</code> spécifique (par exemple <code>filter(event_type == "Violence against civilians")</code>) pour cartographier uniquement ce sous-ensemble.</p>
+</div>
+</section>
+<section id="pour-aller-plus-loin" class="level2">
+<h2 class="anchored" data-anchor-id="pour-aller-plus-loin">12. Pour aller plus loin</h2>
+<p>La version desktop <code>demo.qmd</code> ajoute (à exécuter sous RStudio) :</p>
+<ul>
+<li><strong>Partie II ERA5</strong> : authentification CDS, requête API <code>ecmwfr</code>, lecture NetCDF, conversion Kelvin → Celsius, extraction multi-couches par région, série temporelle nationale + saisonnalité + carte d’anomalie. Nécessite un fichier <code>.nc</code> de quelques Mo et un token Copernicus personnel.</li>
+<li><strong>Cartes <code>tmap</code></strong> avec mode interactif (<code>view</code>) sur fond satellite Esri.</li>
+<li><strong>Export GPKG / GeoTIFF / PNG</strong> pour réutilisation et publication.</li>
+<li><strong>Bonus API ACLED</strong> : <code>acledR::acled_api()</code> pour télécharger 10 ans complets et croiser avec les données de Boko Haram / crise anglophone documentées.</li>
+</ul>
+<p>Le devoir individuel (12 questions Edith + Q-final 5 questions de synthèse pour décideur) est dans <code>exercice.qmd</code>.</p>
+<p><a href="../INDEX.html">← Retour à l’accueil</a></p>
+
+
+<!-- -->
+
+<script type="webr-data">
+eyJvcHRpb25zIjp7ImJhc2VVcmwiOiJodHRwczovL3dlYnIuci13YXNtLm9yZy92MC42LjAvIn0sInBhY2thZ2VzIjp7InBrZ3MiOlsiZXZhbHVhdGUiLCJrbml0ciIsImh0bWx0b29scyIsInNmIiwiZHBseXIiLCJnZ3Bsb3QyIiwicmVhZHIiLCJzY2FsZXMiLCJ0aWR5ciJdLCJyZXBvcyI6W119LCJyZW5kZXJfZGYiOiJkZWZhdWx0In0=
+</script>
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W3siY2VsbE5hbWUiOiJ3ZWJyLXdpZGdldC0xMSIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IntcbiAgLy8gV2FpdCBmb3Igb3V0cHV0IHRvIGJlIHdyaXR0ZW4gdG8gdGhlIERPTSwgdGhlbiB0cmlnZ2VyIHdpZGdldCByZW5kZXJpbmdcbiAgYXdhaXQgX3dlYnJfdmFsdWVfMTE7XG4gIGlmICh3aW5kb3cuSFRNTFdpZGdldHMpIHtcbiAgICB3aW5kb3cuSFRNTFdpZGdldHMuc3RhdGljUmVuZGVyKCk7XG4gIH1cbiAgaWYgKHdpbmRvdy5QYWdlZFRhYmxlRG9jKSB7XG4gICAgd2luZG93LlBhZ2VkVGFibGVEb2MuaW5pdEFsbCgpO1xuICB9XG59XG4ifSx7ImNlbGxOYW1lIjoid2Vici0xMSIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJzb3VyY2UiOiJ2aWV3b2YgX3dlYnJfZWRpdG9yXzExID0ge1xuICBjb25zdCB7IFdlYlJFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuICBjb25zdCBzY3JpcHRDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcIndlYnItMTEtY29udGVudHNcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBibG9jayA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKHNjcmlwdENvbnRlbnQpKTtcblxuICBjb25zdCBvcHRpb25zID0gT2JqZWN0LmFzc2lnbih7IGlkOiBgd2Vici0xMS1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBXZWJSRXhlcmNpc2VFZGl0b3Iod2ViUk9qcy53ZWJSUHJvbWlzZSwgYmxvY2suY29kZSwgb3B0aW9ucyk7XG5cbiAgcmV0dXJuIGVkaXRvci5jb250YWluZXI7XG59XG5fd2Vicl92YWx1ZV8xMSA9IHdlYlJPanMucHJvY2Vzcyhfd2Vicl9lZGl0b3JfMTEsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLXdpZGdldC0xMCIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IntcbiAgLy8gV2FpdCBmb3Igb3V0cHV0IHRvIGJlIHdyaXR0ZW4gdG8gdGhlIERPTSwgdGhlbiB0cmlnZ2VyIHdpZGdldCByZW5kZXJpbmdcbiAgYXdhaXQgX3dlYnJfdmFsdWVfMTA7XG4gIGlmICh3aW5kb3cuSFRNTFdpZGdldHMpIHtcbiAgICB3aW5kb3cuSFRNTFdpZGdldHMuc3RhdGljUmVuZGVyKCk7XG4gIH1cbiAgaWYgKHdpbmRvdy5QYWdlZFRhYmxlRG9jKSB7XG4gICAgd2luZG93LlBhZ2VkVGFibGVEb2MuaW5pdEFsbCgpO1xuICB9XG59XG4ifSx7ImNlbGxOYW1lIjoid2Vici0xMCIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJzb3VyY2UiOiJ2aWV3b2YgX3dlYnJfZWRpdG9yXzEwID0ge1xuICBjb25zdCB7IFdlYlJFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuICBjb25zdCBzY3JpcHRDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcIndlYnItMTAtY29udGVudHNcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBibG9jayA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKHNjcmlwdENvbnRlbnQpKTtcblxuICBjb25zdCBvcHRpb25zID0gT2JqZWN0LmFzc2lnbih7IGlkOiBgd2Vici0xMC1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBXZWJSRXhlcmNpc2VFZGl0b3Iod2ViUk9qcy53ZWJSUHJvbWlzZSwgYmxvY2suY29kZSwgb3B0aW9ucyk7XG5cbiAgcmV0dXJuIGVkaXRvci5jb250YWluZXI7XG59XG5fd2Vicl92YWx1ZV8xMCA9IHdlYlJPanMucHJvY2Vzcyhfd2Vicl9lZGl0b3JfMTAsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLXdpZGdldC05IiwiaW5saW5lIjpmYWxzZSwibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoie1xuICAvLyBXYWl0IGZvciBvdXRwdXQgdG8gYmUgd3JpdHRlbiB0byB0aGUgRE9NLCB0aGVuIHRyaWdnZXIgd2lkZ2V0IHJlbmRlcmluZ1xuICBhd2FpdCBfd2Vicl92YWx1ZV85O1xuICBpZiAod2luZG93LkhUTUxXaWRnZXRzKSB7XG4gICAgd2luZG93LkhUTUxXaWRnZXRzLnN0YXRpY1JlbmRlcigpO1xuICB9XG4gIGlmICh3aW5kb3cuUGFnZWRUYWJsZURvYykge1xuICAgIHdpbmRvdy5QYWdlZFRhYmxlRG9jLmluaXRBbGwoKTtcbiAgfVxufVxuIn0seyJjZWxsTmFtZSI6IndlYnItOSIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJzb3VyY2UiOiJ2aWV3b2YgX3dlYnJfZWRpdG9yXzkgPSB7XG4gIGNvbnN0IHsgV2ViUkV4ZXJjaXNlRWRpdG9yLCBiNjREZWNvZGUgfSA9IHdpbmRvdy5fZXhlcmNpc2Vfb2pzX3J1bnRpbWU7XG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwid2Vici05LWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHdlYnItOS1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBXZWJSRXhlcmNpc2VFZGl0b3Iod2ViUk9qcy53ZWJSUHJvbWlzZSwgYmxvY2suY29kZSwgb3B0aW9ucyk7XG5cbiAgcmV0dXJuIGVkaXRvci5jb250YWluZXI7XG59XG5fd2Vicl92YWx1ZV85ID0gd2ViUk9qcy5wcm9jZXNzKF93ZWJyX2VkaXRvcl85LCB7fSk7XG4ifSx7ImNlbGxOYW1lIjoid2Vici13aWRnZXQtOCIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IntcbiAgLy8gV2FpdCBmb3Igb3V0cHV0IHRvIGJlIHdyaXR0ZW4gdG8gdGhlIERPTSwgdGhlbiB0cmlnZ2VyIHdpZGdldCByZW5kZXJpbmdcbiAgYXdhaXQgX3dlYnJfdmFsdWVfODtcbiAgaWYgKHdpbmRvdy5IVE1MV2lkZ2V0cykge1xuICAgIHdpbmRvdy5IVE1MV2lkZ2V0cy5zdGF0aWNSZW5kZXIoKTtcbiAgfVxuICBpZiAod2luZG93LlBhZ2VkVGFibGVEb2MpIHtcbiAgICB3aW5kb3cuUGFnZWRUYWJsZURvYy5pbml0QWxsKCk7XG4gIH1cbn1cbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLTgiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF93ZWJyX2VkaXRvcl84ID0ge1xuICBjb25zdCB7IFdlYlJFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuICBjb25zdCBzY3JpcHRDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcIndlYnItOC1jb250ZW50c1xcXCJdYCkudGV4dENvbnRlbnQ7XG4gIGNvbnN0IGJsb2NrID0gSlNPTi5wYXJzZShiNjREZWNvZGUoc2NyaXB0Q29udGVudCkpO1xuXG4gIGNvbnN0IG9wdGlvbnMgPSBPYmplY3QuYXNzaWduKHsgaWQ6IGB3ZWJyLTgtY29udGVudHNgIH0sIGJsb2NrLmF0dHIpO1xuICBjb25zdCBlZGl0b3IgPSBuZXcgV2ViUkV4ZXJjaXNlRWRpdG9yKHdlYlJPanMud2ViUlByb21pc2UsIGJsb2NrLmNvZGUsIG9wdGlvbnMpO1xuXG4gIHJldHVybiBlZGl0b3IuY29udGFpbmVyO1xufVxuX3dlYnJfdmFsdWVfOCA9IHdlYlJPanMucHJvY2Vzcyhfd2Vicl9lZGl0b3JfOCwge30pO1xuIn0seyJjZWxsTmFtZSI6IndlYnItd2lkZ2V0LTciLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJ7XG4gIC8vIFdhaXQgZm9yIG91dHB1dCB0byBiZSB3cml0dGVuIHRvIHRoZSBET00sIHRoZW4gdHJpZ2dlciB3aWRnZXQgcmVuZGVyaW5nXG4gIGF3YWl0IF93ZWJyX3ZhbHVlXzc7XG4gIGlmICh3aW5kb3cuSFRNTFdpZGdldHMpIHtcbiAgICB3aW5kb3cuSFRNTFdpZGdldHMuc3RhdGljUmVuZGVyKCk7XG4gIH1cbiAgaWYgKHdpbmRvdy5QYWdlZFRhYmxlRG9jKSB7XG4gICAgd2luZG93LlBhZ2VkVGFibGVEb2MuaW5pdEFsbCgpO1xuICB9XG59XG4ifSx7ImNlbGxOYW1lIjoid2Vici03IiwiaW5saW5lIjpmYWxzZSwibWV0aG9kTmFtZSI6ImludGVycHJldCIsInNvdXJjZSI6InZpZXdvZiBfd2Vicl9lZGl0b3JfNyA9IHtcbiAgY29uc3QgeyBXZWJSRXhlcmNpc2VFZGl0b3IsIGI2NERlY29kZSB9ID0gd2luZG93Ll9leGVyY2lzZV9vanNfcnVudGltZTtcbiAgY29uc3Qgc2NyaXB0Q29udGVudCA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoYHNjcmlwdFt0eXBlPVxcXCJ3ZWJyLTctY29udGVudHNcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBibG9jayA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKHNjcmlwdENvbnRlbnQpKTtcblxuICBjb25zdCBvcHRpb25zID0gT2JqZWN0LmFzc2lnbih7IGlkOiBgd2Vici03LWNvbnRlbnRzYCB9LCBibG9jay5hdHRyKTtcbiAgY29uc3QgZWRpdG9yID0gbmV3IFdlYlJFeGVyY2lzZUVkaXRvcih3ZWJST2pzLndlYlJQcm9taXNlLCBibG9jay5jb2RlLCBvcHRpb25zKTtcblxuICByZXR1cm4gZWRpdG9yLmNvbnRhaW5lcjtcbn1cbl93ZWJyX3ZhbHVlXzcgPSB3ZWJST2pzLnByb2Nlc3MoX3dlYnJfZWRpdG9yXzcsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLXdpZGdldC02IiwiaW5saW5lIjpmYWxzZSwibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoie1xuICAvLyBXYWl0IGZvciBvdXRwdXQgdG8gYmUgd3JpdHRlbiB0byB0aGUgRE9NLCB0aGVuIHRyaWdnZXIgd2lkZ2V0IHJlbmRlcmluZ1xuICBhd2FpdCBfd2Vicl92YWx1ZV82O1xuICBpZiAod2luZG93LkhUTUxXaWRnZXRzKSB7XG4gICAgd2luZG93LkhUTUxXaWRnZXRzLnN0YXRpY1JlbmRlcigpO1xuICB9XG4gIGlmICh3aW5kb3cuUGFnZWRUYWJsZURvYykge1xuICAgIHdpbmRvdy5QYWdlZFRhYmxlRG9jLmluaXRBbGwoKTtcbiAgfVxufVxuIn0seyJjZWxsTmFtZSI6IndlYnItNiIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJzb3VyY2UiOiJ2aWV3b2YgX3dlYnJfZWRpdG9yXzYgPSB7XG4gIGNvbnN0IHsgV2ViUkV4ZXJjaXNlRWRpdG9yLCBiNjREZWNvZGUgfSA9IHdpbmRvdy5fZXhlcmNpc2Vfb2pzX3J1bnRpbWU7XG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwid2Vici02LWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHdlYnItNi1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBXZWJSRXhlcmNpc2VFZGl0b3Iod2ViUk9qcy53ZWJSUHJvbWlzZSwgYmxvY2suY29kZSwgb3B0aW9ucyk7XG5cbiAgcmV0dXJuIGVkaXRvci5jb250YWluZXI7XG59XG5fd2Vicl92YWx1ZV82ID0gd2ViUk9qcy5wcm9jZXNzKF93ZWJyX2VkaXRvcl82LCB7fSk7XG4ifSx7ImNlbGxOYW1lIjoid2Vici13aWRnZXQtNSIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IntcbiAgLy8gV2FpdCBmb3Igb3V0cHV0IHRvIGJlIHdyaXR0ZW4gdG8gdGhlIERPTSwgdGhlbiB0cmlnZ2VyIHdpZGdldCByZW5kZXJpbmdcbiAgYXdhaXQgX3dlYnJfdmFsdWVfNTtcbiAgaWYgKHdpbmRvdy5IVE1MV2lkZ2V0cykge1xuICAgIHdpbmRvdy5IVE1MV2lkZ2V0cy5zdGF0aWNSZW5kZXIoKTtcbiAgfVxuICBpZiAod2luZG93LlBhZ2VkVGFibGVEb2MpIHtcbiAgICB3aW5kb3cuUGFnZWRUYWJsZURvYy5pbml0QWxsKCk7XG4gIH1cbn1cbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLTUiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF93ZWJyX2VkaXRvcl81ID0ge1xuICBjb25zdCB7IFdlYlJFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuICBjb25zdCBzY3JpcHRDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcIndlYnItNS1jb250ZW50c1xcXCJdYCkudGV4dENvbnRlbnQ7XG4gIGNvbnN0IGJsb2NrID0gSlNPTi5wYXJzZShiNjREZWNvZGUoc2NyaXB0Q29udGVudCkpO1xuXG4gIGNvbnN0IG9wdGlvbnMgPSBPYmplY3QuYXNzaWduKHsgaWQ6IGB3ZWJyLTUtY29udGVudHNgIH0sIGJsb2NrLmF0dHIpO1xuICBjb25zdCBlZGl0b3IgPSBuZXcgV2ViUkV4ZXJjaXNlRWRpdG9yKHdlYlJPanMud2ViUlByb21pc2UsIGJsb2NrLmNvZGUsIG9wdGlvbnMpO1xuXG4gIHJldHVybiBlZGl0b3IuY29udGFpbmVyO1xufVxuX3dlYnJfdmFsdWVfNSA9IHdlYlJPanMucHJvY2Vzcyhfd2Vicl9lZGl0b3JfNSwge30pO1xuIn0seyJjZWxsTmFtZSI6IndlYnItd2lkZ2V0LTQiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJ7XG4gIC8vIFdhaXQgZm9yIG91dHB1dCB0byBiZSB3cml0dGVuIHRvIHRoZSBET00sIHRoZW4gdHJpZ2dlciB3aWRnZXQgcmVuZGVyaW5nXG4gIGF3YWl0IF93ZWJyX3ZhbHVlXzQ7XG4gIGlmICh3aW5kb3cuSFRNTFdpZGdldHMpIHtcbiAgICB3aW5kb3cuSFRNTFdpZGdldHMuc3RhdGljUmVuZGVyKCk7XG4gIH1cbiAgaWYgKHdpbmRvdy5QYWdlZFRhYmxlRG9jKSB7XG4gICAgd2luZG93LlBhZ2VkVGFibGVEb2MuaW5pdEFsbCgpO1xuICB9XG59XG4ifSx7ImNlbGxOYW1lIjoid2Vici00IiwiaW5saW5lIjpmYWxzZSwibWV0aG9kTmFtZSI6ImludGVycHJldCIsInNvdXJjZSI6InZpZXdvZiBfd2Vicl9lZGl0b3JfNCA9IHtcbiAgY29uc3QgeyBXZWJSRXhlcmNpc2VFZGl0b3IsIGI2NERlY29kZSB9ID0gd2luZG93Ll9leGVyY2lzZV9vanNfcnVudGltZTtcbiAgY29uc3Qgc2NyaXB0Q29udGVudCA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoYHNjcmlwdFt0eXBlPVxcXCJ3ZWJyLTQtY29udGVudHNcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBibG9jayA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKHNjcmlwdENvbnRlbnQpKTtcblxuICBjb25zdCBvcHRpb25zID0gT2JqZWN0LmFzc2lnbih7IGlkOiBgd2Vici00LWNvbnRlbnRzYCB9LCBibG9jay5hdHRyKTtcbiAgY29uc3QgZWRpdG9yID0gbmV3IFdlYlJFeGVyY2lzZUVkaXRvcih3ZWJST2pzLndlYlJQcm9taXNlLCBibG9jay5jb2RlLCBvcHRpb25zKTtcblxuICByZXR1cm4gZWRpdG9yLmNvbnRhaW5lcjtcbn1cbl93ZWJyX3ZhbHVlXzQgPSB3ZWJST2pzLnByb2Nlc3MoX3dlYnJfZWRpdG9yXzQsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLXdpZGdldC0zIiwiaW5saW5lIjpmYWxzZSwibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoie1xuICAvLyBXYWl0IGZvciBvdXRwdXQgdG8gYmUgd3JpdHRlbiB0byB0aGUgRE9NLCB0aGVuIHRyaWdnZXIgd2lkZ2V0IHJlbmRlcmluZ1xuICBhd2FpdCBfd2Vicl92YWx1ZV8zO1xuICBpZiAod2luZG93LkhUTUxXaWRnZXRzKSB7XG4gICAgd2luZG93LkhUTUxXaWRnZXRzLnN0YXRpY1JlbmRlcigpO1xuICB9XG4gIGlmICh3aW5kb3cuUGFnZWRUYWJsZURvYykge1xuICAgIHdpbmRvdy5QYWdlZFRhYmxlRG9jLmluaXRBbGwoKTtcbiAgfVxufVxuIn0seyJjZWxsTmFtZSI6IndlYnItMyIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJzb3VyY2UiOiJ2aWV3b2YgX3dlYnJfZWRpdG9yXzMgPSB7XG4gIGNvbnN0IHsgV2ViUkV4ZXJjaXNlRWRpdG9yLCBiNjREZWNvZGUgfSA9IHdpbmRvdy5fZXhlcmNpc2Vfb2pzX3J1bnRpbWU7XG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwid2Vici0zLWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHdlYnItMy1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBXZWJSRXhlcmNpc2VFZGl0b3Iod2ViUk9qcy53ZWJSUHJvbWlzZSwgYmxvY2suY29kZSwgb3B0aW9ucyk7XG5cbiAgcmV0dXJuIGVkaXRvci5jb250YWluZXI7XG59XG5fd2Vicl92YWx1ZV8zID0gd2ViUk9qcy5wcm9jZXNzKF93ZWJyX2VkaXRvcl8zLCB7fSk7XG4ifSx7ImNlbGxOYW1lIjoid2Vici13aWRnZXQtMiIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IntcbiAgLy8gV2FpdCBmb3Igb3V0cHV0IHRvIGJlIHdyaXR0ZW4gdG8gdGhlIERPTSwgdGhlbiB0cmlnZ2VyIHdpZGdldCByZW5kZXJpbmdcbiAgYXdhaXQgX3dlYnJfdmFsdWVfMjtcbiAgaWYgKHdpbmRvdy5IVE1MV2lkZ2V0cykge1xuICAgIHdpbmRvdy5IVE1MV2lkZ2V0cy5zdGF0aWNSZW5kZXIoKTtcbiAgfVxuICBpZiAod2luZG93LlBhZ2VkVGFibGVEb2MpIHtcbiAgICB3aW5kb3cuUGFnZWRUYWJsZURvYy5pbml0QWxsKCk7XG4gIH1cbn1cbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLTIiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF93ZWJyX2VkaXRvcl8yID0ge1xuICBjb25zdCB7IFdlYlJFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuICBjb25zdCBzY3JpcHRDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcIndlYnItMi1jb250ZW50c1xcXCJdYCkudGV4dENvbnRlbnQ7XG4gIGNvbnN0IGJsb2NrID0gSlNPTi5wYXJzZShiNjREZWNvZGUoc2NyaXB0Q29udGVudCkpO1xuXG4gIGNvbnN0IG9wdGlvbnMgPSBPYmplY3QuYXNzaWduKHsgaWQ6IGB3ZWJyLTItY29udGVudHNgIH0sIGJsb2NrLmF0dHIpO1xuICBjb25zdCBlZGl0b3IgPSBuZXcgV2ViUkV4ZXJjaXNlRWRpdG9yKHdlYlJPanMud2ViUlByb21pc2UsIGJsb2NrLmNvZGUsIG9wdGlvbnMpO1xuXG4gIHJldHVybiBlZGl0b3IuY29udGFpbmVyO1xufVxuX3dlYnJfdmFsdWVfMiA9IHdlYlJPanMucHJvY2Vzcyhfd2Vicl9lZGl0b3JfMiwge30pO1xuIn0seyJjZWxsTmFtZSI6IndlYnItd2lkZ2V0LTEiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJ7XG4gIC8vIFdhaXQgZm9yIG91dHB1dCB0byBiZSB3cml0dGVuIHRvIHRoZSBET00sIHRoZW4gdHJpZ2dlciB3aWRnZXQgcmVuZGVyaW5nXG4gIGF3YWl0IF93ZWJyX3ZhbHVlXzE7XG4gIGlmICh3aW5kb3cuSFRNTFdpZGdldHMpIHtcbiAgICB3aW5kb3cuSFRNTFdpZGdldHMuc3RhdGljUmVuZGVyKCk7XG4gIH1cbiAgaWYgKHdpbmRvdy5QYWdlZFRhYmxlRG9jKSB7XG4gICAgd2luZG93LlBhZ2VkVGFibGVEb2MuaW5pdEFsbCgpO1xuICB9XG59XG4ifSx7ImNlbGxOYW1lIjoid2Vici0xIiwiaW5saW5lIjpmYWxzZSwibWV0aG9kTmFtZSI6ImludGVycHJldCIsInNvdXJjZSI6InZpZXdvZiBfd2Vicl9lZGl0b3JfMSA9IHtcbiAgY29uc3QgeyBXZWJSRXhlcmNpc2VFZGl0b3IsIGI2NERlY29kZSB9ID0gd2luZG93Ll9leGVyY2lzZV9vanNfcnVudGltZTtcbiAgY29uc3Qgc2NyaXB0Q29udGVudCA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoYHNjcmlwdFt0eXBlPVxcXCJ3ZWJyLTEtY29udGVudHNcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBibG9jayA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKHNjcmlwdENvbnRlbnQpKTtcblxuICBjb25zdCBvcHRpb25zID0gT2JqZWN0LmFzc2lnbih7IGlkOiBgd2Vici0xLWNvbnRlbnRzYCB9LCBibG9jay5hdHRyKTtcbiAgY29uc3QgZWRpdG9yID0gbmV3IFdlYlJFeGVyY2lzZUVkaXRvcih3ZWJST2pzLndlYlJQcm9taXNlLCBibG9jay5jb2RlLCBvcHRpb25zKTtcblxuICByZXR1cm4gZWRpdG9yLmNvbnRhaW5lcjtcbn1cbl93ZWJyX3ZhbHVlXzEgPSB3ZWJST2pzLnByb2Nlc3MoX3dlYnJfZWRpdG9yXzEsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLXByZWx1ZGUiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJ3ZWJST2pzID0ge1xuICBjb25zdCB7IFdlYlIsIENoYW5uZWxUeXBlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lLldlYlI7XG4gIGNvbnN0IHtcbiAgICBXZWJSRXZhbHVhdG9yLFxuICAgIFdlYlJFbnZpcm9ubWVudE1hbmFnZXIsXG4gICAgc2V0dXBSLFxuICAgIGI2NERlY29kZSxcbiAgICBjb2xsYXBzZVBhdGhcbiAgfSA9IHdpbmRvdy5fZXhlcmNpc2Vfb2pzX3J1bnRpbWU7XG5cbiAgY29uc3Qgc3RhdHVzQ29udGFpbmVyID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoXCJleGVyY2lzZS1sb2FkaW5nLXN0YXR1c1wiKTtcbiAgY29uc3QgaW5kaWNhdG9yQ29udGFpbmVyID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoXCJleGVyY2lzZS1sb2FkaW5nLWluZGljYXRvclwiKTtcbiAgaW5kaWNhdG9yQ29udGFpbmVyLmNsYXNzTGlzdC5yZW1vdmUoXCJkLW5vbmVcIik7XG5cbiAgbGV0IHN0YXR1c1RleHQgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KFwiZGl2XCIpXG4gIHN0YXR1c1RleHQuY2xhc3NMaXN0ID0gXCJleGVyY2lzZS1sb2FkaW5nLWRldGFpbHNcIjtcbiAgc3RhdHVzVGV4dCA9IHN0YXR1c0NvbnRhaW5lci5hcHBlbmRDaGlsZChzdGF0dXNUZXh0KTtcbiAgc3RhdHVzVGV4dC50ZXh0Q29udGVudCA9IGBJbml0aWFsaXNlYDtcblxuICAvLyBIb2lzdCBpbmRpY2F0b3Igb3V0IGZyb20gZmluYWwgc2xpZGUgd2hlbiBydW5uaW5nIHVuZGVyIHJldmVhbFxuICBjb25zdCByZXZlYWxTdGF0dXMgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKFwiLnJldmVhbCAuZXhlcmNpc2UtbG9hZGluZy1pbmRpY2F0b3JcIik7XG4gIGlmIChyZXZlYWxTdGF0dXMpIHtcbiAgICByZXZlYWxTdGF0dXMucmVtb3ZlKCk7XG4gICAgZG9jdW1lbnQucXVlcnlTZWxlY3RvcihcIi5yZXZlYWwgPiAuc2xpZGVzXCIpLmFwcGVuZENoaWxkKHJldmVhbFN0YXR1cyk7XG4gIH1cblxuICAvLyBNYWtlIGFueSByZXZlYWwgc2xpZGVzIHdpdGggbGl2ZSBjZWxscyBzY3JvbGxhYmxlXG4gIGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3JBbGwoXCIucmV2ZWFsIC5leGVyY2lzZS1jZWxsXCIpLmZvckVhY2goKGVsKSA9PiB7XG4gICAgZWwuY2xvc2VzdCgnc2VjdGlvbi5zbGlkZScpLmNsYXNzTGlzdC5hZGQoXCJzY3JvbGxhYmxlXCIpO1xuICB9KVxuXG4gIC8vIHdlYlIgc3VwcGxlbWVudGFsIGRhdGEgYW5kIG9wdGlvbnNcbiAgY29uc3QgZGF0YUNvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwid2Vici1kYXRhXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgZGF0YSA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKGRhdGFDb250ZW50KSk7XG5cbiAgLy8gR3JhYiBsaXN0IG9mIHJlc291cmNlcyB0byBiZSBkb3dubG9hZGVkXG4gIGNvbnN0IGZpbGVzQ29udGVudCA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoYHNjcmlwdFt0eXBlPVxcXCJ2ZnMtZmlsZVxcXCJdYCkudGV4dENvbnRlbnQ7XG4gIGNvbnN0IGZpbGVzID0gSlNPTi5wYXJzZShiNjREZWNvZGUoZmlsZXNDb250ZW50KSk7XG5cbiAgLy8gSW5pdGlhbGlzZSB3ZWJSIGFuZCBzZXR1cCBmb3IgUiBjb2RlIGV2YWx1YXRpb25cbiAgbGV0IHdlYlJQcm9taXNlID0gKGFzeW5jICh3ZWJSKSA9PiB7XG4gICAgc3RhdHVzVGV4dC50ZXh0Q29udGVudCA9IGBEb3dubG9hZGluZyB3ZWJSYDtcbiAgICBhd2FpdCB3ZWJSLmluaXQoKTtcblxuICAgIC8vIEluc3RhbGwgcHJvdmlkZWQgbGlzdCBvZiBwYWNrYWdlc1xuICAgIC8vIEVuc3VyZSB3ZWJSIGRlZmF1bHQgcmVwbyBpcyBpbmNsdWRlZFxuICAgIGRhdGEucGFja2FnZXMucmVwb3MucHVzaChcImh0dHBzOi8vcmVwby5yLXdhc20ub3JnXCIpXG4gICAgYXdhaXQgZGF0YS5wYWNrYWdlcy5wa2dzLm1hcCgocGtnKSA9PiAoKSA9PiB7XG4gICAgICBzdGF0dXNUZXh0LnRleHRDb250ZW50ID0gYERvd25sb2FkaW5nIHBhY2thZ2U6ICR7cGtnfWA7XG4gICAgICByZXR1cm4gd2ViUi5ldmFsUlZvaWQoYFxuICAgICAgICB3ZWJyOjppbnN0YWxsKHBrZywgcmVwb3MgPSByZXBvcylcbiAgICAgICAgbGlicmFyeShwa2csIGNoYXJhY3Rlci5vbmx5ID0gVFJVRSlcbiAgICAgIGAsIHsgZW52OiB7XG4gICAgICAgIHBrZzogcGtnLFxuICAgICAgICByZXBvczogZGF0YS5wYWNrYWdlcy5yZXBvcyxcbiAgICAgIH19KTtcbiAgICB9KS5yZWR1Y2UoKGN1ciwgbmV4dCkgPT4gY3VyLnRoZW4obmV4dCksIFByb21pc2UucmVzb2x2ZSgpKTtcblxuICAgIC8vIERvd25sb2FkIGFuZCBpbnN0YWxsIHJlc291cmNlc1xuICAgIGF3YWl0IGZpbGVzLm1hcCgoZmlsZSkgPT4gYXN5bmMgKCkgPT4ge1xuICAgICAgY29uc3QgbmFtZSA9IGZpbGUuc3Vic3RyaW5nKGZpbGUubGFzdEluZGV4T2YoJy8nKSArIDEpO1xuICAgICAgc3RhdHVzVGV4dC50ZXh0Q29udGVudCA9IGBEb3dubG9hZGluZyByZXNvdXJjZTogJHtuYW1lfWA7XG4gICAgICBjb25zdCByZXNwb25zZSA9IGF3YWl0IGZldGNoKGZpbGUpO1xuICAgICAgaWYgKCFyZXNwb25zZS5vaykge1xuICAgICAgICB0aHJvdyBuZXcgRXJyb3IoYENhbid0IGRvd25sb2FkIFxcYCR7ZmlsZX1cXGAuIEVycm9yICR7cmVzcG9uc2Uuc3RhdHVzfTogXCIke3Jlc3BvbnNlLnN0YXR1c1RleHR9XCIuYCk7XG4gICAgICB9XG4gICAgICBjb25zdCBkYXRhID0gYXdhaXQgcmVzcG9uc2UuYXJyYXlCdWZmZXIoKTtcblxuICAgICAgLy8gU3RvcmUgVVJMcyBpbiB0aGUgY3dkIHdpdGhvdXQgYW55IHN1YmRpcmVjdG9yeSBzdHJ1Y3R1cmVcbiAgICAgIGlmIChmaWxlLmluY2x1ZGVzKFwiOi8vXCIpKSB7XG4gICAgICAgIGZpbGUgPSBuYW1lO1xuICAgICAgfVxuXG4gICAgICAvLyBDb2xsYXBzZSBoaWdoZXIgZGlyZWN0b3J5IHN0cnVjdHVyZVxuICAgICAgZmlsZSA9IGNvbGxhcHNlUGF0aChmaWxlKTtcblxuICAgICAgLy8gQ3JlYXRlIGRpcmVjdG9yeSB0cmVlLCBpZ25vcmluZyBcImRpcmVjdG9yeSBleGlzdHNcIiBWRlMgZXJyb3JzXG4gICAgICBjb25zdCBwYXJ0cyA9IGZpbGUuc3BsaXQoJy8nKS5zbGljZSgwLCAtMSk7XG4gICAgICBsZXQgcGF0aCA9ICcnO1xuICAgICAgd2hpbGUgKHBhcnRzLmxlbmd0aCA+IDApIHtcbiAgICAgICAgcGF0aCArPSBwYXJ0cy5zaGlmdCgpICsgJy8nO1xuICAgICAgICBjb25zdCBhbmFseXNpcyA9IGF3YWl0IHdlYlIuRlMuYW5hbHl6ZVBhdGgocGF0aCk7XG4gICAgICAgIGlmICghYW5hbHlzaXMuZXhpc3RzKSB7XG4gICAgICAgICAgdHJ5IHtcbiAgICAgICAgICAgIGF3YWl0IHdlYlIuRlMubWtkaXIocGF0aCk7XG4gICAgICAgICAgfSBjYXRjaCAoZSkge1xuICAgICAgICAgICAgdGhyb3cgbmV3IEVycm9yKGBGaWxlc3lzdGVtIEVycm9yOiBcIiR7ZS5tZXNzYWdlfVwiLmApO1xuICAgICAgICAgIH1cbiAgICAgICAgfVxuICAgICAgfVxuXG4gICAgICAvLyBXcml0ZSB0aGlzIGZpbGUgdG8gdGhlIFZGU1xuICAgICAgcmV0dXJuIGF3YWl0IHdlYlIuRlMud3JpdGVGaWxlKGZpbGUsIG5ldyBVaW50OEFycmF5KGRhdGEpKTtcbiAgICB9KS5yZWR1Y2UoKGN1ciwgbmV4dCkgPT4gY3VyLnRoZW4obmV4dCksIFByb21pc2UucmVzb2x2ZSgpKTtcblxuICAgIHN0YXR1c1RleHQudGV4dENvbnRlbnQgPSBgSW5zdGFsbGluZyB3ZWJSIHNoaW1zYDtcbiAgICBhd2FpdCB3ZWJSLmV2YWxSVm9pZChgd2Vicjo6c2hpbV9pbnN0YWxsKClgKTtcblxuICAgIHN0YXR1c1RleHQudGV4dENvbnRlbnQgPSBgV2ViUiBlbnZpcm9ubWVudCBzZXR1cGA7XG4gICAgYXdhaXQgc2V0dXBSKHdlYlIsIGRhdGEpO1xuXG4gICAgc3RhdHVzVGV4dC5yZW1vdmUoKTtcbiAgICBpZiAoc3RhdHVzQ29udGFpbmVyLmNoaWxkcmVuLmxlbmd0aCA9PSAwKSB7XG4gICAgICBzdGF0dXNDb250YWluZXIucGFyZW50Tm9kZS5yZW1vdmUoKTtcbiAgICB9XG4gICAgcmV0dXJuIHdlYlI7XG4gIH0pKG5ldyBXZWJSKGRhdGEub3B0aW9ucykpO1xuXG4gIC8vIEtlZXAgdHJhY2sgb2YgaW5pdGlhbCBPSlMgYmxvY2sgcmVuZGVyXG4gIGNvbnN0IHJlbmRlcmVkT2pzID0ge307XG5cbiAgY29uc3QgcHJvY2VzcyA9IGFzeW5jIChjb250ZXh0LCBpbnB1dHMpID0+IHtcbiAgICBjb25zdCB3ZWJSID0gYXdhaXQgd2ViUlByb21pc2U7XG4gICAgY29uc3QgZXZhbHVhdG9yID0gbmV3IFdlYlJFdmFsdWF0b3Iod2ViUiwgY29udGV4dClcbiAgICBhd2FpdCBldmFsdWF0b3IucHJvY2VzcyhpbnB1dHMpO1xuICAgIHJldHVybiBldmFsdWF0b3IuY29udGFpbmVyO1xuICB9XG5cbiAgcmV0dXJuIHtcbiAgICBwcm9jZXNzLFxuICAgIHdlYlJQcm9taXNlLFxuICAgIHJlbmRlcmVkT2pzLFxuICB9O1xufVxuIn1dfQ==
+</script>
+<div id="exercise-loading-indicator" class="exercise-loading-indicator d-none d-flex align-items-center gap-2">
+<div id="exercise-loading-status" class="d-flex gap-2">
+
+</div>
+<div class="spinner-grow spinner-grow-sm">
+
+</div>
+</div>
+<script type="vfs-file">
+WyIuLi9fY29tbW9ucy9kYXRhL2pvdXJfMDlfZXh0cmFpdHMvQUNMRURfRGF0YS5jc3YiLCIuLi9fY29tbW9ucy9kYXRhL2pvdXJfMDdfZXh0cmFpdHMvZ2FkbTQxX0NNUl9hZG0xLmdlb2pzb24iXQ==
+</script>
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W119
+</script>
+<div id="exercise-loading-indicator" class="exercise-loading-indicator d-none d-flex align-items-center gap-2">
+<div id="exercise-loading-status" class="d-flex gap-2">
+
+</div>
+<div class="spinner-grow spinner-grow-sm">
+
+</div>
+</div>
+<script type="vfs-file">
+W10=
+</script>
+</section>
+
+</main> <!-- /main -->
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W119
+</script>
+<script type="module">
+if (window.location.protocol === "file:") { alert("The OJS runtime does not work with file:// URLs. Please use a web server to view this document."); }
+window._ojs.paths.runtimeToDoc = "../../J09_applications_spatiales_sciences_sociales";
+window._ojs.paths.runtimeToRoot = "../..";
+window._ojs.paths.docToRoot = "..";
+window._ojs.selfContained = false;
+window._ojs.runtime.interpretFromScriptTags();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "J9 — Applications spatiales et sciences sociales"</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> "Code R exécutable dans le navigateur — Partie I ACLED"</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">engine:</span><span class="co"> knitr</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">webr:</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">  packages:</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">    - sf</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">    - dplyr</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co">    - ggplot2</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co">    - readr</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co">    - scales</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co">    - tidyr</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co">  resources:</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co">    - ../_commons/data/jour_09_extraits/ACLED_Data.csv</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co">    - ../_commons/data/jour_07_extraits/gadm41_CMR_adm1.geojson</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>::: {.iford-callout}</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>**Mode d'emploi.** Cliquez **Run code** dans chaque cellule. WebR charge <span class="in">`sf`</span> et <span class="in">`dplyr`</span> au premier appel (~25 s la première fois). Tout tourne dans votre navigateur — aucune installation locale.</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>**Limitation technique** : ce runtime ne couvre que la **Partie I — ACLED** (conflits armés). La **Partie II — ERA5** (température, package <span class="in">`ecmwfr`</span> + NetCDF) nécessite un fichier <span class="in">`.nc`</span> de plusieurs Mo + token Copernicus + le package <span class="in">`ncdf4`</span> non portable sur WebR. Voir <span class="in">`demo.qmd`</span> desktop pour l'expérience ERA5 complète.</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>**Données 100 % réelles** : export ACLED Explorer pour le Cameroun (déposé par Edith Darin dans le Drive <span class="in">`workshop_material/jour_09_*`</span>). Aucune simulation.</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>**Conception pédagogique** : Edith Darin (GDSG/IFORD). **Intégration runtime** : Ramesesse Dzita.</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="fu">## 1. Charger le CSV ACLED + GADM ADM1</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="in">#| autorun: true</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="in"># 4 packages pour ce TD : sf (vecteurs = points / polygones / lignes),</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="in"># dplyr (manipulation de tableaux : filter, mutate, group_by, summarise),</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="in"># ggplot2 (graphiques et cartes statiques via geom_sf),</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="in"># readr (lecture CSV plus rapide et plus stricte que read.csv de base R).</span></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="in">library(sf)</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a><span class="in">library(dplyr)</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a><span class="in">library(ggplot2)</span></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a><span class="in">library(readr)</span></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="in"># ACLED = Armed Conflict Location &amp; Event Data Project. Base mondiale de</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="in"># reference (academique + humanitaire) pour les evenements de conflit</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a><span class="in"># arme. Chaque ligne = 1 evenement GEOCODE = pourvu d'une paire (latitude,</span></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a><span class="in"># longitude) en degres decimaux. Mise a jour hebdomadaire, gratuite apres</span></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a><span class="in"># inscription sur acleddata.com. Variables cles : event_date (date),</span></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a><span class="in"># event_type (categorie de violence), actor1/actor2, fatalities (deces),</span></span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a><span class="in"># admin1/admin2 (region/departement).</span></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a><span class="in">#</span></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a><span class="in"># GADM = Global ADMinistrative areas, base mondiale des decoupages</span></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a><span class="in"># administratifs. ADM0 = pays, ADM1 = regions (10 pour le Cameroun),</span></span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a><span class="in"># ADM2 = departements. On charge ici uniquement l'ADM1 pour cartographier</span></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a><span class="in"># les conflits a l'echelle regionale.</span></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a><span class="in">acled_brut &lt;- read_csv("_commons/data/jour_09_extraits/ACLED_Data.csv",</span></span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a><span class="in">                       show_col_types = FALSE)</span></span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a><span class="in">cmr1       &lt;- read_sf("_commons/data/jour_07_extraits/gadm41_CMR_adm1.geojson")</span></span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a><span class="in"># Premier diagnostic : combien d'evenements dans le CSV ACLED, et combien</span></span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a><span class="in"># de regions ADM1 dans GADM (attendu : 10 pour le Cameroun).</span></span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a><span class="in">c(evenements = nrow(acled_brut), regions = nrow(cmr1))</span></span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a><span class="in"># glimpse = vue verticale compacte du tableau : 1 ligne par colonne, avec</span></span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a><span class="in"># son type R (chr, dbl, date) et les premieres valeurs. Indispensable</span></span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a><span class="in"># AVANT toute analyse pour reperer les colonnes mal typees.</span></span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a><span class="in">glimpse(acled_brut)</span></span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a><span class="fu">## 2. Nettoyage et conversion (Exercice 2)</span></span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a><span class="in"># ACLED publie son CSV avec toutes les colonnes en TEXTE (meme les dates</span></span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a><span class="in"># et les nombres). On convertit explicitement chaque colonne dans son</span></span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a><span class="in"># vrai type R avant calcul. Le champ "mois" cree avec format("%Y-%m")</span></span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a><span class="in"># servira de cle d'AGREGATION TEMPORELLE mensuelle (ex : "2025-03" = mars</span></span>
+<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a><span class="in"># 2025), pour regrouper tous les evenements d'un meme mois en une ligne.</span></span>
+<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a><span class="in"># Filtre final : on retire les lignes sans coordonnees (impossibles a</span></span>
+<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a><span class="in"># placer sur une carte).</span></span>
+<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a><span class="in">acled_clean &lt;- acled_brut |&gt;</span></span>
+<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a><span class="in">  mutate(</span></span>
+<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a><span class="in">    event_date = as.Date(event_date),</span></span>
+<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a><span class="in">    annee      = as.integer(year),</span></span>
+<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a><span class="in">    mois       = format(event_date, "%Y-%m"),   # cle d'agregation mensuelle</span></span>
+<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a><span class="in">    fatalities = as.numeric(fatalities),</span></span>
+<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a><span class="in">    longitude  = as.numeric(longitude),</span></span>
+<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a><span class="in">    latitude   = as.numeric(latitude)</span></span>
+<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a><span class="in">  ) |&gt;</span></span>
+<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a><span class="in">  filter(!is.na(longitude), !is.na(latitude))</span></span>
+<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a><span class="in"># Verification : combien d'evenements valides et quelle periode couverte ?</span></span>
+<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a><span class="in">cat("Evenements valides :", nrow(acled_clean), "\n")</span></span>
+<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a><span class="in">cat("Periode :", format(min(acled_clean$event_date), "%Y-%m-%d"), "\n         ",</span></span>
+<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a><span class="in">    format(max(acled_clean$event_date), "%Y-%m-%d"), "\n")</span></span>
+<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a><span class="fu">## 3. Exploration : types et régions (Exercice 3)</span></span>
+<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a><span class="in"># event_type = typologie ACLED standardisee a 6 categories :</span></span>
+<span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a><span class="in">#   - Battles                        : affrontements armes entre groupes</span></span>
+<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a><span class="in">#   - Violence against civilians     : exactions contre des civils</span></span>
+<span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a><span class="in">#   - Riots                          : emeutes violentes (rues)</span></span>
+<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a><span class="in">#   - Protests                       : manifestations pacifiques</span></span>
+<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a><span class="in">#   - Strategic developments         : declarations, mouvements de troupes</span></span>
+<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a><span class="in">#   - Explosions / Remote violence   : bombes, drones, artillerie</span></span>
+<span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a><span class="in"># count(sort = TRUE) = raccourci dplyr equivalent a</span></span>
+<span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a><span class="in"># group_by(event_type) |&gt; tally() |&gt; arrange(desc(n)).</span></span>
+<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a><span class="in">acled_clean |&gt;</span></span>
+<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a><span class="in">  count(event_type, sort = TRUE, name = "n_evenements")</span></span>
+<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a><span class="in"># admin1 = niveau region dans la nomenclature ACLED (aligne sur l'ADM1</span></span>
+<span id="cb1-119"><a href="#cb1-119" aria-hidden="true" tabindex="-1"></a><span class="in"># GADM pour le Cameroun : Extreme-Nord, Nord-Ouest, Sud-Ouest, etc.).</span></span>
+<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a><span class="in"># Classement des regions par intensite des conflits enregistres :</span></span>
+<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a><span class="in"># permet d'identifier rapidement les zones de concentration.</span></span>
+<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a><span class="in">acled_clean |&gt;</span></span>
+<span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a><span class="in">  count(admin1, sort = TRUE, name = "n_evenements")</span></span>
+<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a><span class="fu">## 4. Évolution annuelle par type (Exercice 4a)</span></span>
+<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a><span class="in">library(scales)</span></span>
+<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a><span class="in"># AGREGATION TEMPORELLE = operation cle des sciences sociales : on</span></span>
+<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a><span class="in"># resume les evenements ponctuels (1 ligne = 1 evenement, date precise)</span></span>
+<span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a><span class="in"># en serie agregee (1 ligne = 1 periode + 1 type avec son comptage).</span></span>
+<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a><span class="in"># Ici grain ANNUEL + ventilation par event_type : 1 ligne par couple</span></span>
+<span id="cb1-137"><a href="#cb1-137" aria-hidden="true" tabindex="-1"></a><span class="in"># (annee, event_type) avec le nombre d'evenements correspondants.</span></span>
+<span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a><span class="in">resume_annuel &lt;- acled_clean |&gt;</span></span>
+<span id="cb1-139"><a href="#cb1-139" aria-hidden="true" tabindex="-1"></a><span class="in">  count(annee, event_type, name = "n_evenements")</span></span>
+<span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-141"><a href="#cb1-141" aria-hidden="true" tabindex="-1"></a><span class="in"># Histogramme empile : la hauteur totale = tous les types confondus,</span></span>
+<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a><span class="in"># les couleurs permettent de voir la composition (battles, violence...).</span></span>
+<span id="cb1-143"><a href="#cb1-143" aria-hidden="true" tabindex="-1"></a><span class="in">ggplot(resume_annuel,</span></span>
+<span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a><span class="in">       aes(x = annee, y = n_evenements, fill = event_type)) +</span></span>
+<span id="cb1-145"><a href="#cb1-145" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_col() +</span></span>
+<span id="cb1-146"><a href="#cb1-146" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_x_continuous(</span></span>
+<span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a><span class="in">    breaks = seq(min(resume_annuel$annee), max(resume_annuel$annee), by = 1)</span></span>
+<span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a><span class="in">  ) +</span></span>
+<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_fill_brewer(palette = "Set2") +</span></span>
+<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(title    = "Evolution annuelle des conflits au Cameroun",</span></span>
+<span id="cb1-151"><a href="#cb1-151" aria-hidden="true" tabindex="-1"></a><span class="in">       subtitle = paste0("Source ACLED ", min(resume_annuel$annee), "-",</span></span>
+<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a><span class="in">                         max(resume_annuel$annee),</span></span>
+<span id="cb1-153"><a href="#cb1-153" aria-hidden="true" tabindex="-1"></a><span class="in">                         " - agregation annuelle par type d'evenement"),</span></span>
+<span id="cb1-154"><a href="#cb1-154" aria-hidden="true" tabindex="-1"></a><span class="in">       x = "Annee", y = "Nombre d'evenements", fill = "Type d'evenement",</span></span>
+<span id="cb1-155"><a href="#cb1-155" aria-hidden="true" tabindex="-1"></a><span class="in">       caption = "Source : ACLED Project - IFORD x GDSG 2026") +</span></span>
+<span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal() +</span></span>
+<span id="cb1-157"><a href="#cb1-157" aria-hidden="true" tabindex="-1"></a><span class="in">  theme(axis.text.x = element_text(angle = 45, hjust = 1))</span></span>
+<span id="cb1-158"><a href="#cb1-158" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a><span class="fu">## 5. Décès annuels (Exercice 4c)</span></span>
+<span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-164"><a href="#cb1-164" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb1-165"><a href="#cb1-165" aria-hidden="true" tabindex="-1"></a><span class="in"># Cette fois on somme `fatalities` au lieu de compter les evenements :</span></span>
+<span id="cb1-166"><a href="#cb1-166" aria-hidden="true" tabindex="-1"></a><span class="in"># 1 evenement peut entrainer 0 ou plusieurs deces. La courbe deces est</span></span>
+<span id="cb1-167"><a href="#cb1-167" aria-hidden="true" tabindex="-1"></a><span class="in"># souvent decouplee de la courbe evenements (massacre unique vs nombreux</span></span>
+<span id="cb1-168"><a href="#cb1-168" aria-hidden="true" tabindex="-1"></a><span class="in"># evenements de faible intensite).</span></span>
+<span id="cb1-169"><a href="#cb1-169" aria-hidden="true" tabindex="-1"></a><span class="in">resume_deces &lt;- acled_clean |&gt;</span></span>
+<span id="cb1-170"><a href="#cb1-170" aria-hidden="true" tabindex="-1"></a><span class="in">  group_by(annee) |&gt;</span></span>
+<span id="cb1-171"><a href="#cb1-171" aria-hidden="true" tabindex="-1"></a><span class="in">  summarise(deces = sum(fatalities, na.rm = TRUE), .groups = "drop")</span></span>
+<span id="cb1-172"><a href="#cb1-172" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-173"><a href="#cb1-173" aria-hidden="true" tabindex="-1"></a><span class="in">ggplot(resume_deces, aes(x = annee, y = deces)) +</span></span>
+<span id="cb1-174"><a href="#cb1-174" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_line(colour = "#CB181D", linewidth = 1.2) +</span></span>
+<span id="cb1-175"><a href="#cb1-175" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_point(colour = "#CB181D", size = 2.5) +</span></span>
+<span id="cb1-176"><a href="#cb1-176" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_x_continuous(</span></span>
+<span id="cb1-177"><a href="#cb1-177" aria-hidden="true" tabindex="-1"></a><span class="in">    breaks = seq(min(resume_deces$annee), max(resume_deces$annee), by = 1)</span></span>
+<span id="cb1-178"><a href="#cb1-178" aria-hidden="true" tabindex="-1"></a><span class="in">  ) +</span></span>
+<span id="cb1-179"><a href="#cb1-179" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(title    = "Deces lies aux conflits au Cameroun",</span></span>
+<span id="cb1-180"><a href="#cb1-180" aria-hidden="true" tabindex="-1"></a><span class="in">       subtitle = paste0("Source ACLED ", min(resume_deces$annee), "-",</span></span>
+<span id="cb1-181"><a href="#cb1-181" aria-hidden="true" tabindex="-1"></a><span class="in">                         max(resume_deces$annee),</span></span>
+<span id="cb1-182"><a href="#cb1-182" aria-hidden="true" tabindex="-1"></a><span class="in">                         " - somme annuelle des deces declares"),</span></span>
+<span id="cb1-183"><a href="#cb1-183" aria-hidden="true" tabindex="-1"></a><span class="in">       x = "Annee", y = "Nombre de deces (n)",</span></span>
+<span id="cb1-184"><a href="#cb1-184" aria-hidden="true" tabindex="-1"></a><span class="in">       caption = "Source : ACLED Project - IFORD x GDSG 2026") +</span></span>
+<span id="cb1-185"><a href="#cb1-185" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal()</span></span>
+<span id="cb1-186"><a href="#cb1-186" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-187"><a href="#cb1-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-188"><a href="#cb1-188" aria-hidden="true" tabindex="-1"></a><span class="fu">## 6. Conversion en couche sf (Exercice 5a)</span></span>
+<span id="cb1-189"><a href="#cb1-189" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-192"><a href="#cb1-192" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb1-193"><a href="#cb1-193" aria-hidden="true" tabindex="-1"></a><span class="in"># GEOCODAGE = chaque evenement ACLED est livre avec une paire</span></span>
+<span id="cb1-194"><a href="#cb1-194" aria-hidden="true" tabindex="-1"></a><span class="in"># (latitude, longitude) en degres decimaux. st_as_sf transforme ce</span></span>
+<span id="cb1-195"><a href="#cb1-195" aria-hidden="true" tabindex="-1"></a><span class="in"># tableau classique en objet SPATIAL (couche sf) que R sait afficher</span></span>
+<span id="cb1-196"><a href="#cb1-196" aria-hidden="true" tabindex="-1"></a><span class="in"># en carte et croiser avec d'autres couches geographiques.</span></span>
+<span id="cb1-197"><a href="#cb1-197" aria-hidden="true" tabindex="-1"></a><span class="in"># - coords = noms des colonnes lon/lat dans le tableau source</span></span>
+<span id="cb1-198"><a href="#cb1-198" aria-hidden="true" tabindex="-1"></a><span class="in"># - crs = 4326 = EPSG:4326 = WGS84 (lat/lon decimaux). C'est le CRS</span></span>
+<span id="cb1-199"><a href="#cb1-199" aria-hidden="true" tabindex="-1"></a><span class="in">#   (Coordinate Reference System) standard du GPS et le CRS natif</span></span>
+<span id="cb1-200"><a href="#cb1-200" aria-hidden="true" tabindex="-1"></a><span class="in">#   utilise par ACLED.</span></span>
+<span id="cb1-201"><a href="#cb1-201" aria-hidden="true" tabindex="-1"></a><span class="in"># - remove = FALSE : on garde les colonnes longitude/latitude dans la</span></span>
+<span id="cb1-202"><a href="#cb1-202" aria-hidden="true" tabindex="-1"></a><span class="in">#   table d'attributs (utile pour exporter en CSV plus tard).</span></span>
+<span id="cb1-203"><a href="#cb1-203" aria-hidden="true" tabindex="-1"></a><span class="in">acled_pts &lt;- st_as_sf(</span></span>
+<span id="cb1-204"><a href="#cb1-204" aria-hidden="true" tabindex="-1"></a><span class="in">  acled_clean,</span></span>
+<span id="cb1-205"><a href="#cb1-205" aria-hidden="true" tabindex="-1"></a><span class="in">  coords = c("longitude", "latitude"),</span></span>
+<span id="cb1-206"><a href="#cb1-206" aria-hidden="true" tabindex="-1"></a><span class="in">  crs    = 4326,</span></span>
+<span id="cb1-207"><a href="#cb1-207" aria-hidden="true" tabindex="-1"></a><span class="in">  remove = FALSE</span></span>
+<span id="cb1-208"><a href="#cb1-208" aria-hidden="true" tabindex="-1"></a><span class="in">)</span></span>
+<span id="cb1-209"><a href="#cb1-209" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-210"><a href="#cb1-210" aria-hidden="true" tabindex="-1"></a><span class="in">cat("Couche sf :", nrow(acled_pts), "points, CRS :",</span></span>
+<span id="cb1-211"><a href="#cb1-211" aria-hidden="true" tabindex="-1"></a><span class="in">    st_crs(acled_pts)$input, "\n")</span></span>
+<span id="cb1-212"><a href="#cb1-212" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-213"><a href="#cb1-213" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-214"><a href="#cb1-214" aria-hidden="true" tabindex="-1"></a><span class="fu">## 7. Carte des points par type (Exercice 5b)</span></span>
+<span id="cb1-215"><a href="#cb1-215" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-216"><a href="#cb1-216" aria-hidden="true" tabindex="-1"></a>Sur WebR on utilise <span class="in">`ggplot2 + geom_sf`</span> à la place de <span class="in">`tmap`</span> (qui n'est pas portable).</span>
+<span id="cb1-217"><a href="#cb1-217" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-220"><a href="#cb1-220" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb1-221"><a href="#cb1-221" aria-hidden="true" tabindex="-1"></a><span class="in"># Carte de LOCALISATION : 1 point = 1 evenement, couleur = event_type.</span></span>
+<span id="cb1-222"><a href="#cb1-222" aria-hidden="true" tabindex="-1"></a><span class="in"># Fond gris clair = polygones ADM1 du Cameroun (contexte geographique).</span></span>
+<span id="cb1-223"><a href="#cb1-223" aria-hidden="true" tabindex="-1"></a><span class="in"># Etiquettes NAME_1 ajoutees en gris pour situer chaque region.</span></span>
+<span id="cb1-224"><a href="#cb1-224" aria-hidden="true" tabindex="-1"></a><span class="in"># alpha = 0.6 attenue la superposition dans les zones tres denses.</span></span>
+<span id="cb1-225"><a href="#cb1-225" aria-hidden="true" tabindex="-1"></a><span class="in"># Palette Set2 = qualitative pastel (8 couleurs distinctes, accessible).</span></span>
+<span id="cb1-226"><a href="#cb1-226" aria-hidden="true" tabindex="-1"></a><span class="in">ggplot() +</span></span>
+<span id="cb1-227"><a href="#cb1-227" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(data = cmr1, fill = "grey95", colour = "grey50", linewidth = 0.4) +</span></span>
+<span id="cb1-228"><a href="#cb1-228" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(data = acled_pts, aes(colour = event_type),</span></span>
+<span id="cb1-229"><a href="#cb1-229" aria-hidden="true" tabindex="-1"></a><span class="in">          size = 1, alpha = 0.6) +</span></span>
+<span id="cb1-230"><a href="#cb1-230" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf_text(data = cmr1, aes(label = NAME_1),</span></span>
+<span id="cb1-231"><a href="#cb1-231" aria-hidden="true" tabindex="-1"></a><span class="in">               size = 2.2, colour = "grey30", fontface = "bold") +</span></span>
+<span id="cb1-232"><a href="#cb1-232" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_colour_brewer(palette = "Set2") +</span></span>
+<span id="cb1-233"><a href="#cb1-233" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(title    = "Conflits armes au Cameroun - localisation des evenements",</span></span>
+<span id="cb1-234"><a href="#cb1-234" aria-hidden="true" tabindex="-1"></a><span class="in">       subtitle = paste0("ACLED ", format(min(acled_clean$event_date), "%Y"),</span></span>
+<span id="cb1-235"><a href="#cb1-235" aria-hidden="true" tabindex="-1"></a><span class="in">                         "-", format(max(acled_clean$event_date), "%Y"),</span></span>
+<span id="cb1-236"><a href="#cb1-236" aria-hidden="true" tabindex="-1"></a><span class="in">                         " - 1 point = 1 evenement geocode (lat/lon, CRS EPSG:4326)"),</span></span>
+<span id="cb1-237"><a href="#cb1-237" aria-hidden="true" tabindex="-1"></a><span class="in">       colour   = "Type d'evenement (ACLED)",</span></span>
+<span id="cb1-238"><a href="#cb1-238" aria-hidden="true" tabindex="-1"></a><span class="in">       caption  = "Sources : ACLED Project (evenements) - GADM v4.1 (regions ADM1) - IFORD x GDSG 2026") +</span></span>
+<span id="cb1-239"><a href="#cb1-239" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal() +</span></span>
+<span id="cb1-240"><a href="#cb1-240" aria-hidden="true" tabindex="-1"></a><span class="in">  theme(axis.text = element_blank(), axis.ticks = element_blank(),</span></span>
+<span id="cb1-241"><a href="#cb1-241" aria-hidden="true" tabindex="-1"></a><span class="in">        panel.grid = element_blank())</span></span>
+<span id="cb1-242"><a href="#cb1-242" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-243"><a href="#cb1-243" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-244"><a href="#cb1-244" aria-hidden="true" tabindex="-1"></a><span class="fu">## 8. Choroplèthe par région via st_within (Exercice 5c)</span></span>
+<span id="cb1-245"><a href="#cb1-245" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-248"><a href="#cb1-248" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb1-249"><a href="#cb1-249" aria-hidden="true" tabindex="-1"></a><span class="in">library(tidyr)</span></span>
+<span id="cb1-250"><a href="#cb1-250" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-251"><a href="#cb1-251" aria-hidden="true" tabindex="-1"></a><span class="in"># AGREGATION SPATIALE = on resume des donnees ponctuelles (points</span></span>
+<span id="cb1-252"><a href="#cb1-252" aria-hidden="true" tabindex="-1"></a><span class="in"># ACLED) au niveau d'une unite administrative (ici ADM1 = region). La</span></span>
+<span id="cb1-253"><a href="#cb1-253" aria-hidden="true" tabindex="-1"></a><span class="in"># jointure spatiale st_within repond a la question : "le point tombe-t-il</span></span>
+<span id="cb1-254"><a href="#cb1-254" aria-hidden="true" tabindex="-1"></a><span class="in"># dans tel polygone ?". Pour chaque point on recupere le NAME_1 de la</span></span>
+<span id="cb1-255"><a href="#cb1-255" aria-hidden="true" tabindex="-1"></a><span class="in"># region qui le contient, puis on compte les evenements et on somme les</span></span>
+<span id="cb1-256"><a href="#cb1-256" aria-hidden="true" tabindex="-1"></a><span class="in"># deces par region.</span></span>
+<span id="cb1-257"><a href="#cb1-257" aria-hidden="true" tabindex="-1"></a><span class="in">resume_par_region &lt;- acled_pts |&gt;</span></span>
+<span id="cb1-258"><a href="#cb1-258" aria-hidden="true" tabindex="-1"></a><span class="in">  st_join(cmr1[c("NAME_1")], join = st_within) |&gt;</span></span>
+<span id="cb1-259"><a href="#cb1-259" aria-hidden="true" tabindex="-1"></a><span class="in">  st_drop_geometry() |&gt;</span></span>
+<span id="cb1-260"><a href="#cb1-260" aria-hidden="true" tabindex="-1"></a><span class="in">  filter(!is.na(NAME_1)) |&gt;     # ecarte les points hors Cameroun (frontiere)</span></span>
+<span id="cb1-261"><a href="#cb1-261" aria-hidden="true" tabindex="-1"></a><span class="in">  group_by(NAME_1) |&gt;</span></span>
+<span id="cb1-262"><a href="#cb1-262" aria-hidden="true" tabindex="-1"></a><span class="in">  summarise(</span></span>
+<span id="cb1-263"><a href="#cb1-263" aria-hidden="true" tabindex="-1"></a><span class="in">    n_evenements = n(),</span></span>
+<span id="cb1-264"><a href="#cb1-264" aria-hidden="true" tabindex="-1"></a><span class="in">    deces        = sum(fatalities, na.rm = TRUE),</span></span>
+<span id="cb1-265"><a href="#cb1-265" aria-hidden="true" tabindex="-1"></a><span class="in">    .groups      = "drop"</span></span>
+<span id="cb1-266"><a href="#cb1-266" aria-hidden="true" tabindex="-1"></a><span class="in">  )</span></span>
+<span id="cb1-267"><a href="#cb1-267" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-268"><a href="#cb1-268" aria-hidden="true" tabindex="-1"></a><span class="in"># left_join reattache les comptages a la couche polygonale GADM.</span></span>
+<span id="cb1-269"><a href="#cb1-269" aria-hidden="true" tabindex="-1"></a><span class="in"># replace_na = on remplit a 0 les regions sans evenement (sinon NA cartes).</span></span>
+<span id="cb1-270"><a href="#cb1-270" aria-hidden="true" tabindex="-1"></a><span class="in">cmr1_acled &lt;- cmr1 |&gt;</span></span>
+<span id="cb1-271"><a href="#cb1-271" aria-hidden="true" tabindex="-1"></a><span class="in">  left_join(resume_par_region, by = "NAME_1") |&gt;</span></span>
+<span id="cb1-272"><a href="#cb1-272" aria-hidden="true" tabindex="-1"></a><span class="in">  mutate(</span></span>
+<span id="cb1-273"><a href="#cb1-273" aria-hidden="true" tabindex="-1"></a><span class="in">    n_evenements = replace_na(n_evenements, 0L),</span></span>
+<span id="cb1-274"><a href="#cb1-274" aria-hidden="true" tabindex="-1"></a><span class="in">    deces        = replace_na(deces, 0)</span></span>
+<span id="cb1-275"><a href="#cb1-275" aria-hidden="true" tabindex="-1"></a><span class="in">  )</span></span>
+<span id="cb1-276"><a href="#cb1-276" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-277"><a href="#cb1-277" aria-hidden="true" tabindex="-1"></a><span class="in">cmr1_acled |&gt;</span></span>
+<span id="cb1-278"><a href="#cb1-278" aria-hidden="true" tabindex="-1"></a><span class="in">  st_drop_geometry() |&gt;</span></span>
+<span id="cb1-279"><a href="#cb1-279" aria-hidden="true" tabindex="-1"></a><span class="in">  arrange(desc(n_evenements)) |&gt;</span></span>
+<span id="cb1-280"><a href="#cb1-280" aria-hidden="true" tabindex="-1"></a><span class="in">  select(NAME_1, n_evenements, deces)</span></span>
+<span id="cb1-281"><a href="#cb1-281" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-282"><a href="#cb1-282" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-283"><a href="#cb1-283" aria-hidden="true" tabindex="-1"></a><span class="fu">## 9. Carte choroplèthe par région</span></span>
+<span id="cb1-284"><a href="#cb1-284" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-287"><a href="#cb1-287" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb1-288"><a href="#cb1-288" aria-hidden="true" tabindex="-1"></a><span class="in"># CHOROPLETHE = carte polygonale ou la COULEUR du polygone traduit une</span></span>
+<span id="cb1-289"><a href="#cb1-289" aria-hidden="true" tabindex="-1"></a><span class="in"># valeur quantitative (ici : nombre d'evenements par region). Palette</span></span>
+<span id="cb1-290"><a href="#cb1-290" aria-hidden="true" tabindex="-1"></a><span class="in"># YlOrRd (jaune-orange-rouge) = sequentielle Brewer, conventionnelle</span></span>
+<span id="cb1-291"><a href="#cb1-291" aria-hidden="true" tabindex="-1"></a><span class="in"># pour representer une INTENSITE croissante de conflits.</span></span>
+<span id="cb1-292"><a href="#cb1-292" aria-hidden="true" tabindex="-1"></a><span class="in"># Etiquettes ADM1 ajoutees pour identifier chaque region sans confusion.</span></span>
+<span id="cb1-293"><a href="#cb1-293" aria-hidden="true" tabindex="-1"></a><span class="in">ggplot(cmr1_acled) +</span></span>
+<span id="cb1-294"><a href="#cb1-294" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(aes(fill = n_evenements), colour = "white", linewidth = 0.4) +</span></span>
+<span id="cb1-295"><a href="#cb1-295" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_fill_distiller(palette = "YlOrRd", direction = 1,</span></span>
+<span id="cb1-296"><a href="#cb1-296" aria-hidden="true" tabindex="-1"></a><span class="in">                       name = "Nombre d'evenements (n)") +</span></span>
+<span id="cb1-297"><a href="#cb1-297" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf_label(aes(label = NAME_1), size = 2.2, color = "grey20",</span></span>
+<span id="cb1-298"><a href="#cb1-298" aria-hidden="true" tabindex="-1"></a><span class="in">                fontface = "bold", label.padding = unit(0.1, "lines")) +</span></span>
+<span id="cb1-299"><a href="#cb1-299" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(title    = "Conflits par region administrative - Cameroun",</span></span>
+<span id="cb1-300"><a href="#cb1-300" aria-hidden="true" tabindex="-1"></a><span class="in">       subtitle = paste0("ACLED ", format(min(acled_clean$event_date), "%Y"),</span></span>
+<span id="cb1-301"><a href="#cb1-301" aria-hidden="true" tabindex="-1"></a><span class="in">                         "-", format(max(acled_clean$event_date), "%Y"),</span></span>
+<span id="cb1-302"><a href="#cb1-302" aria-hidden="true" tabindex="-1"></a><span class="in">                         " - agregation ADM1 par jointure spatiale st_within"),</span></span>
+<span id="cb1-303"><a href="#cb1-303" aria-hidden="true" tabindex="-1"></a><span class="in">       caption  = "Sources : ACLED Project (evenements) - GADM v4.1 (regions ADM1) - IFORD x GDSG 2026") +</span></span>
+<span id="cb1-304"><a href="#cb1-304" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal() +</span></span>
+<span id="cb1-305"><a href="#cb1-305" aria-hidden="true" tabindex="-1"></a><span class="in">  theme(axis.text = element_blank(), axis.ticks = element_blank(),</span></span>
+<span id="cb1-306"><a href="#cb1-306" aria-hidden="true" tabindex="-1"></a><span class="in">        panel.grid = element_blank())</span></span>
+<span id="cb1-307"><a href="#cb1-307" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-308"><a href="#cb1-308" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-309"><a href="#cb1-309" aria-hidden="true" tabindex="-1"></a><span class="fu">## 10. Carte des décès par région</span></span>
+<span id="cb1-310"><a href="#cb1-310" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-313"><a href="#cb1-313" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb1-314"><a href="#cb1-314" aria-hidden="true" tabindex="-1"></a><span class="in"># Meme principe que la carte precedente, mais on cartographie ici</span></span>
+<span id="cb1-315"><a href="#cb1-315" aria-hidden="true" tabindex="-1"></a><span class="in"># l'intensite LETALE (cumul des deces) au lieu du simple comptage des</span></span>
+<span id="cb1-316"><a href="#cb1-316" aria-hidden="true" tabindex="-1"></a><span class="in"># evenements. La meme palette YlOrRd preserve la coherence visuelle.</span></span>
+<span id="cb1-317"><a href="#cb1-317" aria-hidden="true" tabindex="-1"></a><span class="in">ggplot(cmr1_acled) +</span></span>
+<span id="cb1-318"><a href="#cb1-318" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(aes(fill = deces), colour = "white", linewidth = 0.4) +</span></span>
+<span id="cb1-319"><a href="#cb1-319" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_fill_distiller(palette = "YlOrRd", direction = 1,</span></span>
+<span id="cb1-320"><a href="#cb1-320" aria-hidden="true" tabindex="-1"></a><span class="in">                       labels = comma,</span></span>
+<span id="cb1-321"><a href="#cb1-321" aria-hidden="true" tabindex="-1"></a><span class="in">                       name = "Nombre de deces (n)") +</span></span>
+<span id="cb1-322"><a href="#cb1-322" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf_label(aes(label = NAME_1), size = 2.2, color = "grey20",</span></span>
+<span id="cb1-323"><a href="#cb1-323" aria-hidden="true" tabindex="-1"></a><span class="in">                fontface = "bold", label.padding = unit(0.1, "lines")) +</span></span>
+<span id="cb1-324"><a href="#cb1-324" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(title    = "Deces lies aux conflits par region administrative - Cameroun",</span></span>
+<span id="cb1-325"><a href="#cb1-325" aria-hidden="true" tabindex="-1"></a><span class="in">       subtitle = paste0("ACLED ", format(min(acled_clean$event_date), "%Y"),</span></span>
+<span id="cb1-326"><a href="#cb1-326" aria-hidden="true" tabindex="-1"></a><span class="in">                         "-", format(max(acled_clean$event_date), "%Y"),</span></span>
+<span id="cb1-327"><a href="#cb1-327" aria-hidden="true" tabindex="-1"></a><span class="in">                         " - somme des deces declares par region ADM1"),</span></span>
+<span id="cb1-328"><a href="#cb1-328" aria-hidden="true" tabindex="-1"></a><span class="in">       caption  = "Sources : ACLED Project (deces declares) - GADM v4.1 (regions ADM1) - IFORD x GDSG 2026") +</span></span>
+<span id="cb1-329"><a href="#cb1-329" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal() +</span></span>
+<span id="cb1-330"><a href="#cb1-330" aria-hidden="true" tabindex="-1"></a><span class="in">  theme(axis.text = element_blank(), axis.ticks = element_blank(),</span></span>
+<span id="cb1-331"><a href="#cb1-331" aria-hidden="true" tabindex="-1"></a><span class="in">        panel.grid = element_blank())</span></span>
+<span id="cb1-332"><a href="#cb1-332" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb1-333"><a href="#cb1-333" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-334"><a href="#cb1-334" aria-hidden="true" tabindex="-1"></a><span class="fu">## 11. À essayer</span></span>
+<span id="cb1-335"><a href="#cb1-335" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-336"><a href="#cb1-336" aria-hidden="true" tabindex="-1"></a>::: {.iford-callout}</span>
+<span id="cb1-337"><a href="#cb1-337" aria-hidden="true" tabindex="-1"></a>Modifie la requête <span class="in">`filter(annee &gt;= ...)`</span> pour ne garder que les 3 dernières années. Refais le pipeline jusqu'à la carte. Quelle évolution observes-tu ? Une région prend-elle plus d'importance récemment ?</span>
+<span id="cb1-338"><a href="#cb1-338" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-339"><a href="#cb1-339" aria-hidden="true" tabindex="-1"></a>Tu peux aussi filtrer sur un <span class="in">`event_type`</span> spécifique (par exemple <span class="in">`filter(event_type == "Violence against civilians")`</span>) pour cartographier uniquement ce sous-ensemble.</span>
+<span id="cb1-340"><a href="#cb1-340" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-341"><a href="#cb1-341" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-342"><a href="#cb1-342" aria-hidden="true" tabindex="-1"></a><span class="fu">## 12. Pour aller plus loin</span></span>
+<span id="cb1-343"><a href="#cb1-343" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-344"><a href="#cb1-344" aria-hidden="true" tabindex="-1"></a>La version desktop <span class="in">`demo.qmd`</span> ajoute (à exécuter sous RStudio) :</span>
+<span id="cb1-345"><a href="#cb1-345" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-346"><a href="#cb1-346" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Partie II ERA5** : authentification CDS, requête API <span class="in">`ecmwfr`</span>, lecture NetCDF, conversion Kelvin → Celsius, extraction multi-couches par région, série temporelle nationale + saisonnalité + carte d'anomalie. Nécessite un fichier <span class="in">`.nc`</span> de quelques Mo et un token Copernicus personnel.</span>
+<span id="cb1-347"><a href="#cb1-347" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Cartes `tmap`** avec mode interactif (<span class="in">`view`</span>) sur fond satellite Esri.</span>
+<span id="cb1-348"><a href="#cb1-348" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Export GPKG / GeoTIFF / PNG** pour réutilisation et publication.</span>
+<span id="cb1-349"><a href="#cb1-349" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Bonus API ACLED** : <span class="in">`acledR::acled_api()`</span> pour télécharger 10 ans complets et croiser avec les données de Boko Haram / crise anglophone documentées.</span>
+<span id="cb1-350"><a href="#cb1-350" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-351"><a href="#cb1-351" aria-hidden="true" tabindex="-1"></a>Le devoir individuel (12 questions Edith + Q-final 5 questions de synthèse pour décideur) est dans <span class="in">`exercice.qmd`</span>.</span>
+<span id="cb1-352"><a href="#cb1-352" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-353"><a href="#cb1-353" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">← Retour à l'accueil</span><span class="co">](../INDEX.md)</span></span>
+</code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

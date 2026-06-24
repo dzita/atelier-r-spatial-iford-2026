@@ -1,0 +1,877 @@
+[
+  {
+    "objectID": "J10_workflows_reproductibles/runtime.html",
+    "href": "J10_workflows_reproductibles/runtime.html",
+    "title": "J10 — Flux reproductibles et mini-projet",
+    "section": "",
+    "text": "Mode d’emploi. Cliquez Run code dans chaque cellule. WebR charge sf, dplyr, ggplot2, purrr au boot. Tout tourne dans votre navigateur — aucune installation locale.\nLimitation technique : le runtime WebR couvre les sections 1, 3, 5 et 6 de demo.qmd (chargement projet + cartes statiques + automatisation purrr + métadonnées FAIR). Les sections 2 (Quarto multi-format render) et 4 (Git init/commit/push) exigent un terminal système et ne tournent pas dans WebR. La distinction tmap_mode(\"plot\") vs tmap_mode(\"view\") n’est pas non plus disponible ici (tmap n’est pas portable WebR) — voir demo.qmd desktop pour ces 3 points.\nDonnées 100 % réelles : regions_indicateurs_demo.gpkg préparé par Edith Darin (10 régions du Cameroun, indicateurs démographiques et sociaux). Aucune simulation.\nConception pédagogique : Edith Darin (GDSG/IFORD). Intégration runtime : Ramesesse Dzita."
+  },
+  {
+    "objectID": "J10_workflows_reproductibles/runtime.html#charger-le-dataset-fil-rouge",
+    "href": "J10_workflows_reproductibles/runtime.html#charger-le-dataset-fil-rouge",
+    "title": "J10 — Flux reproductibles et mini-projet",
+    "section": "1. Charger le dataset fil rouge",
+    "text": "1. Charger le dataset fil rouge"
+  },
+  {
+    "objectID": "J10_workflows_reproductibles/runtime.html#inspecter-le-tableau-dindicateurs",
+    "href": "J10_workflows_reproductibles/runtime.html#inspecter-le-tableau-dindicateurs",
+    "title": "J10 — Flux reproductibles et mini-projet",
+    "section": "2. Inspecter le tableau d’indicateurs",
+    "text": "2. Inspecter le tableau d’indicateurs"
+  },
+  {
+    "objectID": "J10_workflows_reproductibles/runtime.html#carte-statique-de-laccès-à-leau-améliorée",
+    "href": "J10_workflows_reproductibles/runtime.html#carte-statique-de-laccès-à-leau-améliorée",
+    "title": "J10 — Flux reproductibles et mini-projet",
+    "section": "3. Carte statique de l’accès à l’eau améliorée",
+    "text": "3. Carte statique de l’accès à l’eau améliorée\nCarte choroplethe : la couleur de chaque region encode le pourcentage de menages ayant acces a une source d’eau amelioree (forage, robinet, borne-fontaine)."
+  },
+  {
+    "objectID": "J10_workflows_reproductibles/runtime.html#comparer-un-deuxième-indicateur-lalphabétisation",
+    "href": "J10_workflows_reproductibles/runtime.html#comparer-un-deuxième-indicateur-lalphabétisation",
+    "title": "J10 — Flux reproductibles et mini-projet",
+    "section": "4. Comparer un deuxième indicateur — l’alphabétisation",
+    "text": "4. Comparer un deuxième indicateur — l’alphabétisation\nMême dataset, même code, on change juste la variable cartographiée. C’est l’idée de l’automatisation par paramètre : la même fonction génère N cartes pour N indicateurs.\n\n\n\n\n\n\n\n\n\nÀ noter : la démo tmap_mode(\"view\") (carte interactive Leaflet) de la version desktop demo.qmd n’est pas reproduisible ici parce que tmap n’est pas portable sur WebR. La leçon « plot vs view » est vue en classe sur RStudio."
+  },
+  {
+    "objectID": "J10_workflows_reproductibles/runtime.html#automatisation-par-boucle-régionale",
+    "href": "J10_workflows_reproductibles/runtime.html#automatisation-par-boucle-régionale",
+    "title": "J10 — Flux reproductibles et mini-projet",
+    "section": "5. Automatisation par boucle régionale",
+    "text": "5. Automatisation par boucle régionale\nFonction unitaire qui calcule densité + taille de ménage + FOSA/10k pour une région donnée."
+  },
+  {
+    "objectID": "J10_workflows_reproductibles/runtime.html#appliquer-aux-10-régions-en-une-commande",
+    "href": "J10_workflows_reproductibles/runtime.html#appliquer-aux-10-régions-en-une-commande",
+    "title": "J10 — Flux reproductibles et mini-projet",
+    "section": "6. Appliquer aux 10 régions en une commande",
+    "text": "6. Appliquer aux 10 régions en une commande"
+  },
+  {
+    "objectID": "J10_workflows_reproductibles/runtime.html#à-essayer-ton-mini-projet",
+    "href": "J10_workflows_reproductibles/runtime.html#à-essayer-ton-mini-projet",
+    "title": "J10 — Flux reproductibles et mini-projet",
+    "section": "7. À essayer — ton mini-projet",
+    "text": "7. À essayer — ton mini-projet\n\nModifie l’indicateur calculé dans resumer_region() : - Remplace densite par ecoles_pour_1000_hab = r$ecoles / r$population * 1000. - Ou crée un indice composite (par exemple 0.5 * eau_amelioree_pct + 0.5 * alphabetisation_pct).\nRelance map_dfr et trie. Quelles régions se démarquent ?\nC’est exactement le pattern du mini-projet : choisir un indicateur, le calculer pour les 10 régions, l’interpréter."
+  },
+  {
+    "objectID": "J10_workflows_reproductibles/runtime.html#les-7-métadonnées-minimales-dun-livrable",
+    "href": "J10_workflows_reproductibles/runtime.html#les-7-métadonnées-minimales-dun-livrable",
+    "title": "J10 — Flux reproductibles et mini-projet",
+    "section": "8. Les 7 métadonnées minimales d’un livrable",
+    "text": "8. Les 7 métadonnées minimales d’un livrable\nVoici la grille à coller dans chaque export FAIR (Section 6 de demo.qmd).\n\n\n\n\n\n\n\n\n\nRègle simple : sans ces 7 informations, ton .gpkg ou .csv est inutilisable par quelqu’un d’autre dans 6 mois."
+  },
+  {
+    "objectID": "J10_workflows_reproductibles/runtime.html#pour-aller-plus-loin",
+    "href": "J10_workflows_reproductibles/runtime.html#pour-aller-plus-loin",
+    "title": "J10 — Flux reproductibles et mini-projet",
+    "section": "9. Pour aller plus loin",
+    "text": "9. Pour aller plus loin\nLa version desktop demo.qmd ajoute (à exécuter sous RStudio) :\n\nSection 2 complète : rendu Quarto multi-format (HTML / PPTX / PDF / Word) avec commandes quarto render --to ....\nSection 4 complète : workflow Git complet (init, add, commit, push) + équivalents usethis::use_git() / use_github().\nSidecar JSON FAIR : export regions_indicateurs_enrichi.gpkg.json lisible par machine avec capture du commit Git court pour traçabilité.\nCarte sauvée en PNG via tmap_save(..., dpi = 200).\n\nLe devoir individuel (Q1-Q5 + mini-projet en groupe avec grille de présentation 5 min × 6 étapes) est dans exercice.qmd.\n← Retour à l’accueil"
+  },
+  {
+    "objectID": "J08_teledetection_observation_terre/runtime.html",
+    "href": "J08_teledetection_observation_terre/runtime.html",
+    "title": "J8 — Télédétection et observation de la Terre",
+    "section": "",
+    "text": "Mode d’emploi. Cliquez Run code dans chaque cellule. WebR charge sf, dplyr, ggplot2 au premier appel (~25 s la première fois). Tout tourne dans votre navigateur — aucune installation locale.\nLimitation technique : le runtime WebR ne couvre que la Partie II EMSR772 (Yagoua AOI01) avec un échantillon Open Buildings. Le pipeline GHSL Built-Up (Partie I) nécessite la décompression de 15 tuiles ZIP et la mosaïque terra — trop lourd pour le navigateur. Voir demo.qmd desktop pour l’expérience complète sur Cameroun entier.\nDonnées 100 % réelles : extraits Copernicus EMSR772 AOI01 (Yagoua) + échantillon Open Buildings restreint à la zone. Aucune simulation.\nConception pédagogique : Edith Darin (GDSG/IFORD). Intégration runtime : Ramesesse Dzita."
+  },
+  {
+    "objectID": "J08_teledetection_observation_terre/runtime.html#charger-les-couches-copernicus-ems-aoi01-yagoua",
+    "href": "J08_teledetection_observation_terre/runtime.html#charger-les-couches-copernicus-ems-aoi01-yagoua",
+    "title": "J8 — Télédétection et observation de la Terre",
+    "section": "1. Charger les couches Copernicus EMS AOI01 (Yagoua)",
+    "text": "1. Charger les couches Copernicus EMS AOI01 (Yagoua)"
+  },
+  {
+    "objectID": "J08_teledetection_observation_terre/runtime.html#visualiser-zone-et-inondation",
+    "href": "J08_teledetection_observation_terre/runtime.html#visualiser-zone-et-inondation",
+    "title": "J8 — Télédétection et observation de la Terre",
+    "section": "2. Visualiser zone et inondation",
+    "text": "2. Visualiser zone et inondation"
+  },
+  {
+    "objectID": "J08_teledetection_observation_terre/runtime.html#charger-lextrait-de-bâtiments-open-buildings",
+    "href": "J08_teledetection_observation_terre/runtime.html#charger-lextrait-de-bâtiments-open-buildings",
+    "title": "J8 — Télédétection et observation de la Terre",
+    "section": "3. Charger l’extrait de bâtiments Open Buildings",
+    "text": "3. Charger l’extrait de bâtiments Open Buildings\nL’extrait Open Buildings restreint à la zone Yagoua (~5 000-15 000 bâtiments) est pré-filtré sur confidence &gt;= 0.7."
+  },
+  {
+    "objectID": "J08_teledetection_observation_terre/runtime.html#bâtiments-dans-la-zone-aoi01",
+    "href": "J08_teledetection_observation_terre/runtime.html#bâtiments-dans-la-zone-aoi01",
+    "title": "J8 — Télédétection et observation de la Terre",
+    "section": "4. Bâtiments dans la zone AOI01",
+    "text": "4. Bâtiments dans la zone AOI01"
+  },
+  {
+    "objectID": "J08_teledetection_observation_terre/runtime.html#estimation-de-la-population-dans-aoi01",
+    "href": "J08_teledetection_observation_terre/runtime.html#estimation-de-la-population-dans-aoi01",
+    "title": "J8 — Télédétection et observation de la Terre",
+    "section": "5. Estimation de la population dans AOI01",
+    "text": "5. Estimation de la population dans AOI01"
+  },
+  {
+    "objectID": "J08_teledetection_observation_terre/runtime.html#bâtiments-et-population-touchés-par-linondation",
+    "href": "J08_teledetection_observation_terre/runtime.html#bâtiments-et-population-touchés-par-linondation",
+    "title": "J8 — Télédétection et observation de la Terre",
+    "section": "6. Bâtiments et population touchés par l’inondation",
+    "text": "6. Bâtiments et population touchés par l’inondation\nst_filter(batiments_aoi01, flood01) garde les bâtiments dont la géométrie intersecte au moins un polygone d’inondation."
+  },
+  {
+    "objectID": "J08_teledetection_observation_terre/runtime.html#carte-combinée-bâtiments-inondation",
+    "href": "J08_teledetection_observation_terre/runtime.html#carte-combinée-bâtiments-inondation",
+    "title": "J8 — Télédétection et observation de la Terre",
+    "section": "7. Carte combinée — bâtiments + inondation",
+    "text": "7. Carte combinée — bâtiments + inondation"
+  },
+  {
+    "objectID": "J08_teledetection_observation_terre/runtime.html#ventilation-par-classe-de-profondeur",
+    "href": "J08_teledetection_observation_terre/runtime.html#ventilation-par-classe-de-profondeur",
+    "title": "J8 — Télédétection et observation de la Terre",
+    "section": "8. Ventilation par classe de profondeur",
+    "text": "8. Ventilation par classe de profondeur"
+  },
+  {
+    "objectID": "J08_teledetection_observation_terre/runtime.html#à-essayer",
+    "href": "J08_teledetection_observation_terre/runtime.html#à-essayer",
+    "title": "J8 — Télédétection et observation de la Terre",
+    "section": "9. À essayer",
+    "text": "9. À essayer\n\nModifie l’hypothèse pers_par_batiment &lt;- 5 en 7 (rural traditionnel) puis 3 (urbain moderne). Compare l’écart de la population touchée — c’est l’illustration de la sensibilité au paramètre d’hypothèse.\nTu peux aussi filtrer les bâtiments avant l’analyse (par exemple ne garder que ceux avec area_in_meters &gt; 50 pour les habitations principales)."
+  },
+  {
+    "objectID": "J08_teledetection_observation_terre/runtime.html#pour-aller-plus-loin",
+    "href": "J08_teledetection_observation_terre/runtime.html#pour-aller-plus-loin",
+    "title": "J8 — Télédétection et observation de la Terre",
+    "section": "10. Pour aller plus loin",
+    "text": "10. Pour aller plus loin\nLa version desktop demo.qmd ajoute (à exécuter sous RStudio) :\n\nPartie I GHSL Built-Up : mosaïque 8 tuiles 2025 + 7 tuiles 2015, indicateurs nationaux + régionaux + départementaux, typologie de croissance, cartes choroplèthes (part bâtie, gain, croissance relative).\nAOI02 et AOI03 : reproduction de l’analyse exposition sur les 2 autres zones Copernicus de l’activation EMSR772 + graphiques de synthèse 3 AOI.\nCartes tmap avec mode interactif (view) sur fond satellite Esri.WorldImagery.\nBonus : croiser GHSL bâti × EMS inondation × WorldPop pour validation triangulaire.\n\nLe devoir individuel (12 questions Edith + Q-final 5 questions de synthèse pour décideur) est dans exercice.qmd.\n← Retour à l’accueil"
+  },
+  {
+    "objectID": "J06_statistiques_spatiales/runtime.html",
+    "href": "J06_statistiques_spatiales/runtime.html",
+    "title": "J6 — Statistiques spatiales sur OSM Cameroun",
+    "section": "",
+    "text": "Mode d’emploi. Cliquez Run code dans chaque cellule. Données réelles : facilités de santé OSM du Cameroun + polygones GADM ADM2 (départements).\nPipeline analytique : Jean Saturnin Alogo Samba (GDSG/IFORD). Bascule OSM + runtime : Ramesesse Dzita.\nNote technique : spdep n’est pas portable sur WebR. On code Moran’s I à la main + test par permutation Monte Carlo. La version spdep complète est dans demo.qmd.\nDonnées 100 % réelles : aucune variable simulée. Variable d’analyse = nombre de facilités OSM par département ADM2 (compté par agrégation spatiale)."
+  },
+  {
+    "objectID": "J06_statistiques_spatiales/runtime.html#charger-facilités-osm-départements-gadm",
+    "href": "J06_statistiques_spatiales/runtime.html#charger-facilités-osm-départements-gadm",
+    "title": "J6 — Statistiques spatiales sur OSM Cameroun",
+    "section": "1. Charger facilités OSM + départements GADM",
+    "text": "1. Charger facilités OSM + départements GADM"
+  },
+  {
+    "objectID": "J06_statistiques_spatiales/runtime.html#carte-de-localisation-par-catégorie",
+    "href": "J06_statistiques_spatiales/runtime.html#carte-de-localisation-par-catégorie",
+    "title": "J6 — Statistiques spatiales sur OSM Cameroun",
+    "section": "2. Carte de localisation par catégorie",
+    "text": "2. Carte de localisation par catégorie"
+  },
+  {
+    "objectID": "J06_statistiques_spatiales/runtime.html#ratio-r-motifs-ponctuels-sur-les-points",
+    "href": "J06_statistiques_spatiales/runtime.html#ratio-r-motifs-ponctuels-sur-les-points",
+    "title": "J6 — Statistiques spatiales sur OSM Cameroun",
+    "section": "3. Ratio R — motifs ponctuels (sur les points)",
+    "text": "3. Ratio R — motifs ponctuels (sur les points)"
+  },
+  {
+    "objectID": "J06_statistiques_spatiales/runtime.html#kde-densité-par-noyau-sur-les-points",
+    "href": "J06_statistiques_spatiales/runtime.html#kde-densité-par-noyau-sur-les-points",
+    "title": "J6 — Statistiques spatiales sur OSM Cameroun",
+    "section": "4. KDE — densité par noyau (sur les points)",
+    "text": "4. KDE — densité par noyau (sur les points)"
+  },
+  {
+    "objectID": "J06_statistiques_spatiales/runtime.html#agrégation-par-département-adm2-jointure-spatiale",
+    "href": "J06_statistiques_spatiales/runtime.html#agrégation-par-département-adm2-jointure-spatiale",
+    "title": "J6 — Statistiques spatiales sur OSM Cameroun",
+    "section": "5. Agrégation par département ADM2 (jointure spatiale)",
+    "text": "5. Agrégation par département ADM2 (jointure spatiale)\nC’est ici qu’on construit la variable réelle d’analyse statistique : n_facilites par département."
+  },
+  {
+    "objectID": "J06_statistiques_spatiales/runtime.html#choroplèthe-du-comptage-par-département",
+    "href": "J06_statistiques_spatiales/runtime.html#choroplèthe-du-comptage-par-département",
+    "title": "J6 — Statistiques spatiales sur OSM Cameroun",
+    "section": "6. Choroplèthe du comptage par département",
+    "text": "6. Choroplèthe du comptage par département"
+  },
+  {
+    "objectID": "J06_statistiques_spatiales/runtime.html#morans-i-global-manuel-sur-le-comptage-par-département",
+    "href": "J06_statistiques_spatiales/runtime.html#morans-i-global-manuel-sur-le-comptage-par-département",
+    "title": "J6 — Statistiques spatiales sur OSM Cameroun",
+    "section": "7. Moran’s I global manuel (sur le comptage par département)",
+    "text": "7. Moran’s I global manuel (sur le comptage par département)\nMatrice de voisinage entre départements = contiguïté (deux départements voisins s’ils partagent une frontière). On la calcule à la main avec st_touches()."
+  },
+  {
+    "objectID": "J06_statistiques_spatiales/runtime.html#test-de-significativité-par-permutation",
+    "href": "J06_statistiques_spatiales/runtime.html#test-de-significativité-par-permutation",
+    "title": "J6 — Statistiques spatiales sur OSM Cameroun",
+    "section": "8. Test de significativité par permutation",
+    "text": "8. Test de significativité par permutation"
+  },
+  {
+    "objectID": "J06_statistiques_spatiales/runtime.html#lisa-local-par-département",
+    "href": "J06_statistiques_spatiales/runtime.html#lisa-local-par-département",
+    "title": "J6 — Statistiques spatiales sur OSM Cameroun",
+    "section": "9. LISA local par département",
+    "text": "9. LISA local par département"
+  },
+  {
+    "objectID": "J06_statistiques_spatiales/runtime.html#carte-lisa-des-départements",
+    "href": "J06_statistiques_spatiales/runtime.html#carte-lisa-des-départements",
+    "title": "J6 — Statistiques spatiales sur OSM Cameroun",
+    "section": "10. Carte LISA des départements",
+    "text": "10. Carte LISA des départements"
+  },
+  {
+    "objectID": "J06_statistiques_spatiales/runtime.html#liste-des-déserts-médicaux-pour-transmission",
+    "href": "J06_statistiques_spatiales/runtime.html#liste-des-déserts-médicaux-pour-transmission",
+    "title": "J6 — Statistiques spatiales sur OSM Cameroun",
+    "section": "11. Liste des déserts médicaux pour transmission",
+    "text": "11. Liste des déserts médicaux pour transmission"
+  },
+  {
+    "objectID": "J06_statistiques_spatiales/runtime.html#pour-aller-plus-loin",
+    "href": "J06_statistiques_spatiales/runtime.html#pour-aller-plus-loin",
+    "title": "J6 — Statistiques spatiales sur OSM Cameroun",
+    "section": "12. Pour aller plus loin",
+    "text": "12. Pour aller plus loin\nLa version desktop demo.qmd utilise spdep avec les tests asymptotiques officiels. Elle inclut le diagramme de Moran et permet d’éprouver des matrices de poids alternatives (k plus proches voisins, distance fixe). Le devoir Q6 (exercice.qmd) propose de refaire le pipeline sur une sous-catégorie de facilités (pharmacies, hôpitaux).\n← Retour à l’accueil"
+  },
+  {
+    "objectID": "J04_gestion_donnees_tidyverse/runtime.html",
+    "href": "J04_gestion_donnees_tidyverse/runtime.html",
+    "title": "J4 — Gestion des données pour l’analyse spatiale",
+    "section": "",
+    "text": "Mode d’emploi. Cliquez Run code dans chaque cellule. WebR charge dplyr, tidyr, readr, sf au premier appel (~20 s la première fois). Tout tourne dans votre navigateur — aucune installation locale.\nDonnées 100 % réelles : extraits CSV de l’EDS-MICS Cameroun 2018 (DHS Program), produits par le script pedagogie/_commons/data/dhs_cmr/00_extraire_dhs_pour_webr.R côté animateur à partir des microfichiers .DTA Stata officiels.\nNote technique : srvyr et haven ne sont pas (encore) portables sur WebR. On charge les CSV extraits directement et on illustre les verbes dplyr/jointures/agrégations non pondérées. La pédagogie complète sur plan de sondage stratifié + pondération (Module 4) est dans la version desktop demo.qmd.\nArchitecture modulaire : Jean Saturnin Alogo Samba (GDSG/IFORD). Bascule DHS réel + runtime : Ramesesse Dzita."
+  },
+  {
+    "objectID": "J04_gestion_donnees_tidyverse/runtime.html#charger-les-extraits-dhs-cameroun-2018",
+    "href": "J04_gestion_donnees_tidyverse/runtime.html#charger-les-extraits-dhs-cameroun-2018",
+    "title": "J4 — Gestion des données pour l’analyse spatiale",
+    "section": "1. Charger les extraits DHS Cameroun 2018",
+    "text": "1. Charger les extraits DHS Cameroun 2018\n\n\n\n\n\n\n\n\nAperçu des premières lignes de chaque table :"
+  },
+  {
+    "objectID": "J04_gestion_donnees_tidyverse/runtime.html#module-1-tidyverse-de-base",
+    "href": "J04_gestion_donnees_tidyverse/runtime.html#module-1-tidyverse-de-base",
+    "title": "J4 — Gestion des données pour l’analyse spatiale",
+    "section": "2. Module 1 — Tidyverse de base",
+    "text": "2. Module 1 — Tidyverse de base\n\nLe pipe |&gt; se lit « puis »\n\n\n\n\n\n\n\n\n\n\nselect + filter + count\n\n\n\n\n\n\n\n\n\n\nmutate + case_when\n\n\n\n\n\n\n\n\n\n\ngroup_by + summarise : agrégation\n\n\n\n\n\n\n\n\n\nÀ retenir. filter filtre les lignes, select choisit les colonnes, mutate crée une variable, group_by + summarise agrège, pivot_wider réorganise. Cinq verbes pour 80 % de l’analyse de données."
+  },
+  {
+    "objectID": "J04_gestion_donnees_tidyverse/runtime.html#module-2-jointures-hr-pr",
+    "href": "J04_gestion_donnees_tidyverse/runtime.html#module-2-jointures-hr-pr",
+    "title": "J4 — Gestion des données pour l’analyse spatiale",
+    "section": "3. Module 2 — Jointures HR ↔︎ PR",
+    "text": "3. Module 2 — Jointures HR ↔︎ PR\n\nLa double clé (cluster_id, menage_id)\nChaque personne PR référence un ménage HR via cette double clé. Ne jamais joindre sur menage_id seul (un même numéro de ménage existe dans plusieurs clusters).\n\n\n\n\n\n\n\n\n\n\nleft_join : enrichir PR avec les caractéristiques du ménage\n\n\n\n\n\n\n\n\nLe nombre de lignes doit être identique, et zéro NA sur les colonnes ajoutées (toutes les personnes ont un ménage parent valide).\n\n\nanti_join : règle d’or de diagnostic"
+  },
+  {
+    "objectID": "J04_gestion_donnees_tidyverse/runtime.html#module-5-indicateurs-par-région-version-non-pondérée",
+    "href": "J04_gestion_donnees_tidyverse/runtime.html#module-5-indicateurs-par-région-version-non-pondérée",
+    "title": "J4 — Gestion des données pour l’analyse spatiale",
+    "section": "4. Module 5 — Indicateurs par région (version non pondérée)",
+    "text": "4. Module 5 — Indicateurs par région (version non pondérée)\nLa pondération propre par plan de sondage stratifié est dans demo.qmd desktop avec srvyr. Ici, version brute pour illustrer le pipeline."
+  },
+  {
+    "objectID": "J04_gestion_donnees_tidyverse/runtime.html#module-6-joindre-à-gadm-adm1",
+    "href": "J04_gestion_donnees_tidyverse/runtime.html#module-6-joindre-à-gadm-adm1",
+    "title": "J4 — Gestion des données pour l’analyse spatiale",
+    "section": "5. Module 6 — Joindre à GADM ADM1",
+    "text": "5. Module 6 — Joindre à GADM ADM1\n\nCharger GADM et normaliser les noms de régions\n\n\n\n\n\n\n\n\n\n\nJointure"
+  },
+  {
+    "objectID": "J04_gestion_donnees_tidyverse/runtime.html#carte-choroplèthe-par-région",
+    "href": "J04_gestion_donnees_tidyverse/runtime.html#carte-choroplèthe-par-région",
+    "title": "J4 — Gestion des données pour l’analyse spatiale",
+    "section": "6. Carte choroplèthe par région",
+    "text": "6. Carte choroplèthe par région"
+  },
+  {
+    "objectID": "J04_gestion_donnees_tidyverse/runtime.html#pour-aller-plus-loin",
+    "href": "J04_gestion_donnees_tidyverse/runtime.html#pour-aller-plus-loin",
+    "title": "J4 — Gestion des données pour l’analyse spatiale",
+    "section": "7. Pour aller plus loin",
+    "text": "7. Pour aller plus loin\nLa version desktop demo.qmd ajoute :\n\nModule 3 complet : détection NA, conceptualisation MCAR/MAR/MNAR, trois stratégies de traitement, piège du NA structurel.\nModule 4 complet : srvyr pour le plan de sondage stratifié à deux degrés, calcul des intervalles de confiance, comparaison brut vs pondéré.\nIndicateurs individus : sortie de personnes_design avec poids HV005 et strate HV022.\nLecture des microfichiers .DTA complets (5 741 variables HR, 394 PR) via haven::read_dta et le helper fetch_dhs_recode_cmr_2018().\n\nLe devoir individuel Q6 est dans exercice.qmd.\n← Retour à l’accueil"
+  },
+  {
+    "objectID": "J02_sf_CRS_vecteurs/runtime.html",
+    "href": "J02_sf_CRS_vecteurs/runtime.html",
+    "title": "J2 — sf et CRS",
+    "section": "",
+    "text": "Mode d’emploi. Cliquez Run code dans chaque cellule pour exécuter. Modifiez le code, recliquez pour relancer. Rien n’est envoyé sur un serveur — tout tourne dans votre navigateur via WebR."
+  },
+  {
+    "objectID": "J02_sf_CRS_vecteurs/runtime.html#charger-les-données-gadm-cameroun",
+    "href": "J02_sf_CRS_vecteurs/runtime.html#charger-les-données-gadm-cameroun",
+    "title": "J2 — sf et CRS",
+    "section": "1. Charger les données GADM Cameroun",
+    "text": "1. Charger les données GADM Cameroun\nLes limites administratives ADM1 et ADM3 sont pré-chargées dans la VM WebR au démarrage de la page. On les lit directement avec sf::read_sf() — aucun téléchargement runtime."
+  },
+  {
+    "objectID": "J02_sf_CRS_vecteurs/runtime.html#reprojeter-et-comparer-trois-crs",
+    "href": "J02_sf_CRS_vecteurs/runtime.html#reprojeter-et-comparer-trois-crs",
+    "title": "J2 — sf et CRS",
+    "section": "2. Reprojeter et comparer trois CRS",
+    "text": "2. Reprojeter et comparer trois CRS\nLe même objet adm1 dans trois CRS différents donne trois superficies différentes. Lambert Cameroun (3119) est le plus fidèle au chiffre officiel (475 442 km²)."
+  },
+  {
+    "objectID": "J02_sf_CRS_vecteurs/runtime.html#buffer-50-km-autour-de-yaoundé",
+    "href": "J02_sf_CRS_vecteurs/runtime.html#buffer-50-km-autour-de-yaoundé",
+    "title": "J2 — sf et CRS",
+    "section": "3. Buffer 50 km autour de Yaoundé",
+    "text": "3. Buffer 50 km autour de Yaoundé\nst_buffer(x, dist = 50000) exige des coordonnées en mètres — d’où la reprojection en UTM 32 N avant l’appel."
+  },
+  {
+    "objectID": "J02_sf_CRS_vecteurs/runtime.html#intersection-quels-arrondissements-dans-le-buffer",
+    "href": "J02_sf_CRS_vecteurs/runtime.html#intersection-quels-arrondissements-dans-le-buffer",
+    "title": "J2 — sf et CRS",
+    "section": "4. Intersection : quels arrondissements dans le buffer ?",
+    "text": "4. Intersection : quels arrondissements dans le buffer ?"
+  },
+  {
+    "objectID": "J02_sf_CRS_vecteurs/runtime.html#dissolve-reconstituer-les-régions-depuis-les-arrondissements",
+    "href": "J02_sf_CRS_vecteurs/runtime.html#dissolve-reconstituer-les-régions-depuis-les-arrondissements",
+    "title": "J2 — sf et CRS",
+    "section": "5. Dissolve : reconstituer les régions depuis les arrondissements",
+    "text": "5. Dissolve : reconstituer les régions depuis les arrondissements\nLe pattern group_by + summarise(geometry = st_union(geometry)) est l’opération dissolve classique en SIG."
+  },
+  {
+    "objectID": "J02_sf_CRS_vecteurs/runtime.html#voronoï-des-10-chefs-lieux-régionaux",
+    "href": "J02_sf_CRS_vecteurs/runtime.html#voronoï-des-10-chefs-lieux-régionaux",
+    "title": "J2 — sf et CRS",
+    "section": "6. Voronoï des 10 chefs-lieux régionaux",
+    "text": "6. Voronoï des 10 chefs-lieux régionaux"
+  },
+  {
+    "objectID": "J02_sf_CRS_vecteurs/runtime.html#validation-des-géométries-après-reprojection",
+    "href": "J02_sf_CRS_vecteurs/runtime.html#validation-des-géométries-après-reprojection",
+    "title": "J2 — sf et CRS",
+    "section": "7. Validation des géométries après reprojection",
+    "text": "7. Validation des géométries après reprojection"
+  },
+  {
+    "objectID": "J02_sf_CRS_vecteurs/runtime.html#pour-aller-plus-loin",
+    "href": "J02_sf_CRS_vecteurs/runtime.html#pour-aller-plus-loin",
+    "title": "J2 — sf et CRS",
+    "section": "8. Pour aller plus loin",
+    "text": "8. Pour aller plus loin\nLa version complète du jour, avec écriture en GeoPackage multi-couches, gestion d’erreurs, et tests sur des fichiers BUCREP officiels, est dans demo.qmd. Le devoir individuel Q6 et son corrigé sont dans exercice.qmd / corrige.qmd.\n← Retour à l’accueil"
+  },
+  {
+    "objectID": "README.html",
+    "href": "README.html",
+    "title": "",
+    "section": "",
+    "text": "Code"
+  },
+  {
+    "objectID": "README.html#comment-cest-organisé",
+    "href": "README.html#comment-cest-organisé",
+    "title": "",
+    "section": "Comment c’est organisé",
+    "text": "Comment c’est organisé\nL’arborescence est par jour : chaque dossier JXX_…/ est autoportant (tout ce qu’il faut pour ce jour-là).\npedagogie/\n├── INDEX.md                              # navigation rapide entre les 10 jours\n├── README.md                             # ce fichier\n├── manuel_animateur.md                   # mode d'emploi pour l'animateur\n├── _quarto.yml                           # config Quarto Live racine (pour le runtime WebR)\n│\n├── _commons/                             # ressources PARTAGÉES J1-J10\n│   ├── helpers/\n│   │   ├── fetch_data.R                  # téléchargement auto + fallback\n│   │   ├── theme_iford.R                 # palette + thème ggplot/tmap\n│   │   └── citations.bib                 # bibliographie commune\n│   └── styles/\n│       ├── slides_revealjs.scss          # thème slides revealjs\n│       └── runtime_quartolive.scss       # thème runtime WebR\n│\n├── J01_intro_R_pensee_spatiale/\n├── J02_sf_CRS_vecteurs/\n├── J03_cartographie_tmap_ggplot/\n├── J04_terra_raster/\n├── J05_jointures_spatiales_demo/\n├── J06_autocorrelation_moran_lisa/\n├── J07_KDE_dasymetrie_teledetection/\n├── J08_population_top_down/\n├── J09_population_bottom_up/\n└── J10_mini_projet_synthese/"
+  },
+  {
+    "objectID": "README.html#contenu-dun-dossier-de-jour",
+    "href": "README.html#contenu-dun-dossier-de-jour",
+    "title": "",
+    "section": "Contenu d’un dossier de jour",
+    "text": "Contenu d’un dossier de jour\nChaque dossier JXX_…/ contient :\n\n\n\n\n\n\n\n\nFichier\nPour qui\nDescription\n\n\n\n\nREADME.md\ntous\nObjectifs, déroulé horaire, données mobilisées, packages utilisés.\n\n\ndemo.qmd\nparticipants\nVersion animation pédagogique complète, rendue en HTML/PDF.\n\n\ndemo.R\nanimateur\nVersion exécutable rapide, à projeter ligne par ligne en salle.\n\n\nslides.qmd\nanimateur\nDeck revealjs (~30-40 slides) pour la projection.\n\n\nruntime.qmd\nparticipants\nVersion WebR — code R exécutable dans le navigateur, zéro install.\n\n\nexercice.qmd\nparticipants\nTP individuel de fin de journée (~30 min).\n\n\ncorrige.qmd\nparticipants\nCorrigé du TP, distribué le lendemain matin."
+  },
+  {
+    "objectID": "README.html#workflow-type-danimation-dune-journée",
+    "href": "README.html#workflow-type-danimation-dune-journée",
+    "title": "",
+    "section": "Workflow type d’animation d’une journée",
+    "text": "Workflow type d’animation d’une journée\n\nLa veille : tester demo.R du jour J en bout-en-bout sur ta machine. Vérifier les téléchargements (GADM, etc.).\nMatin du jour J : ouvrir RStudio sur le projet atelier-r-spatial-iford-2026. Ouvrir slides.qmd côté gauche, demo.R côté droit.\nPendant l’animation : suivre les sessions du README.md. Projeter les slides, exécuter le code du .R à la demande, montrer le demo.qmd pour les explications longues.\nFin de journée : rendre demo.qmd en HTML, distribuer aux participants avec exercice.qmd.\nLe lendemain matin : distribuer corrige.qmd du jour J-1."
+  },
+  {
+    "objectID": "README.html#workflow-type-pour-un-participant-à-domicile-post-atelier",
+    "href": "README.html#workflow-type-pour-un-participant-à-domicile-post-atelier",
+    "title": "",
+    "section": "Workflow type pour un participant à domicile (post-atelier)",
+    "text": "Workflow type pour un participant à domicile (post-atelier)\n\nCloner le dépôt : git clone https://github.com/dzita/atelier-r-spatial-iford-2026.git.\nOuvrir atelier-r-spatial-iford-2026.Rproj dans RStudio.\nLancer source(\"environnement_technique/install_packages.R\") puis verification_setup.R.\nPour rejouer le jour J : ouvrir pedagogie/JXX_…/demo.qmd → cliquer Render.\nPour s’entraîner sans tout télécharger : ouvrir le runtime WebR en ligne sur https://dzita.github.io/atelier-r-spatial-iford-2026/ — R s’exécute directement dans le navigateur (WebR), aucune installation requise. Premier chargement ~30-60 secondes (téléchargement des packages mis en cache ensuite)."
+  },
+  {
+    "objectID": "README.html#conventions",
+    "href": "README.html#conventions",
+    "title": "",
+    "section": "Conventions",
+    "text": "Conventions\n\nSnake_case minuscule pour les noms de fichiers et dossiers (sauf README.md, LICENSE, et le préfixe JXX_ pour le tri).\nTri alphabétique assuré par le préfixe J01_, J02_, …, J10_ (utiliser deux chiffres pour que J10 vienne après J09 et pas après J1).\nHelpers partagés dans _commons/helpers/, sourcés explicitement par les démos via here().\nBibliographie partagée dans _commons/helpers/citations.bib."
+  },
+  {
+    "objectID": "README.html#licence",
+    "href": "README.html#licence",
+    "title": "",
+    "section": "Licence",
+    "text": "Licence\nTout le contenu pédagogique est diffusé sous CC-BY 4.0 (Creative Commons Attribution 4.0 International). La LICENSE sera ajoutée au dépôt avant le 27 juillet 2026."
+  },
+  {
+    "objectID": "README.html#contact",
+    "href": "README.html#contact",
+    "title": "",
+    "section": "Contact",
+    "text": "Contact\nAnimation : Ramesesse Dzita — ramondzita@gmail.com — IFORD × GDSG."
+  },
+  {
+    "objectID": "INDEX.html",
+    "href": "INDEX.html",
+    "title": "",
+    "section": "",
+    "text": "Code"
+  },
+  {
+    "objectID": "INDEX.html#calendrier-et-accès-direct",
+    "href": "INDEX.html#calendrier-et-accès-direct",
+    "title": "",
+    "section": "Calendrier et accès direct",
+    "text": "Calendrier et accès direct\n\n\n\nDate\nJour\nThème\nRuntime navigateur (WebR)\n\n\n\n\nLundi 27 juillet 2026\nJ1\nIntroduction à R et à la pensée spatiale\nLancer J1\n\n\nMardi 28 juillet 2026\nJ2\nDonnées vectorielles sf et CRS\nLancer J2\n\n\nMercredi 29 juillet 2026\nJ3\nDonnées raster avec terra\nLancer J3\n\n\nJeudi 30 juillet 2026\nJ4\nGestion des données + DHS Cameroun 2018\nLancer J4\n\n\nVendredi 31 juillet 2026\nJ5\nVisualisation et cartographie\nLancer J5\n\n\nSamedi 1ᵉʳ août 2026\nJ6\nStatistiques spatiales (Moran’s I, LISA, KDE)\nLancer J6\n\n\nLundi 3 août 2026\nJ7\nPopulation haute résolution + bottom-up\nLancer J7\n\n\nMardi 4 août 2026\nJ8\nTélédétection et observation de la Terre\nLancer J8\n\n\nMercredi 5 août 2026\nJ9\nApplications spatiales sciences sociales\nLancer J9\n\n\nVendredi 7 août 2026\nJ10\nFlux reproductibles + mini-projet + clôture\nLancer J10\n\n\n\n\nDimanche 2 août : repos. Jeudi 6 août : rédaction libre du mini-projet J10."
+  },
+  {
+    "objectID": "INDEX.html#pour-chaque-jour-7-fichiers",
+    "href": "INDEX.html#pour-chaque-jour-7-fichiers",
+    "title": "",
+    "section": "Pour chaque jour, 7 fichiers",
+    "text": "Pour chaque jour, 7 fichiers\nSchéma identique partout :\n\n\n\n\n\n\n\n\nFichier\nRôle\nPour qui\n\n\n\n\nREADME.md\nSynthèse jour, objectifs, déroulé, données\nTout le monde\n\n\nslides.qmd\nSupport revealjs animé (théorie + plan)\nFormateur en salle\n\n\ndemo.qmd\nRapport Quarto complet (toutes opérations)\nRStudio desktop\n\n\ndemo.R\nMiroir condensé demo.qmd (script de salle)\nFormateur en démo\n\n\nruntime.qmd\nWebR exécutable navigateur\nParticipants en autonomie\n\n\nexercice.qmd\nDevoirs Q1-Qn + mini-projet final\nParticipants\n\n\ncorrige.qmd\nSolutions des exercices\nDistribution post-session\n\n\ninstall_packages_day.R\nPackages spécifiques au jour\nFormateur, première install\n\n\n\nLe runtime.qmd n’exécute pas tout : il couvre les opérations portables sur WebR (sf, dplyr, ggplot2, tidyverse). Les opérations non portables (terra, srvyr, spdep, mapedit, ncdf4, ecmwfr, tmap interactif) sont présentées en blocs r lecture seule (avec leur code commenté) et renvoient à demo.qmd pour exécution sous RStudio desktop."
+  },
+  {
+    "objectID": "INDEX.html#programme-détaillé-synthèse-iford",
+    "href": "INDEX.html#programme-détaillé-synthèse-iford",
+    "title": "",
+    "section": "Programme détaillé (synthèse IFORD)",
+    "text": "Programme détaillé (synthèse IFORD)\nJ1 — Introduction à R et à la pensée spatiale. Configuration R & RStudio, bases R pour la science des données, concepts de données spatiales, systèmes de référence de coordonnées (CRS), aperçu des données spatiales en statistiques nationales.\nJ2 — Données vectorielles dans R. Package sf, lecture/écriture Shapefile et GeoJSON, inspection d’objets spatiaux, opérations spatiales de base (sous-réglages, filtrage, jointure), cartographie des frontières administratives du Cameroun, lien avec données CSV (districts de santé).\nJ3 — Données raster avec terra. Packages terra et raster, lecture des rasters dérivés des satellites, opérations raster (découpe, masque, rééchantillonnage, agrégation), combinaison raster + vecteur, étude de cas : MNT SRTM Cameroun.\nJ4 — Gestion des données pour l’analyse spatiale. Remise à niveau Tidyverse (dplyr, tidyr), lien tabulaires/recensements et objets spatiaux, gestion des données manquantes et incohérentes, jointures spatiales et agrégation d’attributs, étude de cas : microfichiers EDS-MICS Cameroun 2018 (HR/PR) liés aux régions ADM1.\nJ5 — Visualisation et cartographie. Cartes thématiques avec ggplot2 et tmap v4, choroplèthes et cartes à points, cartes interactives tmap_mode(\"view\") Leaflet, principes de bonne conception cartographique, production de cartes pour rapports officiels.\nJ6 — Statistiques spatiales et analyse. Analyse des motifs ponctuels, autocorrélation spatiale (Moran's I), estimation de la densité de noyau (KDE), cartographie des points chauds (LISA), étude de cas : répartition spatiale des établissements de santé OSM Cameroun.\nJ7 — Cartographie population haute résolution. Ensembles démographiques en grille (WorldPop R2025A, GHSL, Meta HRSL), approche bottom-up (méthode GDSG, Darin & Leasure 2023), désagrégation des recensements, évaluation et validation, étude de cas : grille de population du Mfoundi (Yaoundé) + 4 sites pilotes RGPH 4 (Bamenda 1, Fongo Tongo, Buea, Mora).\nJ8 — Télédétection et observation de la Terre. Bases de l’imagerie satellite pour les non-spécialistes, accès aux données gratuites (Copernicus, GHSL Built-Up, Google Open Buildings), extraction des statistiques de zones bâties, activation Copernicus EMSR772 Yagoua 2024 (inondations), évaluation exposition bâtiments / population.\nJ9 — Applications en sciences spatiales et sociales. Données de conflits ACLED (Armed Conflict Location & Event Data), réanalyse climatique Copernicus ERA5 (température, anomalies), agrégation temporelle/spatiale, présentations de projets inspirants.\nJ10 — Flux reproductibles et clôture. Rapports reproductibles Quarto multi-format (HTML/PPTX/PDF/Word), contrôle de version Git, automatisation purrr::map_dfr, mini-projet en groupe (grille 6 éléments + restitution 5 min × 6 étapes), principes FAIR, métadonnées géospatiales (ISO 19115), feuille de route INS/BUCREP."
+  },
+  {
+    "objectID": "INDEX.html#ressources-transverses",
+    "href": "INDEX.html#ressources-transverses",
+    "title": "",
+    "section": "Ressources transverses",
+    "text": "Ressources transverses\n\nAu niveau racine du dépôt\n\n../README.md — présentation générale, démarrage rapide, équipe, licence.\n../MANUEL_SUPPORT_TECHNIQUE.md — manuel formateur (architecture, 17 datasets fichés, troubleshooting WebR, FAQ pédagogique par jour, urgences atelier).\n../environnement_technique/install_packages.R — installation globale de tous les packages atelier.\n../environnement_technique/guide_installation.md — guide pas-à-pas pour participants.\n\n\n\nDans pedagogie/\n\n_commons/helpers/fetch_data.R — résolution de chemins datasets (locale + fallback).\n_commons/helpers/citations.bib — bibliographie commune.\n_commons/styles/ — feuilles de style SCSS revealjs + reference-doc PPTX IFORD.\n_commons/img/logo-iford.jpg — logo institutionnel.\n_commons/data/ — extraits légers servis par les runtimes WebR.\n_extensions/r-wasm/live/ — extension Quarto pour le runtime WebR."
+  },
+  {
+    "objectID": "INDEX.html#modes-daccès",
+    "href": "INDEX.html#modes-daccès",
+    "title": "",
+    "section": "Modes d’accès",
+    "text": "Modes d’accès\n\nVous lisez en ligne (le plus simple)\nTout ce site est servi sur GitHub Pages : https://dzita.github.io/atelier-r-spatial-iford-2026/. Aucune installation. WebR charge R et les packages dans la page (~30 s la première fois, en cache ensuite).\n\n\nVous voulez faire tourner les démos completes en local\ngit clone https://github.com/dzita/atelier-r-spatial-iford-2026.git\ncd atelier-r-spatial-iford-2026\nOuvrir atelier-r-spatial-iford-2026.Rproj dans RStudio, puis dans la console :\nsource(\"environnement_technique/install_packages.R\")\nPuis ouvrir le demo.qmd d’un jour pour l’exécuter en direct.\n\n\nVous êtes formateur en salle\nOuvrir demo.R du jour dans RStudio et exécuter ligne par ligne sur projecteur (miroir condensé de demo.qmd, sans la prose narrative)."
+  },
+  {
+    "objectID": "INDEX.html#crédits",
+    "href": "INDEX.html#crédits",
+    "title": "",
+    "section": "Crédits",
+    "text": "Crédits\n\nLead Coordinator GDSG : Pr Mathias Kuépié\nCo-Lead GDSG : Pr Franklin Bouba Djourdebbé\nConception J7/J8/J10 : Edith Darin (Senior Researcher, ex-WorldPop/Oxford, référente bottom-up).\nArchitecture J4/J5/J6 : Jean Saturnin Alogo Samba.\nAnimation unique + lead IT/infrastructure + intégration finale : Ramesesse Dzita — ramondzita@gmail.com.\n\nLe programme officiel IFORD est dans le document de cadrage Atelier sur l'analyse des données Géospatiales avec R.docx. Ce site en est l’implémentation technique reproductible."
+  },
+  {
+    "objectID": "J01_intro_R_pensee_spatiale/runtime.html",
+    "href": "J01_intro_R_pensee_spatiale/runtime.html",
+    "title": "J1 — Intro R + pensée spatiale",
+    "section": "",
+    "text": "Mode d’emploi. Cliquez Run code dans chaque cellule pour exécuter. Modifiez le code librement, recliquez pour relancer. Rien n’est envoyé sur un serveur — tout tourne dans votre navigateur."
+  },
+  {
+    "objectID": "J01_intro_R_pensee_spatiale/runtime.html#r-comme-calculatrice",
+    "href": "J01_intro_R_pensee_spatiale/runtime.html#r-comme-calculatrice",
+    "title": "J1 — Intro R + pensée spatiale",
+    "section": "1. R comme calculatrice",
+    "text": "1. R comme calculatrice\n\n\n\n\n\n\n\n\nÀ essayer : changez les valeurs de pop_est, ou ajoutez une 11ᵉ région imaginaire — puis relancez."
+  },
+  {
+    "objectID": "J01_intro_R_pensee_spatiale/runtime.html#vecteurs-et-opérations-vectorielles",
+    "href": "J01_intro_R_pensee_spatiale/runtime.html#vecteurs-et-opérations-vectorielles",
+    "title": "J1 — Intro R + pensée spatiale",
+    "section": "2. Vecteurs et opérations vectorielles",
+    "text": "2. Vecteurs et opérations vectorielles"
+  },
+  {
+    "objectID": "J01_intro_R_pensee_spatiale/runtime.html#tibble-la-table-de-données-moderne",
+    "href": "J01_intro_R_pensee_spatiale/runtime.html#tibble-la-table-de-données-moderne",
+    "title": "J1 — Intro R + pensée spatiale",
+    "section": "3. Tibble : la table de données moderne",
+    "text": "3. Tibble : la table de données moderne"
+  },
+  {
+    "objectID": "J01_intro_R_pensee_spatiale/runtime.html#les-verbes-dplyr-en-pratique-démographique",
+    "href": "J01_intro_R_pensee_spatiale/runtime.html#les-verbes-dplyr-en-pratique-démographique",
+    "title": "J1 — Intro R + pensée spatiale",
+    "section": "4. Les verbes dplyr en pratique démographique",
+    "text": "4. Les verbes dplyr en pratique démographique"
+  },
+  {
+    "objectID": "J01_intro_R_pensee_spatiale/runtime.html#indicateurs-dhs-cameroun-2018-vraies-données",
+    "href": "J01_intro_R_pensee_spatiale/runtime.html#indicateurs-dhs-cameroun-2018-vraies-données",
+    "title": "J1 — Intro R + pensée spatiale",
+    "section": "5. Indicateurs DHS Cameroun 2018 (vraies données)",
+    "text": "5. Indicateurs DHS Cameroun 2018 (vraies données)\nOn charge directement le CSV agrégé par région issu de l’API DHS StatCompiler (rdhs::dhs_data). Le fichier a été pré-chargé dans la VM WebR au démarrage de la page (déclaré dans webr.resources du YAML) — pas de téléchargement runtime, ça marche en ligne et hors-ligne en preview locale.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nÀ retenir. filter filtre les lignes, select choisit les colonnes, mutate crée une variable, group_by + summarise agrège, pivot_wider réorganise. Cinq verbes pour 80 % de l’analyse de données. Les valeurs ci-dessus sont les vraies estimations DHS 2018 déjà pondérées par le plan de sondage."
+  },
+  {
+    "objectID": "J01_intro_R_pensee_spatiale/runtime.html#première-carte-vraies-limites-gadm-cameroun",
+    "href": "J01_intro_R_pensee_spatiale/runtime.html#première-carte-vraies-limites-gadm-cameroun",
+    "title": "J1 — Intro R + pensée spatiale",
+    "section": "6. Première carte — vraies limites GADM Cameroun",
+    "text": "6. Première carte — vraies limites GADM Cameroun\nLe fichier GADM v4.1 du Cameroun (10 régions, ~190 Ko) est pré-chargé dans la VM WebR au démarrage de la page. On l’ouvre directement avec sf::read_sf() — pas de réseau au runtime, ça marche aussi quand tu n’as pas internet.\n\n\n\n\n\n\n\n\nEt maintenant la vraie carte des 10 régions du Cameroun, avec les contours administratifs officiels :\n\n\n\n\n\n\n\n\n\nÀ essayer : ajoute ../_commons/data/gadm41_CMR_2.json à la liste webr.resources du YAML, recharge la page, puis dans une cellule fais adm2 &lt;- read_sf(\"_commons/data/gadm41_CMR_2.json\") et trace une carte par département. Tu verras un découpage 5 à 10 fois plus fin."
+  },
+  {
+    "objectID": "J01_intro_R_pensee_spatiale/runtime.html#bis.-choroplèthe-densité-carte-thématique-complète",
+    "href": "J01_intro_R_pensee_spatiale/runtime.html#bis.-choroplèthe-densité-carte-thématique-complète",
+    "title": "J1 — Intro R + pensée spatiale",
+    "section": "6 bis. Choroplèthe densité — carte thématique complète",
+    "text": "6 bis. Choroplèthe densité — carte thématique complète\nOn combine la géométrie ADM1 avec le tibble de population créé en section 3, on calcule la densité (habitants par km²), et on colore."
+  },
+  {
+    "objectID": "J01_intro_R_pensee_spatiale/runtime.html#distance-entre-yaoundé-et-douala-démo-crs",
+    "href": "J01_intro_R_pensee_spatiale/runtime.html#distance-entre-yaoundé-et-douala-démo-crs",
+    "title": "J1 — Intro R + pensée spatiale",
+    "section": "7. Distance entre Yaoundé et Douala — démo CRS",
+    "text": "7. Distance entre Yaoundé et Douala — démo CRS\n\n\n\n\n\n\n\n\n\nLa distance Yaoundé–Douala sur la route est d’environ 240 km. Le calcul « naïf » sur les degrés donne un nombre sans dimension — vérifiez par vous-même qu’il ne ressemble en rien aux 240 km attendus."
+  },
+  {
+    "objectID": "J01_intro_R_pensee_spatiale/runtime.html#pour-aller-plus-loin",
+    "href": "J01_intro_R_pensee_spatiale/runtime.html#pour-aller-plus-loin",
+    "title": "J1 — Intro R + pensée spatiale",
+    "section": "8. Pour aller plus loin",
+    "text": "8. Pour aller plus loin\nCe runtime couvre les bases manipulables dans le navigateur. La démo complète du jour (avec tmap pour les cartes thématiques publiables, exports PNG/PDF haute résolution, et le pipeline de chargement via fetch_data.R) est dans pedagogie/J01_intro_R_pensee_spatiale/demo.qmd — à ouvrir dans RStudio ou Posit Cloud avec R installé localement.\nLe devoir individuel Q6 (cartographier votre région d’origine) est dans exercice.qmd ; le corrigé pédagogique est dans corrige.qmd.\n← Retour à l’accueil"
+  },
+  {
+    "objectID": "J03_donnees_raster_terra/runtime.html",
+    "href": "J03_donnees_raster_terra/runtime.html",
+    "title": "J3 — Données raster avec terra",
+    "section": "",
+    "text": "Mode d’emploi. Les cellules Run code (cellules bleues {webr}) tournent dans le navigateur — clique pour exécuter. Les blocs r simples (non bleus) sont en lecture seule : ils montrent le code raster à étudier et à exécuter dans RStudio desktop.\nPourquoi cette séparation ? Le package R terra (raster + GDAL/PROJ/GEOS compilés en WASM, ~15 Mo) déclenche une régression connue de WebR 0.6 : TypeError: resolved is not a function au moment du téléchargement. Tant que ce bug amont n’est pas corrigé, la partie raster ne peut pas s’exécuter dans le navigateur — mais les lignes restent visibles pour la lecture et la copie vers desktop.\nDonnées 100 % réelles : limites administratives officielles GADM v4.1, MNT SRTM agrégé 30 arc-sec (~1 km) du Cameroun (NASA/USGS)."
+  },
+  {
+    "objectID": "J03_donnees_raster_terra/runtime.html#charger-la-silhouette-et-les-régions-du-cameroun",
+    "href": "J03_donnees_raster_terra/runtime.html#charger-la-silhouette-et-les-régions-du-cameroun",
+    "title": "J3 — Données raster avec terra",
+    "section": "1. Charger la silhouette et les régions du Cameroun",
+    "text": "1. Charger la silhouette et les régions du Cameroun"
+  },
+  {
+    "objectID": "J03_donnees_raster_terra/runtime.html#carte-de-référence-silhouette-régions",
+    "href": "J03_donnees_raster_terra/runtime.html#carte-de-référence-silhouette-régions",
+    "title": "J3 — Données raster avec terra",
+    "section": "2. Carte de référence — silhouette + régions",
+    "text": "2. Carte de référence — silhouette + régions"
+  },
+  {
+    "objectID": "J03_donnees_raster_terra/runtime.html#vecteur-vs-raster",
+    "href": "J03_donnees_raster_terra/runtime.html#vecteur-vs-raster",
+    "title": "J3 — Données raster avec terra",
+    "section": "3. Vecteur vs raster",
+    "text": "3. Vecteur vs raster\nLe vecteur (points, lignes, polygones) décrit des entités discrètes : un département, une route, une ville. Le raster (grille de pixels) décrit des phénomènes continus : altitude, température, densité, indice de végétation.\nPour la plupart des analyses spatiales utiles à la statistique publique, on combine les deux : on prend un raster continu (par exemple un MNT SRTM ou une grille WorldPop), et on l’agrège par polygone administratif (extraction zonale) pour obtenir une valeur par région ou par département.\nLes sections 3 bis à 3 octies ci-dessous présentent le pipeline complet terra à reproduire dans RStudio desktop. Le code y est commenté ligne à ligne. Note : sur un poste avec R installé, ouvrir demo.qmd du même dossier exécute ce pipeline en direct."
+  },
+  {
+    "objectID": "J03_donnees_raster_terra/runtime.html#bis.-charger-terra-et-le-srtm-cameroun",
+    "href": "J03_donnees_raster_terra/runtime.html#bis.-charger-terra-et-le-srtm-cameroun",
+    "title": "J3 — Données raster avec terra",
+    "section": "3 bis. Charger terra et le SRTM Cameroun",
+    "text": "3 bis. Charger terra et le SRTM Cameroun\n# sf = vecteur ; terra = raster (grille de pixels, successeur de l'ancien package raster).\nlibrary(sf)\nlibrary(terra)\nlibrary(dplyr)\nlibrary(ggplot2)\n\n# Limites administratives du Cameroun (GADM v4.1).\nadm0 &lt;- read_sf(\"../_commons/data/gadm41_CMR_0.json\")\n\n# MNT = Modele Numerique de Terrain : une image ou chaque pixel = une altitude.\n# SRTM = mission satellite NASA/USGS qui a mesure l'altitude du globe en 2000.\n# rast() ouvre le fichier sans tout charger en RAM (juste un pointeur sur disque).\nsrtm &lt;- rast(\"../_commons/data/cmr_srtm/srtm_cmr_30s.tif\")\nnames(srtm) &lt;- \"elevation_m\"\nsrtm"
+  },
+  {
+    "objectID": "J03_donnees_raster_terra/runtime.html#ter.-inspecter-le-spatraster",
+    "href": "J03_donnees_raster_terra/runtime.html#ter.-inspecter-le-spatraster",
+    "title": "J3 — Données raster avec terra",
+    "section": "3 ter. Inspecter le SpatRaster",
+    "text": "3 ter. Inspecter le SpatRaster\n# Resolution = taille d'un pixel au sol. nlyr = nombre de \"couches\" (bandes).\n# Pour un MNT, 1 bande suffit (l'altitude) ; une image satellite peut en avoir 13.\nc(resolution = res(srtm)[1],\n  nb_cellules = ncell(srtm),\n  nb_bandes   = nlyr(srtm),\n  EPSG        = crs(srtm, describe = TRUE)$code)\n\n# ext() = emprise geographique (xmin, xmax, ymin, ymax) couverte par le raster.\next(srtm)"
+  },
+  {
+    "objectID": "J03_donnees_raster_terra/runtime.html#quater.-crop-mask-sur-la-silhouette-du-cameroun",
+    "href": "J03_donnees_raster_terra/runtime.html#quater.-crop-mask-sur-la-silhouette-du-cameroun",
+    "title": "J3 — Données raster avec terra",
+    "section": "3 quater. Crop + mask sur la silhouette du Cameroun",
+    "text": "3 quater. Crop + mask sur la silhouette du Cameroun\n# crop() = decoupe le raster a l'emprise rectangulaire (bbox) du vecteur.\n# mask() = met NA sur tous les pixels hors des polygones (silhouette pays).\n# On enchaine TOUJOURS crop puis mask : crop reduit la taille, mask nettoie les bords.\nsrtm_cmr        &lt;- crop(srtm, adm0)\nsrtm_cmr_masked &lt;- mask(srtm_cmr, vect(adm0))\n\nplot(srtm_cmr_masked,\n     main = \"Altitude (m) — Cameroun\",\n     plg  = list(title = \"m\"),\n     sub  = \"Source : NASA SRTM 30 arc-sec · IFORD x GDSG 2026\")"
+  },
+  {
+    "objectID": "J03_donnees_raster_terra/runtime.html#quinquies.-algèbre-raster-zones-de-basse-altitude",
+    "href": "J03_donnees_raster_terra/runtime.html#quinquies.-algèbre-raster-zones-de-basse-altitude",
+    "title": "J3 — Données raster avec terra",
+    "section": "3 quinquies. Algèbre raster — zones de basse altitude",
+    "text": "3 quinquies. Algèbre raster — zones de basse altitude\n# Algebre raster : on applique une operation a chaque pixel (cellule par cellule).\n# Ici \"&lt; 500\" renvoie 1 (vrai) si l'altitude est &lt; 500 m, 0 sinon, NA hors masque.\nbasse_alt &lt;- srtm_cmr_masked &lt; 500\nplot(basse_alt,\n     main = \"Zones de basse altitude (&lt; 500 m) — Cameroun\",\n     plg  = list(title = \"classe\"),\n     sub  = \"Source : NASA SRTM 30 arc-sec · IFORD x GDSG 2026\")"
+  },
+  {
+    "objectID": "J03_donnees_raster_terra/runtime.html#sexies.-classification-multi-niveaux",
+    "href": "J03_donnees_raster_terra/runtime.html#sexies.-classification-multi-niveaux",
+    "title": "J3 — Données raster avec terra",
+    "section": "3 sexies. Classification multi-niveaux",
+    "text": "3 sexies. Classification multi-niveaux\n# Classification = regrouper les pixels par tranches (ici 4 classes d'altitude).\n# ifel() est l'equivalent raster de if_else() : SI condition ALORS x SINON y.\nzones &lt;- ifel(srtm_cmr_masked &lt; 200, 1,\n        ifel(srtm_cmr_masked &lt; 500, 2,\n        ifel(srtm_cmr_masked &lt; 1000, 3, 4)))\nplot(zones,\n     main = \"Classes d'altitude — Cameroun\",\n     plg  = list(title = \"classe (1=&lt;200m, 2=200-500, 3=500-1000, 4=&gt;1000)\"),\n     sub  = \"Source : NASA SRTM 30 arc-sec · IFORD x GDSG 2026\")"
+  },
+  {
+    "objectID": "J03_donnees_raster_terra/runtime.html#septies.-statistique-globale",
+    "href": "J03_donnees_raster_terra/runtime.html#septies.-statistique-globale",
+    "title": "J3 — Données raster avec terra",
+    "section": "3 septies. Statistique globale",
+    "text": "3 septies. Statistique globale\n# global() = statistique calculee sur TOUS les pixels valides du raster.\n# Renvoie un data.frame ; ici on arrondit en m.\nglobal(srtm_cmr_masked, c(\"mean\", \"min\", \"max\", \"sd\"), na.rm = TRUE) |&gt; round()"
+  },
+  {
+    "objectID": "J03_donnees_raster_terra/runtime.html#octies.-extraction-zonale-par-région-choroplèthe",
+    "href": "J03_donnees_raster_terra/runtime.html#octies.-extraction-zonale-par-région-choroplèthe",
+    "title": "J3 — Données raster avec terra",
+    "section": "3 octies. Extraction zonale par région + choroplèthe",
+    "text": "3 octies. Extraction zonale par région + choroplèthe\nadm1 &lt;- read_sf(\"../_commons/data/gadm41_CMR_1.json\")\n\n# Extraction zonale = pour chaque polygone (region), on resume les pixels\n# qui tombent dedans (ici la moyenne d'altitude). Pont raster &lt;-&gt; vecteur.\nelev_par_region &lt;- terra::extract(srtm_cmr_masked, vect(adm1),\n                                   fun = \"mean\", na.rm = TRUE)\nelev_par_region$NAME_1 &lt;- adm1$NAME_1\n\nelev_par_region |&gt;\n  select(NAME_1, elev_moy = elevation_m) |&gt;\n  mutate(elev_moy = round(elev_moy)) |&gt;\n  arrange(desc(elev_moy))\n\n# Choroplethe = carte ou la couleur de chaque polygone code une valeur numerique.\nadm1_elev &lt;- adm1 |&gt;\n  mutate(elev_moy = round(elev_par_region$elevation_m))\n\nggplot(adm1_elev) +\n  geom_sf(aes(fill = elev_moy), color = \"white\", linewidth = 0.3) +\n  scale_fill_viridis_c(option = \"G\", name = \"Élévation\\nmoyenne (m)\") +\n  geom_sf_label(aes(label = NAME_1), size = 2.1,\n                color = \"white\", fontface = \"bold\") +\n  labs(title    = \"Élévation moyenne par région — Cameroun\",\n       subtitle = \"MNT SRTM 30 arc-sec (NASA/USGS) · terra::extract\",\n       caption  = \"Source : NASA SRTM 30 arc-sec · GADM v4.1 · IFORD x GDSG 2026\") +\n  theme_minimal() +\n  theme(axis.text = element_blank(), axis.ticks = element_blank(),\n        panel.grid = element_blank())"
+  },
+  {
+    "objectID": "J03_donnees_raster_terra/runtime.html#substitut-vecteur-superficie-des-régions",
+    "href": "J03_donnees_raster_terra/runtime.html#substitut-vecteur-superficie-des-régions",
+    "title": "J3 — Données raster avec terra",
+    "section": "4. Substitut vecteur — superficie des régions",
+    "text": "4. Substitut vecteur — superficie des régions\nEn attendant que terra soit utilisable en WebR, voici l’équivalent vecteur du pattern d’extraction zonale : on calcule une grandeur par polygone (ici la superficie) directement avec sf."
+  },
+  {
+    "objectID": "J03_donnees_raster_terra/runtime.html#carte-choroplèthe-superficie-des-régions",
+    "href": "J03_donnees_raster_terra/runtime.html#carte-choroplèthe-superficie-des-régions",
+    "title": "J3 — Données raster avec terra",
+    "section": "5. Carte choroplèthe — superficie des régions",
+    "text": "5. Carte choroplèthe — superficie des régions\nL’équivalent vecteur d’une choroplèthe raster : la couleur encode une valeur calculée par polygone."
+  },
+  {
+    "objectID": "J03_donnees_raster_terra/runtime.html#pour-la-suite",
+    "href": "J03_donnees_raster_terra/runtime.html#pour-la-suite",
+    "title": "J3 — Données raster avec terra",
+    "section": "6. Pour la suite",
+    "text": "6. Pour la suite\nOuvre pedagogie/J03_donnees_raster_terra/demo.qmd dans RStudio desktop pour l’expérience raster exécutable :\n\nMNT SRTM 30 arc-sec chargé via rast().\nCrop + mask sur la silhouette du Cameroun.\nAlgèbre raster : zones de basse altitude (&lt; 500 m).\nClassification multi-niveaux : 4 tranches d’altitude.\nStatistique globale : moyenne, min, max, écart-type sur les pixels valides.\nExtraction zonale : altitude moyenne par région avec terra::extract.\nChoroplèthe d’élévation par région : carte thématique finale.\n\nLe devoir individuel Q6 raster est dans exercice.qmd, son corrigé dans corrige.qmd.\n← Retour à l’accueil"
+  },
+  {
+    "objectID": "J05_visualisation_cartographie/runtime.html",
+    "href": "J05_visualisation_cartographie/runtime.html",
+    "title": "J5 — Visualisation et cartographie",
+    "section": "",
+    "text": "Mode d’emploi. Cliquez Run code dans chaque cellule pour exécuter. Modifiez le code, recliquez pour relancer. Tout tourne dans votre navigateur via WebR.\nNote importante : tmap n’est pas disponible sur WebR (trop de dépendances). Ce runtime utilise ggplot2 + geom_sf, qui produit des résultats équivalents en mode statique. La démo tmap complète est dans demo.qmd à exécuter sous RStudio.\nDonnées réelles : indicateurs EDS-MICS Cameroun 2018 agrégés par région, calculés localement depuis le microfichier DHS via srvyr (cf. pedagogie/_commons/data/dhs_cmr/00_telecharger_dhs_indicateurs.R). Aucune simulation."
+  },
+  {
+    "objectID": "J05_visualisation_cartographie/runtime.html#charger-gadm-indicateurs-dhs-réels",
+    "href": "J05_visualisation_cartographie/runtime.html#charger-gadm-indicateurs-dhs-réels",
+    "title": "J5 — Visualisation et cartographie",
+    "section": "1. Charger GADM + indicateurs DHS réels",
+    "text": "1. Charger GADM + indicateurs DHS réels"
+  },
+  {
+    "objectID": "J05_visualisation_cartographie/runtime.html#passer-en-format-wide-et-joindre-à-gadm",
+    "href": "J05_visualisation_cartographie/runtime.html#passer-en-format-wide-et-joindre-à-gadm",
+    "title": "J5 — Visualisation et cartographie",
+    "section": "2. Passer en format wide et joindre à GADM",
+    "text": "2. Passer en format wide et joindre à GADM"
+  },
+  {
+    "objectID": "J05_visualisation_cartographie/runtime.html#choroplèthe-minimale-ggplot2",
+    "href": "J05_visualisation_cartographie/runtime.html#choroplèthe-minimale-ggplot2",
+    "title": "J5 — Visualisation et cartographie",
+    "section": "3. Choroplèthe minimale ggplot2",
+    "text": "3. Choroplèthe minimale ggplot2"
+  },
+  {
+    "objectID": "J05_visualisation_cartographie/runtime.html#choroplèthe-publiable-avec-décorations",
+    "href": "J05_visualisation_cartographie/runtime.html#choroplèthe-publiable-avec-décorations",
+    "title": "J5 — Visualisation et cartographie",
+    "section": "4. Choroplèthe publiable avec décorations",
+    "text": "4. Choroplèthe publiable avec décorations"
+  },
+  {
+    "objectID": "J05_visualisation_cartographie/runtime.html#comparer-deux-indicateurs-avec-facet_wrap",
+    "href": "J05_visualisation_cartographie/runtime.html#comparer-deux-indicateurs-avec-facet_wrap",
+    "title": "J5 — Visualisation et cartographie",
+    "section": "5. Comparer deux indicateurs avec facet_wrap",
+    "text": "5. Comparer deux indicateurs avec facet_wrap\nAu lieu de tmap_arrange(), on utilise les facettes ggplot2 après avoir restructuré la table en format long avec tidyr::pivot_longer()."
+  },
+  {
+    "objectID": "J05_visualisation_cartographie/runtime.html#choix-de-palette-viridis-vs-colorbrewer",
+    "href": "J05_visualisation_cartographie/runtime.html#choix-de-palette-viridis-vs-colorbrewer",
+    "title": "J5 — Visualisation et cartographie",
+    "section": "6. Choix de palette : viridis vs ColorBrewer",
+    "text": "6. Choix de palette : viridis vs ColorBrewer"
+  },
+  {
+    "objectID": "J05_visualisation_cartographie/runtime.html#à-essayer",
+    "href": "J05_visualisation_cartographie/runtime.html#à-essayer",
+    "title": "J5 — Visualisation et cartographie",
+    "section": "7. À essayer",
+    "text": "7. À essayer\n\nModifie le code pour cartographier tx_eau_ameliore (accès eau améliorée) au lieu de tx_alpha_femmes. Change le titre, choisis une palette adaptée (séquentielle bleue). Relance la cellule."
+  },
+  {
+    "objectID": "J05_visualisation_cartographie/runtime.html#pour-aller-plus-loin",
+    "href": "J05_visualisation_cartographie/runtime.html#pour-aller-plus-loin",
+    "title": "J5 — Visualisation et cartographie",
+    "section": "8. Pour aller plus loin",
+    "text": "8. Pour aller plus loin\nLa version complète du jour avec tmap (modes plot/view, classifications Jenks/quantiles, compass, scalebar, multi-panel tmap_arrange, export PNG/PDF/HTML interactif, palette divergente sur les écarts à la moyenne nationale) est dans demo.qmd, à exécuter sous RStudio. Le devoir individuel Q6 est dans exercice.qmd.\n← Retour à l’accueil"
+  },
+  {
+    "objectID": "J07_population_haute_resolution/runtime.html",
+    "href": "J07_population_haute_resolution/runtime.html",
+    "title": "J7 — Cartographie de la population à haute résolution",
+    "section": "",
+    "text": "Mode d’emploi. Les cellules Run code (cellules bleues {webr}) tournent dans le navigateur — clique pour exécuter. Les blocs r simples (non bleus) sont en lecture seule : ils montrent le code raster à étudier et à exécuter dans RStudio desktop.\nPourquoi cette séparation ? Le package R terra (raster + GDAL/PROJ/GEOS compilés en WASM, ~15 Mo) déclenche une régression connue de WebR 0.6 : TypeError: resolved is not a function au moment du téléchargement. Tant que ce bug amont n’est pas corrigé, la partie raster (WorldPop Mfoundi) ne peut pas s’exécuter dans le navigateur — mais les lignes restent visibles pour la lecture et la copie vers desktop.\nNote technique : tmap mode view, mapedit et exactextractr ne sont pas portables sur WebR non plus. Pour l’expérience complète (mosaïque GHSL, dessin de zone interactive, agrégation exactextractr, comparaison WorldPop vs GHSL), voir demo.qmd desktop.\nDonnées 100 % réelles : OCHA COD-PS Cameroun 2025 (table officielle population par région) + GADM v4.1 ADM1 + extraits WorldPop constrained R2025A pour le Mfoundi (Yaoundé). Aucun raster simulé.\nConception pédagogique : Edith Darin (GDSG/IFORD). Intégration runtime : Ramesesse Dzita."
+  },
+  {
+    "objectID": "J07_population_haute_resolution/runtime.html#charger-le-csv-admin-pop-et-la-couche-adm1",
+    "href": "J07_population_haute_resolution/runtime.html#charger-le-csv-admin-pop-et-la-couche-adm1",
+    "title": "J7 — Cartographie de la population à haute résolution",
+    "section": "1. Charger le CSV admin-pop et la couche ADM1",
+    "text": "1. Charger le CSV admin-pop et la couche ADM1\nOn combine deux fichiers : un CSV tabulaire OCHA COD-PS (la population officielle par région) et un GeoJSON GADM (les contours géographiques des 10 régions). Pour cartographier la population, il faut joindre les deux ; cette première cellule se contente de les charger et de vérifier que les volumes correspondent."
+  },
+  {
+    "objectID": "J07_population_haute_resolution/runtime.html#choroplèthe-de-la-population-totale-par-région-exercice-0",
+    "href": "J07_population_haute_resolution/runtime.html#choroplèthe-de-la-population-totale-par-région-exercice-0",
+    "title": "J7 — Cartographie de la population à haute résolution",
+    "section": "2. Choroplèthe de la population totale par région (Exercice 0)",
+    "text": "2. Choroplèthe de la population totale par région (Exercice 0)\nUn choroplèthe est une carte ou la couleur du polygone code la valeur d’une variable. Ici on colore chaque region selon sa population totale. GADM utilise les noms français pour le Cameroun → clé ADM1_FR. La jointure doit retourner 0 NA si toutes les régions matchent."
+  },
+  {
+    "objectID": "J07_population_haute_resolution/runtime.html#variable-dérivée-ratio-fh-exercice-0b",
+    "href": "J07_population_haute_resolution/runtime.html#variable-dérivée-ratio-fh-exercice-0b",
+    "title": "J7 — Cartographie de la population à haute résolution",
+    "section": "3. Variable dérivée : ratio F/H (Exercice 0b)",
+    "text": "3. Variable dérivée : ratio F/H (Exercice 0b)\nUne variable derivee est calculee a partir d’autres colonnes. Ici ratio_fm = F_TL / M_TL : &gt; 1 = plus de femmes, &lt; 1 = plus d’hommes. Une palette divergente est centree sur une valeur pivot (ici 1, l’equilibre demographique) et utilise deux teintes opposees pour les ecarts."
+  },
+  {
+    "objectID": "J07_population_haute_resolution/runtime.html#part-de-la-population-jeune-exercice-0c",
+    "href": "J07_population_haute_resolution/runtime.html#part-de-la-population-jeune-exercice-0c",
+    "title": "J7 — Cartographie de la population à haute résolution",
+    "section": "4. Part de la population jeune (Exercice 0c)",
+    "text": "4. Part de la population jeune (Exercice 0c)\nLe CSV COD-PS contient une pyramide des ages complete (T_00_04, T_05_09, …). On somme les trois premieres classes (0-14 ans) puis on rapporte au total pour obtenir une part en %. Indicateur cle pour les politiques de scolarisation."
+  },
+  {
+    "objectID": "J07_population_haute_resolution/runtime.html#densité-par-région-avec-échelle-log-exercice-6",
+    "href": "J07_population_haute_resolution/runtime.html#densité-par-région-avec-échelle-log-exercice-6",
+    "title": "J7 — Cartographie de la population à haute résolution",
+    "section": "5. Densité par région avec échelle log (Exercice 6)",
+    "text": "5. Densité par région avec échelle log (Exercice 6)\nLa densite (hab/km²) normalise la population par la surface : indispensable pour comparer des régions de tailles inégales (Extrême-Nord ~34 000 km² vs Est ~109 000 km²). Quand le facteur de variation est grand (&gt;10x), l’échelle log révèle les contrastes que l’échelle linéaire écraserait."
+  },
+  {
+    "objectID": "J07_population_haute_resolution/runtime.html#pipeline-raster-worldpop-lecture-seule",
+    "href": "J07_population_haute_resolution/runtime.html#pipeline-raster-worldpop-lecture-seule",
+    "title": "J7 — Cartographie de la population à haute résolution",
+    "section": "6. Pipeline raster WorldPop (lecture seule)",
+    "text": "6. Pipeline raster WorldPop (lecture seule)\nLes sections 6 bis à 6 sexies ci-dessous présentent le pipeline raster terra à reproduire dans RStudio desktop. Le code y est commenté ligne à ligne. Sur un poste avec R installé, ouvrir demo.qmd du même dossier exécute ce pipeline en direct."
+  },
+  {
+    "objectID": "J07_population_haute_resolution/runtime.html#bis.-charger-un-raster-worldpop-extrait-mfoundi",
+    "href": "J07_population_haute_resolution/runtime.html#bis.-charger-un-raster-worldpop-extrait-mfoundi",
+    "title": "J7 — Cartographie de la population à haute résolution",
+    "section": "6 bis. Charger un raster WorldPop (extrait Mfoundi)",
+    "text": "6 bis. Charger un raster WorldPop (extrait Mfoundi)\nUn raster de population (population grid) est une grille régulière où chaque cellule porte une estimation du nombre d’habitants. WorldPop (université de Southampton) utilise la méthode top-down (Stevens et al. 2015) : on part d’un total officiel par unité administrative puis on redistribue les habitants pixel par pixel selon des covariables (bâtiment, routes, lumières nocturnes…). La version constrained R2025A (dernière release 2024) contraint la redistribution aux pixels réellement bâtis.\nLes TIF WorldPop complets pèsent ~25 Mo chacun. On charge un extrait sur le département du Mfoundi (Yaoundé), recadré et compressé à ~1 Mo.\n# terra remplace l'ancien `raster` : plus rapide, plus moderne, base C++.\nlibrary(terra)\n\n# rast() ouvre le GeoTIFF SANS charger tous les pixels en RAM (pointeur disque).\npop_2025 &lt;- rast(\"../_commons/data/jour_07_extraits/pop_2025_mfoundi.tif\")\npop_2015 &lt;- rast(\"../_commons/data/jour_07_extraits/pop_2015_mfoundi.tif\")\npop_2030 &lt;- rast(\"../_commons/data/jour_07_extraits/pop_2030_mfoundi.tif\")\n\n# print() affiche les metadonnees : dimensions, CRS, etendue, resolution.\nprint(pop_2025)\n# Resolution WorldPop = 0.000833 deg ~ 92.5 m a l'equateur (on parle de \"100 m\").\ncat(\"Résolution (degrés) :\", res(pop_2025), \"\\n\")\ncat(\"Cellules non-NA :\", sum(!is.na(values(pop_2025))), \"\\n\")"
+  },
+  {
+    "objectID": "J07_population_haute_resolution/runtime.html#ter.-visualiser-la-grille-mfoundi-2025",
+    "href": "J07_population_haute_resolution/runtime.html#ter.-visualiser-la-grille-mfoundi-2025",
+    "title": "J7 — Cartographie de la population à haute résolution",
+    "section": "6 ter. Visualiser la grille Mfoundi 2025",
+    "text": "6 ter. Visualiser la grille Mfoundi 2025\nterra::plot est rapide et léger. La valeur d’une cellule = habitants/pixel (1 pixel = 100m x 100m ~ 1 hectare).\n# hcl.colors() = palette HCL perceptuellement uniforme, rev=TRUE inverse l'ordre.\nplot(pop_2025,\n     main = \"WorldPop constrained R2025A — Mfoundi (Yaoundé) — 2025\",\n     sub  = \"Méthode top-down · unité : hab/pixel (100m x 100m)\",\n     col  = hcl.colors(20, \"YlOrRd\", rev = TRUE))\n# Caption manuel (terra n'a pas d'option caption native) :\nmtext(\"Source : WorldPop R2025A constrained 100m · IFORD x GDSG 2026\",\n      side = 1, line = 4, cex = 0.7, adj = 1)"
+  },
+  {
+    "objectID": "J07_population_haute_resolution/runtime.html#quater.-calculer-leffectif-total",
+    "href": "J07_population_haute_resolution/runtime.html#quater.-calculer-leffectif-total",
+    "title": "J7 — Cartographie de la population à haute résolution",
+    "section": "6 quater. Calculer l’effectif total",
+    "text": "6 quater. Calculer l’effectif total\nglobal(raster, \"sum\") somme TOUTES les cellules non-NA. Comme chaque cellule contient déjà un nombre d’habitants (pas une densité), la somme donne directement l’effectif total estimé.\n# Sur l'extrait Mfoundi : pas besoin de crop+mask, le raster est deja recadre.\npop_yaounde_2025 &lt;- global(pop_2025, \"sum\", na.rm = TRUE)$sum\npop_yaounde_2015 &lt;- global(pop_2015, \"sum\", na.rm = TRUE)$sum\npop_yaounde_2030 &lt;- global(pop_2030, \"sum\", na.rm = TRUE)$sum\n\ncat(\"Yaoundé 2015 :\", format(round(pop_yaounde_2015), big.mark = \" \"), \"habitants\\n\")\ncat(\"Yaoundé 2025 :\", format(round(pop_yaounde_2025), big.mark = \" \"), \"habitants\\n\")\ncat(\"Yaoundé 2030 :\", format(round(pop_yaounde_2030), big.mark = \" \"), \"habitants (projection)\\n\")\ncat(\"Croissance 2015-2025 :\",\n    round(100 * (pop_yaounde_2025 - pop_yaounde_2015) / pop_yaounde_2015, 1),\n    \"%\\n\")"
+  },
+  {
+    "objectID": "J07_population_haute_resolution/runtime.html#quinquies.-trajectoire-2015-2030",
+    "href": "J07_population_haute_resolution/runtime.html#quinquies.-trajectoire-2015-2030",
+    "title": "J7 — Cartographie de la population à haute résolution",
+    "section": "6 quinquies. Trajectoire 2015-2030",
+    "text": "6 quinquies. Trajectoire 2015-2030\nOn construit un tibble à 3 lignes (une par année) et on calcule la croissance relative par rapport à 2015 (année de référence). Les projections WorldPop 2030 reposent sur des scénarios SSP du GIEC adaptés à l’Afrique.\nlibrary(tibble)\n\n# population[1] = valeur de la premiere ligne (2015). C'est notre baseline.\nevol &lt;- tibble(\n  annee      = c(2015, 2025, 2030),\n  population = c(round(pop_yaounde_2015),\n                 round(pop_yaounde_2025),\n                 round(pop_yaounde_2030))\n) |&gt;\n  mutate(croissance_vs_2015 = round(100 * (population - population[1]) /\n                                    population[1], 1))\n\nprint(evol)\n\n# Graphique en ligne : geom_line + geom_point pour bien voir les 3 jalons.\nggplot(evol, aes(x = annee, y = population)) +\n  geom_line(colour = \"#2C7FB8\", linewidth = 1) +\n  geom_point(colour = \"#2C7FB8\", size = 3) +\n  scale_y_continuous(labels = comma) +\n  scale_x_continuous(breaks = c(2015, 2025, 2030)) +\n  labs(title    = \"Évolution de la population à Yaoundé (Mfoundi) — 2015 / 2025 / 2030\",\n       subtitle = \"Top-down WorldPop constrained R2025A · projection SSP pour 2030\",\n       caption  = \"Source : WorldPop R2025A constrained 100m · IFORD x GDSG 2026\",\n       x = \"Année\", y = \"Population estimée (habitants)\") +\n  theme_minimal()"
+  },
+  {
+    "objectID": "J07_population_haute_resolution/runtime.html#sexies.-carte-des-3-époques-côte-à-côte",
+    "href": "J07_population_haute_resolution/runtime.html#sexies.-carte-des-3-époques-côte-à-côte",
+    "title": "J7 — Cartographie de la population à haute résolution",
+    "section": "6 sexies. Carte des 3 époques côte-à-côte",
+    "text": "6 sexies. Carte des 3 époques côte-à-côte\nRègle d’or : pour comparer deux cartes raster temporelles, il faut une plage de valeurs commune (sinon l’œil interprète des couleurs identiques comme des valeurs identiques alors que les bornes diffèrent). On calcule range sur les 3 rasters concaténés.\n# range() retourne min et max ; on l'applique a la concatenation des 3 rasters.\nrg &lt;- range(c(values(pop_2015), values(pop_2025), values(pop_2030)), na.rm = TRUE)\n\n# par(mfrow = c(1,3)) = grille graphique 1 ligne x 3 colonnes pour les juxtaposer.\npar(mfrow = c(1, 3))\nplot(pop_2015, main = \"Mfoundi 2015\",\n     col = hcl.colors(20, \"YlOrRd\", rev = TRUE), range = rg)\nplot(pop_2025, main = \"Mfoundi 2025\",\n     col = hcl.colors(20, \"YlOrRd\", rev = TRUE), range = rg)\nplot(pop_2030, main = \"Mfoundi 2030 (projection)\",\n     col = hcl.colors(20, \"YlOrRd\", rev = TRUE), range = rg)\npar(mfrow = c(1, 1))\n# Caption global sous la grille de cartes.\nmtext(\"WorldPop R2025A constrained · hab/pixel · échelle commune · IFORD x GDSG 2026\",\n      side = 1, line = -2, outer = TRUE, cex = 0.7)"
+  },
+  {
+    "objectID": "J07_population_haute_resolution/runtime.html#pour-aller-plus-loin",
+    "href": "J07_population_haute_resolution/runtime.html#pour-aller-plus-loin",
+    "title": "J7 — Cartographie de la population à haute résolution",
+    "section": "7. Pour aller plus loin",
+    "text": "7. Pour aller plus loin\nLa version desktop demo.qmd ajoute :\n\nExercice 5 : zone personnalisée dessinée à la main avec mapedit::editMap() (interactif, non portable WebR).\nExercice 5b : comparaison de 5 villes (Douala, Yaoundé, Bafoussam, Bamenda, Garoua) via lapply + bind_rows.\nExercice 7 : distribution par âge entre 2 régions (pivot_longer + geom_col).\nExercice 8 : pipeline complet GHSL (7 tuiles ZIP Mollweide → sprc → mosaic → project vers WGS84 → mask Cameroun → comparaison WorldPop vs GHSL). Lourd à exécuter (~1 min), non portable WebR.\nCarte interactive Leaflet via tmap_mode(\"view\") avec fond satellite Esri.\n\nLe devoir individuel (14 questions Edith + Q-final 5 questions de synthèse pour décideur) est dans exercice.qmd.\n← Retour à l’accueil"
+  },
+  {
+    "objectID": "J09_applications_spatiales_sciences_sociales/runtime.html",
+    "href": "J09_applications_spatiales_sciences_sociales/runtime.html",
+    "title": "J9 — Applications spatiales et sciences sociales",
+    "section": "",
+    "text": "Mode d’emploi. Cliquez Run code dans chaque cellule. WebR charge sf et dplyr au premier appel (~25 s la première fois). Tout tourne dans votre navigateur — aucune installation locale.\nLimitation technique : ce runtime ne couvre que la Partie I — ACLED (conflits armés). La Partie II — ERA5 (température, package ecmwfr + NetCDF) nécessite un fichier .nc de plusieurs Mo + token Copernicus + le package ncdf4 non portable sur WebR. Voir demo.qmd desktop pour l’expérience ERA5 complète.\nDonnées 100 % réelles : export ACLED Explorer pour le Cameroun (déposé par Edith Darin dans le Drive workshop_material/jour_09_*). Aucune simulation.\nConception pédagogique : Edith Darin (GDSG/IFORD). Intégration runtime : Ramesesse Dzita."
+  },
+  {
+    "objectID": "J09_applications_spatiales_sciences_sociales/runtime.html#charger-le-csv-acled-gadm-adm1",
+    "href": "J09_applications_spatiales_sciences_sociales/runtime.html#charger-le-csv-acled-gadm-adm1",
+    "title": "J9 — Applications spatiales et sciences sociales",
+    "section": "1. Charger le CSV ACLED + GADM ADM1",
+    "text": "1. Charger le CSV ACLED + GADM ADM1"
+  },
+  {
+    "objectID": "J09_applications_spatiales_sciences_sociales/runtime.html#nettoyage-et-conversion-exercice-2",
+    "href": "J09_applications_spatiales_sciences_sociales/runtime.html#nettoyage-et-conversion-exercice-2",
+    "title": "J9 — Applications spatiales et sciences sociales",
+    "section": "2. Nettoyage et conversion (Exercice 2)",
+    "text": "2. Nettoyage et conversion (Exercice 2)"
+  },
+  {
+    "objectID": "J09_applications_spatiales_sciences_sociales/runtime.html#exploration-types-et-régions-exercice-3",
+    "href": "J09_applications_spatiales_sciences_sociales/runtime.html#exploration-types-et-régions-exercice-3",
+    "title": "J9 — Applications spatiales et sciences sociales",
+    "section": "3. Exploration : types et régions (Exercice 3)",
+    "text": "3. Exploration : types et régions (Exercice 3)"
+  },
+  {
+    "objectID": "J09_applications_spatiales_sciences_sociales/runtime.html#évolution-annuelle-par-type-exercice-4a",
+    "href": "J09_applications_spatiales_sciences_sociales/runtime.html#évolution-annuelle-par-type-exercice-4a",
+    "title": "J9 — Applications spatiales et sciences sociales",
+    "section": "4. Évolution annuelle par type (Exercice 4a)",
+    "text": "4. Évolution annuelle par type (Exercice 4a)"
+  },
+  {
+    "objectID": "J09_applications_spatiales_sciences_sociales/runtime.html#décès-annuels-exercice-4c",
+    "href": "J09_applications_spatiales_sciences_sociales/runtime.html#décès-annuels-exercice-4c",
+    "title": "J9 — Applications spatiales et sciences sociales",
+    "section": "5. Décès annuels (Exercice 4c)",
+    "text": "5. Décès annuels (Exercice 4c)"
+  },
+  {
+    "objectID": "J09_applications_spatiales_sciences_sociales/runtime.html#conversion-en-couche-sf-exercice-5a",
+    "href": "J09_applications_spatiales_sciences_sociales/runtime.html#conversion-en-couche-sf-exercice-5a",
+    "title": "J9 — Applications spatiales et sciences sociales",
+    "section": "6. Conversion en couche sf (Exercice 5a)",
+    "text": "6. Conversion en couche sf (Exercice 5a)"
+  },
+  {
+    "objectID": "J09_applications_spatiales_sciences_sociales/runtime.html#carte-des-points-par-type-exercice-5b",
+    "href": "J09_applications_spatiales_sciences_sociales/runtime.html#carte-des-points-par-type-exercice-5b",
+    "title": "J9 — Applications spatiales et sciences sociales",
+    "section": "7. Carte des points par type (Exercice 5b)",
+    "text": "7. Carte des points par type (Exercice 5b)\nSur WebR on utilise ggplot2 + geom_sf à la place de tmap (qui n’est pas portable)."
+  },
+  {
+    "objectID": "J09_applications_spatiales_sciences_sociales/runtime.html#choroplèthe-par-région-via-st_within-exercice-5c",
+    "href": "J09_applications_spatiales_sciences_sociales/runtime.html#choroplèthe-par-région-via-st_within-exercice-5c",
+    "title": "J9 — Applications spatiales et sciences sociales",
+    "section": "8. Choroplèthe par région via st_within (Exercice 5c)",
+    "text": "8. Choroplèthe par région via st_within (Exercice 5c)"
+  },
+  {
+    "objectID": "J09_applications_spatiales_sciences_sociales/runtime.html#carte-choroplèthe-par-région",
+    "href": "J09_applications_spatiales_sciences_sociales/runtime.html#carte-choroplèthe-par-région",
+    "title": "J9 — Applications spatiales et sciences sociales",
+    "section": "9. Carte choroplèthe par région",
+    "text": "9. Carte choroplèthe par région"
+  },
+  {
+    "objectID": "J09_applications_spatiales_sciences_sociales/runtime.html#carte-des-décès-par-région",
+    "href": "J09_applications_spatiales_sciences_sociales/runtime.html#carte-des-décès-par-région",
+    "title": "J9 — Applications spatiales et sciences sociales",
+    "section": "10. Carte des décès par région",
+    "text": "10. Carte des décès par région"
+  },
+  {
+    "objectID": "J09_applications_spatiales_sciences_sociales/runtime.html#à-essayer",
+    "href": "J09_applications_spatiales_sciences_sociales/runtime.html#à-essayer",
+    "title": "J9 — Applications spatiales et sciences sociales",
+    "section": "11. À essayer",
+    "text": "11. À essayer\n\nModifie la requête filter(annee &gt;= ...) pour ne garder que les 3 dernières années. Refais le pipeline jusqu’à la carte. Quelle évolution observes-tu ? Une région prend-elle plus d’importance récemment ?\nTu peux aussi filtrer sur un event_type spécifique (par exemple filter(event_type == \"Violence against civilians\")) pour cartographier uniquement ce sous-ensemble."
+  },
+  {
+    "objectID": "J09_applications_spatiales_sciences_sociales/runtime.html#pour-aller-plus-loin",
+    "href": "J09_applications_spatiales_sciences_sociales/runtime.html#pour-aller-plus-loin",
+    "title": "J9 — Applications spatiales et sciences sociales",
+    "section": "12. Pour aller plus loin",
+    "text": "12. Pour aller plus loin\nLa version desktop demo.qmd ajoute (à exécuter sous RStudio) :\n\nPartie II ERA5 : authentification CDS, requête API ecmwfr, lecture NetCDF, conversion Kelvin → Celsius, extraction multi-couches par région, série temporelle nationale + saisonnalité + carte d’anomalie. Nécessite un fichier .nc de quelques Mo et un token Copernicus personnel.\nCartes tmap avec mode interactif (view) sur fond satellite Esri.\nExport GPKG / GeoTIFF / PNG pour réutilisation et publication.\nBonus API ACLED : acledR::acled_api() pour télécharger 10 ans complets et croiser avec les données de Boko Haram / crise anglophone documentées.\n\nLe devoir individuel (12 questions Edith + Q-final 5 questions de synthèse pour décideur) est dans exercice.qmd.\n← Retour à l’accueil"
+  }
+]

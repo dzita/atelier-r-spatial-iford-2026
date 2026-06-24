@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>J7 — Cartographie de la population à haute résolution – Runtime IFORD × GDSG 2026</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-cbfcc28fdddbba26d4008a6ad21285bb.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-a672a304ec539e01fc8e93f6badf0741.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/live-runtime/live-runtime.js" type="module"></script>
+<link href="../site_libs/quarto-contrib/live-runtime/live-runtime.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script type="module" src="../site_libs/quarto-ojs/quarto-ojs-runtime.js"></script>
+<link href="../site_libs/quarto-ojs/quarto-ojs.css" rel="stylesheet">
+
+
+</head>
+
+<body class="floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="INDEX.md" class="navbar-brand navbar-brand-logo">
+    <img src="../_commons/img/logo-iford.jpg" alt="IFORD" class="navbar-logo light-content">
+    <img src="../_commons/img/logo-iford.jpg" alt="IFORD" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="INDEX.md">
+    <span class="navbar-title">Runtime IFORD × GDSG 2026</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../INDEX.html"> 
+<span class="menu-text">Accueil</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-modules" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Modules</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-modules">    
+        <li>
+    <a class="dropdown-item" href="../J01_intro_R_pensee_spatiale/runtime.html">
+ <span class="dropdown-text">J1 · Intro R + pensée spatiale</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J02_sf_CRS_vecteurs/runtime.html">
+ <span class="dropdown-text">J2 · Données vectorielles sf</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J03_donnees_raster_terra/runtime.html">
+ <span class="dropdown-text">J3 · Données raster terra</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J04_gestion_donnees_tidyverse/runtime.html">
+ <span class="dropdown-text">J4 · Gestion des données (tidyverse)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J05_visualisation_cartographie/runtime.html">
+ <span class="dropdown-text">J5 · Visualisation et cartographie</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J06_statistiques_spatiales/runtime.html">
+ <span class="dropdown-text">J6 · Statistiques spatiales (Moran, LISA, KDE)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J07_population_haute_resolution/runtime.html">
+ <span class="dropdown-text">J7 · Population haute résolution + bottom-up</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J08_teledetection_observation_terre/runtime.html">
+ <span class="dropdown-text">J8 · Télédétection + observation de la Terre</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J09_applications_spatiales_sciences_sociales/runtime.html">
+ <span class="dropdown-text">J9 · Applications sciences sociales (ACLED)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J10_workflows_reproductibles/runtime.html">
+ <span class="dropdown-text">J10 · Reproductibilité + clôture</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul class="collapse">
+  <li><a href="#charger-le-csv-admin-pop-et-la-couche-adm1" id="toc-charger-le-csv-admin-pop-et-la-couche-adm1" class="nav-link active" data-scroll-target="#charger-le-csv-admin-pop-et-la-couche-adm1">1. Charger le CSV admin-pop et la couche ADM1</a></li>
+  <li><a href="#choroplèthe-de-la-population-totale-par-région-exercice-0" id="toc-choroplèthe-de-la-population-totale-par-région-exercice-0" class="nav-link" data-scroll-target="#choroplèthe-de-la-population-totale-par-région-exercice-0">2. Choroplèthe de la population totale par région (Exercice 0)</a></li>
+  <li><a href="#variable-dérivée-ratio-fh-exercice-0b" id="toc-variable-dérivée-ratio-fh-exercice-0b" class="nav-link" data-scroll-target="#variable-dérivée-ratio-fh-exercice-0b">3. Variable dérivée : ratio F/H (Exercice 0b)</a></li>
+  <li><a href="#part-de-la-population-jeune-exercice-0c" id="toc-part-de-la-population-jeune-exercice-0c" class="nav-link" data-scroll-target="#part-de-la-population-jeune-exercice-0c">4. Part de la population jeune (Exercice 0c)</a></li>
+  <li><a href="#densité-par-région-avec-échelle-log-exercice-6" id="toc-densité-par-région-avec-échelle-log-exercice-6" class="nav-link" data-scroll-target="#densité-par-région-avec-échelle-log-exercice-6">5. Densité par région avec échelle log (Exercice 6)</a></li>
+  <li><a href="#pipeline-raster-worldpop-lecture-seule" id="toc-pipeline-raster-worldpop-lecture-seule" class="nav-link" data-scroll-target="#pipeline-raster-worldpop-lecture-seule">6. Pipeline raster WorldPop (lecture seule)</a></li>
+  <li><a href="#bis.-charger-un-raster-worldpop-extrait-mfoundi" id="toc-bis.-charger-un-raster-worldpop-extrait-mfoundi" class="nav-link" data-scroll-target="#bis.-charger-un-raster-worldpop-extrait-mfoundi">6 bis. Charger un raster WorldPop (extrait Mfoundi)</a></li>
+  <li><a href="#ter.-visualiser-la-grille-mfoundi-2025" id="toc-ter.-visualiser-la-grille-mfoundi-2025" class="nav-link" data-scroll-target="#ter.-visualiser-la-grille-mfoundi-2025">6 ter. Visualiser la grille Mfoundi 2025</a></li>
+  <li><a href="#quater.-calculer-leffectif-total" id="toc-quater.-calculer-leffectif-total" class="nav-link" data-scroll-target="#quater.-calculer-leffectif-total">6 quater. Calculer l’effectif total</a></li>
+  <li><a href="#quinquies.-trajectoire-2015-2030" id="toc-quinquies.-trajectoire-2015-2030" class="nav-link" data-scroll-target="#quinquies.-trajectoire-2015-2030">6 quinquies. Trajectoire 2015-2030</a></li>
+  <li><a href="#sexies.-carte-des-3-époques-côte-à-côte" id="toc-sexies.-carte-des-3-époques-côte-à-côte" class="nav-link" data-scroll-target="#sexies.-carte-des-3-époques-côte-à-côte">6 sexies. Carte des 3 époques côte-à-côte</a></li>
+  <li><a href="#pour-aller-plus-loin" id="toc-pour-aller-plus-loin" class="nav-link" data-scroll-target="#pour-aller-plus-loin">7. Pour aller plus loin</a></li>
+  </ul>
+</nav>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">J7 — Cartographie de la population à haute résolution</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<p class="subtitle lead">Code R exécutable dans le navigateur — vecteur + raster lecture seule</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="iford-callout">
+<p><strong>Mode d’emploi.</strong> Les cellules <strong>Run code</strong> (cellules bleues <code>{webr}</code>) tournent dans le navigateur — clique pour exécuter. Les blocs <code>r</code> simples (non bleus) sont en <strong>lecture seule</strong> : ils montrent le code raster à étudier et à exécuter dans RStudio desktop.</p>
+<p><strong>Pourquoi cette séparation ?</strong> Le package R <code>terra</code> (raster + GDAL/PROJ/GEOS compilés en WASM, ~15 Mo) déclenche une régression connue de WebR 0.6 : <code>TypeError: resolved is not a function</code> au moment du téléchargement. Tant que ce bug amont n’est pas corrigé, <strong>la partie raster (WorldPop Mfoundi) ne peut pas s’exécuter dans le navigateur</strong> — mais les lignes restent visibles pour la lecture et la copie vers desktop.</p>
+<p><strong>Note technique</strong> : <code>tmap</code> mode <code>view</code>, <code>mapedit</code> et <code>exactextractr</code> ne sont pas portables sur WebR non plus. Pour l’expérience complète (mosaïque GHSL, dessin de zone interactive, agrégation exactextractr, comparaison WorldPop vs GHSL), voir <code>demo.qmd</code> desktop.</p>
+<p><strong>Données 100 % réelles</strong> : OCHA COD-PS Cameroun 2025 (table officielle population par région) + GADM v4.1 ADM1 + extraits WorldPop constrained R2025A pour le Mfoundi (Yaoundé). Aucun raster simulé.</p>
+<p><strong>Conception pédagogique</strong> : Edith Darin (GDSG/IFORD). <strong>Intégration runtime</strong> : Ramesesse Dzita.</p>
+</div>
+<section id="charger-le-csv-admin-pop-et-la-couche-adm1" class="level2">
+<h2 class="anchored" data-anchor-id="charger-le-csv-admin-pop-et-la-couche-adm1">1. Charger le CSV admin-pop et la couche ADM1</h2>
+<p>On combine deux fichiers : un <strong>CSV tabulaire</strong> OCHA COD-PS (la population officielle par région) et un <strong>GeoJSON GADM</strong> (les contours géographiques des 10 régions). Pour cartographier la population, il faut <strong>joindre</strong> les deux ; cette première cellule se contente de les charger et de vérifier que les volumes correspondent.</p>
+<div class="cell" data-autorun="true">
+<div>
+<div id="webr-1" class="exercise-cell">
+
+</div>
+<script type="webr-1-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBgc2ZgIGxpdC9lY3JpdCBsZXMgY291Y2hlcyB2ZWN0b3JpZWxsZXMuIHRlcnJhIChyYXN0ZXIpIGVzdCBlbiBsZWN0dXJlIHNldWxlXG4jIHBsdXMgYmFzIHBvdXIgZGVzIHJhaXNvbnMgZGUgcG9ydGFiaWxpdGUgV2ViUi5cbmxpYnJhcnkoc2YpXG5saWJyYXJ5KGRwbHlyKVxubGlicmFyeShnZ3Bsb3QyKVxubGlicmFyeShyZWFkcilcbmxpYnJhcnkoc2NhbGVzKVxuXG4jIENTViBhZG1pbi1wb3AgT0NIQSBDT0QtUFMgMjAyNSA9IHRhYmxlIG9mZmljaWVsbGUgZGUgcG9wdWxhdGlvbiBwYXIgcmVnaW9uLlxuIyBHQURNID0gYmFzZSBtb25kaWFsZSBkZSBsaW1pdGVzIGFkbWluaXN0cmF0aXZlcyAodjQuMSwgbWlzZSBhIGpvdXIgMjAyMikuXG5wb3BfYWRtMSA8LSByZWFkX2NzdihcIl9jb21tb25zL2RhdGEvam91cl8wN19leHRyYWl0cy9hZG1wb3BfYWRtMV8yMDI1LmNzdlwiLFxuICAgICAgICAgICAgICAgICAgICAgc2hvd19jb2xfdHlwZXMgPSBGQUxTRSlcbmNtcjEgICAgIDwtIHJlYWRfc2YoXCJfY29tbW9ucy9kYXRhL2pvdXJfMDdfZXh0cmFpdHMvZ2FkbTQxX0NNUl9hZG0xLmdlb2pzb25cIilcblxuIyBWZXJpZmljYXRpb24gcmFwaWRlIDogMTAgcmVnaW9ucyBkYW5zIGxlIENTViBkb2l2ZW50IG1hdGNoZXIgMTAgcG9seWdvbmVzIEdBRE0uXG5jKHJlZ2lvbnNfY3N2ID0gbnJvdyhwb3BfYWRtMSksIHBvbHlnb25lcyA9IG5yb3coY21yMSkpXG4jIFRfVEwgPSBUb3RhbCBUb3VzIExlcyBhZ2VzIDsgRl9UTCA9IGZlbW1lcyA7IE1fVEwgPSBob21tZXMgKG5vbWVuY2xhdHVyZSBDT0QtUFMpLlxuZ2xpbXBzZShwb3BfYWRtMVssIGMoXCJBRE0xX0VOXCIsIFwiQURNMV9GUlwiLCBcIlRfVExcIiwgXCJGX1RMXCIsIFwiTV9UTFwiKV0pIn0=
+</script>
+</div>
+</div>
+</section>
+<section id="choroplèthe-de-la-population-totale-par-région-exercice-0" class="level2">
+<h2 class="anchored" data-anchor-id="choroplèthe-de-la-population-totale-par-région-exercice-0">2. Choroplèthe de la population totale par région (Exercice 0)</h2>
+<p>Un <strong>choroplèthe</strong> est une carte ou la couleur du polygone code la valeur d’une variable. Ici on colore chaque region selon sa population totale. GADM utilise les noms français pour le Cameroun → clé <code>ADM1_FR</code>. La jointure doit retourner 0 NA si toutes les régions matchent.</p>
+<div class="cell">
+<div>
+<div id="webr-2" class="exercise-cell">
+
+</div>
+<script type="webr-2-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBsZWZ0X2pvaW4gZ2FyZGUgVE9VVEVTIGxlcyByZWdpb25zIGRlIGNtcjEgZXQgYWpvdXRlIGxlcyBjb2xvbm5lcyBkdSBDU1YuXG4jIENsZSA9IG5vbSBkZSByZWdpb24gOiBhIGdhdWNoZSBcIk5BTUVfMVwiIChHQURNKSwgYSBkcm9pdGUgXCJBRE0xX0ZSXCIgKENTVikuXG5jbXIxX3BvcCA8LSBjbXIxIHw+XG4gIGxlZnRfam9pbihwb3BfYWRtMSB8PiBzZWxlY3QoQURNMV9GUiwgVF9UTCwgRl9UTCwgTV9UTCksXG4gICAgICAgICAgICBieSA9IGMoXCJOQU1FXzFcIiA9IFwiQURNMV9GUlwiKSlcblxuIyBDb21wdGV1ciBkZSBOQSA9IGNvbnRyb2xlIHF1YWxpdGUgZGUgbGEgam9pbnR1cmUuIDAgPSBwYXJmYWl0LlxuY2F0KFwiUsOpZ2lvbnMgc2FucyBtYXRjaCAoTkEgVF9UTCkgOlwiLCBzdW0oaXMubmEoY21yMV9wb3AkVF9UTCkpLCBcIlxcblwiKVxuXG4jIGdlb21fc2YgdHJhY2UgbGVzIHBvbHlnb25lcyA7IGFlcyhmaWxsID0gVF9UTCkgbWFwcGUgbGEgY291bGV1ciBzdXIgbGEgcG9wdWxhdGlvbi5cbiMgRXRpcXVldHRlcyA6IG5vaXIgc3VyIGZvbmQgYmxhbmMgc2VtaS10cmFuc3BhcmVudCBwb3VyIHJlc3RlciBsaXNpYmxlc1xuIyBxdWVsbGUgcXVlIHNvaXQgbGEgcGFsZXR0ZSBkZSBmb25kIChzZXF1ZW50aWVsbGUsIGRpdmVyZ2VudGUsIGV0Yy4pLlxuZ2dwbG90KGNtcjFfcG9wKSArXG4gIGdlb21fc2YoYWVzKGZpbGwgPSBUX1RMKSwgY29sb3VyID0gXCJ3aGl0ZVwiLCBsaW5ld2lkdGggPSAwLjMpICtcbiAgZ2VvbV9zZl9sYWJlbChhZXMobGFiZWwgPSBOQU1FXzEpLCBzaXplID0gMi4yLCBjb2xvdXIgPSBcImJsYWNrXCIsXG4gICAgICAgICAgICAgICAgZmlsbCA9IGFscGhhKFwid2hpdGVcIiwgMC43NSksIGxhYmVsLnNpemUgPSAwLFxuICAgICAgICAgICAgICAgIGxhYmVsLnBhZGRpbmcgPSB1bml0KDAuMSwgXCJsaW5lc1wiKSkgK1xuICBzY2FsZV9maWxsX3ZpcmlkaXNfYyhvcHRpb24gPSBcInBsYXNtYVwiLCBsYWJlbHMgPSBjb21tYSxcbiAgICAgICAgICAgICAgICAgICAgICAgbmFtZSA9IFwiUG9wdWxhdGlvblxcbihoYWJpdGFudHMpXCIpICtcbiAgbGFicyh0aXRsZSAgICA9IFwiUG9wdWxhdGlvbiB0b3RhbGUgcGFyIHLDqWdpb24g4oCUIENhbWVyb3VuLCAyMDI1XCIsXG4gICAgICAgc3VidGl0bGUgPSBcIkNob3JvcGzDqHRoZSBhZG1pbmlzdHJhdGlmIMK3IDEwIHLDqWdpb25zIEFETTFcIixcbiAgICAgICBjYXB0aW9uICA9IFwiU291cmNlIDogT0NIQSBDT0QtUFMgQ2FtZXJvdW4gMjAyNSDCtyBHQURNIHY0LjEgwrcgSUZPUkQgeCBHRFNHIDIwMjZcIikgK1xuICB0aGVtZV9taW5pbWFsKCkgK1xuICB0aGVtZShheGlzLnRleHQgPSBlbGVtZW50X2JsYW5rKCksIGF4aXMudGlja3MgPSBlbGVtZW50X2JsYW5rKCksXG4gICAgICAgIHBhbmVsLmdyaWQgPSBlbGVtZW50X2JsYW5rKCkpIn0=
+</script>
+</div>
+</div>
+</section>
+<section id="variable-dérivée-ratio-fh-exercice-0b" class="level2">
+<h2 class="anchored" data-anchor-id="variable-dérivée-ratio-fh-exercice-0b">3. Variable dérivée : ratio F/H (Exercice 0b)</h2>
+<p>Une <strong>variable derivee</strong> est calculee a partir d’autres colonnes. Ici <code>ratio_fm = F_TL / M_TL</code> : &gt; 1 = plus de femmes, &lt; 1 = plus d’hommes. Une <strong>palette divergente</strong> est centree sur une valeur pivot (ici 1, l’equilibre demographique) et utilise deux teintes opposees pour les ecarts.</p>
+<div class="cell">
+<div>
+<div id="webr-3" class="exercise-cell">
+
+</div>
+<script type="webr-3-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBtdXRhdGUgYWpvdXRlIHVuZSBub3V2ZWxsZSBjb2xvbm5lIHNhbnMgdG91Y2hlciBhdXggZXhpc3RhbnRlcy5cbmNtcjFfcG9wIDwtIGNtcjFfcG9wIHw+IG11dGF0ZShyYXRpb19mbSA9IEZfVEwgLyBNX1RMKVxuXG4jIGdyYWRpZW50MiA9IHBhbGV0dGUgYSAzIGNvdWxldXJzIChsb3cvbWlkL2hpZ2gpIHBpdm90ZWUgc3VyIG1pZHBvaW50LlxuIyBCbGV1ID0gZGVmaWNpdCBkZSBmZW1tZXMsIGJsYW5jID0gcGFyaXRlLCByb3VnZSA9IHN1cnBsdXMgZGUgZmVtbWVzLlxuZ2dwbG90KGNtcjFfcG9wKSArXG4gIGdlb21fc2YoYWVzKGZpbGwgPSByYXRpb19mbSksIGNvbG91ciA9IFwid2hpdGVcIiwgbGluZXdpZHRoID0gMC4zKSArXG4gIGdlb21fc2ZfbGFiZWwoYWVzKGxhYmVsID0gTkFNRV8xKSwgc2l6ZSA9IDIuMiwgY29sb3VyID0gXCJibGFja1wiLFxuICAgICAgICAgICAgICAgIGZpbGwgPSBhbHBoYShcIndoaXRlXCIsIDAuNzUpLCBsYWJlbC5zaXplID0gMCxcbiAgICAgICAgICAgICAgICBsYWJlbC5wYWRkaW5nID0gdW5pdCgwLjEsIFwibGluZXNcIikpICtcbiAgc2NhbGVfZmlsbF9ncmFkaWVudDIobG93ID0gXCIjMjE2NkFDXCIsIG1pZCA9IFwid2hpdGVcIiwgaGlnaCA9IFwiI0IyMTgyQlwiLFxuICAgICAgICAgICAgICAgICAgICAgICBtaWRwb2ludCA9IDEsIG5hbWUgPSBcIlJhdGlvIEYvSFxcbihzYW5zIHVuaXTDqSlcIikgK1xuICBsYWJzKHRpdGxlICAgID0gXCJSYXRpbyBmZW1tZXMgLyBob21tZXMgcGFyIHLDqWdpb24g4oCUIENhbWVyb3VuLCAyMDI1XCIsXG4gICAgICAgc3VidGl0bGUgPSBcIlBhbGV0dGUgZGl2ZXJnZW50ZSBjZW50csOpZSBzdXIgbCfDqXF1aWxpYnJlIGTDqW1vZ3JhcGhpcXVlIChGL0ggPSAxKVwiLFxuICAgICAgIGNhcHRpb24gID0gXCJTb3VyY2UgOiBPQ0hBIENPRC1QUyBDYW1lcm91biAyMDI1IMK3IEdBRE0gdjQuMSDCtyBJRk9SRCB4IEdEU0cgMjAyNlwiKSArXG4gIHRoZW1lX21pbmltYWwoKSArXG4gIHRoZW1lKGF4aXMudGV4dCA9IGVsZW1lbnRfYmxhbmsoKSwgYXhpcy50aWNrcyA9IGVsZW1lbnRfYmxhbmsoKSxcbiAgICAgICAgcGFuZWwuZ3JpZCA9IGVsZW1lbnRfYmxhbmsoKSkifQ==
+</script>
+</div>
+</div>
+</section>
+<section id="part-de-la-population-jeune-exercice-0c" class="level2">
+<h2 class="anchored" data-anchor-id="part-de-la-population-jeune-exercice-0c">4. Part de la population jeune (Exercice 0c)</h2>
+<p>Le CSV COD-PS contient une <strong>pyramide des ages</strong> complete (<code>T_00_04</code>, <code>T_05_09</code>, …). On somme les trois premieres classes (0-14 ans) puis on rapporte au total pour obtenir une <strong>part en %</strong>. Indicateur cle pour les politiques de scolarisation.</p>
+<div class="cell">
+<div>
+<div id="webr-4" class="exercise-cell">
+
+</div>
+<script type="webr-4-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBPbiBlbnJpY2hpdCBwb3BfYWRtMSBhdmVjIGRldXggbm91dmVsbGVzIGNvbG9ubmVzIChqZXVuZXMgKyBwYXJ0KSBhdmFudCBsYSBqb2ludHVyZS5cbmNtcjFfcG9wIDwtIGNtcjFfcG9wIHw+XG4gIGxlZnRfam9pbihcbiAgICBwb3BfYWRtMSB8PlxuICAgICAgbXV0YXRlKGpldW5lc18wXzE0ICAgICA9IFRfMDBfMDQgKyBUXzA1XzA5ICsgVF8xMF8xNCxcbiAgICAgICAgICAgICBwYXJ0X2pldW5lc19wY3QgPSAxMDAgKiBqZXVuZXNfMF8xNCAvIFRfVEwpIHw+XG4gICAgICBzZWxlY3QoQURNMV9GUiwgcGFydF9qZXVuZXNfcGN0KSxcbiAgICBieSA9IGMoXCJOQU1FXzFcIiA9IFwiQURNMV9GUlwiKVxuICApXG5cbiMgUGFsZXR0ZSBcIm1hZ21hXCIgPSBzZXF1ZW50aWVsbGUgcGVyY2VwdHVlbGxlbWVudCB1bmlmb3JtZSwgYm9ubmUgcG91ciB1biAlLlxuZ2dwbG90KGNtcjFfcG9wKSArXG4gIGdlb21fc2YoYWVzKGZpbGwgPSBwYXJ0X2pldW5lc19wY3QpLCBjb2xvdXIgPSBcIndoaXRlXCIsIGxpbmV3aWR0aCA9IDAuMykgK1xuICBnZW9tX3NmX2xhYmVsKGFlcyhsYWJlbCA9IE5BTUVfMSksIHNpemUgPSAyLjIsIGNvbG91ciA9IFwiYmxhY2tcIixcbiAgICAgICAgICAgICAgICBmaWxsID0gYWxwaGEoXCJ3aGl0ZVwiLCAwLjc1KSwgbGFiZWwuc2l6ZSA9IDAsXG4gICAgICAgICAgICAgICAgbGFiZWwucGFkZGluZyA9IHVuaXQoMC4xLCBcImxpbmVzXCIpKSArXG4gIHNjYWxlX2ZpbGxfdmlyaWRpc19jKG9wdGlvbiA9IFwibWFnbWFcIiwgbmFtZSA9IFwiJSAwLTE0IGFuc1wiKSArXG4gIGxhYnModGl0bGUgICAgPSBcIlBhcnQgZGVzIG1vaW5zIGRlIDE1IGFucyBwYXIgcsOpZ2lvbiDigJQgQ2FtZXJvdW4sIDIwMjVcIixcbiAgICAgICBzdWJ0aXRsZSA9IFwiSW5kaWNhdGV1ciBkZSBqZXVuZXNzZSBkw6ltb2dyYXBoaXF1ZSAoc29tbWUgVF8wMF8wNCArIFRfMDVfMDkgKyBUXzEwXzE0KVwiLFxuICAgICAgIGNhcHRpb24gID0gXCJTb3VyY2UgOiBPQ0hBIENPRC1QUyBDYW1lcm91biAyMDI1IMK3IEdBRE0gdjQuMSDCtyBJRk9SRCB4IEdEU0cgMjAyNlwiKSArXG4gIHRoZW1lX21pbmltYWwoKSArXG4gIHRoZW1lKGF4aXMudGV4dCA9IGVsZW1lbnRfYmxhbmsoKSwgYXhpcy50aWNrcyA9IGVsZW1lbnRfYmxhbmsoKSxcbiAgICAgICAgcGFuZWwuZ3JpZCA9IGVsZW1lbnRfYmxhbmsoKSkifQ==
+</script>
+</div>
+</div>
+</section>
+<section id="densité-par-région-avec-échelle-log-exercice-6" class="level2">
+<h2 class="anchored" data-anchor-id="densité-par-région-avec-échelle-log-exercice-6">5. Densité par région avec échelle log (Exercice 6)</h2>
+<p>La <strong>densite</strong> (hab/km²) normalise la population par la surface : indispensable pour comparer des régions de tailles inégales (Extrême-Nord ~34 000 km² vs Est ~109 000 km²). Quand le facteur de variation est grand (&gt;10x), l’<strong>échelle log</strong> révèle les contrastes que l’échelle linéaire écraserait.</p>
+<div class="cell">
+<div>
+<div id="webr-5" class="exercise-cell">
+
+</div>
+<script type="webr-5-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBzdF9hcmVhIHJldG91cm5lIGRlcyBtMiAoc2YgZGV0ZWN0ZSBsYSBjb2xvbm5lIGdlb21ldHJpZSBhdXRvbWF0aXF1ZW1lbnQpLlxuIyBQb3VyIG1lc3VyZXIgZGVzIHN1cmZhY2VzIHJlYWxpc3RlcyBhdSBDYW1lcm91biwgbCdFUFNHOjMyNjMyIChVVE0gem9uZSAzMk4pXG4jIHNlcmFpdCBwbHVzIHByZWNpcyA7IGljaSBlbiBXR1M4NCBsJ2FwcHJveGltYXRpb24gcmVzdGUgY29ycmVjdGUgcG91ciB2aXN1YWxpc2VyLlxuY21yMV9wb3Akc3VyZmFjZV9rbTIgICAgIDwtIGFzLm51bWVyaWMoc3RfYXJlYShjbXIxX3BvcCkpIC8gMWU2XG5jbXIxX3BvcCRkZW5zaXRlX2hhYl9rbTIgPC0gY21yMV9wb3AkVF9UTCAvIGNtcjFfcG9wJHN1cmZhY2Vfa20yXG5cbiMgdHJhbnMgPSBcImxvZzEwXCIgYXBwbGlxdWUgbGEgdHJhbnNmb3JtYXRpb24gbG9nYXJpdGhtaXF1ZSBzdXIgbGEgcGFsZXR0ZS5cbmdncGxvdChjbXIxX3BvcCkgK1xuICBnZW9tX3NmKGFlcyhmaWxsID0gZGVuc2l0ZV9oYWJfa20yKSwgY29sb3VyID0gXCJ3aGl0ZVwiLCBsaW5ld2lkdGggPSAwLjMpICtcbiAgZ2VvbV9zZl9sYWJlbChhZXMobGFiZWwgPSBOQU1FXzEpLCBzaXplID0gMi4yLCBjb2xvdXIgPSBcImJsYWNrXCIsXG4gICAgICAgICAgICAgICAgZmlsbCA9IGFscGhhKFwid2hpdGVcIiwgMC43NSksIGxhYmVsLnNpemUgPSAwLFxuICAgICAgICAgICAgICAgIGxhYmVsLnBhZGRpbmcgPSB1bml0KDAuMSwgXCJsaW5lc1wiKSkgK1xuICBzY2FsZV9maWxsX3ZpcmlkaXNfYyhvcHRpb24gPSBcImluZmVybm9cIiwgdHJhbnMgPSBcImxvZzEwXCIsXG4gICAgICAgICAgICAgICAgICAgICAgIGxhYmVscyA9IGNvbW1hLCBuYW1lID0gXCJoYWIva23CslxcbijDqWNoZWxsZSBsb2cpXCIpICtcbiAgbGFicyh0aXRsZSAgICA9IFwiRGVuc2l0w6kgZGUgcG9wdWxhdGlvbiBwYXIgcsOpZ2lvbiDigJQgQ2FtZXJvdW4sIDIwMjVcIixcbiAgICAgICBzdWJ0aXRsZSA9IFwiw4ljaGVsbGUgbG9nYXJpdGhtaXF1ZSAoY29udHJhc3RlIH4xMHggZW50cmUgcsOpZ2lvbnMgZXh0csOqbWVzKVwiLFxuICAgICAgIGNhcHRpb24gID0gXCJTb3VyY2UgOiBPQ0hBIENPRC1QUyBDYW1lcm91biAyMDI1IMK3IEdBRE0gdjQuMSDCtyBJRk9SRCB4IEdEU0cgMjAyNlwiKSArXG4gIHRoZW1lX21pbmltYWwoKSArXG4gIHRoZW1lKGF4aXMudGV4dCA9IGVsZW1lbnRfYmxhbmsoKSwgYXhpcy50aWNrcyA9IGVsZW1lbnRfYmxhbmsoKSxcbiAgICAgICAgcGFuZWwuZ3JpZCA9IGVsZW1lbnRfYmxhbmsoKSkifQ==
+</script>
+</div>
+</div>
+</section>
+<section id="pipeline-raster-worldpop-lecture-seule" class="level2">
+<h2 class="anchored" data-anchor-id="pipeline-raster-worldpop-lecture-seule">6. Pipeline raster WorldPop (lecture seule)</h2>
+<p>Les sections <strong>6 bis</strong> à <strong>6 sexies</strong> ci-dessous présentent le pipeline raster <code>terra</code> à reproduire dans RStudio desktop. Le code y est commenté ligne à ligne. Sur un poste avec R installé, ouvrir <code>demo.qmd</code> du même dossier exécute ce pipeline en direct.</p>
+</section>
+<section id="bis.-charger-un-raster-worldpop-extrait-mfoundi" class="level2">
+<h2 class="anchored" data-anchor-id="bis.-charger-un-raster-worldpop-extrait-mfoundi">6 bis. Charger un raster WorldPop (extrait Mfoundi)</h2>
+<p>Un <strong>raster de population</strong> (population grid) est une grille régulière où chaque cellule porte une estimation du nombre d’habitants. <strong>WorldPop</strong> (université de Southampton) utilise la méthode <strong>top-down</strong> (Stevens et al.&nbsp;2015) : on part d’un total officiel par unité administrative puis on <strong>redistribue</strong> les habitants pixel par pixel selon des covariables (bâtiment, routes, lumières nocturnes…). La version <strong>constrained R2025A</strong> (dernière release 2024) contraint la redistribution aux pixels réellement bâtis.</p>
+<p>Les TIF WorldPop complets pèsent ~25 Mo chacun. On charge un <strong>extrait</strong> sur le département du Mfoundi (Yaoundé), recadré et compressé à ~1 Mo.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># terra remplace l'ancien `raster` : plus rapide, plus moderne, base C++.</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(terra)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># rast() ouvre le GeoTIFF SANS charger tous les pixels en RAM (pointeur disque).</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>pop_2025 <span class="ot">&lt;-</span> <span class="fu">rast</span>(<span class="st">"../_commons/data/jour_07_extraits/pop_2025_mfoundi.tif"</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>pop_2015 <span class="ot">&lt;-</span> <span class="fu">rast</span>(<span class="st">"../_commons/data/jour_07_extraits/pop_2015_mfoundi.tif"</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>pop_2030 <span class="ot">&lt;-</span> <span class="fu">rast</span>(<span class="st">"../_commons/data/jour_07_extraits/pop_2030_mfoundi.tif"</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># print() affiche les metadonnees : dimensions, CRS, etendue, resolution.</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(pop_2025)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Resolution WorldPop = 0.000833 deg ~ 92.5 m a l'equateur (on parle de "100 m").</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Résolution (degrés) :"</span>, <span class="fu">res</span>(pop_2025), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Cellules non-NA :"</span>, <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(<span class="fu">values</span>(pop_2025))), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="ter.-visualiser-la-grille-mfoundi-2025" class="level2">
+<h2 class="anchored" data-anchor-id="ter.-visualiser-la-grille-mfoundi-2025">6 ter. Visualiser la grille Mfoundi 2025</h2>
+<p><code>terra::plot</code> est rapide et léger. La valeur d’une cellule = <strong>habitants/pixel</strong> (1 pixel = 100m x 100m ~ 1 hectare).</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># hcl.colors() = palette HCL perceptuellement uniforme, rev=TRUE inverse l'ordre.</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(pop_2025,</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>     <span class="at">main =</span> <span class="st">"WorldPop constrained R2025A — Mfoundi (Yaoundé) — 2025"</span>,</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>     <span class="at">sub  =</span> <span class="st">"Méthode top-down · unité : hab/pixel (100m x 100m)"</span>,</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>     <span class="at">col  =</span> <span class="fu">hcl.colors</span>(<span class="dv">20</span>, <span class="st">"YlOrRd"</span>, <span class="at">rev =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Caption manuel (terra n'a pas d'option caption native) :</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="fu">mtext</span>(<span class="st">"Source : WorldPop R2025A constrained 100m · IFORD x GDSG 2026"</span>,</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>      <span class="at">side =</span> <span class="dv">1</span>, <span class="at">line =</span> <span class="dv">4</span>, <span class="at">cex =</span> <span class="fl">0.7</span>, <span class="at">adj =</span> <span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="quater.-calculer-leffectif-total" class="level2">
+<h2 class="anchored" data-anchor-id="quater.-calculer-leffectif-total">6 quater. Calculer l’effectif total</h2>
+<p><code>global(raster, "sum")</code> somme TOUTES les cellules non-NA. Comme chaque cellule contient déjà un nombre d’habitants (pas une densité), la somme donne directement l’effectif total estimé.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Sur l'extrait Mfoundi : pas besoin de crop+mask, le raster est deja recadre.</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>pop_yaounde_2025 <span class="ot">&lt;-</span> <span class="fu">global</span>(pop_2025, <span class="st">"sum"</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)<span class="sc">$</span>sum</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>pop_yaounde_2015 <span class="ot">&lt;-</span> <span class="fu">global</span>(pop_2015, <span class="st">"sum"</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)<span class="sc">$</span>sum</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>pop_yaounde_2030 <span class="ot">&lt;-</span> <span class="fu">global</span>(pop_2030, <span class="st">"sum"</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)<span class="sc">$</span>sum</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Yaoundé 2015 :"</span>, <span class="fu">format</span>(<span class="fu">round</span>(pop_yaounde_2015), <span class="at">big.mark =</span> <span class="st">" "</span>), <span class="st">"habitants</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Yaoundé 2025 :"</span>, <span class="fu">format</span>(<span class="fu">round</span>(pop_yaounde_2025), <span class="at">big.mark =</span> <span class="st">" "</span>), <span class="st">"habitants</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Yaoundé 2030 :"</span>, <span class="fu">format</span>(<span class="fu">round</span>(pop_yaounde_2030), <span class="at">big.mark =</span> <span class="st">" "</span>), <span class="st">"habitants (projection)</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Croissance 2015-2025 :"</span>,</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> (pop_yaounde_2025 <span class="sc">-</span> pop_yaounde_2015) <span class="sc">/</span> pop_yaounde_2015, <span class="dv">1</span>),</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"%</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="quinquies.-trajectoire-2015-2030" class="level2">
+<h2 class="anchored" data-anchor-id="quinquies.-trajectoire-2015-2030">6 quinquies. Trajectoire 2015-2030</h2>
+<p>On construit un tibble à 3 lignes (une par année) et on calcule la <strong>croissance relative</strong> par rapport à 2015 (année de référence). Les projections WorldPop 2030 reposent sur des scénarios SSP du GIEC adaptés à l’Afrique.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tibble)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># population[1] = valeur de la premiere ligne (2015). C'est notre baseline.</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>evol <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">annee      =</span> <span class="fu">c</span>(<span class="dv">2015</span>, <span class="dv">2025</span>, <span class="dv">2030</span>),</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">population =</span> <span class="fu">c</span>(<span class="fu">round</span>(pop_yaounde_2015),</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">round</span>(pop_yaounde_2025),</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">round</span>(pop_yaounde_2030))</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">croissance_vs_2015 =</span> <span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> (population <span class="sc">-</span> population[<span class="dv">1</span>]) <span class="sc">/</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>                                    population[<span class="dv">1</span>], <span class="dv">1</span>))</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(evol)</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Graphique en ligne : geom_line + geom_point pour bien voir les 3 jalons.</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(evol, <span class="fu">aes</span>(<span class="at">x =</span> annee, <span class="at">y =</span> population)) <span class="sc">+</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">colour =</span> <span class="st">"#2C7FB8"</span>, <span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">colour =</span> <span class="st">"#2C7FB8"</span>, <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> comma) <span class="sc">+</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">2015</span>, <span class="dv">2025</span>, <span class="dv">2030</span>)) <span class="sc">+</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title    =</span> <span class="st">"Évolution de la population à Yaoundé (Mfoundi) — 2015 / 2025 / 2030"</span>,</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"Top-down WorldPop constrained R2025A · projection SSP pour 2030"</span>,</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>       <span class="at">caption  =</span> <span class="st">"Source : WorldPop R2025A constrained 100m · IFORD x GDSG 2026"</span>,</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Année"</span>, <span class="at">y =</span> <span class="st">"Population estimée (habitants)"</span>) <span class="sc">+</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="sexies.-carte-des-3-époques-côte-à-côte" class="level2">
+<h2 class="anchored" data-anchor-id="sexies.-carte-des-3-époques-côte-à-côte">6 sexies. Carte des 3 époques côte-à-côte</h2>
+<p><strong>Règle d’or</strong> : pour comparer deux cartes raster temporelles, il faut une <strong>plage de valeurs commune</strong> (sinon l’œil interprète des couleurs identiques comme des valeurs identiques alors que les bornes diffèrent). On calcule <code>range</code> sur les 3 rasters concaténés.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># range() retourne min et max ; on l'applique a la concatenation des 3 rasters.</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>rg <span class="ot">&lt;-</span> <span class="fu">range</span>(<span class="fu">c</span>(<span class="fu">values</span>(pop_2015), <span class="fu">values</span>(pop_2025), <span class="fu">values</span>(pop_2030)), <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># par(mfrow = c(1,3)) = grille graphique 1 ligne x 3 colonnes pour les juxtaposer.</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">3</span>))</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(pop_2015, <span class="at">main =</span> <span class="st">"Mfoundi 2015"</span>,</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> <span class="fu">hcl.colors</span>(<span class="dv">20</span>, <span class="st">"YlOrRd"</span>, <span class="at">rev =</span> <span class="cn">TRUE</span>), <span class="at">range =</span> rg)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(pop_2025, <span class="at">main =</span> <span class="st">"Mfoundi 2025"</span>,</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> <span class="fu">hcl.colors</span>(<span class="dv">20</span>, <span class="st">"YlOrRd"</span>, <span class="at">rev =</span> <span class="cn">TRUE</span>), <span class="at">range =</span> rg)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(pop_2030, <span class="at">main =</span> <span class="st">"Mfoundi 2030 (projection)"</span>,</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> <span class="fu">hcl.colors</span>(<span class="dv">20</span>, <span class="st">"YlOrRd"</span>, <span class="at">rev =</span> <span class="cn">TRUE</span>), <span class="at">range =</span> rg)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>))</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Caption global sous la grille de cartes.</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="fu">mtext</span>(<span class="st">"WorldPop R2025A constrained · hab/pixel · échelle commune · IFORD x GDSG 2026"</span>,</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>      <span class="at">side =</span> <span class="dv">1</span>, <span class="at">line =</span> <span class="sc">-</span><span class="dv">2</span>, <span class="at">outer =</span> <span class="cn">TRUE</span>, <span class="at">cex =</span> <span class="fl">0.7</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="pour-aller-plus-loin" class="level2">
+<h2 class="anchored" data-anchor-id="pour-aller-plus-loin">7. Pour aller plus loin</h2>
+<p>La version desktop <code>demo.qmd</code> ajoute :</p>
+<ul>
+<li><strong>Exercice 5</strong> : zone personnalisée dessinée à la main avec <code>mapedit::editMap()</code> (interactif, non portable WebR).</li>
+<li><strong>Exercice 5b</strong> : comparaison de 5 villes (Douala, Yaoundé, Bafoussam, Bamenda, Garoua) via <code>lapply</code> + <code>bind_rows</code>.</li>
+<li><strong>Exercice 7</strong> : distribution par âge entre 2 régions (<code>pivot_longer + geom_col</code>).</li>
+<li><strong>Exercice 8</strong> : pipeline complet GHSL (7 tuiles ZIP Mollweide → <code>sprc</code> → <code>mosaic</code> → <code>project</code> vers WGS84 → <code>mask</code> Cameroun → comparaison WorldPop vs GHSL). Lourd à exécuter (~1 min), non portable WebR.</li>
+<li><strong>Carte interactive Leaflet</strong> via <code>tmap_mode("view")</code> avec fond satellite Esri.</li>
+</ul>
+<p>Le devoir individuel (14 questions Edith + Q-final 5 questions de synthèse pour décideur) est dans <code>exercice.qmd</code>.</p>
+<p><a href="../INDEX.html">← Retour à l’accueil</a></p>
+
+
+<!-- -->
+
+<script type="webr-data">
+eyJvcHRpb25zIjp7ImJhc2VVcmwiOiJodHRwczovL3dlYnIuci13YXNtLm9yZy92MC42LjAvIn0sInBhY2thZ2VzIjp7InBrZ3MiOlsiZXZhbHVhdGUiLCJrbml0ciIsImh0bWx0b29scyIsInNmIiwiZHBseXIiLCJnZ3Bsb3QyIiwicmVhZHIiLCJzY2FsZXMiLCJ0aWJibGUiXSwicmVwb3MiOltdfSwicmVuZGVyX2RmIjoiZGVmYXVsdCJ9
+</script>
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W3siY2VsbE5hbWUiOiJ3ZWJyLXdpZGdldC01IiwiaW5saW5lIjpmYWxzZSwibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoie1xuICAvLyBXYWl0IGZvciBvdXRwdXQgdG8gYmUgd3JpdHRlbiB0byB0aGUgRE9NLCB0aGVuIHRyaWdnZXIgd2lkZ2V0IHJlbmRlcmluZ1xuICBhd2FpdCBfd2Vicl92YWx1ZV81O1xuICBpZiAod2luZG93LkhUTUxXaWRnZXRzKSB7XG4gICAgd2luZG93LkhUTUxXaWRnZXRzLnN0YXRpY1JlbmRlcigpO1xuICB9XG4gIGlmICh3aW5kb3cuUGFnZWRUYWJsZURvYykge1xuICAgIHdpbmRvdy5QYWdlZFRhYmxlRG9jLmluaXRBbGwoKTtcbiAgfVxufVxuIn0seyJjZWxsTmFtZSI6IndlYnItNSIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJzb3VyY2UiOiJ2aWV3b2YgX3dlYnJfZWRpdG9yXzUgPSB7XG4gIGNvbnN0IHsgV2ViUkV4ZXJjaXNlRWRpdG9yLCBiNjREZWNvZGUgfSA9IHdpbmRvdy5fZXhlcmNpc2Vfb2pzX3J1bnRpbWU7XG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwid2Vici01LWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHdlYnItNS1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBXZWJSRXhlcmNpc2VFZGl0b3Iod2ViUk9qcy53ZWJSUHJvbWlzZSwgYmxvY2suY29kZSwgb3B0aW9ucyk7XG5cbiAgcmV0dXJuIGVkaXRvci5jb250YWluZXI7XG59XG5fd2Vicl92YWx1ZV81ID0gd2ViUk9qcy5wcm9jZXNzKF93ZWJyX2VkaXRvcl81LCB7fSk7XG4ifSx7ImNlbGxOYW1lIjoid2Vici13aWRnZXQtNCIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IntcbiAgLy8gV2FpdCBmb3Igb3V0cHV0IHRvIGJlIHdyaXR0ZW4gdG8gdGhlIERPTSwgdGhlbiB0cmlnZ2VyIHdpZGdldCByZW5kZXJpbmdcbiAgYXdhaXQgX3dlYnJfdmFsdWVfNDtcbiAgaWYgKHdpbmRvdy5IVE1MV2lkZ2V0cykge1xuICAgIHdpbmRvdy5IVE1MV2lkZ2V0cy5zdGF0aWNSZW5kZXIoKTtcbiAgfVxuICBpZiAod2luZG93LlBhZ2VkVGFibGVEb2MpIHtcbiAgICB3aW5kb3cuUGFnZWRUYWJsZURvYy5pbml0QWxsKCk7XG4gIH1cbn1cbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLTQiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF93ZWJyX2VkaXRvcl80ID0ge1xuICBjb25zdCB7IFdlYlJFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuICBjb25zdCBzY3JpcHRDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcIndlYnItNC1jb250ZW50c1xcXCJdYCkudGV4dENvbnRlbnQ7XG4gIGNvbnN0IGJsb2NrID0gSlNPTi5wYXJzZShiNjREZWNvZGUoc2NyaXB0Q29udGVudCkpO1xuXG4gIGNvbnN0IG9wdGlvbnMgPSBPYmplY3QuYXNzaWduKHsgaWQ6IGB3ZWJyLTQtY29udGVudHNgIH0sIGJsb2NrLmF0dHIpO1xuICBjb25zdCBlZGl0b3IgPSBuZXcgV2ViUkV4ZXJjaXNlRWRpdG9yKHdlYlJPanMud2ViUlByb21pc2UsIGJsb2NrLmNvZGUsIG9wdGlvbnMpO1xuXG4gIHJldHVybiBlZGl0b3IuY29udGFpbmVyO1xufVxuX3dlYnJfdmFsdWVfNCA9IHdlYlJPanMucHJvY2Vzcyhfd2Vicl9lZGl0b3JfNCwge30pO1xuIn0seyJjZWxsTmFtZSI6IndlYnItd2lkZ2V0LTMiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJ7XG4gIC8vIFdhaXQgZm9yIG91dHB1dCB0byBiZSB3cml0dGVuIHRvIHRoZSBET00sIHRoZW4gdHJpZ2dlciB3aWRnZXQgcmVuZGVyaW5nXG4gIGF3YWl0IF93ZWJyX3ZhbHVlXzM7XG4gIGlmICh3aW5kb3cuSFRNTFdpZGdldHMpIHtcbiAgICB3aW5kb3cuSFRNTFdpZGdldHMuc3RhdGljUmVuZGVyKCk7XG4gIH1cbiAgaWYgKHdpbmRvdy5QYWdlZFRhYmxlRG9jKSB7XG4gICAgd2luZG93LlBhZ2VkVGFibGVEb2MuaW5pdEFsbCgpO1xuICB9XG59XG4ifSx7ImNlbGxOYW1lIjoid2Vici0zIiwiaW5saW5lIjpmYWxzZSwibWV0aG9kTmFtZSI6ImludGVycHJldCIsInNvdXJjZSI6InZpZXdvZiBfd2Vicl9lZGl0b3JfMyA9IHtcbiAgY29uc3QgeyBXZWJSRXhlcmNpc2VFZGl0b3IsIGI2NERlY29kZSB9ID0gd2luZG93Ll9leGVyY2lzZV9vanNfcnVudGltZTtcbiAgY29uc3Qgc2NyaXB0Q29udGVudCA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoYHNjcmlwdFt0eXBlPVxcXCJ3ZWJyLTMtY29udGVudHNcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBibG9jayA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKHNjcmlwdENvbnRlbnQpKTtcblxuICBjb25zdCBvcHRpb25zID0gT2JqZWN0LmFzc2lnbih7IGlkOiBgd2Vici0zLWNvbnRlbnRzYCB9LCBibG9jay5hdHRyKTtcbiAgY29uc3QgZWRpdG9yID0gbmV3IFdlYlJFeGVyY2lzZUVkaXRvcih3ZWJST2pzLndlYlJQcm9taXNlLCBibG9jay5jb2RlLCBvcHRpb25zKTtcblxuICByZXR1cm4gZWRpdG9yLmNvbnRhaW5lcjtcbn1cbl93ZWJyX3ZhbHVlXzMgPSB3ZWJST2pzLnByb2Nlc3MoX3dlYnJfZWRpdG9yXzMsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLXdpZGdldC0yIiwiaW5saW5lIjpmYWxzZSwibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoie1xuICAvLyBXYWl0IGZvciBvdXRwdXQgdG8gYmUgd3JpdHRlbiB0byB0aGUgRE9NLCB0aGVuIHRyaWdnZXIgd2lkZ2V0IHJlbmRlcmluZ1xuICBhd2FpdCBfd2Vicl92YWx1ZV8yO1xuICBpZiAod2luZG93LkhUTUxXaWRnZXRzKSB7XG4gICAgd2luZG93LkhUTUxXaWRnZXRzLnN0YXRpY1JlbmRlcigpO1xuICB9XG4gIGlmICh3aW5kb3cuUGFnZWRUYWJsZURvYykge1xuICAgIHdpbmRvdy5QYWdlZFRhYmxlRG9jLmluaXRBbGwoKTtcbiAgfVxufVxuIn0seyJjZWxsTmFtZSI6IndlYnItMiIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJzb3VyY2UiOiJ2aWV3b2YgX3dlYnJfZWRpdG9yXzIgPSB7XG4gIGNvbnN0IHsgV2ViUkV4ZXJjaXNlRWRpdG9yLCBiNjREZWNvZGUgfSA9IHdpbmRvdy5fZXhlcmNpc2Vfb2pzX3J1bnRpbWU7XG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwid2Vici0yLWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHdlYnItMi1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBXZWJSRXhlcmNpc2VFZGl0b3Iod2ViUk9qcy53ZWJSUHJvbWlzZSwgYmxvY2suY29kZSwgb3B0aW9ucyk7XG5cbiAgcmV0dXJuIGVkaXRvci5jb250YWluZXI7XG59XG5fd2Vicl92YWx1ZV8yID0gd2ViUk9qcy5wcm9jZXNzKF93ZWJyX2VkaXRvcl8yLCB7fSk7XG4ifSx7ImNlbGxOYW1lIjoid2Vici13aWRnZXQtMSIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IntcbiAgLy8gV2FpdCBmb3Igb3V0cHV0IHRvIGJlIHdyaXR0ZW4gdG8gdGhlIERPTSwgdGhlbiB0cmlnZ2VyIHdpZGdldCByZW5kZXJpbmdcbiAgYXdhaXQgX3dlYnJfdmFsdWVfMTtcbiAgaWYgKHdpbmRvdy5IVE1MV2lkZ2V0cykge1xuICAgIHdpbmRvdy5IVE1MV2lkZ2V0cy5zdGF0aWNSZW5kZXIoKTtcbiAgfVxuICBpZiAod2luZG93LlBhZ2VkVGFibGVEb2MpIHtcbiAgICB3aW5kb3cuUGFnZWRUYWJsZURvYy5pbml0QWxsKCk7XG4gIH1cbn1cbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLTEiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF93ZWJyX2VkaXRvcl8xID0ge1xuICBjb25zdCB7IFdlYlJFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuICBjb25zdCBzY3JpcHRDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcIndlYnItMS1jb250ZW50c1xcXCJdYCkudGV4dENvbnRlbnQ7XG4gIGNvbnN0IGJsb2NrID0gSlNPTi5wYXJzZShiNjREZWNvZGUoc2NyaXB0Q29udGVudCkpO1xuXG4gIGNvbnN0IG9wdGlvbnMgPSBPYmplY3QuYXNzaWduKHsgaWQ6IGB3ZWJyLTEtY29udGVudHNgIH0sIGJsb2NrLmF0dHIpO1xuICBjb25zdCBlZGl0b3IgPSBuZXcgV2ViUkV4ZXJjaXNlRWRpdG9yKHdlYlJPanMud2ViUlByb21pc2UsIGJsb2NrLmNvZGUsIG9wdGlvbnMpO1xuXG4gIHJldHVybiBlZGl0b3IuY29udGFpbmVyO1xufVxuX3dlYnJfdmFsdWVfMSA9IHdlYlJPanMucHJvY2Vzcyhfd2Vicl9lZGl0b3JfMSwge30pO1xuIn0seyJjZWxsTmFtZSI6IndlYnItcHJlbHVkZSIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IndlYlJPanMgPSB7XG4gIGNvbnN0IHsgV2ViUiwgQ2hhbm5lbFR5cGUgfSA9IHdpbmRvdy5fZXhlcmNpc2Vfb2pzX3J1bnRpbWUuV2ViUjtcbiAgY29uc3Qge1xuICAgIFdlYlJFdmFsdWF0b3IsXG4gICAgV2ViUkVudmlyb25tZW50TWFuYWdlcixcbiAgICBzZXR1cFIsXG4gICAgYjY0RGVjb2RlLFxuICAgIGNvbGxhcHNlUGF0aFxuICB9ID0gd2luZG93Ll9leGVyY2lzZV9vanNfcnVudGltZTtcblxuICBjb25zdCBzdGF0dXNDb250YWluZXIgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZChcImV4ZXJjaXNlLWxvYWRpbmctc3RhdHVzXCIpO1xuICBjb25zdCBpbmRpY2F0b3JDb250YWluZXIgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZChcImV4ZXJjaXNlLWxvYWRpbmctaW5kaWNhdG9yXCIpO1xuICBpbmRpY2F0b3JDb250YWluZXIuY2xhc3NMaXN0LnJlbW92ZShcImQtbm9uZVwiKTtcblxuICBsZXQgc3RhdHVzVGV4dCA9IGRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoXCJkaXZcIilcbiAgc3RhdHVzVGV4dC5jbGFzc0xpc3QgPSBcImV4ZXJjaXNlLWxvYWRpbmctZGV0YWlsc1wiO1xuICBzdGF0dXNUZXh0ID0gc3RhdHVzQ29udGFpbmVyLmFwcGVuZENoaWxkKHN0YXR1c1RleHQpO1xuICBzdGF0dXNUZXh0LnRleHRDb250ZW50ID0gYEluaXRpYWxpc2VgO1xuXG4gIC8vIEhvaXN0IGluZGljYXRvciBvdXQgZnJvbSBmaW5hbCBzbGlkZSB3aGVuIHJ1bm5pbmcgdW5kZXIgcmV2ZWFsXG4gIGNvbnN0IHJldmVhbFN0YXR1cyA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoXCIucmV2ZWFsIC5leGVyY2lzZS1sb2FkaW5nLWluZGljYXRvclwiKTtcbiAgaWYgKHJldmVhbFN0YXR1cykge1xuICAgIHJldmVhbFN0YXR1cy5yZW1vdmUoKTtcbiAgICBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKFwiLnJldmVhbCA+IC5zbGlkZXNcIikuYXBwZW5kQ2hpbGQocmV2ZWFsU3RhdHVzKTtcbiAgfVxuXG4gIC8vIE1ha2UgYW55IHJldmVhbCBzbGlkZXMgd2l0aCBsaXZlIGNlbGxzIHNjcm9sbGFibGVcbiAgZG9jdW1lbnQucXVlcnlTZWxlY3RvckFsbChcIi5yZXZlYWwgLmV4ZXJjaXNlLWNlbGxcIikuZm9yRWFjaCgoZWwpID0+IHtcbiAgICBlbC5jbG9zZXN0KCdzZWN0aW9uLnNsaWRlJykuY2xhc3NMaXN0LmFkZChcInNjcm9sbGFibGVcIik7XG4gIH0pXG5cbiAgLy8gd2ViUiBzdXBwbGVtZW50YWwgZGF0YSBhbmQgb3B0aW9uc1xuICBjb25zdCBkYXRhQ29udGVudCA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoYHNjcmlwdFt0eXBlPVxcXCJ3ZWJyLWRhdGFcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBkYXRhID0gSlNPTi5wYXJzZShiNjREZWNvZGUoZGF0YUNvbnRlbnQpKTtcblxuICAvLyBHcmFiIGxpc3Qgb2YgcmVzb3VyY2VzIHRvIGJlIGRvd25sb2FkZWRcbiAgY29uc3QgZmlsZXNDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcInZmcy1maWxlXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgZmlsZXMgPSBKU09OLnBhcnNlKGI2NERlY29kZShmaWxlc0NvbnRlbnQpKTtcblxuICAvLyBJbml0aWFsaXNlIHdlYlIgYW5kIHNldHVwIGZvciBSIGNvZGUgZXZhbHVhdGlvblxuICBsZXQgd2ViUlByb21pc2UgPSAoYXN5bmMgKHdlYlIpID0+IHtcbiAgICBzdGF0dXNUZXh0LnRleHRDb250ZW50ID0gYERvd25sb2FkaW5nIHdlYlJgO1xuICAgIGF3YWl0IHdlYlIuaW5pdCgpO1xuXG4gICAgLy8gSW5zdGFsbCBwcm92aWRlZCBsaXN0IG9mIHBhY2thZ2VzXG4gICAgLy8gRW5zdXJlIHdlYlIgZGVmYXVsdCByZXBvIGlzIGluY2x1ZGVkXG4gICAgZGF0YS5wYWNrYWdlcy5yZXBvcy5wdXNoKFwiaHR0cHM6Ly9yZXBvLnItd2FzbS5vcmdcIilcbiAgICBhd2FpdCBkYXRhLnBhY2thZ2VzLnBrZ3MubWFwKChwa2cpID0+ICgpID0+IHtcbiAgICAgIHN0YXR1c1RleHQudGV4dENvbnRlbnQgPSBgRG93bmxvYWRpbmcgcGFja2FnZTogJHtwa2d9YDtcbiAgICAgIHJldHVybiB3ZWJSLmV2YWxSVm9pZChgXG4gICAgICAgIHdlYnI6Omluc3RhbGwocGtnLCByZXBvcyA9IHJlcG9zKVxuICAgICAgICBsaWJyYXJ5KHBrZywgY2hhcmFjdGVyLm9ubHkgPSBUUlVFKVxuICAgICAgYCwgeyBlbnY6IHtcbiAgICAgICAgcGtnOiBwa2csXG4gICAgICAgIHJlcG9zOiBkYXRhLnBhY2thZ2VzLnJlcG9zLFxuICAgICAgfX0pO1xuICAgIH0pLnJlZHVjZSgoY3VyLCBuZXh0KSA9PiBjdXIudGhlbihuZXh0KSwgUHJvbWlzZS5yZXNvbHZlKCkpO1xuXG4gICAgLy8gRG93bmxvYWQgYW5kIGluc3RhbGwgcmVzb3VyY2VzXG4gICAgYXdhaXQgZmlsZXMubWFwKChmaWxlKSA9PiBhc3luYyAoKSA9PiB7XG4gICAgICBjb25zdCBuYW1lID0gZmlsZS5zdWJzdHJpbmcoZmlsZS5sYXN0SW5kZXhPZignLycpICsgMSk7XG4gICAgICBzdGF0dXNUZXh0LnRleHRDb250ZW50ID0gYERvd25sb2FkaW5nIHJlc291cmNlOiAke25hbWV9YDtcbiAgICAgIGNvbnN0IHJlc3BvbnNlID0gYXdhaXQgZmV0Y2goZmlsZSk7XG4gICAgICBpZiAoIXJlc3BvbnNlLm9rKSB7XG4gICAgICAgIHRocm93IG5ldyBFcnJvcihgQ2FuJ3QgZG93bmxvYWQgXFxgJHtmaWxlfVxcYC4gRXJyb3IgJHtyZXNwb25zZS5zdGF0dXN9OiBcIiR7cmVzcG9uc2Uuc3RhdHVzVGV4dH1cIi5gKTtcbiAgICAgIH1cbiAgICAgIGNvbnN0IGRhdGEgPSBhd2FpdCByZXNwb25zZS5hcnJheUJ1ZmZlcigpO1xuXG4gICAgICAvLyBTdG9yZSBVUkxzIGluIHRoZSBjd2Qgd2l0aG91dCBhbnkgc3ViZGlyZWN0b3J5IHN0cnVjdHVyZVxuICAgICAgaWYgKGZpbGUuaW5jbHVkZXMoXCI6Ly9cIikpIHtcbiAgICAgICAgZmlsZSA9IG5hbWU7XG4gICAgICB9XG5cbiAgICAgIC8vIENvbGxhcHNlIGhpZ2hlciBkaXJlY3Rvcnkgc3RydWN0dXJlXG4gICAgICBmaWxlID0gY29sbGFwc2VQYXRoKGZpbGUpO1xuXG4gICAgICAvLyBDcmVhdGUgZGlyZWN0b3J5IHRyZWUsIGlnbm9yaW5nIFwiZGlyZWN0b3J5IGV4aXN0c1wiIFZGUyBlcnJvcnNcbiAgICAgIGNvbnN0IHBhcnRzID0gZmlsZS5zcGxpdCgnLycpLnNsaWNlKDAsIC0xKTtcbiAgICAgIGxldCBwYXRoID0gJyc7XG4gICAgICB3aGlsZSAocGFydHMubGVuZ3RoID4gMCkge1xuICAgICAgICBwYXRoICs9IHBhcnRzLnNoaWZ0KCkgKyAnLyc7XG4gICAgICAgIGNvbnN0IGFuYWx5c2lzID0gYXdhaXQgd2ViUi5GUy5hbmFseXplUGF0aChwYXRoKTtcbiAgICAgICAgaWYgKCFhbmFseXNpcy5leGlzdHMpIHtcbiAgICAgICAgICB0cnkge1xuICAgICAgICAgICAgYXdhaXQgd2ViUi5GUy5ta2RpcihwYXRoKTtcbiAgICAgICAgICB9IGNhdGNoIChlKSB7XG4gICAgICAgICAgICB0aHJvdyBuZXcgRXJyb3IoYEZpbGVzeXN0ZW0gRXJyb3I6IFwiJHtlLm1lc3NhZ2V9XCIuYCk7XG4gICAgICAgICAgfVxuICAgICAgICB9XG4gICAgICB9XG5cbiAgICAgIC8vIFdyaXRlIHRoaXMgZmlsZSB0byB0aGUgVkZTXG4gICAgICByZXR1cm4gYXdhaXQgd2ViUi5GUy53cml0ZUZpbGUoZmlsZSwgbmV3IFVpbnQ4QXJyYXkoZGF0YSkpO1xuICAgIH0pLnJlZHVjZSgoY3VyLCBuZXh0KSA9PiBjdXIudGhlbihuZXh0KSwgUHJvbWlzZS5yZXNvbHZlKCkpO1xuXG4gICAgc3RhdHVzVGV4dC50ZXh0Q29udGVudCA9IGBJbnN0YWxsaW5nIHdlYlIgc2hpbXNgO1xuICAgIGF3YWl0IHdlYlIuZXZhbFJWb2lkKGB3ZWJyOjpzaGltX2luc3RhbGwoKWApO1xuXG4gICAgc3RhdHVzVGV4dC50ZXh0Q29udGVudCA9IGBXZWJSIGVudmlyb25tZW50IHNldHVwYDtcbiAgICBhd2FpdCBzZXR1cFIod2ViUiwgZGF0YSk7XG5cbiAgICBzdGF0dXNUZXh0LnJlbW92ZSgpO1xuICAgIGlmIChzdGF0dXNDb250YWluZXIuY2hpbGRyZW4ubGVuZ3RoID09IDApIHtcbiAgICAgIHN0YXR1c0NvbnRhaW5lci5wYXJlbnROb2RlLnJlbW92ZSgpO1xuICAgIH1cbiAgICByZXR1cm4gd2ViUjtcbiAgfSkobmV3IFdlYlIoZGF0YS5vcHRpb25zKSk7XG5cbiAgLy8gS2VlcCB0cmFjayBvZiBpbml0aWFsIE9KUyBibG9jayByZW5kZXJcbiAgY29uc3QgcmVuZGVyZWRPanMgPSB7fTtcblxuICBjb25zdCBwcm9jZXNzID0gYXN5bmMgKGNvbnRleHQsIGlucHV0cykgPT4ge1xuICAgIGNvbnN0IHdlYlIgPSBhd2FpdCB3ZWJSUHJvbWlzZTtcbiAgICBjb25zdCBldmFsdWF0b3IgPSBuZXcgV2ViUkV2YWx1YXRvcih3ZWJSLCBjb250ZXh0KVxuICAgIGF3YWl0IGV2YWx1YXRvci5wcm9jZXNzKGlucHV0cyk7XG4gICAgcmV0dXJuIGV2YWx1YXRvci5jb250YWluZXI7XG4gIH1cblxuICByZXR1cm4ge1xuICAgIHByb2Nlc3MsXG4gICAgd2ViUlByb21pc2UsXG4gICAgcmVuZGVyZWRPanMsXG4gIH07XG59XG4ifV19
+</script>
+<div id="exercise-loading-indicator" class="exercise-loading-indicator d-none d-flex align-items-center gap-2">
+<div id="exercise-loading-status" class="d-flex gap-2">
+
+</div>
+<div class="spinner-grow spinner-grow-sm">
+
+</div>
+</div>
+<script type="vfs-file">
+WyIuLi9fY29tbW9ucy9kYXRhL2pvdXJfMDdfZXh0cmFpdHMvYWRtcG9wX2FkbTFfMjAyNS5jc3YiLCIuLi9fY29tbW9ucy9kYXRhL2pvdXJfMDdfZXh0cmFpdHMvZ2FkbTQxX0NNUl9hZG0xLmdlb2pzb24iXQ==
+</script>
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W119
+</script>
+<div id="exercise-loading-indicator" class="exercise-loading-indicator d-none d-flex align-items-center gap-2">
+<div id="exercise-loading-status" class="d-flex gap-2">
+
+</div>
+<div class="spinner-grow spinner-grow-sm">
+
+</div>
+</div>
+<script type="vfs-file">
+W10=
+</script>
+</section>
+
+</main> <!-- /main -->
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W119
+</script>
+<script type="module">
+if (window.location.protocol === "file:") { alert("The OJS runtime does not work with file:// URLs. Please use a web server to view this document."); }
+window._ojs.paths.runtimeToDoc = "../../J07_population_haute_resolution";
+window._ojs.paths.runtimeToRoot = "../..";
+window._ojs.paths.docToRoot = "..";
+window._ojs.selfContained = false;
+window._ojs.runtime.interpretFromScriptTags();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "J7 — Cartographie de la population à haute résolution"</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> "Code R exécutable dans le navigateur — vecteur + raster lecture seule"</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="an">engine:</span><span class="co"> knitr</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="an">webr:</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">  packages:</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">    - sf</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">    - dplyr</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co">    - ggplot2</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co">    - readr</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co">    - scales</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="co">    - tibble</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="co">  resources:</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="co">    - ../_commons/data/jour_07_extraits/admpop_adm1_2025.csv</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="co">    - ../_commons/data/jour_07_extraits/gadm41_CMR_adm1.geojson</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>::: {.iford-callout}</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>**Mode d'emploi.** Les cellules **Run code** (cellules bleues `{webr}`) tournent dans le navigateur — clique pour exécuter. Les blocs `r` simples (non bleus) sont en **lecture seule** : ils montrent le code raster à étudier et à exécuter dans RStudio desktop.</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>**Pourquoi cette séparation ?** Le package R `terra` (raster + GDAL/PROJ/GEOS compilés en WASM, ~15 Mo) déclenche une régression connue de WebR 0.6 : `TypeError: resolved is not a function` au moment du téléchargement. Tant que ce bug amont n'est pas corrigé, **la partie raster (WorldPop Mfoundi) ne peut pas s'exécuter dans le navigateur** — mais les lignes restent visibles pour la lecture et la copie vers desktop.</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>**Note technique** : <span class="in">`tmap`</span> mode <span class="in">`view`</span>, <span class="in">`mapedit`</span> et <span class="in">`exactextractr`</span> ne sont pas portables sur WebR non plus. Pour l'expérience complète (mosaïque GHSL, dessin de zone interactive, agrégation exactextractr, comparaison WorldPop vs GHSL), voir <span class="in">`demo.qmd`</span> desktop.</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>**Données 100 % réelles** : OCHA COD-PS Cameroun 2025 (table officielle population par région) + GADM v4.1 ADM1 + extraits WorldPop constrained R2025A pour le Mfoundi (Yaoundé). Aucun raster simulé.</span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>**Conception pédagogique** : Edith Darin (GDSG/IFORD). **Intégration runtime** : Ramesesse Dzita.</span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a><span class="fu">## 1. Charger le CSV admin-pop et la couche ADM1</span></span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>On combine deux fichiers : un **CSV tabulaire** OCHA COD-PS (la population officielle par région) et un **GeoJSON GADM** (les contours géographiques des 10 régions). Pour cartographier la population, il faut **joindre** les deux ; cette première cellule se contente de les charger et de vérifier que les volumes correspondent.</span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a><span class="in">#| autorun: true</span></span>
+<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a><span class="in"># `sf` lit/ecrit les couches vectorielles. terra (raster) est en lecture seule</span></span>
+<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a><span class="in"># plus bas pour des raisons de portabilite WebR.</span></span>
+<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a><span class="in">library(sf)</span></span>
+<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a><span class="in">library(dplyr)</span></span>
+<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a><span class="in">library(ggplot2)</span></span>
+<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a><span class="in">library(readr)</span></span>
+<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a><span class="in">library(scales)</span></span>
+<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a><span class="in"># CSV admin-pop OCHA COD-PS 2025 = table officielle de population par region.</span></span>
+<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a><span class="in"># GADM = base mondiale de limites administratives (v4.1, mise a jour 2022).</span></span>
+<span id="cb6-48"><a href="#cb6-48" aria-hidden="true" tabindex="-1"></a><span class="in">pop_adm1 &lt;- read_csv("_commons/data/jour_07_extraits/admpop_adm1_2025.csv",</span></span>
+<span id="cb6-49"><a href="#cb6-49" aria-hidden="true" tabindex="-1"></a><span class="in">                     show_col_types = FALSE)</span></span>
+<span id="cb6-50"><a href="#cb6-50" aria-hidden="true" tabindex="-1"></a><span class="in">cmr1     &lt;- read_sf("_commons/data/jour_07_extraits/gadm41_CMR_adm1.geojson")</span></span>
+<span id="cb6-51"><a href="#cb6-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-52"><a href="#cb6-52" aria-hidden="true" tabindex="-1"></a><span class="in"># Verification rapide : 10 regions dans le CSV doivent matcher 10 polygones GADM.</span></span>
+<span id="cb6-53"><a href="#cb6-53" aria-hidden="true" tabindex="-1"></a><span class="in">c(regions_csv = nrow(pop_adm1), polygones = nrow(cmr1))</span></span>
+<span id="cb6-54"><a href="#cb6-54" aria-hidden="true" tabindex="-1"></a><span class="in"># T_TL = Total Tous Les ages ; F_TL = femmes ; M_TL = hommes (nomenclature COD-PS).</span></span>
+<span id="cb6-55"><a href="#cb6-55" aria-hidden="true" tabindex="-1"></a><span class="in">glimpse(pop_adm1[, c("ADM1_EN", "ADM1_FR", "T_TL", "F_TL", "M_TL")])</span></span>
+<span id="cb6-56"><a href="#cb6-56" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-57"><a href="#cb6-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-58"><a href="#cb6-58" aria-hidden="true" tabindex="-1"></a><span class="fu">## 2. Choroplèthe de la population totale par région (Exercice 0)</span></span>
+<span id="cb6-59"><a href="#cb6-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-60"><a href="#cb6-60" aria-hidden="true" tabindex="-1"></a>Un **choroplèthe** est une carte ou la couleur du polygone code la valeur d'une variable. Ici on colore chaque region selon sa population totale. GADM utilise les noms français pour le Cameroun → clé <span class="in">`ADM1_FR`</span>. La jointure doit retourner 0 NA si toutes les régions matchent.</span>
+<span id="cb6-61"><a href="#cb6-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-64"><a href="#cb6-64" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb6-65"><a href="#cb6-65" aria-hidden="true" tabindex="-1"></a><span class="in"># left_join garde TOUTES les regions de cmr1 et ajoute les colonnes du CSV.</span></span>
+<span id="cb6-66"><a href="#cb6-66" aria-hidden="true" tabindex="-1"></a><span class="in"># Cle = nom de region : a gauche "NAME_1" (GADM), a droite "ADM1_FR" (CSV).</span></span>
+<span id="cb6-67"><a href="#cb6-67" aria-hidden="true" tabindex="-1"></a><span class="in">cmr1_pop &lt;- cmr1 |&gt;</span></span>
+<span id="cb6-68"><a href="#cb6-68" aria-hidden="true" tabindex="-1"></a><span class="in">  left_join(pop_adm1 |&gt; select(ADM1_FR, T_TL, F_TL, M_TL),</span></span>
+<span id="cb6-69"><a href="#cb6-69" aria-hidden="true" tabindex="-1"></a><span class="in">            by = c("NAME_1" = "ADM1_FR"))</span></span>
+<span id="cb6-70"><a href="#cb6-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-71"><a href="#cb6-71" aria-hidden="true" tabindex="-1"></a><span class="in"># Compteur de NA = controle qualite de la jointure. 0 = parfait.</span></span>
+<span id="cb6-72"><a href="#cb6-72" aria-hidden="true" tabindex="-1"></a><span class="in">cat("Régions sans match (NA T_TL) :", sum(is.na(cmr1_pop$T_TL)), "\n")</span></span>
+<span id="cb6-73"><a href="#cb6-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-74"><a href="#cb6-74" aria-hidden="true" tabindex="-1"></a><span class="in"># geom_sf trace les polygones ; aes(fill = T_TL) mappe la couleur sur la population.</span></span>
+<span id="cb6-75"><a href="#cb6-75" aria-hidden="true" tabindex="-1"></a><span class="in"># Etiquettes : noir sur fond blanc semi-transparent pour rester lisibles</span></span>
+<span id="cb6-76"><a href="#cb6-76" aria-hidden="true" tabindex="-1"></a><span class="in"># quelle que soit la palette de fond (sequentielle, divergente, etc.).</span></span>
+<span id="cb6-77"><a href="#cb6-77" aria-hidden="true" tabindex="-1"></a><span class="in">ggplot(cmr1_pop) +</span></span>
+<span id="cb6-78"><a href="#cb6-78" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(aes(fill = T_TL), colour = "white", linewidth = 0.3) +</span></span>
+<span id="cb6-79"><a href="#cb6-79" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf_label(aes(label = NAME_1), size = 2.2, colour = "black",</span></span>
+<span id="cb6-80"><a href="#cb6-80" aria-hidden="true" tabindex="-1"></a><span class="in">                fill = alpha("white", 0.75), label.size = 0,</span></span>
+<span id="cb6-81"><a href="#cb6-81" aria-hidden="true" tabindex="-1"></a><span class="in">                label.padding = unit(0.1, "lines")) +</span></span>
+<span id="cb6-82"><a href="#cb6-82" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_fill_viridis_c(option = "plasma", labels = comma,</span></span>
+<span id="cb6-83"><a href="#cb6-83" aria-hidden="true" tabindex="-1"></a><span class="in">                       name = "Population\n(habitants)") +</span></span>
+<span id="cb6-84"><a href="#cb6-84" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(title    = "Population totale par région — Cameroun, 2025",</span></span>
+<span id="cb6-85"><a href="#cb6-85" aria-hidden="true" tabindex="-1"></a><span class="in">       subtitle = "Choroplèthe administratif · 10 régions ADM1",</span></span>
+<span id="cb6-86"><a href="#cb6-86" aria-hidden="true" tabindex="-1"></a><span class="in">       caption  = "Source : OCHA COD-PS Cameroun 2025 · GADM v4.1 · IFORD x GDSG 2026") +</span></span>
+<span id="cb6-87"><a href="#cb6-87" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal() +</span></span>
+<span id="cb6-88"><a href="#cb6-88" aria-hidden="true" tabindex="-1"></a><span class="in">  theme(axis.text = element_blank(), axis.ticks = element_blank(),</span></span>
+<span id="cb6-89"><a href="#cb6-89" aria-hidden="true" tabindex="-1"></a><span class="in">        panel.grid = element_blank())</span></span>
+<span id="cb6-90"><a href="#cb6-90" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-91"><a href="#cb6-91" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-92"><a href="#cb6-92" aria-hidden="true" tabindex="-1"></a><span class="fu">## 3. Variable dérivée : ratio F/H (Exercice 0b)</span></span>
+<span id="cb6-93"><a href="#cb6-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-94"><a href="#cb6-94" aria-hidden="true" tabindex="-1"></a>Une **variable derivee** est calculee a partir d'autres colonnes. Ici `ratio_fm = F_TL / M_TL` : &gt; 1 = plus de femmes, &lt; 1 = plus d'hommes. Une **palette divergente** est centree sur une valeur pivot (ici 1, l'equilibre demographique) et utilise deux teintes opposees pour les ecarts.</span>
+<span id="cb6-95"><a href="#cb6-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-98"><a href="#cb6-98" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb6-99"><a href="#cb6-99" aria-hidden="true" tabindex="-1"></a><span class="in"># mutate ajoute une nouvelle colonne sans toucher aux existantes.</span></span>
+<span id="cb6-100"><a href="#cb6-100" aria-hidden="true" tabindex="-1"></a><span class="in">cmr1_pop &lt;- cmr1_pop |&gt; mutate(ratio_fm = F_TL / M_TL)</span></span>
+<span id="cb6-101"><a href="#cb6-101" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-102"><a href="#cb6-102" aria-hidden="true" tabindex="-1"></a><span class="in"># gradient2 = palette a 3 couleurs (low/mid/high) pivotee sur midpoint.</span></span>
+<span id="cb6-103"><a href="#cb6-103" aria-hidden="true" tabindex="-1"></a><span class="in"># Bleu = deficit de femmes, blanc = parite, rouge = surplus de femmes.</span></span>
+<span id="cb6-104"><a href="#cb6-104" aria-hidden="true" tabindex="-1"></a><span class="in">ggplot(cmr1_pop) +</span></span>
+<span id="cb6-105"><a href="#cb6-105" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(aes(fill = ratio_fm), colour = "white", linewidth = 0.3) +</span></span>
+<span id="cb6-106"><a href="#cb6-106" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf_label(aes(label = NAME_1), size = 2.2, colour = "black",</span></span>
+<span id="cb6-107"><a href="#cb6-107" aria-hidden="true" tabindex="-1"></a><span class="in">                fill = alpha("white", 0.75), label.size = 0,</span></span>
+<span id="cb6-108"><a href="#cb6-108" aria-hidden="true" tabindex="-1"></a><span class="in">                label.padding = unit(0.1, "lines")) +</span></span>
+<span id="cb6-109"><a href="#cb6-109" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_fill_gradient2(low = "#2166AC", mid = "white", high = "#B2182B",</span></span>
+<span id="cb6-110"><a href="#cb6-110" aria-hidden="true" tabindex="-1"></a><span class="in">                       midpoint = 1, name = "Ratio F/H\n(sans unité)") +</span></span>
+<span id="cb6-111"><a href="#cb6-111" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(title    = "Ratio femmes / hommes par région — Cameroun, 2025",</span></span>
+<span id="cb6-112"><a href="#cb6-112" aria-hidden="true" tabindex="-1"></a><span class="in">       subtitle = "Palette divergente centrée sur l'équilibre démographique (F/H = 1)",</span></span>
+<span id="cb6-113"><a href="#cb6-113" aria-hidden="true" tabindex="-1"></a><span class="in">       caption  = "Source : OCHA COD-PS Cameroun 2025 · GADM v4.1 · IFORD x GDSG 2026") +</span></span>
+<span id="cb6-114"><a href="#cb6-114" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal() +</span></span>
+<span id="cb6-115"><a href="#cb6-115" aria-hidden="true" tabindex="-1"></a><span class="in">  theme(axis.text = element_blank(), axis.ticks = element_blank(),</span></span>
+<span id="cb6-116"><a href="#cb6-116" aria-hidden="true" tabindex="-1"></a><span class="in">        panel.grid = element_blank())</span></span>
+<span id="cb6-117"><a href="#cb6-117" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-118"><a href="#cb6-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-119"><a href="#cb6-119" aria-hidden="true" tabindex="-1"></a><span class="fu">## 4. Part de la population jeune (Exercice 0c)</span></span>
+<span id="cb6-120"><a href="#cb6-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-121"><a href="#cb6-121" aria-hidden="true" tabindex="-1"></a>Le CSV COD-PS contient une **pyramide des ages** complete (`T_00_04`, `T_05_09`, ...). On somme les trois premieres classes (0-14 ans) puis on rapporte au total pour obtenir une **part en %**. Indicateur cle pour les politiques de scolarisation.</span>
+<span id="cb6-122"><a href="#cb6-122" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-125"><a href="#cb6-125" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb6-126"><a href="#cb6-126" aria-hidden="true" tabindex="-1"></a><span class="in"># On enrichit pop_adm1 avec deux nouvelles colonnes (jeunes + part) avant la jointure.</span></span>
+<span id="cb6-127"><a href="#cb6-127" aria-hidden="true" tabindex="-1"></a><span class="in">cmr1_pop &lt;- cmr1_pop |&gt;</span></span>
+<span id="cb6-128"><a href="#cb6-128" aria-hidden="true" tabindex="-1"></a><span class="in">  left_join(</span></span>
+<span id="cb6-129"><a href="#cb6-129" aria-hidden="true" tabindex="-1"></a><span class="in">    pop_adm1 |&gt;</span></span>
+<span id="cb6-130"><a href="#cb6-130" aria-hidden="true" tabindex="-1"></a><span class="in">      mutate(jeunes_0_14     = T_00_04 + T_05_09 + T_10_14,</span></span>
+<span id="cb6-131"><a href="#cb6-131" aria-hidden="true" tabindex="-1"></a><span class="in">             part_jeunes_pct = 100 * jeunes_0_14 / T_TL) |&gt;</span></span>
+<span id="cb6-132"><a href="#cb6-132" aria-hidden="true" tabindex="-1"></a><span class="in">      select(ADM1_FR, part_jeunes_pct),</span></span>
+<span id="cb6-133"><a href="#cb6-133" aria-hidden="true" tabindex="-1"></a><span class="in">    by = c("NAME_1" = "ADM1_FR")</span></span>
+<span id="cb6-134"><a href="#cb6-134" aria-hidden="true" tabindex="-1"></a><span class="in">  )</span></span>
+<span id="cb6-135"><a href="#cb6-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-136"><a href="#cb6-136" aria-hidden="true" tabindex="-1"></a><span class="in"># Palette "magma" = sequentielle perceptuellement uniforme, bonne pour un %.</span></span>
+<span id="cb6-137"><a href="#cb6-137" aria-hidden="true" tabindex="-1"></a><span class="in">ggplot(cmr1_pop) +</span></span>
+<span id="cb6-138"><a href="#cb6-138" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(aes(fill = part_jeunes_pct), colour = "white", linewidth = 0.3) +</span></span>
+<span id="cb6-139"><a href="#cb6-139" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf_label(aes(label = NAME_1), size = 2.2, colour = "black",</span></span>
+<span id="cb6-140"><a href="#cb6-140" aria-hidden="true" tabindex="-1"></a><span class="in">                fill = alpha("white", 0.75), label.size = 0,</span></span>
+<span id="cb6-141"><a href="#cb6-141" aria-hidden="true" tabindex="-1"></a><span class="in">                label.padding = unit(0.1, "lines")) +</span></span>
+<span id="cb6-142"><a href="#cb6-142" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_fill_viridis_c(option = "magma", name = "% 0-14 ans") +</span></span>
+<span id="cb6-143"><a href="#cb6-143" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(title    = "Part des moins de 15 ans par région — Cameroun, 2025",</span></span>
+<span id="cb6-144"><a href="#cb6-144" aria-hidden="true" tabindex="-1"></a><span class="in">       subtitle = "Indicateur de jeunesse démographique (somme T_00_04 + T_05_09 + T_10_14)",</span></span>
+<span id="cb6-145"><a href="#cb6-145" aria-hidden="true" tabindex="-1"></a><span class="in">       caption  = "Source : OCHA COD-PS Cameroun 2025 · GADM v4.1 · IFORD x GDSG 2026") +</span></span>
+<span id="cb6-146"><a href="#cb6-146" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal() +</span></span>
+<span id="cb6-147"><a href="#cb6-147" aria-hidden="true" tabindex="-1"></a><span class="in">  theme(axis.text = element_blank(), axis.ticks = element_blank(),</span></span>
+<span id="cb6-148"><a href="#cb6-148" aria-hidden="true" tabindex="-1"></a><span class="in">        panel.grid = element_blank())</span></span>
+<span id="cb6-149"><a href="#cb6-149" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-150"><a href="#cb6-150" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-151"><a href="#cb6-151" aria-hidden="true" tabindex="-1"></a><span class="fu">## 5. Densité par région avec échelle log (Exercice 6)</span></span>
+<span id="cb6-152"><a href="#cb6-152" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-153"><a href="#cb6-153" aria-hidden="true" tabindex="-1"></a>La **densite** (hab/km²) normalise la population par la surface : indispensable pour comparer des régions de tailles inégales (Extrême-Nord ~34 000 km² vs Est ~109 000 km²). Quand le facteur de variation est grand (&gt;10x), l'**échelle log** révèle les contrastes que l'échelle linéaire écraserait.</span>
+<span id="cb6-154"><a href="#cb6-154" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-157"><a href="#cb6-157" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb6-158"><a href="#cb6-158" aria-hidden="true" tabindex="-1"></a><span class="in"># st_area retourne des m2 (sf detecte la colonne geometrie automatiquement).</span></span>
+<span id="cb6-159"><a href="#cb6-159" aria-hidden="true" tabindex="-1"></a><span class="in"># Pour mesurer des surfaces realistes au Cameroun, l'EPSG:32632 (UTM zone 32N)</span></span>
+<span id="cb6-160"><a href="#cb6-160" aria-hidden="true" tabindex="-1"></a><span class="in"># serait plus precis ; ici en WGS84 l'approximation reste correcte pour visualiser.</span></span>
+<span id="cb6-161"><a href="#cb6-161" aria-hidden="true" tabindex="-1"></a><span class="in">cmr1_pop$surface_km2     &lt;- as.numeric(st_area(cmr1_pop)) / 1e6</span></span>
+<span id="cb6-162"><a href="#cb6-162" aria-hidden="true" tabindex="-1"></a><span class="in">cmr1_pop$densite_hab_km2 &lt;- cmr1_pop$T_TL / cmr1_pop$surface_km2</span></span>
+<span id="cb6-163"><a href="#cb6-163" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-164"><a href="#cb6-164" aria-hidden="true" tabindex="-1"></a><span class="in"># trans = "log10" applique la transformation logarithmique sur la palette.</span></span>
+<span id="cb6-165"><a href="#cb6-165" aria-hidden="true" tabindex="-1"></a><span class="in">ggplot(cmr1_pop) +</span></span>
+<span id="cb6-166"><a href="#cb6-166" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(aes(fill = densite_hab_km2), colour = "white", linewidth = 0.3) +</span></span>
+<span id="cb6-167"><a href="#cb6-167" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf_label(aes(label = NAME_1), size = 2.2, colour = "black",</span></span>
+<span id="cb6-168"><a href="#cb6-168" aria-hidden="true" tabindex="-1"></a><span class="in">                fill = alpha("white", 0.75), label.size = 0,</span></span>
+<span id="cb6-169"><a href="#cb6-169" aria-hidden="true" tabindex="-1"></a><span class="in">                label.padding = unit(0.1, "lines")) +</span></span>
+<span id="cb6-170"><a href="#cb6-170" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_fill_viridis_c(option = "inferno", trans = "log10",</span></span>
+<span id="cb6-171"><a href="#cb6-171" aria-hidden="true" tabindex="-1"></a><span class="in">                       labels = comma, name = "hab/km²\n(échelle log)") +</span></span>
+<span id="cb6-172"><a href="#cb6-172" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(title    = "Densité de population par région — Cameroun, 2025",</span></span>
+<span id="cb6-173"><a href="#cb6-173" aria-hidden="true" tabindex="-1"></a><span class="in">       subtitle = "Échelle logarithmique (contraste ~10x entre régions extrêmes)",</span></span>
+<span id="cb6-174"><a href="#cb6-174" aria-hidden="true" tabindex="-1"></a><span class="in">       caption  = "Source : OCHA COD-PS Cameroun 2025 · GADM v4.1 · IFORD x GDSG 2026") +</span></span>
+<span id="cb6-175"><a href="#cb6-175" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal() +</span></span>
+<span id="cb6-176"><a href="#cb6-176" aria-hidden="true" tabindex="-1"></a><span class="in">  theme(axis.text = element_blank(), axis.ticks = element_blank(),</span></span>
+<span id="cb6-177"><a href="#cb6-177" aria-hidden="true" tabindex="-1"></a><span class="in">        panel.grid = element_blank())</span></span>
+<span id="cb6-178"><a href="#cb6-178" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-179"><a href="#cb6-179" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-180"><a href="#cb6-180" aria-hidden="true" tabindex="-1"></a><span class="fu">## 6. Pipeline raster WorldPop (lecture seule)</span></span>
+<span id="cb6-181"><a href="#cb6-181" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-182"><a href="#cb6-182" aria-hidden="true" tabindex="-1"></a>Les sections **6 bis** à **6 sexies** ci-dessous présentent le pipeline raster <span class="in">`terra`</span> à reproduire dans RStudio desktop. Le code y est commenté ligne à ligne. Sur un poste avec R installé, ouvrir <span class="in">`demo.qmd`</span> du même dossier exécute ce pipeline en direct.</span>
+<span id="cb6-183"><a href="#cb6-183" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-184"><a href="#cb6-184" aria-hidden="true" tabindex="-1"></a><span class="fu">## 6 bis. Charger un raster WorldPop (extrait Mfoundi)</span></span>
+<span id="cb6-185"><a href="#cb6-185" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-186"><a href="#cb6-186" aria-hidden="true" tabindex="-1"></a>Un **raster de population** (population grid) est une grille régulière où chaque cellule porte une estimation du nombre d'habitants. **WorldPop** (université de Southampton) utilise la méthode **top-down** (Stevens et al. 2015) : on part d'un total officiel par unité administrative puis on **redistribue** les habitants pixel par pixel selon des covariables (bâtiment, routes, lumières nocturnes…). La version **constrained R2025A** (dernière release 2024) contraint la redistribution aux pixels réellement bâtis.</span>
+<span id="cb6-187"><a href="#cb6-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-188"><a href="#cb6-188" aria-hidden="true" tabindex="-1"></a>Les TIF WorldPop complets pèsent ~25 Mo chacun. On charge un **extrait** sur le département du Mfoundi (Yaoundé), recadré et compressé à ~1 Mo.</span>
+<span id="cb6-189"><a href="#cb6-189" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-190"><a href="#cb6-190" aria-hidden="true" tabindex="-1"></a><span class="in">```r</span></span>
+<span id="cb6-191"><a href="#cb6-191" aria-hidden="true" tabindex="-1"></a><span class="co"># terra remplace l'ancien `raster` : plus rapide, plus moderne, base C++.</span></span>
+<span id="cb6-192"><a href="#cb6-192" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(terra)</span>
+<span id="cb6-193"><a href="#cb6-193" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-194"><a href="#cb6-194" aria-hidden="true" tabindex="-1"></a><span class="co"># rast() ouvre le GeoTIFF SANS charger tous les pixels en RAM (pointeur disque).</span></span>
+<span id="cb6-195"><a href="#cb6-195" aria-hidden="true" tabindex="-1"></a>pop_2025 <span class="ot">&lt;-</span> <span class="fu">rast</span>(<span class="st">"../_commons/data/jour_07_extraits/pop_2025_mfoundi.tif"</span>)</span>
+<span id="cb6-196"><a href="#cb6-196" aria-hidden="true" tabindex="-1"></a>pop_2015 <span class="ot">&lt;-</span> <span class="fu">rast</span>(<span class="st">"../_commons/data/jour_07_extraits/pop_2015_mfoundi.tif"</span>)</span>
+<span id="cb6-197"><a href="#cb6-197" aria-hidden="true" tabindex="-1"></a>pop_2030 <span class="ot">&lt;-</span> <span class="fu">rast</span>(<span class="st">"../_commons/data/jour_07_extraits/pop_2030_mfoundi.tif"</span>)</span>
+<span id="cb6-198"><a href="#cb6-198" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-199"><a href="#cb6-199" aria-hidden="true" tabindex="-1"></a><span class="co"># print() affiche les metadonnees : dimensions, CRS, etendue, resolution.</span></span>
+<span id="cb6-200"><a href="#cb6-200" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(pop_2025)</span>
+<span id="cb6-201"><a href="#cb6-201" aria-hidden="true" tabindex="-1"></a><span class="co"># Resolution WorldPop = 0.000833 deg ~ 92.5 m a l'equateur (on parle de "100 m").</span></span>
+<span id="cb6-202"><a href="#cb6-202" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Résolution (degrés) :"</span>, <span class="fu">res</span>(pop_2025), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb6-203"><a href="#cb6-203" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Cellules non-NA :"</span>, <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(<span class="fu">values</span>(pop_2025))), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb6-204"><a href="#cb6-204" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-205"><a href="#cb6-205" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-206"><a href="#cb6-206" aria-hidden="true" tabindex="-1"></a><span class="fu">## 6 ter. Visualiser la grille Mfoundi 2025</span></span>
+<span id="cb6-207"><a href="#cb6-207" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-208"><a href="#cb6-208" aria-hidden="true" tabindex="-1"></a><span class="in">`terra::plot`</span> est rapide et léger. La valeur d'une cellule = **habitants/pixel** (1 pixel = 100m x 100m ~ 1 hectare).</span>
+<span id="cb6-209"><a href="#cb6-209" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-210"><a href="#cb6-210" aria-hidden="true" tabindex="-1"></a><span class="in">```r</span></span>
+<span id="cb6-211"><a href="#cb6-211" aria-hidden="true" tabindex="-1"></a><span class="co"># hcl.colors() = palette HCL perceptuellement uniforme, rev=TRUE inverse l'ordre.</span></span>
+<span id="cb6-212"><a href="#cb6-212" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(pop_2025,</span>
+<span id="cb6-213"><a href="#cb6-213" aria-hidden="true" tabindex="-1"></a>     <span class="at">main =</span> <span class="st">"WorldPop constrained R2025A — Mfoundi (Yaoundé) — 2025"</span>,</span>
+<span id="cb6-214"><a href="#cb6-214" aria-hidden="true" tabindex="-1"></a>     <span class="at">sub  =</span> <span class="st">"Méthode top-down · unité : hab/pixel (100m x 100m)"</span>,</span>
+<span id="cb6-215"><a href="#cb6-215" aria-hidden="true" tabindex="-1"></a>     <span class="at">col  =</span> <span class="fu">hcl.colors</span>(<span class="dv">20</span>, <span class="st">"YlOrRd"</span>, <span class="at">rev =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb6-216"><a href="#cb6-216" aria-hidden="true" tabindex="-1"></a><span class="co"># Caption manuel (terra n'a pas d'option caption native) :</span></span>
+<span id="cb6-217"><a href="#cb6-217" aria-hidden="true" tabindex="-1"></a><span class="fu">mtext</span>(<span class="st">"Source : WorldPop R2025A constrained 100m · IFORD x GDSG 2026"</span>,</span>
+<span id="cb6-218"><a href="#cb6-218" aria-hidden="true" tabindex="-1"></a>      <span class="at">side =</span> <span class="dv">1</span>, <span class="at">line =</span> <span class="dv">4</span>, <span class="at">cex =</span> <span class="fl">0.7</span>, <span class="at">adj =</span> <span class="dv">1</span>)</span>
+<span id="cb6-219"><a href="#cb6-219" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-220"><a href="#cb6-220" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-221"><a href="#cb6-221" aria-hidden="true" tabindex="-1"></a><span class="fu">## 6 quater. Calculer l'effectif total</span></span>
+<span id="cb6-222"><a href="#cb6-222" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-223"><a href="#cb6-223" aria-hidden="true" tabindex="-1"></a><span class="in">`global(raster, "sum")`</span> somme TOUTES les cellules non-NA. Comme chaque cellule contient déjà un nombre d'habitants (pas une densité), la somme donne directement l'effectif total estimé.</span>
+<span id="cb6-224"><a href="#cb6-224" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-225"><a href="#cb6-225" aria-hidden="true" tabindex="-1"></a><span class="in">```r</span></span>
+<span id="cb6-226"><a href="#cb6-226" aria-hidden="true" tabindex="-1"></a><span class="co"># Sur l'extrait Mfoundi : pas besoin de crop+mask, le raster est deja recadre.</span></span>
+<span id="cb6-227"><a href="#cb6-227" aria-hidden="true" tabindex="-1"></a>pop_yaounde_2025 <span class="ot">&lt;-</span> <span class="fu">global</span>(pop_2025, <span class="st">"sum"</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)<span class="sc">$</span>sum</span>
+<span id="cb6-228"><a href="#cb6-228" aria-hidden="true" tabindex="-1"></a>pop_yaounde_2015 <span class="ot">&lt;-</span> <span class="fu">global</span>(pop_2015, <span class="st">"sum"</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)<span class="sc">$</span>sum</span>
+<span id="cb6-229"><a href="#cb6-229" aria-hidden="true" tabindex="-1"></a>pop_yaounde_2030 <span class="ot">&lt;-</span> <span class="fu">global</span>(pop_2030, <span class="st">"sum"</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)<span class="sc">$</span>sum</span>
+<span id="cb6-230"><a href="#cb6-230" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-231"><a href="#cb6-231" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Yaoundé 2015 :"</span>, <span class="fu">format</span>(<span class="fu">round</span>(pop_yaounde_2015), <span class="at">big.mark =</span> <span class="st">" "</span>), <span class="st">"habitants</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb6-232"><a href="#cb6-232" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Yaoundé 2025 :"</span>, <span class="fu">format</span>(<span class="fu">round</span>(pop_yaounde_2025), <span class="at">big.mark =</span> <span class="st">" "</span>), <span class="st">"habitants</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb6-233"><a href="#cb6-233" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Yaoundé 2030 :"</span>, <span class="fu">format</span>(<span class="fu">round</span>(pop_yaounde_2030), <span class="at">big.mark =</span> <span class="st">" "</span>), <span class="st">"habitants (projection)</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb6-234"><a href="#cb6-234" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Croissance 2015-2025 :"</span>,</span>
+<span id="cb6-235"><a href="#cb6-235" aria-hidden="true" tabindex="-1"></a>    <span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> (pop_yaounde_2025 <span class="sc">-</span> pop_yaounde_2015) <span class="sc">/</span> pop_yaounde_2015, <span class="dv">1</span>),</span>
+<span id="cb6-236"><a href="#cb6-236" aria-hidden="true" tabindex="-1"></a>    <span class="st">"%</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb6-237"><a href="#cb6-237" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-238"><a href="#cb6-238" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-239"><a href="#cb6-239" aria-hidden="true" tabindex="-1"></a><span class="fu">## 6 quinquies. Trajectoire 2015-2030</span></span>
+<span id="cb6-240"><a href="#cb6-240" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-241"><a href="#cb6-241" aria-hidden="true" tabindex="-1"></a>On construit un tibble à 3 lignes (une par année) et on calcule la **croissance relative** par rapport à 2015 (année de référence). Les projections WorldPop 2030 reposent sur des scénarios SSP du GIEC adaptés à l'Afrique.</span>
+<span id="cb6-242"><a href="#cb6-242" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-243"><a href="#cb6-243" aria-hidden="true" tabindex="-1"></a><span class="in">```r</span></span>
+<span id="cb6-244"><a href="#cb6-244" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tibble)</span>
+<span id="cb6-245"><a href="#cb6-245" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-246"><a href="#cb6-246" aria-hidden="true" tabindex="-1"></a><span class="co"># population[1] = valeur de la premiere ligne (2015). C'est notre baseline.</span></span>
+<span id="cb6-247"><a href="#cb6-247" aria-hidden="true" tabindex="-1"></a>evol <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb6-248"><a href="#cb6-248" aria-hidden="true" tabindex="-1"></a>  <span class="at">annee      =</span> <span class="fu">c</span>(<span class="dv">2015</span>, <span class="dv">2025</span>, <span class="dv">2030</span>),</span>
+<span id="cb6-249"><a href="#cb6-249" aria-hidden="true" tabindex="-1"></a>  <span class="at">population =</span> <span class="fu">c</span>(<span class="fu">round</span>(pop_yaounde_2015),</span>
+<span id="cb6-250"><a href="#cb6-250" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">round</span>(pop_yaounde_2025),</span>
+<span id="cb6-251"><a href="#cb6-251" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">round</span>(pop_yaounde_2030))</span>
+<span id="cb6-252"><a href="#cb6-252" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb6-253"><a href="#cb6-253" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">croissance_vs_2015 =</span> <span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> (population <span class="sc">-</span> population[<span class="dv">1</span>]) <span class="sc">/</span></span>
+<span id="cb6-254"><a href="#cb6-254" aria-hidden="true" tabindex="-1"></a>                                    population[<span class="dv">1</span>], <span class="dv">1</span>))</span>
+<span id="cb6-255"><a href="#cb6-255" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-256"><a href="#cb6-256" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(evol)</span>
+<span id="cb6-257"><a href="#cb6-257" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-258"><a href="#cb6-258" aria-hidden="true" tabindex="-1"></a><span class="co"># Graphique en ligne : geom_line + geom_point pour bien voir les 3 jalons.</span></span>
+<span id="cb6-259"><a href="#cb6-259" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(evol, <span class="fu">aes</span>(<span class="at">x =</span> annee, <span class="at">y =</span> population)) <span class="sc">+</span></span>
+<span id="cb6-260"><a href="#cb6-260" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">colour =</span> <span class="st">"#2C7FB8"</span>, <span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb6-261"><a href="#cb6-261" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">colour =</span> <span class="st">"#2C7FB8"</span>, <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb6-262"><a href="#cb6-262" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> comma) <span class="sc">+</span></span>
+<span id="cb6-263"><a href="#cb6-263" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">2015</span>, <span class="dv">2025</span>, <span class="dv">2030</span>)) <span class="sc">+</span></span>
+<span id="cb6-264"><a href="#cb6-264" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title    =</span> <span class="st">"Évolution de la population à Yaoundé (Mfoundi) — 2015 / 2025 / 2030"</span>,</span>
+<span id="cb6-265"><a href="#cb6-265" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"Top-down WorldPop constrained R2025A · projection SSP pour 2030"</span>,</span>
+<span id="cb6-266"><a href="#cb6-266" aria-hidden="true" tabindex="-1"></a>       <span class="at">caption  =</span> <span class="st">"Source : WorldPop R2025A constrained 100m · IFORD x GDSG 2026"</span>,</span>
+<span id="cb6-267"><a href="#cb6-267" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Année"</span>, <span class="at">y =</span> <span class="st">"Population estimée (habitants)"</span>) <span class="sc">+</span></span>
+<span id="cb6-268"><a href="#cb6-268" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb6-269"><a href="#cb6-269" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-270"><a href="#cb6-270" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-271"><a href="#cb6-271" aria-hidden="true" tabindex="-1"></a><span class="fu">## 6 sexies. Carte des 3 époques côte-à-côte</span></span>
+<span id="cb6-272"><a href="#cb6-272" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-273"><a href="#cb6-273" aria-hidden="true" tabindex="-1"></a>**Règle d'or** : pour comparer deux cartes raster temporelles, il faut une **plage de valeurs commune** (sinon l'œil interprète des couleurs identiques comme des valeurs identiques alors que les bornes diffèrent). On calcule <span class="in">`range`</span> sur les 3 rasters concaténés.</span>
+<span id="cb6-274"><a href="#cb6-274" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-275"><a href="#cb6-275" aria-hidden="true" tabindex="-1"></a><span class="in">```r</span></span>
+<span id="cb6-276"><a href="#cb6-276" aria-hidden="true" tabindex="-1"></a><span class="co"># range() retourne min et max ; on l'applique a la concatenation des 3 rasters.</span></span>
+<span id="cb6-277"><a href="#cb6-277" aria-hidden="true" tabindex="-1"></a>rg <span class="ot">&lt;-</span> <span class="fu">range</span>(<span class="fu">c</span>(<span class="fu">values</span>(pop_2015), <span class="fu">values</span>(pop_2025), <span class="fu">values</span>(pop_2030)), <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb6-278"><a href="#cb6-278" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-279"><a href="#cb6-279" aria-hidden="true" tabindex="-1"></a><span class="co"># par(mfrow = c(1,3)) = grille graphique 1 ligne x 3 colonnes pour les juxtaposer.</span></span>
+<span id="cb6-280"><a href="#cb6-280" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">3</span>))</span>
+<span id="cb6-281"><a href="#cb6-281" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(pop_2015, <span class="at">main =</span> <span class="st">"Mfoundi 2015"</span>,</span>
+<span id="cb6-282"><a href="#cb6-282" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> <span class="fu">hcl.colors</span>(<span class="dv">20</span>, <span class="st">"YlOrRd"</span>, <span class="at">rev =</span> <span class="cn">TRUE</span>), <span class="at">range =</span> rg)</span>
+<span id="cb6-283"><a href="#cb6-283" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(pop_2025, <span class="at">main =</span> <span class="st">"Mfoundi 2025"</span>,</span>
+<span id="cb6-284"><a href="#cb6-284" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> <span class="fu">hcl.colors</span>(<span class="dv">20</span>, <span class="st">"YlOrRd"</span>, <span class="at">rev =</span> <span class="cn">TRUE</span>), <span class="at">range =</span> rg)</span>
+<span id="cb6-285"><a href="#cb6-285" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(pop_2030, <span class="at">main =</span> <span class="st">"Mfoundi 2030 (projection)"</span>,</span>
+<span id="cb6-286"><a href="#cb6-286" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> <span class="fu">hcl.colors</span>(<span class="dv">20</span>, <span class="st">"YlOrRd"</span>, <span class="at">rev =</span> <span class="cn">TRUE</span>), <span class="at">range =</span> rg)</span>
+<span id="cb6-287"><a href="#cb6-287" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>))</span>
+<span id="cb6-288"><a href="#cb6-288" aria-hidden="true" tabindex="-1"></a><span class="co"># Caption global sous la grille de cartes.</span></span>
+<span id="cb6-289"><a href="#cb6-289" aria-hidden="true" tabindex="-1"></a><span class="fu">mtext</span>(<span class="st">"WorldPop R2025A constrained · hab/pixel · échelle commune · IFORD x GDSG 2026"</span>,</span>
+<span id="cb6-290"><a href="#cb6-290" aria-hidden="true" tabindex="-1"></a>      <span class="at">side =</span> <span class="dv">1</span>, <span class="at">line =</span> <span class="sc">-</span><span class="dv">2</span>, <span class="at">outer =</span> <span class="cn">TRUE</span>, <span class="at">cex =</span> <span class="fl">0.7</span>)</span>
+<span id="cb6-291"><a href="#cb6-291" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-292"><a href="#cb6-292" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-293"><a href="#cb6-293" aria-hidden="true" tabindex="-1"></a><span class="fu">## 7. Pour aller plus loin</span></span>
+<span id="cb6-294"><a href="#cb6-294" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-295"><a href="#cb6-295" aria-hidden="true" tabindex="-1"></a>La version desktop <span class="in">`demo.qmd`</span> ajoute :</span>
+<span id="cb6-296"><a href="#cb6-296" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-297"><a href="#cb6-297" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Exercice 5** : zone personnalisée dessinée à la main avec <span class="in">`mapedit::editMap()`</span> (interactif, non portable WebR).</span>
+<span id="cb6-298"><a href="#cb6-298" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Exercice 5b** : comparaison de 5 villes (Douala, Yaoundé, Bafoussam, Bamenda, Garoua) via <span class="in">`lapply`</span> + <span class="in">`bind_rows`</span>.</span>
+<span id="cb6-299"><a href="#cb6-299" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Exercice 7** : distribution par âge entre 2 régions (<span class="in">`pivot_longer + geom_col`</span>).</span>
+<span id="cb6-300"><a href="#cb6-300" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Exercice 8** : pipeline complet GHSL (7 tuiles ZIP Mollweide → <span class="in">`sprc`</span> → <span class="in">`mosaic`</span> → <span class="in">`project`</span> vers WGS84 → <span class="in">`mask`</span> Cameroun → comparaison WorldPop vs GHSL). Lourd à exécuter (~1 min), non portable WebR.</span>
+<span id="cb6-301"><a href="#cb6-301" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Carte interactive Leaflet** via <span class="in">`tmap_mode("view")`</span> avec fond satellite Esri.</span>
+<span id="cb6-302"><a href="#cb6-302" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-303"><a href="#cb6-303" aria-hidden="true" tabindex="-1"></a>Le devoir individuel (14 questions Edith + Q-final 5 questions de synthèse pour décideur) est dans <span class="in">`exercice.qmd`</span>.</span>
+<span id="cb6-304"><a href="#cb6-304" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-305"><a href="#cb6-305" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">← Retour à l'accueil</span><span class="co">](../INDEX.md)</span></span>
+</code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
