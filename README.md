@@ -68,32 +68,37 @@ quarto render pedagogie/J05_visualisation_cartographie/demo.qmd --to html
 ```
 atelier-r-spatial-iford-2026/
 ├── README.md                              # Ce fichier
-├── MANUEL_SUPPORT_TECHNIQUE.md            # Manuel formateur (architecture, datasets, troubleshooting)
+├── MANUEL_SUPPORT_TECHNIQUE.md            # Manuel formateur (architecture, données, dépannage)
 ├── atelier-r-spatial-iford-2026.Rproj     # Projet RStudio
 ├── LICENSE                                # CC BY 4.0 sur le matériel pédagogique
 │
 ├── environnement_technique/               # Installation globale tous packages atelier
-│   └── install_packages.R
+│   ├── install_packages.R
+│   ├── guide_installation.md
+│   ├── verification_setup.R
+│   └── architecture_quarto.md
 │
-├── datasets/cameroun/                     # Datasets canoniques (gros volumes .gitignored)
-│   ├── admin_boundaries/                  # GADM JSON ADM0-3
-│   ├── population_grids/                  # WorldPop, GHS-POP, Meta HRSL
-│   ├── dhs_mics/                          # DHS Cameroun 2018
-│   ├── elevation/                         # SRTM
-│   ├── cmr_sante/                         # OSM healthcare
-│   ├── jour_07_population/                # WorldPop R2025A + GHS-POP tuiles
-│   ├── jour_08_teledetection/             # GHSL + EMSR772 + Open Buildings
-│   ├── jour_09_acled_era5/                # ACLED CSV + ERA5 NetCDF
-│   └── jour_10/                           # Dataset fil rouge J10 (Edith Darin)
-│
-└── pedagogie/                             # Coeur pédagogique (projet Quarto)
+└── pedagogie/                             # Cœur pédagogique (projet Quarto)
     ├── _quarto.yml                        # Config site + navbar
     ├── _extensions/r-wasm/live/           # Extension WebR
     ├── _commons/
-    │   ├── data/                          # Extraits LÉGERS embarqués WebR
+    │   ├── data/                          # Extraits légers chargés par WebR
     │   ├── helpers/fetch_data.R           # Tous les fetch_*() (résolution chemins)
     │   ├── styles/                        # SCSS revealjs + iford_reference.pptx
     │   └── img/                           # Logo IFORD
+    │
+    ├── datasets/cameroun/                 # Datasets complets utilisés par le projet
+    │   ├── admin_boundaries/              #   GADM JSON ADM0-3
+    │   ├── population_grids/              #   WorldPop, GHS-POP, Meta HRSL
+    │   ├── dhs_mics/                      #   DHS Cameroun 2018 (clusters GPS)
+    │   ├── elevation/                     #   SRTM
+    │   ├── cmr_sante/                     #   OSM établissements de santé
+    │   ├── CM_2018_DHS/                   #   DHS microfichiers Stata HR/PR/IR/MR/KR/BR/CR/FW
+    │   ├── jour_07_population/            #   WorldPop R2025A + GHS-POP tuiles + DATA_ECOLE
+    │   ├── jour_08_teledetection/         #   GHSL + EMSR772 Yagoua + Open Buildings
+    │   ├── jour_09_acled_era5/            #   ACLED CSV + ERA5 NetCDF
+    │   └── jour_10/                       #   Dataset fil rouge J10 (Edith Darin)
+    │
     ├── INDEX.md                           # Accueil du site
     ├── J01_intro_R_pensee_spatiale/       # Chaque jour suit le même schéma :
     │   ├── README.md                      #   - synthèse jour
@@ -115,7 +120,9 @@ atelier-r-spatial-iford-2026/
     └── J10_workflows_reproductibles/
 ```
 
-Convention : noms de dossiers et fichiers en **snake_case minuscule**. Les fichiers spéciaux universels (`README.md`, `LICENSE`) gardent leur convention.
+Le dossier des données utilisées par le projet est **`pedagogie/datasets/cameroun/`**. Les gros fichiers (TIF WorldPop, ZIP GHSL, microfichiers DHS `.DTA`) sont exclus du suivi Git via `.gitignore` mais leur emplacement attendu est documenté dans le manuel technique.
+
+Convention de nommage : dossiers et fichiers en **snake_case minuscule**. Les fichiers spéciaux universels (`README.md`, `LICENSE`) gardent leur convention.
 
 ## Manuel technique
 

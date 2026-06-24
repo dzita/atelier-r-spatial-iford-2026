@@ -9,7 +9,7 @@
 ## Table des matières
 
 1. [Architecture du dépôt](#1-architecture-du-depot)
-2. [Stack technique et flux de rendu](#2-stack-technique-et-flux-de-rendu)
+2. [Outils techniques et flux de rendu](#2-outils-techniques-et-flux-de-rendu)
 3. [Runtime WebR — comment ça marche, où ça casse](#3-runtime-webr)
 4. [Datasets — fiche détaillée par fichier](#4-datasets)
 5. [Procédures d'installation participant](#5-installation-participant)
@@ -32,31 +32,34 @@ atelier-r-spatial-iford-2026/
 ├── MANUEL_SUPPORT_TECHNIQUE.md            # Ce document
 │
 ├── environnement_technique/
-│   └── install_packages.R                 # Installation globale tous packages atelier
+│   ├── install_packages.R                 # Installation globale tous packages atelier
+│   ├── guide_installation.md              # Pas-à-pas pour participants
+│   ├── verification_setup.R               # Smoke-test post-installation
+│   └── architecture_quarto.md             # Référence technique Quarto/WebR
 │
-├── datasets/cameroun/                     # Datasets canoniques (parfois .gitignored)
-│   ├── admin_boundaries/                  # GADM JSON ADM0-3
-│   ├── population_grids/                  # WorldPop, GHS-POP, Meta HRSL
-│   ├── dhs_mics/                          # DHS Cameroun 2018 (microfichiers .DTA)
-│   ├── elevation/                         # SRTM tile
-│   ├── cmr_sante/                         # OSM healthcare
-│   ├── CM_2018_DHS/                       # Pack DHS complet (.gitignored, ~500 Mo)
-│   ├── jour_07_population/                # WorldPop R2025A + GHS-POP tuiles
-│   ├── jour_08_teledetection/             # GHSL + EMSR772 + Open Buildings
-│   ├── jour_09_acled_era5/                # ACLED CSV + ERA5 NetCDF
-│   └── jour_10/                           # Dataset Edith fil rouge (commité, léger)
-│
-└── pedagogie/                             # Cœur pédagogique (= projet Quarto)
+└── pedagogie/                             # Cœur pédagogique (projet Quarto)
     ├── _quarto.yml                        # Config Quarto + navbar + resources
     ├── _extensions/r-wasm/live/           # Extension Quarto pour WebR
+    │
     ├── _commons/
-    │   ├── data/                          # Extraits LÉGERS pour runtime WebR (≤ 5 Mo chacun)
+    │   ├── data/                          # Extraits légers chargés par WebR (≤ 5 Mo)
     │   ├── helpers/
-    │   │   ├── fetch_data.R              # Centralise tous les fetch_*()
+    │   │   ├── fetch_data.R               # Résolution des chemins datasets
     │   │   └── citations.bib              # Bibliographie atelier
     │   ├── styles/                        # SCSS revealjs + iford_reference.pptx
     │   └── img/                           # Logo IFORD + visuels
-    ├── datasets/cameroun/                 # Symlink vers ../datasets/cameroun/
+    │
+    ├── datasets/cameroun/                 # Toutes les données du projet
+    │   ├── admin_boundaries/              #   GADM JSON ADM0-3
+    │   ├── population_grids/              #   WorldPop, GHS-POP, Meta HRSL
+    │   ├── dhs_mics/                      #   DHS Cameroun 2018 (clusters GPS)
+    │   ├── elevation/                     #   SRTM
+    │   ├── cmr_sante/                     #   OSM établissements de santé
+    │   ├── CM_2018_DHS/                   #   DHS microfichiers Stata (`.gitignore`)
+    │   ├── jour_07_population/            #   WorldPop R2025A + GHS-POP + DATA_ECOLE
+    │   ├── jour_08_teledetection/         #   GHSL + EMSR772 + Open Buildings
+    │   ├── jour_09_acled_era5/            #   ACLED CSV + ERA5 NetCDF
+    │   └── jour_10/                       #   Dataset fil rouge (Edith Darin)
     │
     ├── INDEX.md                           # Page d'accueil du site
     ├── J01_intro_R_pensee_spatiale/       # Chaque jour suit le même schéma :
@@ -79,16 +82,16 @@ atelier-r-spatial-iford-2026/
     └── J10_workflows_reproductibles/
 ```
 
-**Règles d'or de l'architecture** :
+**Règles à connaître** :
 
-- **Deux marqueurs de racine concurrents** : `atelier-r-spatial-iford-2026.Rproj` à la racine du repo, et `_quarto.yml` dans `pedagogie/`. C'est la source de 80 % des bugs de chemin. Toujours ancrer explicitement avec `rprojroot::find_root(rprojroot::has_file("atelier-r-spatial-iford-2026.Rproj"))` plutôt que `here::here()` qui peut résoudre vers `pedagogie/`.
-- **Datasets versionnés UNE seule fois** : sous `datasets/cameroun/`. Ce dossier est référencé depuis `pedagogie/datasets/cameroun/` (soit par symlink soit par chemin). Jamais de duplication.
-- **`_commons/data/`** : extraits **légers** (≤ 5 Mo chacun) pour le runtime WebR uniquement. Pré-générés par des scripts `00_*.R` côté formateur, puis commités. Ne JAMAIS y mettre les originaux WorldPop ou GHSL — c'est l'erreur classique qui fait passer le repo de 50 Mo à 5 Go.
-- **Convention de nommage des extraits** : `_commons/data/jour_XX_extraits/...` pour les jours qui consomment des données spécifiques (J7, J8, J9, J10) ; `_commons/data/<source>/...` pour les datasets transverses (`gadm41_CMR_*.json`, `dhs_cmr/`, `cmr_sante/`, `cmr_srtm/`).
+- **Deux marqueurs de racine concurrents** : `atelier-r-spatial-iford-2026.Rproj` à la racine du dépôt, et `_quarto.yml` dans `pedagogie/`. C'est la source de la plupart des erreurs de chemin. Toujours ancrer explicitement avec `rprojroot::find_root(rprojroot::has_file("atelier-r-spatial-iford-2026.Rproj"))` plutôt que `here::here()` qui peut résoudre vers `pedagogie/`.
+- **Toutes les données du projet vivent sous `pedagogie/datasets/cameroun/`**. Aucun dossier de données ailleurs dans le dépôt. Pas de duplication, pas de lien symbolique.
+- **`pedagogie/_commons/data/`** : extraits **légers** (≤ 5 Mo chacun) chargés par le runtime WebR au démarrage de la page. Préparés par des scripts `00_*.R` côté formateur, puis ajoutés au dépôt. Ne **jamais** y mettre les fichiers WorldPop ou GHSL complets — c'est l'erreur classique qui fait passer le dépôt de 50 Mo à 5 Go.
+- **Convention de nommage des extraits** : `_commons/data/jour_XX_extraits/...` pour les jours qui utilisent des données spécifiques (J7, J8, J9, J10) ; `_commons/data/<source>/...` pour les données partagées par plusieurs jours (`gadm41_CMR_*.json`, `dhs_cmr/`, `cmr_sante/`, `cmr_srtm/`).
 
 ---
 
-## 2. Stack technique et flux de rendu {#2-stack-technique-et-flux-de-rendu}
+## 2. Outils techniques et flux de rendu {#2-outils-techniques-et-flux-de-rendu}
 
 ### Logiciels requis sur le poste animateur
 
@@ -255,7 +258,7 @@ Pour chaque dataset, voici son origine, sa structure, sa taille, sa licence, où
 - **CRS** : WGS84 (EPSG:4326).
 - **Source** : <https://gadm.org/download_country.html> → Cameroon → JSON.
 - **URL directe** : `https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_CMR_<niveau>.json`
-- **Emplacement local** : `datasets/cameroun/admin_boundaries/gadm41_CMR_<niveau>.json`
+- **Emplacement local** : `pedagogie/datasets/cameroun/admin_boundaries/gadm41_CMR_<niveau>.json`
 - **Helper R** : `fetch_gadm_cameroon(level = 0|1|2|3)` dans `fetch_data.R`
 - **Embarqué WebR** : oui, dans `_commons/data/gadm41_CMR_*.json` (ADM0, ADM1, ADM2, ADM3 selon le jour)
 - **Jours qui l'utilisent** : J1 (ADM1), J2 (ADM1+ADM3), J3 (ADM0+ADM1), J4 (ADM1), J5 (ADM1), J6 (ADM2), J7 (ADM1+ADM2 via GeoJSON allégé)
@@ -270,7 +273,7 @@ Pour chaque dataset, voici son origine, sa structure, sa taille, sa licence, où
 - **CRS** : WGS84.
 - **Source** : <https://hub.worldpop.org/geodata/summary?id=49866>
 - **URL directe** : `https://data.worldpop.org/GIS/Population/Global_2000_2020/2020/CMR/cmr_ppp_2020.tif`
-- **Emplacement** : `datasets/cameroun/population_grids/CMR_pop_WorldPop_top-down_100m_2020.tif`
+- **Emplacement** : `pedagogie/datasets/cameroun/population_grids/CMR_pop_WorldPop_top-down_100m_2020.tif`
 - **Helper** : `fetch_worldpop_cmr_2020()`
 - **Embarqué WebR** : NON (trop lourd). Extraits Mfoundi générés par bootstrap (cf. 4.13).
 - **Jour** : J7 desktop principalement, J3 mention conceptuelle.
@@ -283,7 +286,7 @@ Pour chaque dataset, voici son origine, sa structure, sa taille, sa licence, où
 - **Licence** : CC-BY 4.0.
 - **CRS** : WGS84.
 - **Source** : <https://hub.worldpop.org/geodata/summary?id=24784> (variantes par année dans Drive d'Edith)
-- **Emplacement** : `datasets/cameroun/jour_07_population/cmr_pop_<année>_CN_100m_R2025A_v1.tif`
+- **Emplacement** : `pedagogie/datasets/cameroun/jour_07_population/cmr_pop_<année>_CN_100m_R2025A_v1.tif`
 - **Helper** : `fetch_worldpop_constrained_cmr(year = c(2015, 2025, 2030))`
 - **Embarqué WebR** : extraits Mfoundi (Yaoundé département) pré-calculés ~1 Mo chacun (`_commons/data/jour_07_extraits/pop_<année>_mfoundi.tif`).
 - **Jour** : J7.
@@ -293,7 +296,7 @@ Pour chaque dataset, voici son origine, sa structure, sa taille, sa licence, où
 - **Quoi** : grille de population 100m JRC, alternative à WorldPop.
 - **Format** : GeoTIFF, tuile mondiale 3 Go à découper sur l'emprise CMR.
 - **Source** : <https://human-settlement.emergency.copernicus.eu/download.php?ds=pop>
-- **Emplacement** : `datasets/cameroun/population_grids/CMR_pop_GHSL_R2023A_100m_2020.tif`
+- **Emplacement** : `pedagogie/datasets/cameroun/population_grids/CMR_pop_GHSL_R2023A_100m_2020.tif`
 - **Helper** : `fetch_ghspop_cmr_2020()`
 - **Embarqué WebR** : NON.
 - **Jour** : J7 (comparaison méthodologique avec WorldPop).
@@ -305,7 +308,7 @@ Pour chaque dataset, voici son origine, sa structure, sa taille, sa licence, où
 - **Tailles** : ~10-50 Mo par tuile.
 - **Licence** : CC-BY 4.0 (JRC).
 - **Source** : <https://human-settlement.emergency.copernicus.eu/download.php?ds=bu>
-- **Emplacement** : `datasets/cameroun/jour_08_teledetection/GHS-BUILT/` (dossier avec 15 zips × 2 années = 30 zips)
+- **Emplacement** : `pedagogie/datasets/cameroun/jour_08_teledetection/GHS-BUILT/` (dossier avec 15 zips × 2 années = 30 zips)
 - **Helper** : `fetch_ghs_built_dir()`
 - **Embarqué WebR** : NON (trop lourd). Le runtime J8 ne couvre PAS la partie GHSL.
 - **Jour** : J8 desktop Partie I.
@@ -320,7 +323,7 @@ Pour chaque dataset, voici son origine, sa structure, sa taille, sa licence, où
 - **Licence** : libre (Copernicus EMS, attribution).
 - **CRS** : UTM zone 33N (EPSG:32633).
 - **Source** : <https://emergency.copernicus.eu/mapping/list-of-components/EMSR772>
-- **Emplacement** : `datasets/cameroun/jour_08_teledetection/EMSR772_products/` (avec sous-dossiers par AOI)
+- **Emplacement** : `pedagogie/datasets/cameroun/jour_08_teledetection/EMSR772_products/` (avec sous-dossiers par AOI)
 - **Helper** : `fetch_emsr772_dir()`
 - **Embarqué WebR** : extraits AOI01 uniquement (`_commons/data/jour_08_extraits/aoi01_yagoua.geojson` + `flood01_yagoua.geojson`), reprojetés WGS84.
 - **Jour** : J8 Partie II.
@@ -335,7 +338,7 @@ Pour chaque dataset, voici son origine, sa structure, sa taille, sa licence, où
 - **Licence** : CC-BY 4.0 (Sirko et al. 2021).
 - **CRS** : WGS84.
 - **Source** : <https://sites.research.google/open-buildings/>
-- **Emplacement** : `datasets/cameroun/jour_08_teledetection/Open Buildings/` (5 fichiers `.csv.gz` couvrant la région Yagoua)
+- **Emplacement** : `pedagogie/datasets/cameroun/jour_08_teledetection/Open Buildings/` (5 fichiers `.csv.gz` couvrant la région Yagoua)
 - **Helper** : `fetch_open_buildings_dir()`
 - **Filtrage standard** : `confidence >= 0.7` (recommandé par Google ; en dessous, on garde des bruits de modèle).
 - **Embarqué WebR** : extrait pré-filtré sur la bbox AOI01 (`_commons/data/jour_08_extraits/batiments_yagoua.geojson`), ~5-15k bâtiments, ~2-3 Mo.
@@ -347,7 +350,7 @@ Pour chaque dataset, voici son origine, sa structure, sa taille, sa licence, où
 - **Format** : Stata `.DTA`, 7 fichiers, total ~300-500 Mo.
 - **Licence** : DHS Program (compte gratuit + soumission projet, validation 24-48 h).
 - **Source** : <https://dhsprogram.com/data/dataset/Cameroon_Standard-DHS_2018.cfm>
-- **Emplacement** : `datasets/cameroun/CM_2018_DHS/CM<RC>71DT/CM<RC>71FL.DTA` où `<RC>` = HR/PR/...
+- **Emplacement** : `pedagogie/datasets/cameroun/CM_2018_DHS/CM<RC>71DT/CM<RC>71FL.DTA` où `<RC>` = HR/PR/...
 - **Helper** : `fetch_dhs_recode_cmr_2018(recode = "HR")` etc.
 - **`.gitignored`** : oui (trop lourd + licence).
 - **Embarqué WebR** : extraits CSV légers générés par `00_extraire_dhs_pour_webr.R` (HR + PR), ~3-5 Mo chacun (`_commons/data/dhs_cmr/dhs_cmr_2018_*_extrait.csv`).
@@ -370,7 +373,7 @@ Pour chaque dataset, voici son origine, sa structure, sa taille, sa licence, où
 - **Quoi** : positions GPS (lat/lon) des grappes d'enquête, avec offset de confidentialité.
 - **Format** : Shapefile.
 - **Source** : DHS Program (même compte que microfichiers, dossier "Geographic Data" `CMGE71FL.zip`).
-- **Emplacement** : `datasets/cameroun/dhs_mics/CMGE71FL.shp` (+ .dbf .shx .prj)
+- **Emplacement** : `pedagogie/datasets/cameroun/dhs_mics/CMGE71FL.shp` (+ .dbf .shx .prj)
 - **Helper** : `fetch_dhs_clusters_cmr_2018()`
 - **Jour** : J4 (méthodologie), J5 (cartographie ponctuelle).
 
@@ -405,7 +408,7 @@ Pour chaque dataset, voici son origine, sa structure, sa taille, sa licence, où
 - **Quoi** : population totale par région ADM1, par sexe et 5 grands groupes d'âge, source officielle BUCREP via OCHA.
 - **Format** : CSV.
 - **Source** : <https://data.humdata.org/dataset/cod-ps-cmr>
-- **Emplacement** : `datasets/cameroun/jour_07_population/cmr_admpop_adm1_2025.csv`
+- **Emplacement** : `pedagogie/datasets/cameroun/jour_07_population/cmr_admpop_adm1_2025.csv`
 - **Helper** : `fetch_admpop_adm1_cmr_2025()`
 - **Embarqué WebR** : copie dans `_commons/data/jour_07_extraits/admpop_adm1_2025.csv`
 - **Jour** : J7.
@@ -417,7 +420,7 @@ Pour chaque dataset, voici son origine, sa structure, sa taille, sa licence, où
 - **Taille** : ~1-5 Mo selon période.
 - **Licence** : ACLED Terms of Use (académique gratuit, commercial sur demande).
 - **Source** : <https://acleddata.com/data-export-tool/> (compte requis).
-- **Emplacement** : `datasets/cameroun/jour_09_acled_era5/ACLED_Data.csv`
+- **Emplacement** : `pedagogie/datasets/cameroun/jour_09_acled_era5/ACLED_Data.csv`
 - **Embarqué WebR** : copié dans `_commons/data/jour_09_extraits/ACLED_Data.csv` (étape manuelle, ou via `Copy-Item` PowerShell).
 - **Jour** : J9 Partie I.
 
@@ -428,7 +431,7 @@ Pour chaque dataset, voici son origine, sa structure, sa taille, sa licence, où
 - **Taille** : ~5-20 Mo selon période.
 - **Licence** : libre (Copernicus CDS, compte gratuit + token).
 - **Source** : <https://cds.climate.copernicus.eu/> (via package `ecmwfr` ou téléchargement web).
-- **Emplacement** : `datasets/cameroun/jour_09_acled_era5/era5_t2m_cmr.nc`
+- **Emplacement** : `pedagogie/datasets/cameroun/jour_09_acled_era5/era5_t2m_cmr.nc`
 - **Helper** : `fetch_era5_t2m_cmr()` (avec instructions de token CDS).
 - **`.gitignored`** : oui (compte CDS requis).
 - **Embarqué WebR** : NON (`ncdf4` n'est pas portable WebR).
@@ -442,7 +445,7 @@ Pour chaque dataset, voici son origine, sa structure, sa taille, sa licence, où
 - **Licence** : libre (matériel pédagogique Edith Darin pour atelier IFORD).
 - **CRS** : WGS84.
 - **Source** : repo `jour_10_flux_reproductibles_projets` d'Edith Darin (Drive partagé).
-- **Emplacement** : `datasets/cameroun/jour_10/regions_indicateurs_demo.gpkg` (+ variantes)
+- **Emplacement** : `pedagogie/datasets/cameroun/jour_10/regions_indicateurs_demo.gpkg` (+ variantes)
 - **Helper** : `fetch_indicateurs_regions_demo(format = "gpkg" | "shp" | "csv")`
 - **Script de génération** : `pedagogie/J10_workflows_reproductibles/00_copier_datasets_edith_j10.R` (copie depuis le repo Edith vers le repo atelier + miroir dans `_commons/data/jour_10_extraits/`)
 - **Embarqué WebR** : oui.
@@ -454,7 +457,7 @@ Pour chaque dataset, voici son origine, sa structure, sa taille, sa licence, où
 - **Quoi** : datasets pédagogiques Edith pour la démo bottom-up GDSG (sites pilotes RGPH 4 : Bamenda 1, Fongo Tongo, Buea, Mora).
 - **Format** : ZIP.
 - **Source** : Drive privé Edith Darin (matériel formateur).
-- **Emplacement** : `datasets/cameroun/jour_07_population/DATA_ECOLE.zip`
+- **Emplacement** : `pedagogie/datasets/cameroun/jour_07_population/DATA_ECOLE.zip`
 - **Helper** : `fetch_data_ecole_cmr()`
 - **`.gitignored`** : oui (matériel formateur non public).
 - **Jour** : J7 bonus.
