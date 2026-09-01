@@ -344,7 +344,12 @@ ggplot(sais, aes(x = mois, y = moyenne)) +
   geom_ribbon(aes(ymin = mini, ymax = maxi), fill = "#D1E5F0") +
   geom_line(colour = "#2166AC", linewidth = 0.9) +
   geom_point(colour = "#2166AC") +
-  scale_x_continuous(breaks = 1:12, labels = levels(era_nat2$mois_f)) +
+  # Les etiquettes sont derivees des mois REELLEMENT presents, jamais
+  # posees en dur : breaks et labels ont ainsi toujours la meme longueur.
+  # La version precedente ecrivait breaks = 1:12 et labels = levels(...),
+  # ce qui echouait des que la serie ne couvrait pas les douze mois.
+  scale_x_continuous(breaks = sort(unique(sais$mois)),
+                     labels = month.abb[sort(unique(sais$mois))]) +
   labs(title = "Saisonnalite de la temperature nationale",
        subtitle = "Trait : moyenne du mois sur toutes les annees. Ruban : minimum et maximum observes.",
        x = NULL, y = "Temperature (degres Celsius)") +

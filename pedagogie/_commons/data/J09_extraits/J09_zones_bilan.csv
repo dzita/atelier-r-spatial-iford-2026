@@ -1,0 +1,4 @@
+zone,surface_aoi_km2,surface_inondee_km2,n_batiments,couverture_batiments,n_batiments_inondes,pct_batiments_inondes,pop_inondee_estimee,interpretable
+AOI01,6870,229.9,382942,TRUE,1635,0.4,8175,TRUE
+AOI02,5532,606.9,0,FALSE,NA,NA,NA,FALSE
+AOI03,8088,510.7,10560,TRUE,29,0.3,145,TRUE

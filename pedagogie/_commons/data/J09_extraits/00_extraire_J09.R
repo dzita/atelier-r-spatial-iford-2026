@@ -366,10 +366,51 @@ flood_union <- st_union(st_geometry(flood_fen))
 # 5. Open Buildings dans la fenetre
 # ---------------------------------------------------------------------
 cat("\n--- 5. Open Buildings ---\n")
-ob <- st_read(file.path(dir_in, "open_buildings_yagoua.gpkg"), quiet = TRUE) |>
-  st_make_valid()
-cat("  Batiments lus :", format(nrow(ob), big.mark = " "),
-    "| colonnes :", paste(setdiff(names(ob), attr(ob, "sf_column")),
+# CORRECTIF 01/09/2026 -- POURQUOI CETTE SECTION NE FINISSAIT JAMAIS.
+#
+# Le code lisait la couche ENTIERE (144 Mo, de l'ordre du million de
+# polygones), puis lui appliquait st_make_valid(), st_transform() et un
+# st_intersects(..., sparse = FALSE) : quatre passes completes, alors que
+# seuls les batiments de la fenetre de 5 x 5 km servent ensuite.
+# st_make_valid() sur un million de polygones se compte en heures.
+#
+# Parade : pousser le filtre spatial DANS GDAL, a la lecture. wkt_filter
+# n'apporte en memoire que les entites qui intersectent l'emprise demandee,
+# en s'appuyant sur l'index spatial du GeoPackage. Tout ce qui suit
+# travaille alors sur quelques milliers de batiments au lieu d'un million.
+#
+# L'emprise de filtrage couvre la fenetre d'etude ET les trois AOI, sinon
+# le bilan de la section 9 ne trouverait rien pour AOI02 et AOI03.
+f_ob <- file.path(dir_in, "open_buildings_yagoua.gpkg")
+
+info_ob <- st_layers(f_ob)
+crs_ob  <- info_ob$crs[[1]]
+cat("  Couche :", info_ob$name[1], "|",
+    format(info_ob$features[1], big.mark = " "), "entites au total\n")
+
+emprises <- c(
+  lapply(aoi, function(a) st_as_sfc(st_bbox(st_transform(a, crs_ob)))),
+  list(st_as_sfc(st_bbox(st_transform(fenetre_m, crs_ob))))
+)
+filtre_wkt <- st_as_text(st_union(do.call(c, emprises)))
+
+t_ob <- Sys.time()
+ob <- st_read(f_ob, wkt_filter = filtre_wkt, quiet = TRUE)
+cat("  Batiments retenus par le filtre spatial :",
+    format(nrow(ob), big.mark = " "),
+    sprintf("(%.0f s)\n", as.numeric(difftime(Sys.time(), t_ob, units = "secs"))))
+
+# Reparation CIBLEE : on ne repare que ce qui est invalide, et on le dit.
+# st_make_valid() applique en aveugle a toute la couche etait l'autre moitie
+# du probleme.
+n_inval <- sum(!st_is_valid(ob))
+cat("  Geometries invalides :", n_inval, "/", nrow(ob), "\n")
+if (n_inval > 0) {
+  ob <- st_make_valid(ob)
+  cat("  -> reparees ; restantes :", sum(!st_is_valid(ob)), "\n")
+}
+
+cat("  Colonnes :", paste(setdiff(names(ob), attr(ob, "sf_column")),
                           collapse = ", "), "\n")
 col_conf <- intersect(c("confidence", "CONFIDENCE"), names(ob))[1]
 col_area <- intersect(c("area_in_meters", "AREA_IN_METERS"), names(ob))[1]
@@ -378,7 +419,12 @@ cat("  Batiments sous le seuil    :",
     sum(ob[[col_conf]] < SEUIL_CONFIANCE, na.rm = TRUE), "\n")
 
 ob_m <- st_transform(ob, CRS_MESURE)
-bat_fen <- ob_m[st_intersects(ob_m, fenetre_m, sparse = FALSE)[, 1], ] |>
+
+# CORRECTIF 01/09/2026. `sparse = FALSE` construisait une matrice logique
+# dense et desactivait le chemin optimise de sf. st_filter() utilise
+# l'index spatial et ne materialise rien.
+bat_fen <- ob_m |>
+  st_filter(fenetre_m, .predicate = st_intersects) |>
   filter(.data[[col_conf]] >= SEUIL_CONFIANCE)
 cat("  Batiments dans la fenetre, au-dessus du seuil :", nrow(bat_fen), "\n")
 
@@ -560,15 +606,38 @@ ligne_vide <- function(nm) tibble::tibble(
 
 bilan <- lapply(names(aoi), function(nm) {
   if (is.null(aoi[[nm]]) || is.null(flo[[nm]])) return(ligne_vide(nm))
+  t_aoi <- Sys.time()
   a <- st_transform(aoi[[nm]], CRS_MESURE)
   f <- st_transform(flo[[nm]], CRS_MESURE) |> st_make_valid()
-  fu <- st_union(st_geometry(f))
-  # La couche Open Buildings ne couvre que l'AOI01 + 5 km de marge. Sur
-  # AOI02 et AOI03, nrow() vaut 0 : ce zero N'EST PAS UNE MESURE.
-  dans <- ob_m[lengths(st_intersects(ob_m, a)) > 0, ]
+
+  # CORRECTIF 01/09/2026 -- POURQUOI CETTE SECTION NE FINISSAIT PAS.
+  #
+  # 1. st_union(st_geometry(f)) fusionnait toutes les emprises inondees, a
+  #    chaque tour de boucle. C'est l'operation la plus couteuse de sf sur
+  #    des milliers de polygones -- ET ELLE EST INUTILE ICI : on veut savoir
+  #    si un batiment touche AU MOINS UNE emprise, ce que
+  #    lengths(st_intersects(dans, f)) > 0 donne directement.
+  # 2. st_intersects(ob_m, a) balayait la couche ENTIERE pour chacune des
+  #    trois AOI. On la reduit d'abord par l'emprise rectangulaire de l'AOI
+  #    -- test tres rapide, servi par l'index spatial -- puis on ne fait le
+  #    test exact que sur les candidats restants.
+  candidats <- ob_m |> st_filter(st_as_sfc(st_bbox(a)),
+                                 .predicate = st_intersects)
+  dans <- candidats |> st_filter(a, .predicate = st_intersects)
   dans <- dans[dans[[col_conf]] >= SEUIL_CONFIANCE, ]
   n_bat <- nrow(dans)
-  n_ino <- if (n_bat > 0) sum(lengths(st_intersects(dans, st_sf(geometry = fu))) > 0) else NA_integer_
+
+  # La couche Open Buildings ne couvre que l'AOI01 + une marge. Sur AOI02 et
+  # AOI03, n_bat vaut 0 : CE ZERO N'EST PAS UNE MESURE. Le drapeau
+  # `couverture_batiments` plus bas est ce qui distingue « aucun batiment
+  # touche » de « aucun batiment connu ».
+  n_ino <- if (n_bat > 0)
+    sum(lengths(st_intersects(dans, f)) > 0) else NA_integer_
+
+  cat(sprintf("  %-6s : %s candidats -> %s dans l'AOI (%.0f s)\n", nm,
+              format(nrow(candidats), big.mark = " "),
+              format(n_bat, big.mark = " "),
+              as.numeric(difftime(Sys.time(), t_aoi, units = "secs"))))
   couvert <- n_bat >= SEUIL_COUVERTURE
   tibble::tibble(
     zone = nm,

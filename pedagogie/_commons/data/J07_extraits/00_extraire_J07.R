@@ -405,10 +405,43 @@ xy <- st_coordinates(pts_utm)
 # Selon la version de spatstat.geom, as.owin() accepte un sfc, un sf, ou
 # ni l'un ni l'autre. On essaie dans cet ordre et on echoue en nommant la
 # cause, plutot que de laisser un message obscur arreter tout le script.
-fen <- tryCatch(
-  as.owin(pays),
+# CORRECTIF 01/09/2026 -- LA FENETRE, ET POURQUOI ELLE FAISAIT TOUT ECHOUER.
+#
+# Symptome : envelope(pp, Kest, nsim = 39) tournait TOUTE UNE NUIT sans
+# aboutir. Ce n'etait pas de la lenteur, c'etait intraitable.
+#
+# Cause : `pays` est l'union des 200 districts sanitaires NON SIMPLIFIES --
+# un polygone de plusieurs dizaines de milliers de sommets. Sur une fenetre
+# polygonale, spatstat paie ce detail deux fois :
+#   - runifpoint() tire les points par rejet, avec un test point-dans-polygone
+#     contre tous les sommets, et cela 39 fois ;
+#   - Kest applique une correction de bord isotrope qui intersecte un cercle
+#     avec la frontiere POUR CHAQUE POINT ET CHAQUE RAYON.
+# Le cout croit avec le nombre de sommets, et il n'y a pas de garde-fou.
+#
+# Parade, en deux temps :
+#   1. simplifier le contour. La fenetre delimite la REGION D'ETUDE ; elle
+#      ne sert a aucune mesure. Une tolerance de 2 km sur un pays de
+#      475 000 km2 ne change rien aux echelles ou G, K et L sont lues.
+#   2. convertir en MASQUE binaire (as.mask). spatstat travaille alors sur
+#      une grille reguliere : le tirage devient immediat et les corrections
+#      de bord se calculent par balayage. C'est la pratique recommandee des
+#      qu'une fenetre est un peu detaillee.
+#
+# CE QUE CELA COUTE, et qui doit etre dit : la frontiere devient un escalier
+# de cellules de ~1 km. Les valeurs de K et G pres du bord s'en trouvent
+# tres legerement modifiees. C'est sans consequence sur la LECTURE -- on
+# regarde si la courbe observee sort de l'enveloppe, pas sa 3e decimale.
+TOL_FENETRE_M <- 2000
+MASQUE_DIMYX  <- 512
+
+pays_simple <- st_simplify(pays, dTolerance = TOL_FENETRE_M,
+                           preserveTopology = TRUE)
+
+fen_poly <- tryCatch(
+  as.owin(pays_simple),
   error = function(e1) tryCatch(
-    as.owin(st_as_sf(pays)),
+    as.owin(st_as_sf(pays_simple)),
     error = function(e2)
       stop("[J07-extrait] Impossible de construire la fenetre spatstat ",
            "a partir de la couche des districts.\n",
@@ -416,6 +449,14 @@ fen <- tryCatch(
            "  as.owin(sf)  : ", conditionMessage(e2), "\n",
            "  Verifiez la version de spatstat.geom (>= 3.0 attendue).",
            call. = FALSE)))
+
+fen <- as.mask(fen_poly, dimyx = MASQUE_DIMYX)
+
+cat(sprintf("[J07-extrait] Fenetre : contour simplifie a %d m, ",
+            TOL_FENETRE_M))
+cat(sprintf("convertie en masque %dx%d\n", MASQUE_DIMYX, MASQUE_DIMYX))
+cat(sprintf("  aire de la fenetre : %.0f km2 (reference nationale ~475 442)\n",
+            area(fen) / 1e6))
 # CORRECTIF 01/09/2026 -- ALIGNEMENT DES POINTS ET DE LEURS ATTRIBUTS.
 #
 # ppp() ecarte silencieusement les points hors fenetre. Les grappes EDS ont
@@ -502,9 +543,38 @@ cat(sprintf("[J07-extrait] Test du quadrat 8x8 : X2 = %.1f, ddl = %d, p = %.4g\n
 # enveloppes Monte-Carlo. 39 simulations donnent un test bilateral a 5 %.
 # ATTENTION AU TEMPS DE CALCUL : quelques minutes sur 400+ points.
 NSIM <- 39
-env_G <- envelope(pp, Gest, nsim = NSIM, verbose = FALSE)
-env_K <- envelope(pp, Kest, nsim = NSIM, verbose = FALSE)
-env_L <- envelope(pp, Lest, nsim = NSIM, verbose = FALSE)
+
+# CORRECTIF 01/09/2026. Deux reglages, en plus du passage de la fenetre en
+# masque (section 6) :
+#
+#   correction = "border" -- la correction de bord isotrope de Ripley est la
+#   plus couteuse ; la correction par bordure ("border", ou reduced sample)
+#   se contente d'ecarter les points trop proches du bord. Elle est moins
+#   efficace statistiquement AUX GRANDS RAYONS, ce qui n'a pas d'importance
+#   ici : on lit ces courbes pour savoir si le semis est agrege, pas pour
+#   publier un K(r).
+#
+#   rmax borne le rayon. Par defaut spatstat va jusqu'a un quart du plus
+#   petit cote de la fenetre -- environ 300 km sur le Cameroun, ou plus
+#   aucune interpretation n'a de sens pour des grappes d'enquete. On
+#   s'arrete a 100 km, ce qui divise encore le temps de calcul.
+RMAX_M <- 100000
+
+t0 <- Sys.time()
+cat("[J07-extrait] Enveloppes Monte-Carlo (", NSIM, " simulations)...\n", sep = "")
+
+env_G <- envelope(pp, Gest, nsim = NSIM, verbose = FALSE,
+                  correction = "border")
+cat("  G fait  (", round(difftime(Sys.time(), t0, units = "secs")), "s)\n", sep = "")
+
+env_K <- envelope(pp, Kest, nsim = NSIM, verbose = FALSE,
+                  correction = "border", rmax = RMAX_M)
+cat("  K fait  (", round(difftime(Sys.time(), t0, units = "secs")), "s)\n", sep = "")
+
+env_L <- envelope(pp, Lest, nsim = NSIM, verbose = FALSE,
+                  correction = "border", rmax = RMAX_M)
+cat("  L fait  (", round(difftime(Sys.time(), t0, units = "secs")), "s au total)\n",
+    sep = "")
 
 vers_df <- function(e, nom) {
   as.data.frame(e)[, c("r", "obs", "theo", "lo", "hi")] |>
