@@ -1,0 +1,7 @@
+fichier,taille_ko,source,usage,note
+CMR_household_v1_0_admin_level2.csv,3,pedagogie/J03_univers_vectoriel/datasets/ (ou all_data/),Runtime WebR J03 - declare dans webr.resources de runtime.qmd,"Couches simplifiees : pour APPRENDRE, pas pour publier un chiffre"
+CMR_population_v1_0_admin_level2.csv,3,pedagogie/J03_univers_vectoriel/datasets/ (ou all_data/),Runtime WebR J03 - declare dans webr.resources de runtime.qmd,"Couches simplifiees : pour APPRENDRE, pas pour publier un chiffre"
+covar_dhs_grappes_extrait.csv,60,pedagogie/J03_univers_vectoriel/datasets/ (ou all_data/),Runtime WebR J03 - declare dans webr.resources de runtime.qmd,"Couches simplifiees : pour APPRENDRE, pas pour publier un chiffre"
+dhs_grappes_cmr2018.geojson,124,pedagogie/J03_univers_vectoriel/datasets/ (ou all_data/),Runtime WebR J03 - declare dans webr.resources de runtime.qmd,"Couches simplifiees : pour APPRENDRE, pas pour publier un chiffre"
+ds_sante_cmr.geojson,421,pedagogie/J03_univers_vectoriel/datasets/ (ou all_data/),Runtime WebR J03 - declare dans webr.resources de runtime.qmd,"Couches simplifiees : pour APPRENDRE, pas pour publier un chiffre"
+pays_limitrophes_cmr.geojson,168,pedagogie/J03_univers_vectoriel/datasets/ (ou all_data/),Runtime WebR J03 - declare dans webr.resources de runtime.qmd,"Couches simplifiees : pour APPRENDRE, pas pour publier un chiffre"

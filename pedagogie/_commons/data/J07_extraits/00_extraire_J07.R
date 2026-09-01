@@ -397,19 +397,99 @@ pays <- st_union(st_transform(ds_val, 32633))
 pts_utm <- st_transform(pts_ds, 32633)
 xy <- st_coordinates(pts_utm)
 
-fen <- as.owin(st_as_sfc(pays))
+# CORRECTIF 01/09/2026. La ligne etait : as.owin(st_as_sfc(pays)).
+# st_union() renvoie deja un sfc, pas un sf : st_as_sfc() n'avait donc rien
+# a convertir et echouait sur
+#   « pas de methode pour 'st_as_sfc' applicable pour un objet de classe
+#     c('sfc_MULTIPOLYGON', 'sfc') ».
+# Selon la version de spatstat.geom, as.owin() accepte un sfc, un sf, ou
+# ni l'un ni l'autre. On essaie dans cet ordre et on echoue en nommant la
+# cause, plutot que de laisser un message obscur arreter tout le script.
+fen <- tryCatch(
+  as.owin(pays),
+  error = function(e1) tryCatch(
+    as.owin(st_as_sf(pays)),
+    error = function(e2)
+      stop("[J07-extrait] Impossible de construire la fenetre spatstat ",
+           "a partir de la couche des districts.\n",
+           "  as.owin(sfc) : ", conditionMessage(e1), "\n",
+           "  as.owin(sf)  : ", conditionMessage(e2), "\n",
+           "  Verifiez la version de spatstat.geom (>= 3.0 attendue).",
+           call. = FALSE)))
+# CORRECTIF 01/09/2026 -- ALIGNEMENT DES POINTS ET DE LEURS ATTRIBUTS.
+#
+# ppp() ecarte silencieusement les points hors fenetre. Les grappes EDS ont
+# des coordonnees VOLONTAIREMENT DEPLACEES par le DHS (2 km en urbain, 5 km
+# en rural, 10 km pour 1 % des grappes rurales) : certaines tombent donc
+# hors du contour du pays. C'est attendu, ce n'est pas une erreur de donnee.
+#
+# Ce qui, en revanche, etait un bug : la section KDE plus bas reprenait les
+# libelles urbain/rural par pts_utm$milieu[seq_len(npoints(pp))], donc les
+# N PREMIERS, en supposant que le point ecarte soit le dernier. Il ne l'est
+# pas. A partir du rang du point rejete, chaque grappe recevait le libelle
+# de la suivante -- et les cartes de densite « urbain » et « rural »
+# melangeaient les deux, sans qu'aucune erreur ne soit levee.
+#
+# On filtre donc AVANT de construire pp, avec la fenetre elle-meme comme
+# critere : xy et pts_utm restent alignes par construction.
+dedans <- inside.owin(xy[, 1], xy[, 2], fen)
+n_rejetes <- sum(!dedans)
+
+if (n_rejetes > 0) {
+  cat(sprintf("[J07-extrait] %d grappe(s) hors du contour, ecartee(s) AVANT ppp :\n",
+              n_rejetes))
+  print(utils::head(sf::st_drop_geometry(pts_utm)[!dedans,
+        intersect(c("DHSCLUST", "milieu", "ds_nom"), names(pts_utm))], 10))
+  cat("  (deplacement DHS : attendu, cf. note ci-dessus)\n")
+}
+
+pts_utm <- pts_utm[dedans, ]
+xy      <- xy[dedans, , drop = FALSE]
+
 pp  <- ppp(x = xy[, 1], y = xy[, 2], window = fen)
-cat(sprintf("[J07-extrait] ppp : %d points retenus, %d rejetes hors fenetre\n",
-            npoints(pp), nrow(xy) - npoints(pp)))
+
+# Controle : plus aucun point ne doit etre rejete a ce stade.
+if (npoints(pp) != nrow(xy))
+  stop("[J07-extrait] ", nrow(xy) - npoints(pp), " point(s) encore rejete(s) ",
+       "par ppp() apres filtrage. L'alignement des attributs n'est pas sur : ",
+       "ne pas utiliser les sorties KDE.", call. = FALSE)
+
+cat(sprintf("[J07-extrait] ppp : %d points, 0 rejete (alignement garanti)\n",
+            npoints(pp)))
 
 # --- 6.1 Test du quadrat : la fenetre est decoupee en cellules, on compare
 # les effectifs observes aux effectifs attendus sous processus de Poisson
 # homogene (CSR : Complete Spatial Randomness).
 qt <- quadrat.test(pp, nx = 8, ny = 8)
 qc <- quadratcount(pp, nx = 8, ny = 8)
-quadrat_df <- as.data.frame(qc) |>
-  setNames(c("colonne", "ligne", "observe")) |>
-  mutate(attendu_csr = npoints(pp) / nrow(as.data.frame(qc)),
+# CORRECTIF 01/09/2026. Le code posait trois noms sur le retour de
+# as.data.frame(qc), et echouait sur
+#   « 'names' attribute [3] must be the same length as the vector [2] ».
+# as.data.frame() sur un quadratcount ne renvoie pas le meme nombre de
+# colonnes selon la version de spatstat.geom : tantot 3 (ligne, colonne,
+# effectif), tantot 2. On passe donc par as.table(), dont la forme est
+# stable, et on nomme d'apres ce qu'on RECOIT plutot que d'apres ce qu'on
+# suppose.
+quadrat_df <- as.data.frame(as.table(qc), stringsAsFactors = FALSE)
+
+if (ncol(quadrat_df) == 3L) {
+  # Cas 2D attendu : Var1 = bande en Y (ligne), Var2 = bande en X (colonne).
+  names(quadrat_df) <- c("ligne", "colonne", "observe")
+} else if (ncol(quadrat_df) == 2L) {
+  # La table est arrivee a plat : on conserve l'identifiant de cellule tel
+  # quel plutot que d'inventer un decoupage ligne x colonne.
+  names(quadrat_df) <- c("cellule", "observe")
+  message("[J07-extrait] quadratcount aplati en 2 colonnes ",
+          "(version de spatstat.geom) : colonne 'cellule' au lieu de ",
+          "'ligne' + 'colonne'. Le runtime doit en tenir compte.")
+} else {
+  stop("[J07-extrait] Forme inattendue de quadratcount : ",
+       ncol(quadrat_df), " colonnes (", paste(names(quadrat_df),
+       collapse = ", "), "). Attendu 2 ou 3.", call. = FALSE)
+}
+
+quadrat_df <- quadrat_df |>
+  mutate(attendu_csr = npoints(pp) / nrow(quadrat_df),
          statistique = as.numeric(qt$statistic),
          ddl         = as.numeric(qt$parameter),
          p_value     = as.numeric(qt$p.value),
@@ -452,15 +532,22 @@ bandwidths <- c(petit = h_scott / 2, scott = h_scott, grand = h_scott * 2)
 cat(sprintf("[J07-extrait] bandwidths (m) : petit %.0f, scott %.0f, grand %.0f\n",
             bandwidths[1], bandwidths[2], bandwidths[3]))
 
+# CORRECTIF 01/09/2026. Le code prenait pts_utm$milieu[seq_len(npoints(pp))],
+# c'est-a-dire les N PREMIERS libelles, en supposant que le point ecarte par
+# ppp() soit le dernier. Le filtrage par inside.owin() a la section 6 rend
+# desormais pts_utm et pp de meme longueur ET dans le meme ordre : on lit
+# donc la colonne directement, sans decoupage.
+stopifnot(nrow(pts_utm) == npoints(pp))
+
 sous_pop <- list(
   tous   = rep(TRUE, npoints(pp)),
-  urbain = pts_utm$milieu[seq_len(npoints(pp))] == "U",
-  rural  = pts_utm$milieu[seq_len(npoints(pp))] == "R"
+  urbain = pts_utm$milieu == "U",
+  rural  = pts_utm$milieu == "R"
 )
-# NOTE : l'appariement ci-dessus suppose que ppp() a conserve TOUS les points
-# dans l'ordre. Si le compteur « points rejetes » de la section 6 est > 0,
-# l'alignement est faux -- A VALIDER AU PREMIER RENDU, et corriger en
-# filtrant xy AVANT de construire pp.
+cat(sprintf("[J07-extrait] sous-populations : %d urbaines, %d rurales, %d NA\n",
+            sum(sous_pop$urbain, na.rm = TRUE),
+            sum(sous_pop$rural,  na.rm = TRUE),
+            sum(is.na(pts_utm$milieu))))
 
 grilles <- list()
 for (nb_nom in names(bandwidths)) {

@@ -1,0 +1,7 @@
+fichier,entites,unite,source,ponderee,taille_ko
+ecam5_pauvrete_region.csv,12,region administrative,ECAM5 2021-2022 (INS Cameroun),oui (coefextr),2
+ecam5_pauvrete_region_milieu.csv,22,region x milieu,ECAM5 2021-2022 (INS Cameroun),oui (coefextr),1
+ecam5_taille_menages.csv,3,base de calcul,ECAM5 2021-2022 (INS Cameroun),oui et non (3 lectures),0
+eds_grappes_eau.csv,430,grappe EDS,EDS-MICS 2018 (DHS) + CMGC72FL,oui (hv005/1e6),71
+cmr_regions_J05.geojson,12,region administrative,GADM 4.1 + ECAM5,oui (coefextr),98
+districts_sanitaires_J05.geojson,200,district sanitaire,DHIS2 MINSANTE + EDS-MICS 2018,oui (2 etages),413

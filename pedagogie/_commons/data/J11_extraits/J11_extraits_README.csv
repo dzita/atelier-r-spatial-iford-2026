@@ -1,0 +1,5 @@
+fichier,unite_observation,produit_par,consomme_par
+J11_ecam5_regions.csv,region d'enquete ECAM5,pedagogie/_commons/data/J11_extraits/00_extraire_J11.R,pedagogie/J11_perenniser_transmettre/runtime.qmd
+J11_biais_taille.csv,unite de parcours,pedagogie/_commons/data/J11_extraits/00_extraire_J11.R,pedagogie/J11_perenniser_transmettre/runtime.qmd
+J11_correspondance_regions.csv,libelle source,pedagogie/_commons/data/J11_extraits/00_extraire_J11.R,pedagogie/J11_perenniser_transmettre/runtime.qmd
+J11_adm1_cmr.geojson,region ADM1,pedagogie/_commons/data/J11_extraits/00_extraire_J11.R,pedagogie/J11_perenniser_transmettre/runtime.qmd

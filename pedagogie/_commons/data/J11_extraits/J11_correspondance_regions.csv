@@ -1,0 +1,13 @@
+libelle_source,cle_source,NAME_1,methode,justification
+extrême-nord,extremenord,Extrême-Nord,normalisation,libelle identique apres normalisation
+yaounde,yaounde,Centre,table manuelle,"Yaounde est une ville, pas une region administrative : elle appartient au Centre"
+douala,douala,Littoral,table manuelle,"Douala est une ville, pas une region administrative : elle appartient au Littoral"
+nord,nord,Nord,normalisation,libelle identique apres normalisation
+ouest,ouest,Ouest,normalisation,libelle identique apres normalisation
+est,est,Est,normalisation,libelle identique apres normalisation
+littoral,littoral,Littoral,normalisation,libelle identique apres normalisation
+adamaoua,adamaoua,Adamaoua,normalisation,libelle identique apres normalisation
+sud,sud,Sud,normalisation,libelle identique apres normalisation
+sud-ouest,sudouest,Sud-Ouest,normalisation,libelle identique apres normalisation
+nord-ouest,nordouest,Nord-Ouest,normalisation,libelle identique apres normalisation
+centre,centre,Centre,normalisation,libelle identique apres normalisation

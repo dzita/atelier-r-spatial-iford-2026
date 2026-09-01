@@ -1,0 +1,6 @@
+fichier,unite_observation,produit_par,consomme_par,taille_ko
+J08_adm1_population.geojson,region ADM1,pedagogie/_commons/data/J08_extraits/00_extraire_J08.R,pedagogie/J08_population_haute_resolution/runtime.qmd,86
+J08_adm2_population.geojson,departement ADM2,pedagogie/_commons/data/J08_extraits/00_extraire_J08.R,pedagogie/J08_population_haute_resolution/runtime.qmd,265
+J08_adm1_indicateurs.csv,region ADM1,pedagogie/_commons/data/J08_extraits/00_extraire_J08.R,pedagogie/J08_population_haute_resolution/runtime.qmd,1
+J08_pyramide_adm1.csv,region x tranche x sexe,pedagogie/_commons/data/J08_extraits/00_extraire_J08.R,pedagogie/J08_population_haute_resolution/runtime.qmd,10
+J08_totaux_nationaux.csv,source x annee,pedagogie/_commons/data/J08_extraits/00_extraire_J08.R,pedagogie/J08_population_haute_resolution/runtime.qmd,0

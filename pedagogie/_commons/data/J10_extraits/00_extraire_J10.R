@@ -83,6 +83,33 @@ suppressPackageStartupMessages({
 })
 cat("select() fourni par :", environmentName(environment(select)), "\n")
 
+# CORRECTIF 01/09/2026 -- L'ORDRE DE CHARGEMENT NE SUFFIT PAS.
+#
+# Le bloc ci-dessus charge sae avant dplyr, ce qui est correct DANS UNE
+# SESSION NEUVE. Mais si un autre script a deja ete execute dans la meme
+# session R -- typiquement 00_extraire_J07.R, qui attache spdep, spatstat
+# et raster -- alors dplyr est DEJA attache, et library(dplyr) devient une
+# operation NULLE : elle ne le remonte pas dans la search path. MASS ou
+# raster, attaches plus tard, gagnent alors sur select().
+#
+# Symptome observe : « Erreur dans select(cmr1, NAME_1) : argument
+# inutilise (NAME_1) » -- la signature de MASS::select(), qui n'a pas
+# d'argument nomme.
+#
+# On force donc la liaison dans l'environnement global. C'est defendable
+# ICI parce que ce fichier est un script de production, execute d'un bloc.
+# Le .qmd de la journee, lui, garde l'ordre de chargement explicite : c'est
+# la que le piege s'ENSEIGNE, et il doit y rester visible.
+select <- dplyr::select
+filter <- dplyr::filter          # stats::filter fait un tout autre travail
+mutate <- dplyr::mutate
+
+cat("select() apres correction :",
+    environmentName(environment(select)), "\n")
+if (!identical(environment(select), environment(dplyr::select)))
+  stop("[J10-extrait] select() n'est toujours pas celui de dplyr. ",
+       "Redemarrez R et relancez ce script seul.", call. = FALSE)
+
 sf_use_s2(FALSE)
 
 .PROJECT_ROOT <- rprojroot::find_root(
@@ -420,7 +447,22 @@ form <- as.formula(paste("insecure_direct ~", paste(cov_retenues,
 
 # FAY-HERRIOT. Ce qui distingue ce modele d'une simple regression : vardir,
 # la variance d'echantillonnage CONNUE de chaque commune.
-fh <- mseFH(form, vardir = sae_in$var_direct, data = as.data.frame(sae_in))
+#
+# CORRECTIF 01/09/2026. L'appel etait :
+#   mseFH(form, vardir = sae_in$var_direct, data = as.data.frame(sae_in))
+# et echouait sur « colonnes non definies selectionnees ».
+#
+# POURQUOI. Quand l'argument `data` est fourni, sae::mseFH() ne lit PAS un
+# vecteur : il fait
+#     namevar <- deparse(substitute(vardir))
+#     vardir  <- data[, namevar]
+# c'est-a-dire qu'il DEPARSE l'expression et s'en sert comme nom de colonne.
+# `sae_in$var_direct` devenait donc la chaine "sae_in$var_direct", cherchee
+# comme colonne du data.frame -- ou elle n'existe evidemment pas.
+# Il faut passer le nom NU de la colonne, comme dans une formule.
+sae_df <- as.data.frame(sae_in)
+stopifnot("var_direct" %in% names(sae_df))
+fh <- mseFH(form, vardir = var_direct, data = sae_df)
 cat("\nCoefficients du modele :\n")
 print(round(fh$est$fit$estcoef, 4))
 cat("Variance de l'effet aleatoire de commune :",

@@ -397,15 +397,53 @@ n_apres_join <- nrow(st_join(bat_fen,
                              join = st_intersects, left = TRUE))
 cat("  Lignes avant / apres un st_join naif :", n_avant, "/", n_apres_join,
     " -> duplications evitees :", n_apres_join - n_avant, "\n")
+# CORRECTIF 01/09/2026.
+# Le code ne traitait qu'un seul cas d'absence : l'intersection VIDE
+# (length(k) == 0). Il en existe un second, qui s'est produit au bati 202 :
+# l'intersection n'est pas vide, mais TOUTES les classes de profondeur qui
+# recouvrent le batiment valent NA. which.max() sur un vecteur entierement
+# NA renvoie integer(0) ; l'indexation ne rend alors rien, et vapply()
+# echoue sur « values must be length 1, but FUN(X[[202]]) result is
+# length 0 ».
+#
+# Un polygone d'inondation sans classe de profondeur n'est pas une anomalie
+# du script : Copernicus EMS ne donne une hauteur d'eau que la ou son modele
+# a pu en estimer une. L'etendue observee est donc plus large que l'etendue
+# mesuree -- c'est meme la lecon du module 5. On compte ces cas et on les
+# nomme, plutot que de les laisser faire planter la chaine.
 idx <- st_intersects(bat_fen, flood_fen)
+
+n_flood_na <- sum(is.na(flood_fen$ordre_classe))
+if (n_flood_na > 0)
+  cat("  Polygones d'inondation SANS classe de profondeur :",
+      n_flood_na, "/", nrow(flood_fen),
+      "\n    -> les batiments qui ne touchent que ceux-la auront",
+      "classe_profondeur = NA.\n")
+
 classe_max <- vapply(idx, function(k) {
   if (length(k) == 0) return(NA_character_)
-  flood_fen$classe_profondeur[k[which.max(flood_fen$ordre_classe[k])]]
+  o <- flood_fen$ordre_classe[k]
+  if (all(is.na(o))) return(NA_character_)   # touche, mais profondeur inconnue
+  as.character(flood_fen$classe_profondeur[k[which.max(o)]])
 }, character(1))
+
 ordre_max <- vapply(idx, function(k) {
   if (length(k) == 0) return(NA_real_)
-  max(flood_fen$ordre_classe[k], na.rm = TRUE)
+  o <- flood_fen$ordre_classe[k]
+  if (all(is.na(o))) return(NA_real_)        # max(NA, na.rm=TRUE) donnerait -Inf
+  max(o, na.rm = TRUE)
 }, numeric(1))
+
+# Trois etats a distinguer, et la carte doit les distinguer aussi (regle 4.4) :
+#   - hors zone inondee            : inonde = FALSE
+#   - inonde, profondeur connue    : classe_profondeur renseignee
+#   - inonde, profondeur INCONNUE  : inonde = TRUE et classe_profondeur = NA
+n_touche_sans_classe <- sum(lengths(idx) > 0 & is.na(classe_max))
+cat("  Batiments touches mais SANS profondeur mesuree :",
+    n_touche_sans_classe, "\n")
+if (n_touche_sans_classe > 0)
+  cat("    Ces batiments sont exposes : ils ne doivent PAS etre comptes\n",
+      "   comme non touches, ni colories comme profondeur nulle.\n")
 
 batiments <- bat_fen |>
   mutate(confidence        = .data[[col_conf]],

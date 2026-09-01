@@ -1,0 +1,13 @@
+region,n_menages,poids_total,taille_moyenne_brute,taille_moyenne_ponderee,part_urbain_pct,cle_region
+extrême-nord,279,798601,5.69,5.72,22.8,extremenord
+yaounde,224,730022,4.22,4.12,100,yaounde
+douala,221,777728,4.15,4.09,100,douala
+nord,215,430895,5.28,4.72,24.2,nord
+ouest,172,518135,4.32,4.35,41.6,ouest
+est,159,338010,4.46,4.34,22.5,est
+littoral,148,462900,4.03,4.17,41.9,littoral
+adamaoua,145,253561,5.52,5.3,32.3,adamaoua
+sud,139,250289,3.5,3.43,44.3,sud
+sud-ouest,134,491338,3.69,3.61,47.9,sudouest
+nord-ouest,115,438019,4.63,4.97,36.1,nordouest
+centre,114,454589,4.6,4.63,18.5,centre

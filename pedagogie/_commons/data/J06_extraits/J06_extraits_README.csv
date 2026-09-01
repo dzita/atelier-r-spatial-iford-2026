@@ -1,0 +1,6 @@
+fichier,entites,unite,source,simplifiee,taille_ko
+cmr_adm1_carto.geojson,12,region,GADM 4.1 + ECAM5 + EDS-MICS 2018,"oui, 0.010 deg",96
+cmr_adm2_carto.geojson,58,departement,GADM 4.1 + WorldPop admin level 2,"oui, 0.006 deg",262
+cmr_ds_carto.geojson,200,district sanitaire,DHIS2 MINSANTE + EDS-MICS 2018,"oui, 0.005 deg",403
+eds_grappes_points.csv,430,grappe EDS,EDS-MICS 2018 (DHS),sans objet,37
+bornes_discretisation.csv,110,borne de classe,classInt (quantile / equal / jenks / sd),sans objet,7
