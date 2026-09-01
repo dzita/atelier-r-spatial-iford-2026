@@ -1,0 +1,3445 @@
+---
+title: "J10 · Les données spatiales au service des politiques publiques — démonstration formateur"
+subtitle: "Atelier IFORD × GDSG 2026 · Yaoundé · Référents : E. Darin, R. Dzita, M. Teda, J.S. Alogo — Support : R. Elandi"
+author: "Geospatial Data Science Group — IFORD"
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    toc-location: left
+    number-sections: false
+    code-tools: true
+    code-fold: false
+    df-print: paged
+execute:
+  eval: true       # exécute le code ET affiche les sorties
+  echo: true
+  error: true      # un chunk en erreur n'interrompt pas le rendu
+  warning: true    # PHASE DE TEST : avertissements visibles (repasser à false
+                   # pour la version distribuée aux participants si trop bavard)
+  message: true
+  fig-width: 8
+  fig-height: 5
+---
+
+::: {.callout-note}
+## Comment lire ce document
+
+Ce rapport est le **miroir exécuté** de `scripts/script_formateur_J10.R` : chaque section
+montre le code **et sa sortie**. Ce dossier est **autonome** : ouvrez-le directement dans
+RStudio (ou double-cliquez le `.qmd`). Les données sont dans le sous-dossier `datasets/`
+et les sorties vont dans `outputs/` — **tous les chemins sont relatifs à ce dossier**.
+
+1. Une fois : `source("install_packages_day.R")` (packages du jour — `sae` et `survey`
+   sont longs à compiler, comptez du temps).
+2. Vérifier que `datasets/` contient les fichiers listés dans `datasets/LISEZMOI.md`.
+3. Cliquer **Render**.
+
+Le document est instrumenté : après chaque lecture, chaque jointure, chaque extraction,
+un `cat()` affiche des effectifs, des `NA` restants, un CRS. **Ces compteurs sont le
+principal outil de diagnostic de la journée** : s'ils disparaissent d'une sortie, c'est
+que le chunk a échoué au-dessus.
+:::
+
+::: {.callout-important}
+## Avertissement : cette journée change de pays en cours de route
+
+Les parties I et II portent sur le **Cameroun** (conflits ACLED, température ERA5).
+La partie III — estimation sur petits domaines — porte sur le **Bénin** (enquête EHCVM
+2018-2019, communes, grille de 3 km). Ce n'est pas une négligence, c'est une décision
+de méthode assumée, expliquée au Module 5 : l'extrait camerounais dont nous disposons
+(`ecam5.dta`) **n'est pas représentatif à l'intérieur des régions** — le taux de
+pauvreté qu'il donne pour l'Est est de 7,5 % contre 41,5 % publié par l'INS. Bâtir un
+exercice d'estimation sur petits domaines dessus produirait des cartes qu'il faudrait
+ensuite interdire de citer.
+
+Ce que ce déplacement coûte au fil rouge camerounais de l'atelier, et ce qu'il faut
+dire aux participants, est écrit dans l'encadré d'ouverture du Module 5.
+:::
+
+```{r}
+#| label: setup
+#| include: false
+for (d in c("outputs")) {
+  dir.create(d, recursive = TRUE, showWarnings = FALSE)
+}
+```
+
+# Module 0 — Le dossier, les packages, l'inventaire
+
+## 0.1 — L'arborescence de la journée
+
+```{r}
+#| label: chunk-arborescence
+# Ce document ne connait qu'un seul repertoire de donnees : "datasets/", a plat,
+# a la racine du dossier de la journee. Aucun appel a un localisateur de projet,
+# aucune variable de repertoire recomposee, aucun sous-dossier : c'est cette
+# convention, et elle seule, que l'outil de distribution des donnees detecte par
+# expression reguliere pour remplir datasets/.
+cat(paste(
+  "",
+  "J10_politiques_publiques/",
+  "|-- demo_formateur_J10.qmd            <- CE document (source unique)",
+  "|-- install_packages_day.R            <- packages de la journee (a lancer une fois)",
+  "|-- README.md",
+  "|-- datasets/                         <- donnees, a PLAT",
+  "|   |-- acled_cameroon_export.csv     <- evenements ACLED, Cameroun (Modules 1-2)",
+  "|   |-- gadm41_CMR.gpkg               <- limites administratives Cameroun, GADM 4.1",
+  "|   |-- era5_t2m_mensuel_cameroun.nc  <- ERA5 T2m mensuel, Kelvin (Modules 3-4)",
+  "|   |-- ehcvm2018_benin_menages.csv   <- menages geolocalises EHCVM 2018-2019 (Module 5)",
+  "|   |-- gadm_ben_communes.gpkg        <- communes du Benin, admin2 (Module 8)",
+  "|   |-- benin_grille_3km.gpkg         <- grille de 3 km (Module 9)",
+  "|   |-- benin_covariables_admin2.csv  <- covariables par commune (Modules 6-7)",
+  "|   |-- benin_covariables_grille.csv  <- covariables par cellule (Modules 5 et 9)",
+  "|   `-- LISEZMOI.md                   <- inventaire verifie et pieges chiffres",
+  "|-- scripts/",
+  "|   |-- script_formateur_J10.R        <- miroir executable de ce document",
+  "|   |-- script_etudiant_J10.R         <- trame a trous",
+  "|   `-- script_etudiant_J10_corrige.R <- corrige, distribue en fin de journee",
+  "|-- archive_en/                       <- scripts EN d'origine, archives, non maintenus",
+  "`-- outputs/                          <- TOUTES les sorties (cree automatiquement)",
+  "",
+  sep = "\n"
+))
+```
+
+::: {.callout-note}
+## Une sortie n'écrit jamais dans `datasets/`
+
+`datasets/` est en **lecture seule** par convention : il contient ce qui a été reçu,
+rien de ce qui a été calculé. Tout ce que la journée produit — cartes, tableaux,
+couches, rasters — va dans `outputs/`, avec le préfixe `J10_`. Cette séparation n'est
+pas cosmétique : elle permet de vider `outputs/` et de tout recalculer sans jamais
+risquer d'effacer une donnée source, et elle rend visible d'un coup d'œil ce qui est
+une mesure et ce qui est un résultat de calcul.
+:::
+
+## 0.2 — Les packages, et un ordre de chargement qui compte
+
+```{r}
+#| label: chunk-packages
+# === CHARGEMENT DES PACKAGES ================================================
+# Liste alignee sur les library() REELLEMENT utilises par cette journee.
+# L'installation se fait une fois, par source("install_packages_day.R").
+#
+# L'ORDRE DES DEUX PREMIERES LIGNES N'EST PAS INDIFFERENT.
+# sae depend de MASS. MASS definit une fonction select(). Si dplyr est charge
+# AVANT sae, c'est MASS::select() qui gagne, et tout appel a select() dans la
+# suite du document echoue sur un message incomprehensible :
+#   "unused arguments" / "no applicable method"
+# En chargeant sae d'abord et dplyr ensuite, c'est dplyr::select() qui masque
+# MASS::select(), ce que nous voulons. En cas de doute, la parade explicite est
+# d'ecrire dplyr::select().
+library(sf)            # donnees vectorielles (Simple Features)
+library(sae)           # <- AVANT dplyr : MASS (dont sae depend) masque select()
+library(survey)        # plans de sondage, estimation ponderee
+library(dplyr)         # verbes de manipulation de tableaux
+library(tidyr)         # pivot_longer(), replace_na()
+library(ggplot2)       # graphiques
+library(readr)         # lecture des CSV
+library(tmap)          # cartographie thematique (API version 4)
+library(scales)        # mise en forme des axes
+library(terra)         # rasters et NetCDF
+library(exactextractr) # statistiques zonales exactes raster x polygones
+
+cat("Dossier de travail :", getwd(), "\n")
+cat("Fichiers presents dans datasets/ :", length(list.files("datasets")), "\n")
+
+# Verification du conflit annonce : qui fournit select() dans cette session ?
+cat("select() vient de :",
+    environmentName(environment(get("select"))), "\n")
+```
+
+::: {.callout-warning}
+## Le piège du masquage de `select()`
+
+Trois packages de cette journée définissent une fonction `select()` : `dplyr`, `MASS`
+(chargé silencieusement par `sae`) et, dans d'autres contextes, `raster`. Le dernier
+chargé gagne. C'est le mécanisme normal de R — le message « The following object is
+masked from 'package:MASS': select » n'est pas une erreur, c'est un avertissement de
+courtoisie que tout le monde ignore.
+
+**Ce que fait le choix technique.** Charger `sae` avant `dplyr` place `dplyr::select()`
+au-dessus. Si vous inversez les deux lignes, la journée s'arrête au Module 6 sur une
+erreur qui ne parle ni de `sae`, ni de `MASS`, ni de masquage.
+
+**Ce qui se lit.** La ligne `select() vient de :` ci-dessus doit afficher `dplyr`.
+
+**Ce qui ne se lit pas.** Ce contrôle ne dit rien des autres masquages de la session
+(`filter()` est masqué par `stats`, `extract()` par `terra`). La règle générale, quand
+un appel se comporte de façon inexplicable, est de le qualifier : `dplyr::select()`.
+:::
+
+## 0.3 — Inventaire : ce que la journée attend, ce que le dossier contient
+
+```{r}
+#| label: chunk-inventaire
+# Avant d'ecrire la moindre ligne d'analyse : verifier que les fichiers sont la.
+# Un chemin faux ne se voit pas dans un rendu Quarto avec error: true -- il
+# produit une sortie vide au milieu d'une page qui a l'air complete.
+fichiers_attendus <- c(
+  "acled_cameroon_export.csv",
+  "gadm41_CMR.gpkg",
+  "era5_t2m_mensuel_cameroun.nc",
+  "ehcvm2018_benin_menages.csv",
+  "gadm_ben_communes.gpkg",
+  "benin_grille_3km.gpkg",
+  "benin_covariables_admin2.csv",
+  "benin_covariables_grille.csv"
+)
+
+inventaire <- data.frame(
+  fichier = fichiers_attendus,
+  present = file.exists(file.path("datasets", fichiers_attendus))
+)
+print(inventaire)
+
+cat("\nFichiers attendus presents :", sum(inventaire$present), "/",
+    nrow(inventaire), "\n")
+if (any(!inventaire$present)) {
+  cat("MANQUANTS :",
+      paste(inventaire$fichier[!inventaire$present], collapse = ", "), "\n")
+}
+
+# Le Module 10 (accessibilite) repose sur deux fichiers supplementaires,
+# retrouves le 01/09/2026. Le module est repasse en execution : ces deux lignes
+# doivent afficher TRUE, sinon le module 10 sortira en erreur.
+cat("\nModule 10 (accessibilite, reactive le 01/09/2026) :\n")
+cat("  datasets/DS.geojson       present ?", file.exists("datasets/DS.geojson"), "\n")
+cat("  datasets/gadm41_CMR_2.shp present ?", file.exists("datasets/gadm41_CMR_2.shp"), "\n")
+```
+
+::: {.callout-note}
+## La question de la journée
+
+**Comment une donnée spatiale devient-elle un argument recevable devant un décideur ?**
+
+Trois familles de données, trois façons de répondre :
+
+| Famille | Fichier | Unité d'observation | Ce qu'elle mesure vraiment |
+|---|---|---|---|
+| Événementiel | `acled_cameroon_export.csv` | **l'événement rapporté** | ce que des sources ont rapporté, daté et localisé |
+| Réanalyse | `era5_t2m_mensuel_cameroun.nc` | **la cellule de ~31 km, par mois** | la sortie d'un modèle météorologique contraint par des observations |
+| Enquête | `ehcvm2018_benin_menages.csv` | **le ménage enquêté**, dans une grappe | une déclaration de ménage, à pondérer pour parler de la population |
+
+Aucune des trois n'est « la réalité ». Chacune est une **construction** dont il faut
+connaître la règle de fabrication avant de la cartographier. C'est le fil de la journée :
+une carte hérite de toutes les décisions prises en amont sans jamais les afficher.
+:::
+
+
+# Module 1 — Données événementielles : lire ACLED sans lui faire dire plus
+
+## 1.1 — Ce qu'est ACLED, et ce que n'est pas un « événement »
+
+::: {.callout-note}
+## ACLED — Armed Conflict Location & Event Data Project
+
+ACLED (`acleddata.com`) code, à partir de sources ouvertes — presse nationale et
+locale, rapports d'ONG, communiqués, réseaux sociaux vérifiés — des **événements** de
+violence politique et de contestation : batailles, violences contre les civils,
+émeutes, manifestations, explosions/violences à distance, développements stratégiques.
+
+Chaque ligne porte une date, un type, un ou deux acteurs, une localisation (nom de
+lieu + latitude/longitude), un nombre de morts rapportés, et deux indicateurs de
+qualité trop souvent ignorés : `time_precision` et `geo_precision`.
+
+**Un événement ACLED n'est pas un fait vérifié : c'est un fait rapporté.** La base
+mesure conjointement l'activité conflictuelle *et* l'activité des sources qui la
+rapportent. Une région où la presse ne circule pas produit peu d'événements, ce qui ne
+signifie pas qu'il s'y passe peu de choses. Toute la journée, écrivez « événements
+rapportés », jamais « événements ».
+
+L'accès se fait par un compte gratuit sur `developer.acleddata.com` et le package
+`acledR`. Le fichier de ce dossier est un export figé, au format identique à celui de
+l'API — les analyses ci-dessous tournent donc sans connexion.
+:::
+
+```{r}
+#| label: chunk-acled-api-reference
+#| eval: false
+# BLOC DE REFERENCE -- NON EXECUTE (necessite un compte myACLED et une connexion).
+# Conserve pour montrer que le fichier fourni est un export figé de cette requete.
+#
+# install.packages("acledR")
+#
+# acled_brut <- acledR::acled_api(
+#   email      = "votre@email.com",
+#   password   = "votre_mot_de_passe",
+#   country    = "Cameroon",
+#   start_date = "2015-01-01",
+#   end_date   = as.character(Sys.Date()),
+#   monadic    = FALSE
+# )
+# readr::write_csv(acled_brut, "datasets/acled_cameroon_export.csv")
+```
+
+## 1.2 — Lecture et structure réelle du fichier
+
+```{r}
+#| label: chunk-acled-lecture
+# Separateur : virgule (verifie sur l'en-tete du fichier). Les champs "notes"
+# contiennent des virgules, mais ils sont proteges par des guillemets : read_csv()
+# les gere. La verification qui suit n'est pas decorative -- un mauvais separateur
+# renvoie UNE colonne unique, sans lever la moindre erreur.
+acled_brut <- read_csv("datasets/acled_cameroon_export.csv", show_col_types = FALSE)
+
+cat("ACLED :", nrow(acled_brut), "lignes x", ncol(acled_brut), "colonnes\n")
+cat("Une seule colonne lue ? ", ncol(acled_brut) == 1,
+    "  (TRUE = mauvais separateur)\n\n")
+
+cat("Colonnes reellement presentes :\n")
+print(names(acled_brut))
+```
+
+```{r}
+#| label: chunk-acled-annees
+# Les annees couvertes par l'export. On ne les suppose pas : on les lit.
+annees_disponibles <- sort(unique(acled_brut$year))
+cat("Annees disponibles :", paste(annees_disponibles, collapse = ", "), "\n")
+cat("Nombre d'annees :", length(annees_disponibles), "\n")
+
+cat("\nEvenements par annee :\n")
+print(table(acled_brut$year))
+
+cat("\nTypes d'evenements presents :\n")
+print(sort(table(acled_brut$event_type), decreasing = TRUE))
+```
+
+::: {.callout-note}
+## Les colonnes qui servent, et celles qui piègent
+
+| Colonne | Contenu | Usage dans la journée |
+|---|---|---|
+| `event_date`, `year` | date de l'événement | séries temporelles |
+| `event_type`, `sub_event_type` | typologie ACLED à deux niveaux | comptages, couleurs de la carte |
+| `admin1`, `admin2`, `admin3` | découpage administratif **tel qu'ACLED l'écrit** | **le piège du Module 2** |
+| `latitude`, `longitude` | position du lieu rapporté | conversion en couche `sf` |
+| `geo_precision` | 1 = lieu précis, 2 = ville la plus proche, 3 = région | qualité de la position |
+| `time_precision` | 1 = jour connu, 2 = semaine, 3 = mois | qualité de la date |
+| `fatalities` | morts **rapportés**, pas comptés | courbe des décès |
+| `notes` | résumé textuel de la source | jamais agrégé, toujours utile à lire |
+
+`geo_precision` et `time_precision` sont les deux colonnes que tout le monde oublie.
+Un événement `geo_precision = 3` est placé au centroïde d'une région : sur une carte
+de points, il ressemble exactement à un événement localisé au mètre près.
+:::
+
+## 1.3 — Contrôle des valeurs douteuses avant tout calcul
+
+```{r}
+#| label: chunk-acled-sentinelles
+# CONTROLE DES SENTINELLES ET DES VALEURS IMPOSSIBLES.
+# Une sentinelle traverse mean() sans un mot. On les cherche AVANT de calculer.
+
+# a) fatalities : des negatifs ? des valeurs aberrantes ?
+cat("fatalities -- min :", min(acled_brut$fatalities, na.rm = TRUE),
+    "| max :", max(acled_brut$fatalities, na.rm = TRUE),
+    "| NA :", sum(is.na(acled_brut$fatalities)), "\n")
+cat("fatalities negatifs (sentinelle possible) :",
+    sum(acled_brut$fatalities < 0, na.rm = TRUE), "\n")
+
+# b) coordonnees a (0, 0) : le point "null island", au large du golfe de Guinee.
+#    C'est LA sentinelle classique des bases d'evenements : une coordonnee
+#    manquante remplacee par zero. Sur une carte du Cameroun, ces points
+#    tombent dans l'ocean, et personne ne les remarque si on ne les compte pas.
+cat("\nCoordonnees exactement (0, 0) :",
+    sum(acled_brut$latitude == 0 & acled_brut$longitude == 0, na.rm = TRUE), "\n")
+cat("latitude NA :", sum(is.na(acled_brut$latitude)),
+    "| longitude NA :", sum(is.na(acled_brut$longitude)), "\n")
+
+# c) l'emprise du Cameroun est approximativement 1.6-13.1 N et 8.4-16.2 E.
+#    Tout point hors de cette boite est suspect.
+hors_emprise <- with(
+  acled_brut,
+  latitude < 1 | latitude > 14 | longitude < 8 | longitude > 17
+)
+cat("Points hors de l'emprise plausible du Cameroun :",
+    sum(hors_emprise, na.rm = TRUE), "\n")
+
+# d) qualite de la localisation et de la date
+cat("\nRepartition de geo_precision (1 = lieu precis, 3 = region) :\n")
+print(table(acled_brut$geo_precision, useNA = "ifany"))
+cat("\nRepartition de time_precision (1 = jour connu, 3 = mois) :\n")
+print(table(acled_brut$time_precision, useNA = "ifany"))
+```
+
+::: {.callout-warning}
+## Ce que ce contrôle vient d'établir
+
+**Ce qu'il code.** Quatre familles de défauts : les valeurs négatives de `fatalities`
+(sentinelle d'absence dans certaines bases), les coordonnées `(0, 0)`, les points hors
+emprise, et la qualité déclarée de la géolocalisation.
+
+**Ce que les choix techniques font.** La boîte englobante `1–14 N / 8–17 E` est un
+test **grossier et volontairement large** : il attrape les erreurs de saisie et les
+inversions latitude/longitude, pas les erreurs de quelques kilomètres. Une inversion
+`c(latitude, longitude)` au lieu de `c(longitude, latitude)` place les points du
+Cameroun quelque part au large de la Somalie : ce test la détecte, `st_as_sf()` non —
+l'inversion ne lève **aucune erreur**.
+
+**Ce qui se lit.** Les compteurs ci-dessus, à relire à voix haute en salle.
+
+**Ce qui ne se lit pas.** Un `geo_precision = 3` n'est pas une erreur : c'est un
+événement dont on sait seulement la région. Il est légitime dans un comptage régional
+(Module 2) et illégitime dans une carte de points lue au village près (section 2.1).
+Le même enregistrement est bon ou mauvais **selon la question posée**.
+:::
+
+## 1.4 — Nettoyage et champ temporel
+
+```{r}
+#| label: chunk-acled-nettoyage
+# Nettoyage minimal et EXPLICITE : chaque ligne retiree est comptee.
+n_avant <- nrow(acled_brut)
+
+acled_clean <- acled_brut |>
+  mutate(
+    event_date = as.Date(event_date),
+    annee      = as.integer(year),
+    mois       = format(event_date, "%Y-%m"),
+    fatalities = as.numeric(fatalities),
+    longitude  = as.numeric(longitude),
+    latitude   = as.numeric(latitude)
+  ) |>
+  filter(
+    !is.na(longitude), !is.na(latitude),
+    !(longitude == 0 & latitude == 0)   # on retire "null island", en le disant
+  )
+
+cat("Lignes avant nettoyage :", n_avant, "\n")
+cat("Lignes apres nettoyage :", nrow(acled_clean), "\n")
+cat("Lignes retirees (coordonnees absentes ou nulles) :",
+    n_avant - nrow(acled_clean), "\n")
+
+cat("\nPlage temporelle :",
+    format(min(acled_clean$event_date), "%Y-%m-%d"), "a",
+    format(max(acled_clean$event_date), "%Y-%m-%d"), "\n")
+
+# Champ d'analyse : les dix dernieres annees couvertes par le fichier. On borne
+# a partir de la DERNIERE annee du fichier, pas de la date du jour : le materiel
+# doit donner la meme sortie en 2026 et en 2030.
+annee_max <- max(acled_clean$annee, na.rm = TRUE)
+annee_min <- annee_max - 9
+
+acled_clean <- acled_clean |> filter(annee >= annee_min)
+
+cat("Champ retenu :", annee_min, "-", annee_max, "|",
+    nrow(acled_clean), "evenements\n")
+cat("Evenements exclus par le bornage temporel :",
+    sum(acled_brut$year < annee_min, na.rm = TRUE), "\n")
+```
+
+::: {.callout-note}
+## Pourquoi borner sur la donnée et non sur `Sys.Date()`
+
+Le script d'origine calculait le champ temporel à partir de la date du jour
+(`Sys.Date() - 10 ans`). Conséquence : le même document, rendu deux ans plus tard,
+n'affiche plus les mêmes chiffres — et personne ne comprend pourquoi la carte du
+support de cours ne correspond plus à celle de l'écran.
+
+Un matériel pédagogique doit être **reproductible** : on borne sur la dernière année
+présente dans le fichier. Le fichier change, les chiffres changent ; le fichier ne
+change pas, les chiffres non plus.
+:::
+
+## 1.5 — Deux séries : les événements, puis les décès
+
+```{r}
+#| label: chunk-acled-resumes
+# a) Comptage par type d'evenement
+resume_types <- acled_clean |>
+  count(event_type, sort = TRUE, name = "n_evenements") |>
+  mutate(part_pct = round(100 * n_evenements / sum(n_evenements), 1))
+
+print(resume_types)
+
+# b) Comptage par region TELLE QU'ACLED L'ECRIT (colonne admin1).
+#    Retenez ces libelles : ils sont le sujet du Module 2.
+resume_admin1 <- acled_clean |>
+  count(admin1, sort = TRUE, name = "n_evenements")
+
+cat("\nLibelles admin1 presents dans ACLED (", nrow(resume_admin1), ") :\n")
+print(resume_admin1)
+cat("\nadmin1 manquant :", sum(is.na(acled_clean$admin1)), "evenements\n")
+```
+
+```{r}
+#| label: chunk-acled-graphe-annuel
+#| fig-height: 6
+resume_annuel <- acled_clean |>
+  count(annee, event_type, name = "n_evenements")
+
+graphe_annuel <- ggplot(
+  resume_annuel,
+  aes(x = annee, y = n_evenements, fill = event_type)
+) +
+  geom_col() +
+  scale_x_continuous(breaks = seq(annee_min, annee_max, by = 1)) +
+  scale_fill_brewer(palette = "Set2") +
+  labs(
+    title    = "Evenements rapportes par ACLED, Cameroun",
+    subtitle = paste0("Barres empilees par type, ", annee_min, "-", annee_max,
+                      ". Source : ACLED (evenements RAPPORTES)."),
+    x = "Annee", y = "Nombre d'evenements rapportes", fill = "Type"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+print(graphe_annuel)
+```
+
+::: {.callout-tip}
+## Lecture de la figure — barres empilées annuelles
+
+**Ce que la figure code.** La hauteur totale d'une barre est le nombre d'événements
+**rapportés** cette année-là ; chaque couleur est un type ACLED. Un événement compte
+pour 1, qu'il ait fait zéro ou cinquante morts : ce graphique mesure une **fréquence**,
+pas une intensité. C'est le graphe des décès (ci-dessous) qui mesure l'intensité.
+
+**Ce que les choix techniques font.** L'empilement (`geom_col()` sur des groupes)
+rend le **total** annuel très lisible et la comparaison d'un type d'une année à l'autre
+difficile : l'œil compare des segments qui ne partent pas de la même base. Si la
+question porte sur un type précis, il faut `facet_wrap(~ event_type)` — même tableau,
+lecture inverse. La palette `Set2` est **qualitative** : aucune couleur n'est « plus »
+qu'une autre, ce qui est correct pour des catégories non ordonnées.
+
+**Ce qui se lit.** Le profil temporel : périodes de montée, années de pic, composition
+par type qui se déforme au fil du temps.
+
+**Ce qui ne se lit pas.** L'effort de collecte. Une augmentation du nombre
+d'événements rapportés peut venir d'une dégradation de la situation **ou** d'une
+meilleure couverture médiatique **ou** d'un changement de méthodologie ACLED. Rien
+dans ce graphique ne permet de trancher entre les trois — et c'est la première
+question qu'un décideur informé posera.
+:::
+
+```{r}
+#| label: chunk-acled-graphe-deces
+resume_deces <- acled_clean |>
+  group_by(annee) |>
+  summarise(
+    deces        = sum(fatalities, na.rm = TRUE),
+    n_evenements = n(),
+    .groups = "drop"
+  ) |>
+  mutate(deces_par_evenement = round(deces / n_evenements, 2))
+
+print(resume_deces)
+
+graphe_deces <- ggplot(resume_deces, aes(x = annee, y = deces)) +
+  geom_line(colour = "#CB181D", linewidth = 1.2) +
+  geom_point(colour = "#CB181D", size = 2.5) +
+  scale_x_continuous(breaks = seq(annee_min, annee_max, by = 1)) +
+  scale_y_continuous(labels = label_number(big.mark = " ")) +
+  labs(
+    title    = "Deces rapportes lies aux conflits, Cameroun",
+    subtitle = "Somme annuelle de fatalities. Source : ACLED (deces RAPPORTES).",
+    x = "Annee", y = "Nombre de deces rapportes"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+print(graphe_deces)
+```
+
+::: {.callout-tip}
+## Lecture de la figure — courbe des décès
+
+**Ce que la figure code.** La somme annuelle de `fatalities`, c'est-à-dire des décès
+**rapportés par au moins une source et retenus par le codage ACLED**. Ce n'est ni un
+décompte d'état civil, ni une estimation démographique de surmortalité.
+
+**Ce que les choix techniques font.** Relier les points par une ligne suggère une
+continuité entre deux années : c'est une commodité de lecture, pas une propriété de la
+donnée — il n'existe rien « entre » 2019 et 2020 dans ce tableau. La colonne
+`deces_par_evenement` imprimée au-dessus est le vrai complément : elle sépare
+« plus d'événements » de « des événements plus meurtriers », deux phénomènes que la
+courbe des décès seule confond.
+
+**Ce qui se lit.** Les années de rupture, et leur écart avec le graphique des
+fréquences : une année peut battre un record d'événements sans battre celui des décès.
+
+**Ce qui ne se lit pas.** L'incertitude. Un décès rapporté par une source unique et un
+décès confirmé par trois sources pèsent pareil dans cette somme. ACLED documente ses
+règles de codage ; le graphique, lui, n'en garde aucune trace.
+:::
+
+# Module 2 — Du point au polygone : la jointure qui échoue en silence
+
+## 2.1 — Convertir les événements en couche spatiale
+
+```{r}
+#| label: chunk-acled-points
+# ORDRE DES COORDONNEES : c(longitude, latitude), et JAMAIS l'inverse.
+# sf ne verifie rien : il place les points ou on lui dit. Une inversion ne leve
+# aucune erreur, elle deplace simplement tout le Cameroun dans l'ocean Indien.
+# Le seul garde-fou est de tracer la couche immediatement apres l'avoir creee.
+acled_pts <- st_as_sf(
+  acled_clean,
+  coords = c("longitude", "latitude"),
+  crs    = 4326,          # WGS84 : degres. Toujours POSER le CRS.
+  remove = FALSE          # on garde les colonnes lon/lat pour pouvoir verifier
+)
+
+cat("Couche de points ACLED :", nrow(acled_pts), "entites\n")
+cat("CRS :", st_crs(acled_pts)$input, "\n")
+cat("Emprise (bbox) :\n")
+print(st_bbox(acled_pts))
+```
+
+```{r}
+#| label: chunk-gadm-lecture
+# Limites administratives du Cameroun, GADM 4.1, format GeoPackage multicouche.
+# On liste d'abord les couches disponibles : on ne suppose pas leur nom.
+couches_gadm <- st_layers("datasets/gadm41_CMR.gpkg")
+print(couches_gadm)
+
+cmr0 <- st_read("datasets/gadm41_CMR.gpkg", layer = "ADM_ADM_0", quiet = TRUE)
+cmr1 <- st_read("datasets/gadm41_CMR.gpkg", layer = "ADM_ADM_1", quiet = TRUE)
+
+cat("\nADM_ADM_0 (pays)    :", nrow(cmr0), "entite(s) |",
+    "CRS :", st_crs(cmr0)$input, "\n")
+cat("ADM_ADM_1 (regions) :", nrow(cmr1), "entites |",
+    "CRS :", st_crs(cmr1)$input, "\n")
+
+cat("\nChamps de la couche ADM_ADM_1 :\n")
+print(names(cmr1))
+
+cat("\nLibelles NAME_1 tels que GADM les ecrit :\n")
+print(sort(cmr1$NAME_1))
+```
+
+::: {.callout-important}
+## Deux fichiers, deux langues, aucune erreur
+
+Comparez les deux listes que vous venez d'imprimer :
+
+- ACLED écrit ses régions en **français sans accents** : `Sud`, `Extreme-Nord`,
+  `Nord-Ouest`, `Vallee-du-Ntem` au niveau `admin2` ;
+- GADM écrit les siennes en **anglais** : `South`, `Far North`, `North-West`.
+
+Ce n'est **pas** un problème d'accents — c'est un problème de **langue**. Aucune
+translittération, aucun `tolower()`, aucun nettoyage de chaîne ne transformera
+`Extreme-Nord` en `Far North`. Et pourtant `left_join()` acceptera cette jointure
+sans broncher : il produira des `NA`, c'est-à-dire, une fois `replace_na(0)` appliqué,
+des **régions à zéro événement** sur la carte. Une région en guerre affichée en blanc.
+
+C'est le scénario type de la règle « ce qui échoue en silence est plus dangereux que
+ce qui plante ». Nous allons donc le **provoquer** avant de le corriger.
+:::
+
+## 2.2 — Tentative n° 1 : joindre par le libellé (et compter les dégâts)
+
+```{r}
+#| label: chunk-jointure-echec
+# TENTATIVE DELIBEREMENT FAUSSE -- a executer pour voir ce qu'elle produit.
+# Regle : on part TOUJOURS de la couche geographique, jamais du tableau
+# (cmr1 |> left_join(stats)), sinon on perd la geometrie.
+essai_nom <- cmr1 |>
+  st_drop_geometry() |>
+  select(NAME_1) |>
+  left_join(resume_admin1, by = c("NAME_1" = "admin1"))
+
+cat("Regions GADM :", nrow(essai_nom), "\n")
+cat("Regions APPARIEES avec ACLED :", sum(!is.na(essai_nom$n_evenements)), "\n")
+cat("Regions NON appariees (NA) :", sum(is.na(essai_nom$n_evenements)), "\n\n")
+print(essai_nom)
+
+# Et cote ACLED : combien d'evenements se retrouveraient orphelins ?
+libelles_gadm  <- cmr1$NAME_1
+evts_orphelins <- acled_clean |> filter(!(admin1 %in% libelles_gadm))
+cat("\nEvenements ACLED dont admin1 n'existe pas dans GADM :",
+    nrow(evts_orphelins), "sur", nrow(acled_clean),
+    sprintf("(%.1f %%)", 100 * nrow(evts_orphelins) / nrow(acled_clean)), "\n")
+cat("Libelles ACLED sans correspondant GADM :\n")
+print(sort(unique(evts_orphelins$admin1)))
+```
+
+::: {.callout-warning}
+## Le diagnostic, chiffré
+
+Seules s'apparient les régions dont le nom **s'écrit pareil dans les deux langues** —
+en pratique une poignée (`Adamaoua`, `Centre`, `Littoral` en sont les candidates
+évidentes). Toutes les autres deviennent des `NA`.
+
+Traduisez le pourcentage affiché ci-dessus en langage de salle : *« la carte que nous
+aurions publiée aurait affiché zéro événement pour la majorité des régions du pays,
+sans le moindre message d'erreur »*. C'est exactement l'accident que le compteur
+`sum(is.na(...))` après chaque jointure est censé empêcher — et c'est pour cela que la
+règle exige ce compteur **systématiquement**, y compris quand la jointure « ne peut
+pas rater ».
+:::
+
+## 2.3 — Tentative n° 2 : normaliser les chaînes (et voir que ça ne suffit pas)
+
+```{r}
+#| label: chunk-jointure-normalisation
+# La parade habituelle : fabriquer une CLE TECHNIQUE en normalisant les libelles
+# (sans accents, minuscules, sans ponctuation ni espaces). Le libelle d'origine
+# est conserve pour l'affichage : la cle ne sert QU'A joindre.
+normaliser <- function(x) {
+  y <- iconv(x, from = "UTF-8", to = "ASCII//TRANSLIT")  # accents retires
+  y <- tolower(y)
+  y <- gsub("[^a-z]", "", y)                             # ponctuation, espaces
+  y
+}
+
+cle_gadm  <- normaliser(cmr1$NAME_1)
+cle_acled <- normaliser(resume_admin1$admin1)
+
+cat("Cles GADM  :", paste(sort(cle_gadm), collapse = ", "), "\n\n")
+cat("Cles ACLED :", paste(sort(cle_acled), collapse = ", "), "\n\n")
+cat("Cles communes apres normalisation :",
+    length(intersect(cle_gadm, cle_acled)), "sur", length(cle_gadm), "\n")
+```
+
+::: {.callout-note}
+## Ce que la normalisation résout — et ce qu'elle ne résout pas
+
+**Ce qu'elle résout.** Les différences d'écriture : accents, casse, tirets, espaces
+multiples, mots de liaison. Sur un appariement français ↔ français, elle sauve la
+mise (au J05, la même fonction récupérait 11 départements sur 58).
+
+**Ce qu'elle ne résout pas.** La traduction. `extremenord` et `farnorth` restent deux
+chaînes distinctes, et aucun algorithme de distance d'édition ne devrait les rapprocher
+— s'il le faisait, il rapprocherait aussi des choses qui n'ont rien à voir.
+
+Quand la normalisation échoue, la règle est claire : **écrire une table de
+correspondance à la main**. Ce n'est pas un bricolage, c'est une **décision de
+méthode**, qui doit être visible dans le code et justifiée dans le texte. C'est ce que
+fait la section suivante — avant de montrer qu'il existe ici une route plus sûre.
+:::
+
+## 2.4 — Tentative n° 3 : la table de correspondance écrite à la main
+
+```{r}
+#| label: chunk-table-correspondance
+# TABLE DE CORRESPONDANCE FR (ACLED) -> EN (GADM), ecrite a la main, verifiable
+# ligne a ligne par un lecteur humain. Dix regions, dix lignes : rien de magique.
+corresp_regions <- tibble::tribble(
+  ~admin1_acled,    ~NAME_1_gadm,
+  "Adamaoua",       "Adamaoua",
+  "Centre",         "Centre",
+  "Est",            "East",
+  "Extreme-Nord",   "Far North",
+  "Littoral",       "Littoral",
+  "Nord",           "North",
+  "Nord-Ouest",     "North-West",
+  "Ouest",          "West",
+  "Sud",            "South",
+  "Sud-Ouest",      "South-West"
+)
+
+# CONTROLE : chaque libelle de la table existe-t-il vraiment dans GADM ?
+cat("Libelles GADM de la table absents de la couche :",
+    paste(setdiff(corresp_regions$NAME_1_gadm, cmr1$NAME_1), collapse = ", "),
+    "\n")
+cat("Libelles GADM de la couche absents de la table :",
+    paste(setdiff(cmr1$NAME_1, corresp_regions$NAME_1_gadm), collapse = ", "),
+    "\n")
+cat("Libelles ACLED absents de la table :",
+    paste(setdiff(unique(acled_clean$admin1), corresp_regions$admin1_acled),
+          collapse = ", "),
+    "\n")
+
+# Jointure attributaire corrigee
+resume_par_table <- resume_admin1 |>
+  left_join(corresp_regions, by = c("admin1" = "admin1_acled"))
+
+cat("\nEvenements non rattaches malgre la table :",
+    sum(resume_par_table$n_evenements[is.na(resume_par_table$NAME_1_gadm)],
+        na.rm = TRUE), "\n")
+```
+
+::: {.callout-warning}
+## Les deux contrôles à ne jamais omettre sur une table de correspondance
+
+Une table écrite à la main a le défaut de sa qualité : elle a l'air juste. Les deux
+`setdiff()` ci-dessus sont son seul garde-fou.
+
+- Un libellé de la table **absent de la couche** signifie une faute de frappe dans la
+  table : la ligne ne s'appariera jamais, silencieusement.
+- Un libellé de la couche **absent de la table** signifie une région oubliée : elle
+  restera à `NA`, puis à zéro sur la carte.
+
+Vérifiez également que les listes affichées sont vides **dans les deux sens**. Si
+GADM écrivait `Far-North` avec un tiret et notre table `Far North` sans, le premier
+`setdiff()` le dirait immédiatement — sinon, personne ne le verrait jamais.
+:::
+
+## 2.5 — La route sûre : la jointure spatiale `st_within`
+
+```{r}
+#| label: chunk-jointure-spatiale
+# JOINTURE SPATIALE. Elle n'utilise aucun libelle : elle demande, pour chaque
+# point, dans quel polygone il tombe. Une position ne se traduit pas.
+#
+# Prealable obligatoire : harmoniser les CRS, et l'AFFICHER.
+cat("CRS des points  :", st_crs(acled_pts)$input, "\n")
+cat("CRS des regions :", st_crs(cmr1)$input, "\n")
+cat("CRS identiques ? ", st_crs(acled_pts) == st_crs(cmr1), "\n")
+
+if (st_crs(acled_pts) != st_crs(cmr1)) {
+  acled_pts <- st_transform(acled_pts, st_crs(cmr1))
+  cat("-> points reprojetes vers", st_crs(cmr1)$input, "\n")
+}
+
+n_pts_avant <- nrow(acled_pts)
+
+acled_dans_region <- st_join(
+  acled_pts,
+  cmr1[c("NAME_1")],
+  join = st_within        # le point est-il A L'INTERIEUR du polygone ?
+)
+
+# CONTROLE 1 : st_join() peut DUPLIQUER des lignes si deux polygones se
+# recouvrent. On compare le nombre de lignes avant et apres.
+cat("\nPoints avant st_join :", n_pts_avant, "\n")
+cat("Lignes apres st_join :", nrow(acled_dans_region), "\n")
+cat("Duplications introduites :", nrow(acled_dans_region) - n_pts_avant, "\n")
+
+# CONTROLE 2 : points tombes hors de toute region (frontiere, mer, coordonnee
+# fausse). Ce ne sont PAS des dechets : ce sont une information.
+n_hors <- sum(is.na(acled_dans_region$NAME_1))
+cat("Points hors de toute region GADM :", n_hors,
+    sprintf("(%.2f %%)", 100 * n_hors / nrow(acled_dans_region)), "\n")
+
+if (n_hors > 0) {
+  cat("\nCes points, tels qu'ACLED les localise (admin1 declare) :\n")
+  print(table(acled_dans_region$admin1[is.na(acled_dans_region$NAME_1)]))
+}
+```
+
+```{r}
+#| label: chunk-comparaison-jointures
+# CONFRONTATION : ce que dit le LIBELLE d'ACLED contre ce que dit la POSITION.
+# Les deux devraient coincider. Les desaccords sont un diagnostic de qualite.
+verif <- acled_dans_region |>
+  st_drop_geometry() |>
+  filter(!is.na(NAME_1)) |>
+  left_join(corresp_regions, by = c("admin1" = "admin1_acled")) |>
+  mutate(accord = NAME_1 == NAME_1_gadm)
+
+cat("Evenements ou le libelle ACLED et le polygone GADM concordent :",
+    sum(verif$accord, na.rm = TRUE), "\n")
+cat("Evenements en DESACCORD :", sum(!verif$accord, na.rm = TRUE),
+    sprintf("(%.2f %%)", 100 * mean(!verif$accord, na.rm = TRUE)), "\n")
+
+if (sum(!verif$accord, na.rm = TRUE) > 0) {
+  cat("\nDetail des desaccords (admin1 declare -> region du polygone) :\n")
+  print(
+    verif |>
+      filter(!accord) |>
+      count(admin1, NAME_1, sort = TRUE, name = "n") |>
+      head(15)
+  )
+}
+```
+
+::: {.callout-tip}
+## Ce que le désaccord raconte
+
+Un désaccord entre le libellé et la position n'est pas nécessairement une erreur
+d'ACLED. Trois causes possibles, à distinguer devant les participants :
+
+1. **Un événement près d'une frontière régionale**, dont la coordonnée (souvent le
+   centroïde d'une ville) tombe du mauvais côté du trait. Le tracé GADM n'est pas la
+   vérité juridique de la limite administrative.
+2. **Un découpage administratif qui a changé.** GADM 4.1 est figé ; ACLED code selon
+   le découpage en vigueur à la date de l'événement.
+3. **Une coordonnée imprécise** (`geo_precision` 2 ou 3), placée sur la ville la plus
+   proche ou le centroïde régional.
+
+Dans les trois cas, la position reste la clé la plus sûre pour agréger — mais le taux
+de désaccord est un **indicateur de qualité** qu'il faut publier à côté de la carte,
+pas dissimuler.
+:::
+
+## 2.6 — Agrégation régionale et carte choroplèthe
+
+```{r}
+#| label: chunk-agregation-region
+resume_par_region <- acled_dans_region |>
+  st_drop_geometry() |>
+  filter(!is.na(NAME_1)) |>
+  group_by(NAME_1) |>
+  summarise(
+    n_evenements = n(),
+    deces        = sum(fatalities, na.rm = TRUE),
+    n_batailles  = sum(event_type == "Battles", na.rm = TRUE),
+    .groups = "drop"
+  )
+
+cat("Regions avec au moins un evenement :", nrow(resume_par_region),
+    "sur", nrow(cmr1), "\n\n")
+
+# ON PART DE LA COUCHE GEOGRAPHIQUE : cmr1 |> left_join(stats).
+cmr1_acled <- cmr1 |>
+  left_join(resume_par_region, by = "NAME_1")
+
+cat("Regions sans aucun evenement rapporte (NA apres jointure) :",
+    sum(is.na(cmr1_acled$n_evenements)), "\n")
+if (any(is.na(cmr1_acled$n_evenements))) {
+  cat("Lesquelles :",
+      paste(cmr1_acled$NAME_1[is.na(cmr1_acled$n_evenements)], collapse = ", "),
+      "\n")
+}
+
+# DECISION EXPLICITE : ici, et SEULEMENT ici, remplacer NA par 0 est legitime.
+# La jointure est spatiale : une region sans ligne n'est pas une region non
+# appariee, c'est une region ou aucun evenement n'a ete rapporte. Le zero est
+# une MESURE, pas un trou. Avec la jointure par libelle du 2.2, le meme
+# replace_na(0) aurait fabrique de fausses regions pacifiees.
+cmr1_acled <- cmr1_acled |>
+  mutate(
+    n_evenements = replace_na(n_evenements, 0L),
+    deces        = replace_na(deces, 0),
+    n_batailles  = replace_na(n_batailles, 0L)
+  )
+
+print(
+  cmr1_acled |>
+    st_drop_geometry() |>
+    select(NAME_1, n_evenements, deces, n_batailles) |>
+    arrange(desc(n_evenements))
+)
+```
+
+::: {.callout-important}
+## `replace_na(0)` : la même ligne de code, deux significations opposées
+
+C'est le point de méthode le plus important du module.
+
+Après une **jointure spatiale réussie**, une région absente du tableau est une région
+où **aucun événement n'a été rapporté**. Remplacer par zéro est correct : le zéro est
+une observation.
+
+Après une **jointure par libellé ratée**, une région absente est une région **dont le
+nom ne s'est pas apparié**. Remplacer par zéro fabrique une information fausse, et lui
+donne sur la carte exactement la même autorité visuelle qu'à une information vraie.
+
+La ligne de code est identique. Ce qui change, c'est ce qu'on sait de l'étape d'avant.
+D'où la discipline : **on ne remplace un `NA` par une valeur qu'après avoir compté les
+`NA` et su d'où ils viennent.**
+:::
+
+```{r}
+#| label: chunk-carte-points
+#| fig-height: 7
+tmap_mode("plot")   # jamais "view" dans un document distribue (cf. Module 10)
+
+carte_types <- tm_shape(cmr1) +
+  tm_borders(col = "grey50", lwd = 0.8) +
+  tm_shape(acled_pts) +
+  tm_dots(
+    fill        = "event_type",
+    size        = 0.25,
+    fill_alpha  = 0.6,
+    fill.legend = tm_legend(title = "Type d'evenement")
+  ) +
+  tm_shape(cmr0) +
+  tm_borders(col = "grey20", lwd = 1.8) +
+  tm_title("Evenements rapportes par ACLED, Cameroun") +
+  tm_layout(legend.outside = TRUE)
+
+print(carte_types)
+```
+
+::: {.callout-tip}
+## Lecture de la figure — carte de points
+
+**Ce que la figure code.** Un point = un **événement rapporté**, positionné à la
+coordonnée fournie par ACLED, coloré par type. La taille du point ne code rien (ni le
+nombre de morts, ni l'importance) : c'est une constante d'affichage.
+
+**Ce que les choix techniques font.** La transparence (`fill_alpha = 0.6`) permet de
+deviner les superpositions : là où la couleur est saturée, plusieurs dizaines
+d'événements se recouvrent. C'est un pis-aller — une carte de points **sature** : au-delà
+de quelques centaines d'événements au même endroit, l'œil ne distingue plus 200 de 2000.
+La palette qualitative est correcte pour des types non ordonnés.
+
+**Ce qui se lit.** La géographie du phénomène : des concentrations, des axes, des
+zones vides. Et surtout l'**hétérogénéité interne des régions**, que la choroplèthe
+suivante va effacer.
+
+**Ce qui ne se lit pas.** L'intensité (un point meurtrier ressemble à un point sans
+victime), la précision (un `geo_precision = 3` ressemble à un point GPS), et la
+population exposée — trois points dans une zone désertique et trois points dans une
+ville n'ont pas le même sens.
+
+**En quoi le spatial est utile ici.** Le tableau `resume_admin1` donne un classement
+des régions. La carte montre autre chose : que les événements forment des **blocs
+contigus** qui traversent les limites administratives. Un bloc contigu ne s'explique
+pas par les caractéristiques propres de chaque région, mais par ce que des territoires
+voisins partagent *parce qu'ils sont voisins* — une frontière, un corridor, un même
+acteur armé mobile. Aucun tri de tableau ne fait apparaître cela.
+:::
+
+```{r}
+#| label: chunk-carte-choroplethe
+#| fig-height: 7
+carte_regions <- tm_shape(cmr1_acled) +
+  tm_polygons(
+    fill        = "n_evenements",
+    fill.scale  = tm_scale_intervals(style = "quantile", n = 5,
+                                     values = "brewer.reds"),
+    fill.legend = tm_legend(title = "Evenements\nrapportes"),
+    col         = "white",
+    lwd         = 0.6
+  ) +
+  tm_shape(cmr0) +
+  tm_borders(col = "grey20", lwd = 1.5) +
+  tm_title("Evenements ACLED par region (agregation spatiale)") +
+  tm_layout(legend.outside = TRUE)
+
+print(carte_regions)
+```
+
+::: {.callout-tip}
+## Lecture de la figure — choroplèthe régionale, et ce que l'agrégation a détruit
+
+**Ce que la figure code.** La couleur d'une région est le **nombre total d'événements
+rapportés** tombés dans son polygone. Pas un taux : un effectif brut. Une grande région
+peuplée aura mécaniquement plus d'événements qu'une petite peu peuplée, sans être plus
+violente.
+
+**Ce que les choix techniques font.** La **discrétisation** est ici en quantiles
+(`style = "quantile"`, 5 classes) : chaque classe contient le même nombre de régions,
+ce qui garantit une carte contrastée — y compris quand les écarts réels sont faibles.
+Trois discrétisations différentes du **même tableau** racontent trois histoires :
+*quantiles* (contraste garanti, seuils arbitraires), *intervalles égaux* (seuils
+lisibles, classes parfois vides), *Jenks* (respecte les ruptures naturelles, seuils
+imprévisibles et non comparables d'une carte à l'autre). Il n'existe pas de choix
+neutre ; il existe un choix **déclaré**.
+
+**Ce qui se lit.** Le classement régional et sa géographie d'ensemble.
+
+**Ce qui ne se lit pas.** Tout ce que le module 2.1 montrait : la position exacte, les
+concentrations locales, les vides à l'intérieur d'une région. La choroplèthe affirme
+implicitement que la région est **homogène** — c'est faux, et la carte de points
+précédente le prouve.
+
+**En quoi le spatial est utile ici.** Une choroplèthe ne sert pas à voir *où* est le
+phénomène — la carte de points fait cela mieux. Elle sert à le rendre **comparable à
+une décision** : les budgets, les affectations de personnel et les programmes se
+décident par région, pas par coordonnée GPS. C'est la maille de la décision qui doit
+commander la maille de la carte.
+:::
+
+::: {.callout-important}
+## MAUP — le problème de l'unité spatiale modifiable
+
+Nous venons de faire, en trois lignes de code, ce que la littérature appelle le
+**MAUP** (*Modifiable Areal Unit Problem*, Openshaw 1984) : passer d'un semis de points
+à un découpage en polygones. Le MAUP a deux faces.
+
+**L'effet d'échelle.** Les mêmes points agrégés par région (10 unités), par
+département (58 unités) ou par arrondissement donnent trois cartes différentes, trois
+classements différents et trois corrélations différentes avec n'importe quelle autre
+variable. Plus la maille est fine, plus la variance est forte et plus les corrélations
+faiblissent. Aucun de ces résultats n'est « le vrai ».
+
+**L'effet de zonage.** À nombre d'unités constant, déplacer les limites change les
+résultats. C'est le mécanisme du redécoupage électoral, et il opère aussi sur les
+cartes statistiques.
+
+**La conséquence pratique.** Aucune maille n'est neutre, donc aucune maille n'est
+défendable « en soi ». La seule justification recevable est : *on agrège à la maille de
+la décision qu'on éclaire*. Si le décideur affecte des moyens par région, on cartographie
+par région — en **disant** que la région est hétérogène, et en montrant la carte de
+points à côté.
+
+**Erreur écologique.** Conclure de cette carte que « les habitants de telle région ont
+une probabilité élevée d'être exposés » est un saut illégitime : la carte décrit
+l'agrégat, pas les individus. Une région peut concentrer tous ses événements sur 2 %
+de son territoire. La superposition des deux cartes — fond agrégé, points par-dessus —
+est le meilleur antidote : elle rend l'hétérogénéité interne visible au lieu de la
+laisser deviner.
+:::
+
+## 2.7 — Exports du bloc ACLED
+
+```{r}
+#| label: chunk-export-acled
+# Toutes les sorties vont dans outputs/, prefixees J10_. Jamais dans datasets/.
+st_write(acled_pts, "outputs/J10_acled_points.gpkg",
+         delete_dsn = TRUE, quiet = TRUE)
+st_write(cmr1_acled, "outputs/J10_acled_regions.gpkg",
+         delete_dsn = TRUE, quiet = TRUE)
+
+write_csv(resume_types, "outputs/J10_acled_resume_types.csv")
+write_csv(resume_par_region, "outputs/J10_acled_resume_regions.csv")
+write_csv(resume_deces, "outputs/J10_acled_deces_annuels.csv")
+
+ggsave("outputs/J10_acled_annuel.png", graphe_annuel,
+       width = 10, height = 6, dpi = 180)
+ggsave("outputs/J10_acled_deces.png", graphe_deces,
+       width = 8, height = 5, dpi = 180)
+
+tmap_save(carte_types, "outputs/J10_acled_carte_types.png",
+          width = 1800, height = 1400, dpi = 200)
+tmap_save(carte_regions, "outputs/J10_acled_carte_regions.png",
+          width = 1400, height = 1600, dpi = 200)
+
+cat("Fichiers presents dans outputs/ :", length(list.files("outputs")), "\n")
+print(list.files("outputs"))
+```
+
+
+# Module 3 — Réanalyse climatique : ouvrir un NetCDF sans se tromper d'unité
+
+## 3.1 — Ce qu'est une réanalyse
+
+::: {.callout-note}
+## ERA5 — ce que mesure exactement ce fichier
+
+ERA5 est la **réanalyse** atmosphérique du Centre européen pour les prévisions
+météorologiques à moyen terme (ECMWF), diffusée par le Copernicus Climate Data Store
+(`cds.climate.copernicus.eu`, compte gratuit).
+
+Une réanalyse n'est **ni une observation, ni une prévision**. C'est le résultat d'un
+modèle de circulation atmosphérique que l'on force à rester cohérent avec toutes les
+observations disponibles (stations, ballons, satellites, navires) sur toute la période.
+Le produit est un champ **complet et régulier** — une valeur partout, tous les mois,
+depuis 1940 — là où les observations réelles sont éparses et discontinues. C'est
+précisément son intérêt en Afrique centrale, où le réseau de stations au sol est
+clairsemé, et c'est aussi sa limite : dans les zones sans station, la valeur vient
+majoritairement du modèle.
+
+| Caractéristique | Valeur |
+|---|---|
+| Variable | `2m_temperature` — température de l'air à 2 m du sol |
+| Produit | ERA5 Single Levels, moyennes mensuelles |
+| Résolution spatiale | ~0,25° ≈ **31 km** |
+| Pas de temps | mensuel |
+| **Unité** | **Kelvin** |
+| Format | NetCDF (longitude × latitude × temps) |
+
+**Kelvin.** C'est l'unité native, et rien dans le fichier ne l'affiche à l'écran.
+Un raster ERA5 non converti donne des températures autour de 298 : personne ne
+confondra 298 K avec des degrés Celsius, mais une **anomalie** ou une **différence**
+calculée sans conversion passe, elle, parfaitement inaperçue — une différence de
+2 K vaut 2 °C, tandis qu'une moyenne de 298 K vaut 24,85 °C.
+:::
+
+```{r}
+#| label: chunk-era5-api-reference
+#| eval: false
+# BLOC DE REFERENCE -- NON EXECUTE (necessite un compte Copernicus CDS).
+# Le fichier era5_t2m_mensuel_cameroun.nc de datasets/ est le resultat fige de
+# cette requete. Conserve comme trace de provenance.
+#
+# install.packages("ecmwfr")
+# ecmwfr::wf_set_key(user = "123456", key = "xxxxxxxx-xxxx-xxxx", service = "cds")
+#
+# requete <- list(
+#   dataset_short_name = "reanalysis-era5-single-levels-monthly-means",
+#   product_type       = "monthly_averaged_reanalysis",
+#   variable           = "2m_temperature",
+#   year               = as.character(2015:2024),
+#   month              = sprintf("%02d", 1:12),
+#   time               = "00:00",
+#   area               = c(13.1, 8.4, 1.6, 16.2),   # N, W, S, E (Cameroun)
+#   data_format        = "netcdf",
+#   target             = "era5_t2m_mensuel_cameroun.nc"
+# )
+#
+# ecmwfr::wf_request(request = requete, transfer = TRUE, path = "datasets")
+```
+
+## 3.2 — Ouvrir le NetCDF et l'interroger
+
+```{r}
+#| label: chunk-era5-lecture
+# terra::rast() lit un NetCDF comme une PILE de couches : une couche = un mois.
+era5_brut <- rast("datasets/era5_t2m_mensuel_cameroun.nc")
+
+cat("Nombre de couches (pas de temps) :", nlyr(era5_brut), "\n")
+cat("Dimensions (lignes x colonnes)   :", nrow(era5_brut), "x", ncol(era5_brut), "\n")
+cat("Resolution                       :",
+    paste(round(res(era5_brut), 4), collapse = " x "), "degres\n")
+cat("CRS                              :", crs(era5_brut, describe = TRUE)$name, "\n")
+cat("Emprise :\n")
+print(ext(era5_brut))
+
+cat("\nNoms des 6 premieres couches :\n")
+print(head(names(era5_brut), 6))
+
+# Les dates portees par les couches. Un NetCDF mal ecrit peut n'en porter
+# aucune : on verifie avant de s'en servir.
+dates_era5 <- as.Date(time(era5_brut))
+cat("\nDates lisibles ?", !all(is.na(dates_era5)), "\n")
+cat("Premiere couche :", format(min(dates_era5), "%Y-%m"), "\n")
+cat("Derniere couche :", format(max(dates_era5), "%Y-%m"), "\n")
+cat("Nombre de mois attendus :", nlyr(era5_brut),
+    "| mois distincts :", length(unique(format(dates_era5, "%Y-%m"))), "\n")
+
+# CONTROLE D'UNITE : l'ordre de grandeur trahit le Kelvin.
+valeurs_couche1 <- values(era5_brut[[1]], na.rm = TRUE)
+cat("\nCouche 1 -- min :", round(min(valeurs_couche1), 2),
+    "| moyenne :", round(mean(valeurs_couche1), 2),
+    "| max :", round(max(valeurs_couche1), 2), "\n")
+cat("Ordre de grandeur ~300 => KELVIN. Ordre de grandeur ~25 => Celsius.\n")
+```
+
+## 3.3 — Conversion en Celsius, découpe nationale
+
+```{r}
+#| label: chunk-era5-conversion
+# a) KELVIN -> CELSIUS. Une soustraction, ecrite en clair et commentee : c'est
+#    la ligne la plus facile a oublier de toute la journee.
+era5_celsius <- era5_brut - 273.15
+
+cat("Apres conversion -- couche 1 :\n")
+v1 <- values(era5_celsius[[1]], na.rm = TRUE)
+cat("  min :", round(min(v1), 2), "C | moyenne :", round(mean(v1), 2),
+    "C | max :", round(max(v1), 2), "C\n")
+cat("  Plausible pour le Cameroun ? (attendu : ~15 a ~40 C)\n")
+
+# b) Contour national en SpatVector, dans le CRS du raster.
+cat("\nCRS du raster :", crs(era5_celsius, describe = TRUE)$name, "\n")
+cat("CRS de cmr0   :", st_crs(cmr0)$input, "\n")
+cmr0_vect <- vect(st_transform(cmr0, crs(era5_celsius)))
+
+# c) crop() reduit a l'emprise rectangulaire, mask() met a NA hors du polygone.
+#    Les deux sont necessaires : crop seul laisserait le Nigeria et le Tchad.
+era5_cmr <- mask(crop(era5_celsius, cmr0_vect), cmr0_vect)
+
+cat("\nApres crop + mask :\n")
+cat("  dimensions :", nrow(era5_cmr), "x", ncol(era5_cmr),
+    "| couches :", nlyr(era5_cmr), "\n")
+cat("  cellules non vides (couche 1) :",
+    sum(!is.na(values(era5_cmr[[1]]))), "sur", ncell(era5_cmr), "\n")
+cat("  -> une cellule ERA5 fait ~31 km de cote : le Cameroun entier tient en",
+    sum(!is.na(values(era5_cmr[[1]]))), "cellules.\n")
+```
+
+```{r}
+#| label: chunk-era5-controle-visuel
+#| fig-height: 6
+# CONTROLE VISUEL OBLIGATOIRE apres tout decoupage. Une erreur de CRS ou
+# d'emprise ne se voit pas dans les chiffres : elle se voit sur l'image.
+plot(
+  era5_cmr[[1]],
+  main = paste("ERA5 T2m (degres C) --", format(dates_era5[1], "%Y-%m"))
+)
+plot(st_geometry(cmr1), add = TRUE, border = "grey30", lwd = 0.7)
+```
+
+::: {.callout-tip}
+## Lecture de la figure — contrôle visuel du raster découpé
+
+**Ce que la figure code.** Une cellule = la température moyenne de l'air à 2 m,
+en degrés Celsius, pour le mois affiché, sur une maille d'environ 31 km. Les cellules
+blanches sont hors du polygone national (mises à `NA` par `mask()`).
+
+**Ce que les choix techniques font.** `plot()` de `terra` applique une palette
+continue et des bornes calculées sur la seule couche affichée : deux mois tracés
+séparément **n'ont pas la même échelle** et ne se comparent pas à l'œil. C'est
+acceptable pour un contrôle, jamais pour une figure publiée — d'où l'échelle commune
+imposée aux trois cartes du Module 8.
+
+**Ce qui se lit.** Que le découpage a fonctionné (la forme du Cameroun est
+reconnaissable), que les valeurs sont plausibles, et que l'escalier des cellules révèle
+la vraie résolution : **grossière**. Le gradient nord-sud, s'il est visible, est le
+signal physique attendu.
+
+**Ce qui ne se lit pas.** Aucune variation infra-cellulaire : une cellule couvre
+environ 950 km², ville et campagne confondues. La chaleur urbaine de Douala ou de
+Yaoundé n'existe pas dans ce fichier. Et une valeur reste une **sortie de modèle**,
+pas un thermomètre — au nord du pays, où les stations sont rares, elle repose
+davantage sur la physique du modèle que sur des observations locales.
+:::
+
+# Module 4 — Extraction zonale temporelle : du raster à la série statistique
+
+## 4.1 — `exact_extract()` sur une pile de couches
+
+```{r}
+#| label: chunk-era5-extraction
+# exact_extract() calcule, pour chaque polygone, une statistique ponderee par la
+# FRACTION de chaque cellule reellement couverte par le polygone. C'est ce qui
+# le distingue de terra::extract() : une cellule a cheval sur deux regions
+# n'est pas attribuee en entier a l'une des deux, elle est partagee.
+# Sur une maille de 31 km et des regions de quelques centaines de kilometres,
+# cette difference n'est PAS negligeable : les cellules de bordure representent
+# une part importante de chaque region.
+
+# a) Harmoniser les CRS -- et l'afficher.
+cmr1_proj <- st_transform(cmr1, crs(era5_cmr))
+cat("CRS du raster  :", crs(era5_cmr, describe = TRUE)$name, "\n")
+cat("CRS des regions:", st_crs(cmr1_proj)$input, "\n")
+
+# b) Extraction : une ligne par region, une colonne par couche (= par mois).
+t2m_extrait <- exact_extract(era5_cmr, cmr1_proj, "mean", progress = FALSE)
+
+cat("\nMatrice extraite :", nrow(t2m_extrait), "regions x",
+    ncol(t2m_extrait), "mois\n")
+cat("Coherence : regions attendues =", nrow(cmr1),
+    "| couches attendues =", nlyr(era5_cmr), "\n")
+cat("Valeurs manquantes dans la matrice :", sum(is.na(t2m_extrait)), "\n")
+cat("Noms des 3 premieres colonnes extraites :",
+    paste(head(names(t2m_extrait), 3), collapse = ", "), "\n")
+```
+
+::: {.callout-note}
+## Pourquoi une région peut ressortir vide
+
+Une région dont **aucune cellule** n'est couverte à plus de 0 % renverrait `NaN`.
+Avec des cellules de 31 km, une région de petite superficie peut n'intersecter que
+partiellement une ou deux cellules — la moyenne existe alors, mais elle repose sur
+très peu d'information. Le compteur de `NA` ci-dessus est le premier contrôle ; le
+second est de garder en tête que « moyenne régionale » signifie ici *moyenne d'une
+poignée de cellules de 950 km² chacune*, pas *moyenne du territoire*.
+:::
+
+## 4.2 — Remise en forme longue : le piège des noms de couches
+
+```{r}
+#| label: chunk-era5-pivot
+# PIEGE. exact_extract() nomme ses colonnes d'apres les couches du raster,
+# prefixees "mean." : par exemple "mean.t2m_1", "mean.t2m_2"... Le suffixe
+# n'est PAS forcement un entier utilisable tel quel, et l'ordre alphabetique
+# des noms n'est PAS l'ordre chronologique ("t2m_10" < "t2m_2" en tri texte).
+# On retrouve donc l'indice de chaque couche par match() sur names(era5_cmr),
+# et la date par dates_era5[idx]. On ne devine jamais un indice a partir d'un
+# nom de colonne.
+t2m_long <- cmr1 |>
+  st_drop_geometry() |>
+  select(NAME_1) |>
+  bind_cols(t2m_extrait) |>
+  tidyr::pivot_longer(
+    cols      = -NAME_1,
+    names_to  = "couche",
+    values_to = "t2m_celsius"
+  ) |>
+  mutate(
+    idx   = match(couche, paste0("mean.", names(era5_cmr))),
+    date  = dates_era5[idx],
+    annee = as.integer(format(date, "%Y")),
+    mois  = as.integer(format(date, "%m"))
+  )
+
+# CONTROLES : le match() a-t-il tout retrouve ?
+cat("Lignes en forme longue :", nrow(t2m_long), "\n")
+cat("Attendu (regions x mois) :", nrow(cmr1) * nlyr(era5_cmr), "\n")
+cat("Couches non appariees par match() (idx = NA) :",
+    sum(is.na(t2m_long$idx)), "\n")
+cat("Dates manquantes :", sum(is.na(t2m_long$date)), "\n")
+cat("Temperatures manquantes :", sum(is.na(t2m_long$t2m_celsius)), "\n")
+
+t2m_long <- t2m_long |> select(-couche, -idx)
+
+cat("\nApercu :\n")
+print(head(t2m_long, 8))
+cat("\nPlage des temperatures extraites :",
+    round(min(t2m_long$t2m_celsius, na.rm = TRUE), 2), "a",
+    round(max(t2m_long$t2m_celsius, na.rm = TRUE), 2), "degres C\n")
+```
+
+## 4.3 — Série nationale et tendance lissée
+
+```{r}
+#| label: chunk-era5-serie
+t2m_national <- t2m_long |>
+  group_by(date) |>
+  summarise(t2m_moy = mean(t2m_celsius, na.rm = TRUE), .groups = "drop")
+
+cat("Points de la serie nationale :", nrow(t2m_national), "mois\n")
+cat("Periode :", format(min(t2m_national$date), "%Y-%m"), "a",
+    format(max(t2m_national$date), "%Y-%m"), "\n")
+
+graphe_t2m_serie <- ggplot(t2m_national, aes(x = date, y = t2m_moy)) +
+  geom_line(colour = "#2171B5", linewidth = 0.7) +
+  geom_smooth(method = "loess", se = TRUE, colour = "#CB181D",
+              fill = "#FCBBA1", linetype = "dashed", linewidth = 0.9) +
+  labs(
+    title    = "Temperature de l'air a 2 m, moyenne mensuelle nationale",
+    subtitle = paste("Source : ERA5 (reanalyse).",
+                     "Ligne rouge : tendance LOESS, bande : intervalle de confiance."),
+    x = "Date", y = "Temperature (degres C)"
+  ) +
+  theme_minimal()
+
+print(graphe_t2m_serie)
+```
+
+::: {.callout-tip}
+## Lecture de la figure — série mensuelle et LOESS
+
+**Ce que la figure code.** Chaque point de la ligne bleue est la moyenne, sur les dix
+régions, de la moyenne mensuelle ERA5 de chaque région. C'est donc une **moyenne de
+moyennes non pondérée** : chaque région pèse pareil, quelle que soit sa superficie ou
+sa population. Ce n'est pas la température moyenne du Cameroun, et encore moins celle
+que subit un Camerounais moyen. Pour cela il faudrait pondérer par la superficie (par
+la population, si la question est l'exposition humaine).
+
+**Ce que les choix techniques font.** La courbe rouge est un **LOESS** (*locally
+estimated scatterplot smoothing*) : en chaque point, une régression polynomiale locale
+est ajustée sur les observations voisines, avec un poids décroissant selon la distance.
+Le paramètre `span` (0,75 par défaut) fixe la largeur de ce voisinage : plus il est
+grand, plus la courbe est lisse et plus elle peut effacer un vrai changement de régime ;
+plus il est petit, plus elle suit le bruit. **La courbe n'est pas un modèle
+climatique** : elle ne prédit rien, elle ne teste rien, elle résume visuellement.
+
+La bande rose est l'**intervalle de confiance à 95 % de la courbe lissée**, c'est-à-dire
+l'incertitude sur la position de la moyenne locale — pas l'étendue des valeurs
+observées. Une bande étroite signifie que la moyenne locale est bien déterminée, pas
+que les mois se ressemblent.
+
+**Ce qui se lit.** La saisonnalité, très marquée, qui domine tout le reste. Et,
+éventuellement, une inflexion lente de la courbe rouge.
+
+**Ce qui ne se lit pas.** Une tendance climatique. Dix ans de données mensuelles sur
+un signal saisonnier fort ne permettent pas de conclure au réchauffement : la
+convention en climatologie est la **normale trentenaire**. Dire « la température
+augmente » à partir de cette figure serait une faute de méthode — et le décideur
+retiendrait la phrase, pas la nuance.
+:::
+
+## 4.4 — Saisonnalité : l'amplitude plutôt que la moyenne
+
+```{r}
+#| label: chunk-era5-saisonnalite
+t2m_saisonnalite <- t2m_long |>
+  group_by(mois) |>
+  summarise(
+    t2m_moy = mean(t2m_celsius, na.rm = TRUE),
+    t2m_min = min(t2m_celsius, na.rm = TRUE),
+    t2m_max = max(t2m_celsius, na.rm = TRUE),
+    n_obs   = sum(!is.na(t2m_celsius)),
+    .groups = "drop"
+  ) |>
+  mutate(amplitude = t2m_max - t2m_min)
+
+print(t2m_saisonnalite)
+
+graphe_saisonnalite <- ggplot(t2m_saisonnalite, aes(x = mois, y = t2m_moy)) +
+  geom_ribbon(aes(ymin = t2m_min, ymax = t2m_max),
+              fill = "#FDBB84", alpha = 0.4) +
+  geom_line(colour = "#D94801", linewidth = 1) +
+  geom_point(colour = "#D94801", size = 2) +
+  scale_x_continuous(breaks = 1:12, labels = month.abb) +
+  labs(
+    title    = "Saisonnalite de la temperature a 2 m -- Cameroun",
+    subtitle = "Ligne : moyenne du mois. Ruban : ETENDUE min-max (regions x annees).",
+    x = "Mois", y = "Temperature (degres C)"
+  ) +
+  theme_minimal()
+
+print(graphe_saisonnalite)
+```
+
+::: {.callout-tip}
+## Lecture de la figure — saisonnalité et ruban min/max
+
+**Ce que la figure code.** La ligne est la moyenne de toutes les valeurs
+région × année pour ce mois. Le ruban va du **minimum absolu** au **maximum absolu**
+observés pour ce mois, toutes régions et toutes années confondues.
+
+**Ce que les choix techniques font — et c'est le point.** Un ruban min/max n'est
+**pas** un intervalle de confiance et **pas** un écart-type. Il mélange deux sources de
+variation que rien ne distingue à l'œil : la variation **spatiale** (l'Extrême-Nord
+n'est pas le Sud forestier) et la variation **interannuelle** (2016 n'est pas 2022). Il
+est donc **entièrement gouverné par les valeurs extrêmes** : une seule cellule
+anormalement chaude, une seule fois, élargit le ruban pour toujours. Un ruban
+inter-quartile (`quantile(0.25)` / `quantile(0.75)`) serait robuste ; un ruban ±1
+écart-type parlerait de dispersion ; celui-ci parle d'**enveloppe des possibles**.
+Trois rubans, trois questions différentes, un même tableau.
+
+**Ce qui se lit.** Le calendrier thermique : mois les plus chauds, saison fraîche, et
+surtout le fait que **l'amplitude n'est pas la même selon les mois** (colonne
+`amplitude` imprimée au-dessus). Là où l'amplitude est forte, le pays est
+thermiquement contrasté ce mois-là ; là où elle se resserre, il est homogène.
+
+**Ce qui ne se lit pas.** Quelle région produit le minimum et laquelle le maximum. Le
+ruban est anonyme. Pour le savoir, il faut colorer par région — et l'on obtient une
+autre figure, qui répond à une autre question.
+
+**En quoi le spatial est utile ici.** Ce graphique n'a de sens que parce que
+l'extraction zonale a préservé la dimension régionale : c'est l'écart entre régions,
+mois par mois, qui remplit le ruban. Une moyenne nationale unique aurait produit une
+ligne sans ruban — et masqué que le pays vit, le même mois, deux climats différents.
+:::
+
+## 4.5 — Carte de la température moyenne, et exports
+
+```{r}
+#| label: chunk-era5-carte
+#| fig-height: 7
+# mean() sur une pile terra : moyenne cellule a cellule sur toutes les couches.
+t2m_moy_rast <- mean(era5_cmr)
+
+cat("Raster moyen -- couches :", nlyr(t2m_moy_rast), "\n")
+vm <- values(t2m_moy_rast, na.rm = TRUE)
+cat("Moyenne pluriannuelle -- min :", round(min(vm), 2),
+    "| moyenne :", round(mean(vm), 2),
+    "| max :", round(max(vm), 2), "degres C\n")
+
+carte_t2m_moy <- tm_shape(t2m_moy_rast) +
+  tm_raster(
+    col.scale  = tm_scale_continuous(values = "-brewer.rd_yl_bu"),
+    col.legend = tm_legend(title = "T (degres C)")
+  ) +
+  tm_shape(cmr1) +
+  tm_borders(col = "grey40", lwd = 0.8) +
+  tm_shape(cmr0) +
+  tm_borders(col = "grey10", lwd = 1.8) +
+  tm_title("Temperature moyenne a 2 m -- Cameroun (ERA5)") +
+  tm_layout(legend.outside = TRUE)
+
+print(carte_t2m_moy)
+```
+
+::: {.callout-tip}
+## Lecture de la figure — carte de la moyenne pluriannuelle
+
+**Ce que la figure code.** La moyenne, sur toute la période, de la température
+mensuelle de chaque cellule de 31 km. Une seule valeur résume une centaine de mois.
+
+**Ce que les choix techniques font.** La palette `-brewer.rd_yl_bu` est une palette
+**divergente** rouge-jaune-bleu, dont le signe `-` inverse le sens pour que le rouge
+code le chaud. Une palette divergente suppose un **point de référence** au milieu
+(ici, implicitement, la moyenne de l'étendue affichée) : elle raconte donc « plus chaud
+que » / « plus froid que » et non « beaucoup / peu ». C'est légitime pour une
+température, cela ne le serait pas pour un effectif d'événements — d'où la palette
+séquentielle rouge du Module 2.
+
+**Ce qui se lit.** Le gradient latitudinal et la marque du relief : l'Adamaoua et
+l'ouest montagneux ressortent plus frais que les plaines à altitude comparable en
+latitude.
+
+**Ce qui ne se lit pas.** La variabilité. Deux cellules affichant 26 °C de moyenne
+peuvent avoir, l'une, une amplitude annuelle de 4 °C et l'autre de 14 °C : la carte les
+peint de la même couleur. Une carte de l'écart-type mensuel, à côté, dirait cela — et
+serait souvent plus utile à une politique d'adaptation que la carte des moyennes.
+
+**En quoi le spatial est utile ici.** L'intérêt d'une réanalyse n'est pas la précision
+locale, qu'un thermomètre ferait mieux : c'est la **couverture complète**. Il n'existe
+aucune zone blanche, alors que le réseau de stations au sol en laisse d'immenses. Cette
+complétude est ce qui permet de croiser le climat avec n'importe quelle autre couche —
+population, agriculture, santé — sans qu'un territoire disparaisse de l'analyse faute
+d'observation.
+:::
+
+```{r}
+#| label: chunk-export-era5
+write_csv(t2m_long, "outputs/J10_era5_t2m_mensuel_regions.csv")
+write_csv(t2m_national, "outputs/J10_era5_t2m_mensuel_national.csv")
+write_csv(t2m_saisonnalite, "outputs/J10_era5_saisonnalite.csv")
+
+writeRaster(t2m_moy_rast, "outputs/J10_era5_t2m_moyenne.tif", overwrite = TRUE)
+
+ggsave("outputs/J10_era5_serie_nationale.png", graphe_t2m_serie,
+       width = 10, height = 5, dpi = 180)
+ggsave("outputs/J10_era5_saisonnalite.png", graphe_saisonnalite,
+       width = 8, height = 5, dpi = 180)
+tmap_save(carte_t2m_moy, "outputs/J10_era5_carte_t2m.png",
+          width = 1400, height = 1600, dpi = 200)
+
+cat("Exports ERA5 ecrits dans outputs/.\n")
+```
+
+
+# Module 5 — Une enquête ne suffit pas : plan de sondage et estimation directe
+
+::: {.callout-important}
+## Pourquoi cette partie change de pays — et ce que cela coûte
+
+À partir d'ici, la journée quitte le Cameroun pour le **Bénin**. Il faut le dire aux
+participants, et dire pourquoi.
+
+**La raison technique.** L'estimation sur petits domaines suppose une enquête dont on
+puisse calculer, domaine par domaine, une estimation directe **et sa variance
+d'échantillonnage réelle**. Cela exige trois choses simultanément : les poids de
+sondage, l'identifiant de grappe, et une géolocalisation des grappes. L'extrait
+camerounais dont l'atelier dispose (`ecam5.dta`) échoue au contrôle de référence
+imposé par la méthode : son taux de pauvreté national colle au chiffre publié par
+l'INS (38,6 % contre 37,7 %), mais **à l'intérieur des régions il décroche** — l'Est
+y ressort à 7,5 % contre 41,5 % publié. C'est un extrait de formation, non
+représentatif au niveau infrarégional. Un exercice d'estimation sur petits domaines
+construit dessus produirait des cartes départementales magnifiques, et des chiffres
+qu'il faudrait ensuite interdire de citer. Cartographier un chiffre faux lui donne
+exactement la même autorité visuelle qu'un chiffre juste : c'est précisément ce que la
+journée enseigne à ne pas faire.
+
+**Ce que le déplacement coûte.** Trois choses, à assumer :
+
+1. Le fil rouge camerounais de l'atelier se rompt : les participants ne peuvent pas
+   relier la carte d'insécurité alimentaire aux cartes ACLED et ERA5 du matin.
+2. Le vocabulaire administratif change — on parle de **communes** (admin2 béninois,
+   77 unités) et non de départements camerounais.
+3. Les ordres de grandeur ne sont pas transposables : ce que l'on apprend ici est la
+   **méthode**, pas le diagnostic. Aucun chiffre de cette partie ne décrit le Cameroun.
+
+**Ce que le déplacement apporte.** Une chaîne complète et **exécutable** : plan de
+sondage réel, variance réelle, covariables réelles disponibles à deux résolutions.
+Le participant repart avec un enchaînement qu'il peut rejouer sur les données de son
+pays dès qu'il en dispose.
+
+**Provenance.** Données et code d'extraction adaptés du dépôt public
+`github.com/JoshMerfeld/saereplication` (J. Merfeld). Enquête source : EHCVM
+2018-2019, Bénin, microdonnées Banque mondiale (`microdata.worldbank.org`,
+catalogue 4291). Aucune licence n'étant indiquée sur le dépôt d'origine, l'usage est
+strictement pédagogique. La méthode est **adaptée, non reproduite** : le dépôt
+d'origine ajuste un modèle **unitaire** (prédiction empirique optimale, package
+`povmap`, sélection des covariables par Lasso validé croisé) ; nous simplifions
+volontairement vers un modèle **d'aire** (Fay-Herriot, package `sae`). Les
+coefficients et les cartes obtenus ici ne reproduisent donc pas ceux du dépôt.
+:::
+
+## 5.1 — Les données béninoises
+
+```{r}
+#| label: chunk-benin-lecture
+# a) Les menages enquetes. Une ligne = UN MENAGE (pas un individu).
+menages <- read_csv("datasets/ehcvm2018_benin_menages.csv", show_col_types = FALSE)
+
+cat("EHCVM Benin :", nrow(menages), "menages x", ncol(menages), "colonnes\n")
+cat("Colonnes reelles :", paste(names(menages), collapse = ", "), "\n\n")
+
+cat("Grappes distinctes (variable grappe) :", n_distinct(menages$grappe), "\n")
+cat("Menages par grappe -- min :", min(table(menages$grappe)),
+    "| median :", median(table(menages$grappe)),
+    "| max :", max(table(menages$grappe)), "\n")
+cat("Identifiants de cellule de grille distincts (id) :",
+    n_distinct(menages$id), "\n")
+
+# b) La variable d'interet : insecure. C'est une DECLARATION DE MENAGE.
+cat("\ninsecure -- valeurs distinctes :",
+    paste(sort(unique(menages$insecure)), collapse = ", "), "\n")
+cat("insecure manquant :", sum(is.na(menages$insecure)), "\n")
+cat("Part BRUTE (non ponderee) de menages en insecurite :",
+    sprintf("%.2f %%", 100 * mean(menages$insecure, na.rm = TRUE)), "\n")
+
+# c) Les poids de sondage.
+cat("\nhhweight -- min :", round(min(menages$hhweight), 1),
+    "| median :", round(median(menages$hhweight), 1),
+    "| max :", round(max(menages$hhweight), 1), "\n")
+cat("hhweight manquant ou nul :",
+    sum(is.na(menages$hhweight) | menages$hhweight <= 0), "\n")
+cat("Somme des poids (population de menages representee) :",
+    format(round(sum(menages$hhweight)), big.mark = " "), "\n")
+
+# d) Coordonnees des grappes (lat/lon) : presentes, mais DEPLACEES par le
+#    producteur pour proteger l'anonymat des enquetes -- comme au DHS.
+cat("\nCoordonnees -- lat de", round(min(menages$lat), 3), "a",
+    round(max(menages$lat), 3),
+    "| lon de", round(min(menages$lon), 3), "a",
+    round(max(menages$lon), 3), "\n")
+cat("Menages sans coordonnees :",
+    sum(is.na(menages$lat) | is.na(menages$lon)), "\n")
+```
+
+```{r}
+#| label: chunk-benin-couches
+# Limites communales et grille de 3 km. On liste les couches avant de les lire.
+print(st_layers("datasets/gadm_ben_communes.gpkg"))
+print(st_layers("datasets/benin_grille_3km.gpkg"))
+
+ben_communes <- st_read("datasets/gadm_ben_communes.gpkg",
+                        layer = "ben_adm2_communes", quiet = TRUE)
+ben_grille   <- st_read("datasets/benin_grille_3km.gpkg",
+                        layer = "grille_3km", quiet = TRUE)
+
+cat("\nCommunes (admin2)        :", nrow(ben_communes),
+    "| CRS :", st_crs(ben_communes)$input, "\n")
+cat("Cellules de grille (3 km):", nrow(ben_grille),
+    "| CRS :", st_crs(ben_grille)$input, "\n")
+cat("\nChamps de ben_communes :", paste(names(ben_communes), collapse = ", "), "\n")
+cat("Champs de ben_grille   :", paste(names(ben_grille), collapse = ", "), "\n")
+
+# Cle des communes : admin2Pcod. Est-elle unique ? On verifie AVANT de joindre.
+cat("\nadmin2Pcod distincts :", n_distinct(ben_communes$admin2Pcod),
+    "sur", nrow(ben_communes), "communes -> cle unique ?",
+    n_distinct(ben_communes$admin2Pcod) == nrow(ben_communes), "\n")
+```
+
+```{r}
+#| label: chunk-benin-covariables
+# Covariables geospatiales, aux DEUX resolutions : par commune (pour ajuster le
+# modele) et par cellule de 3 km (pour la prediction fine du Module 9).
+covariables_admin2 <- read_csv("datasets/benin_covariables_admin2.csv",
+                               show_col_types = FALSE)
+covariables_grille <- read_csv("datasets/benin_covariables_grille.csv",
+                               show_col_types = FALSE)
+
+cat("Covariables par commune :", nrow(covariables_admin2), "lignes x",
+    ncol(covariables_admin2), "colonnes\n")
+print(names(covariables_admin2))
+
+cat("\nCovariables par cellule :", nrow(covariables_grille), "lignes x",
+    ncol(covariables_grille), "colonnes\n")
+print(names(covariables_grille))
+
+# Les deux fichiers portent LES MEMES variables sous DES NOMS DIFFERENTS :
+# suffixe "_adm2" par commune, sans suffixe par cellule. C'est volontaire (on ne
+# confond pas les deux resolutions) et c'est un piege au Module 9 : la formule
+# ajustee sur lc_13_urbain_adm2 doit etre appliquee a lc_13_urbain.
+cat("\nCommunes couvertes par la grille :",
+    n_distinct(covariables_grille$admin2Pcod), "\n")
+cat("Cellules par commune -- min :", min(table(covariables_grille$admin2Pcod)),
+    "| median :", median(table(covariables_grille$admin2Pcod)),
+    "| max :", max(table(covariables_grille$admin2Pcod)), "\n")
+```
+
+::: {.callout-note}
+## Ce que mesure `insecure`, exactement
+
+`insecure` vaut 1 si le ménage a **déclaré** avoir connu une situation d'insécurité
+alimentaire, 0 sinon. Trois précisions à donner en salle avant toute carte :
+
+- C'est une **déclaration**, pas une mesure anthropométrique ni un relevé de
+  consommation. Le même ménage, interrogé par un autre enquêteur ou à une autre
+  saison, peut répondre autrement.
+- L'unité est le **ménage**, pas l'individu. Un taux de 30 % de ménages en insécurité
+  ne signifie pas 30 % de la population : les ménages touchés n'ont pas la même taille
+  moyenne que les autres. Confondre les deux, c'est le **biais de taille** — au J05,
+  la taille moyenne des ménages valait 6,55 calculée sur un fichier d'individus et
+  4,59 sur un fichier de ménages. Les deux sont exactes ; elles répondent à deux
+  questions.
+- La date compte : EHCVM 2018-2019. Cartographier cela en 2026 sans écrire l'année
+  sur la carte serait trompeur.
+:::
+
+## 5.2 — Rattacher chaque ménage à sa commune
+
+```{r}
+#| label: chunk-benin-jointure-commune
+# Le fichier menages ne porte PAS admin2Pcod : il porte id, l'identifiant de la
+# cellule de grille de 3 km ou tombe la grappe. C'est le fichier des covariables
+# de grille qui fait le pont id -> admin2Pcod.
+table_id_commune <- covariables_grille |>
+  select(id, admin2Pcod) |>
+  distinct()
+
+cat("Table de passage id -> commune :", nrow(table_id_commune), "lignes\n")
+cat("id en double dans la table de passage :",
+    sum(duplicated(table_id_commune$id)),
+    " (doit valoir 0, sinon la jointure DUPLIQUE des menages)\n")
+
+n_menages_avant <- nrow(menages)
+
+menages_admin2 <- menages |>
+  left_join(table_id_commune, by = "id")
+
+cat("\nMenages avant jointure :", n_menages_avant, "\n")
+cat("Menages apres jointure :", nrow(menages_admin2),
+    "| duplications :", nrow(menages_admin2) - n_menages_avant, "\n")
+cat("Menages sans commune (admin2Pcod NA) :",
+    sum(is.na(menages_admin2$admin2Pcod)),
+    sprintf("(%.2f %%)", 100 * mean(is.na(menages_admin2$admin2Pcod))), "\n")
+cat("Communes representees dans l'enquete :",
+    n_distinct(menages_admin2$admin2Pcod, na.rm = TRUE),
+    "sur", nrow(ben_communes), "communes du pays\n")
+```
+
+::: {.callout-warning}
+## Les communes absentes de l'enquête se verront sur la carte
+
+Le compteur ci-dessus est à retenir pour le Module 8 : les communes qu'aucune grappe
+n'a touchées **n'auront aucune estimation**, ni directe ni modélisée. Elles devront
+apparaître en **gris** sur la carte, jamais à zéro et jamais effacées.
+
+C'est le repérage de ce qui manque : un trou d'échantillonnage se voit sur une carte
+et **jamais dans un tableau**, où il se confond avec une ligne absente que personne ne
+cherche.
+:::
+
+## 5.3 — Le plan de sondage : pourquoi un échantillon n'est pas la population
+
+::: {.callout-important}
+## Trois raisons de ne pas écrire `mean(insecure)`
+
+**1. Les poids.** Un ménage de l'échantillon ne représente pas un ménage du pays, mais
+`hhweight` ménages. Les plans d'enquête sur-échantillonnent délibérément certaines
+strates — petites régions, milieu urbain — pour y obtenir assez d'observations. Sans
+les poids, on décrit **l'échantillon** ; avec les poids, on décrit **la population**.
+L'écart n'est pas cosmétique : au J05, 40,8 % sans poids contre 38,6 % avec.
+
+**2. Les grappes.** L'EHCVM est un sondage **à deux degrés** : on tire d'abord des
+grappes (zones de dénombrement), puis des ménages à l'intérieur. Deux ménages de la
+même grappe se ressemblent plus que deux ménages tirés au hasard dans le pays — même
+quartier, même marché, même saison agricole. Ignorer cette structure ne biaise pas
+l'estimation ponctuelle, mais **divise artificiellement l'erreur-type** : on publie un
+intervalle de confiance deux fois trop étroit, donc une fausse certitude. Pour
+l'estimation sur petits domaines, ce serait fatal — la variance est un *ingrédient* du
+modèle, pas un ornement.
+
+**3. Le bon poids à chaque étage.** Du ménage à la grappe, le poids de sondage ; de la
+grappe à la commune, la somme des poids ; de la commune au national, la population. Et
+la règle qui résume tout : **la moyenne d'une moyenne n'est pas la moyenne**.
+
+`svydesign()` ne calcule rien. Il **décrit** le plan une fois pour toutes, pour que
+toutes les fonctions `survey` qui suivent en tiennent compte automatiquement.
+:::
+
+```{r}
+#| label: chunk-benin-plan-sondage
+# DECLARATION DU PLAN DE SONDAGE.
+#   ids     = ~grappe    : unite primaire de tirage (sondage a deux degres)
+#   weights = ~hhweight  : poids de sondage du menage
+# Aucune strate n'est declaree ici, faute d'identifiant de strate dans le
+# fichier : l'erreur-type obtenue est donc legerement CONSERVATRICE (la
+# stratification, si elle etait declaree, la reduirait un peu).
+plan_sondage <- svydesign(
+  ids     = ~grappe,
+  weights = ~hhweight,
+  data    = menages_admin2
+)
+
+print(plan_sondage)
+
+# COMPARAISON QUI JUSTIFIE TOUT LE MODULE : national, avec et sans poids.
+moy_brute  <- 100 * mean(menages_admin2$insecure, na.rm = TRUE)
+est_pondere <- svymean(~insecure, plan_sondage, na.rm = TRUE)
+
+cat("\nInsecurite alimentaire au niveau national :\n")
+cat("  moyenne BRUTE (sans poids, decrit l'ECHANTILLON) :",
+    sprintf("%.2f %%", moy_brute), "\n")
+cat("  moyenne PONDEREE (decrit la POPULATION)          :",
+    sprintf("%.2f %%", 100 * coef(est_pondere)), "\n")
+cat("  ecart                                            :",
+    sprintf("%.2f point(s)", 100 * coef(est_pondere) - moy_brute), "\n")
+cat("  erreur-type ponderee, plan pris en compte        :",
+    sprintf("%.2f point(s)", 100 * SE(est_pondere)), "\n")
+
+# Le meme calcul EN IGNORANT les grappes, pour mesurer l'effet de grappe.
+plan_sans_grappe <- svydesign(ids = ~1, weights = ~hhweight, data = menages_admin2)
+est_sans_grappe  <- svymean(~insecure, plan_sans_grappe, na.rm = TRUE)
+cat("  erreur-type si l'on IGNORE les grappes           :",
+    sprintf("%.2f point(s)", 100 * SE(est_sans_grappe)), "\n")
+cat("  -> rapport (effet de grappe approche)            :",
+    round(as.numeric(SE(est_pondere) / SE(est_sans_grappe)), 2), "\n")
+```
+
+::: {.callout-tip}
+## Lecture des quatre chiffres ci-dessus
+
+**Ce qu'ils codent.** Le premier décrit les ménages *présents dans le fichier*. Le
+deuxième décrit *les ménages du Bénin*. Ce sont deux populations différentes, et
+l'écart entre les deux est la mesure de ce que la pondération corrige.
+
+**Ce que les choix techniques font.** Le troisième et le quatrième chiffre encadrent
+la même estimation avec deux hypothèses de plan. Le rapport entre les deux
+erreurs-types approche l'**effet de grappe** (*design effect*) : au-dessus de 1, la
+structure en grappes coûte de la précision, et il faut d'autant plus de ménages pour
+atteindre une précision donnée.
+
+**Ce qui se lit.** Qu'un chiffre d'enquête sans son plan de sondage n'est pas un
+résultat, c'est une statistique descriptive de fichier.
+
+**Ce qui ne se lit pas.** La non-réponse. Les poids corrigent le tirage, pas les
+ménages qui n'ont pas répondu ou n'ont pas été trouvés — et ceux-là ne sont
+généralement pas un échantillon aléatoire des autres.
+:::
+
+## 5.4 — Estimation directe par commune, et variance non estimable
+
+```{r}
+#| label: chunk-benin-estimation-directe
+# svyby() applique svymean() SEPAREMENT a chaque commune, en respectant le plan.
+# C'est l'equivalent d'un group_by() |> summarise(mean()) -- sauf que
+# group_by()+mean() ignorerait poids ET grappes, et fournirait une erreur-type
+# sous-estimee, c'est-a-dire inutilisable comme entree du modele.
+direct_svy <- svyby(~insecure, ~admin2Pcod, plan_sondage, svymean, na.rm = TRUE)
+
+cat("Communes avec une estimation directe :", nrow(direct_svy), "\n")
+
+n_menages_admin2 <- menages_admin2 |>
+  count(admin2Pcod, name = "n_menages")
+
+n_grappes_admin2 <- menages_admin2 |>
+  group_by(admin2Pcod) |>
+  summarise(n_grappes = n_distinct(grappe), .groups = "drop")
+
+direct_admin2 <- data.frame(
+  admin2Pcod      = direct_svy$admin2Pcod,
+  insecure_direct = coef(direct_svy) * 100,   # en POINTS DE POURCENTAGE
+  se_direct       = SE(direct_svy) * 100
+) |>
+  left_join(n_menages_admin2, by = "admin2Pcod") |>
+  left_join(n_grappes_admin2, by = "admin2Pcod")
+
+cat("\nTaille d'echantillon par commune -- min :", min(direct_admin2$n_menages),
+    "| median :", median(direct_admin2$n_menages),
+    "| max :", max(direct_admin2$n_menages), "\n")
+cat("Nombre de grappes par commune -- min :", min(direct_admin2$n_grappes),
+    "| median :", median(direct_admin2$n_grappes),
+    "| max :", max(direct_admin2$n_grappes), "\n")
+
+# LE MOMENT DE METHODE : les communes a une seule grappe.
+communes_1_grappe <- direct_admin2 |> filter(n_grappes == 1)
+cat("\nCommunes n'ayant qu'UNE SEULE grappe enquetee :",
+    nrow(communes_1_grappe), "\n")
+cat("Communes dont l'erreur-type est NA ou nulle :",
+    sum(is.na(direct_admin2$se_direct) | direct_admin2$se_direct == 0), "\n")
+
+if (nrow(communes_1_grappe) > 0) {
+  print(communes_1_grappe)
+}
+
+# On MEMORISE les exclues avant de les retirer : elles devront apparaitre en
+# gris sur les cartes du Module 8, pas disparaitre.
+communes_exclues <- direct_admin2 |>
+  filter(is.na(se_direct) | se_direct == 0) |>
+  pull(admin2Pcod)
+
+direct_admin2 <- direct_admin2 |>
+  filter(!is.na(se_direct), se_direct > 0) |>
+  mutate(var_direct = se_direct^2)
+
+cat("\nCommunes CONSERVEES pour le modele :", nrow(direct_admin2), "\n")
+cat("Communes EXCLUES (variance non estimable) :", length(communes_exclues),
+    ifelse(length(communes_exclues) > 0,
+           paste0(" -> ", paste(communes_exclues, collapse = ", ")), ""), "\n")
+cat("Communes du pays sans aucune estimation :",
+    nrow(ben_communes) - nrow(direct_admin2), "sur", nrow(ben_communes), "\n")
+
+cat("\nEstimation directe -- 10 communes les plus touchees :\n")
+print(
+  direct_admin2 |>
+    arrange(desc(insecure_direct)) |>
+    head(10)
+)
+```
+
+::: {.callout-important}
+## Pourquoi une commune à une seule grappe est exclue — et pourquoi c'est un moment de méthode
+
+**Le fait technique.** Avec un sondage en grappes, la variance d'échantillonnage
+s'estime **entre les grappes**, pas entre les ménages. Avec une seule grappe dans un
+domaine, il n'y a rien entre quoi calculer une variance : `survey` renvoie `NA`, ou
+zéro, ou un avertissement selon les options. Ce n'est pas un bug, c'est
+l'arithmétique — on ne calcule pas une dispersion sur un seul point.
+
+**Pourquoi ce n'est pas une commodité.** Le modèle de Fay-Herriot du Module 7 prend la
+variance directe **en entrée** (`vardir`). Une variance à zéro déclarerait au modèle
+que l'estimation directe est *parfaitement précise* : le modèle la laisserait
+intacte, et lui accorderait un poids infini par rapport aux communes bien mesurées.
+Une variance `NA` ferait échouer l'ajustement. Le seul traitement honnête est
+l'exclusion **déclarée**.
+
+**Ce que l'exclusion coûte.** Ces communes sont typiquement les moins peuplées, les
+plus rurales, les plus éloignées — pas un échantillon aléatoire des autres. Les retirer
+du **modèle** est une nécessité ; les faire disparaître de la **carte** serait un
+mensonge par omission. Elles restent donc dans `communes_exclues`, et le Module 8 les
+affichera en gris avec une légende qui les nomme.
+
+**Le seuil est déclaré dans le code**, pas subi : `n_grappes == 1`. Un projet
+opérationnel pourrait le relever à 2 ou 3 grappes, ou à 30 ménages — l'important est
+que le seuil soit écrit, justifié, et visible sur la carte.
+:::
+
+```{r}
+#| label: chunk-benin-graphe-precision
+# La precision de l'estimation directe depend de la taille de l'echantillon.
+# Ce graphe prepare le Module 7 : c'est LA relation que Fay-Herriot exploite.
+graphe_precision <- ggplot(direct_admin2, aes(x = n_menages, y = se_direct)) +
+  geom_point(colour = "#6A51A3", size = 2.2, alpha = 0.8) +
+  scale_x_log10() +
+  labs(
+    title    = "Moins de menages enquetes, moins de precision",
+    subtitle = "Chaque point = une commune. Erreur-type de l'estimation directe.",
+    x = "Nombre de menages enquetes (echelle log)",
+    y = "Erreur-type (points de pourcentage)"
+  ) +
+  theme_minimal()
+
+print(graphe_precision)
+
+cat("Correlation (log n_menages, se_direct) :",
+    round(cor(log(direct_admin2$n_menages), direct_admin2$se_direct), 3), "\n")
+```
+
+::: {.callout-tip}
+## Lecture de la figure — précision contre taille d'échantillon
+
+**Ce que la figure code.** En abscisse, le nombre de ménages effectivement enquêtés
+dans la commune ; en ordonnée, l'erreur-type de l'estimation directe, en points de
+pourcentage. Un point haut = une commune dont le chiffre est **bruité**.
+
+**Ce que les choix techniques font.** L'axe des abscisses est en **échelle
+logarithmique** : c'est le bon choix quand les valeurs s'étalent sur un ordre de
+grandeur (de quelques dizaines à plusieurs centaines de ménages). En échelle linéaire,
+les communes les plus échantillonnées écraseraient toutes les autres contre l'axe. Le
+log rend visible la partie du nuage qui nous intéresse — les petits domaines — au prix
+d'une déformation qu'il faut annoncer : **des écarts égaux à l'écran ne sont pas des
+écarts égaux en ménages**.
+
+**Ce qui se lit.** La décroissance attendue en 1/√n. C'est le **problème** que
+l'estimation sur petits domaines vient résoudre : à droite du nuage, l'enquête suffit ;
+à gauche, elle ne suffit pas.
+
+**Ce qui ne se lit pas.** Que les communes de gauche seraient « mal enquêtées ». Elles
+sont enquêtées **selon le plan**, qui a été dimensionné pour produire des estimations
+nationales et régionales, pas communales. Le problème n'est pas la qualité de
+l'enquête : c'est qu'on lui pose une question à une maille pour laquelle elle n'a
+jamais été conçue.
+:::
+
+
+# Module 6 — Choisir une covariable auxiliaire
+
+::: {.callout-note}
+## Ce qu'on demande à une covariable
+
+Le modèle de Fay-Herriot a besoin d'une information **connue partout** — y compris
+dans les communes mal enquêtées — et **corrélée** à ce qu'on cherche à estimer. C'est
+sa seule exigence, et elle est faible : la covariable n'a pas besoin d'être une cause,
+elle doit seulement prédire.
+
+Nos candidates viennent de Google Earth Engine, extraites par l'auteur du dépôt
+d'origine, et disponibles **aux deux résolutions** : par commune (pour ajuster) et par
+cellule de 3 km (pour prédire, Module 9).
+
+| Covariable (commune) | Ce qu'elle mesure |
+|---|---|
+| `ntl_mean_adm2` | luminosité nocturne moyenne (VIIRS) — proxy d'activité économique |
+| `population_adm2` | population totale estimée |
+| `ndvi_mean_adm2` | indice de végétation moyen — biomasse photosynthétique |
+| `precip_2018_adm2` | cumul de précipitations 2018 |
+| `no2_adm2` | dioxyde d'azote troposphérique — proxy de trafic et d'industrie |
+| `lc_13_urbain_adm2` | part de sol classée « urbain » (MODIS LC_Type1, classe 13) |
+| `lc_12_cultures_adm2` | part de sol classée « cultures » (classe 12) |
+| `lc_8_savane_boisee_adm2` | part de sol classée « savane boisée » (classe 8) |
+| `lc_11_zones_humides_adm2` | part de sol classée « zones humides » (classe 11) |
+
+Ces covariables ne sont **pas** recalculées ici — mais leur fabrication ne demanderait
+rien de nouveau : c'est exactement la statistique zonale déjà pratiquée ce matin
+(`st_join()` pour agréger ACLED par région, `exact_extract()` pour ERA5). Avec les
+compétences des journées précédentes, un participant peut refaire cette extraction sur
+son propre pays.
+:::
+
+```{r}
+#| label: chunk-benin-criblage
+# Joindre les estimations directes aux covariables communales.
+n_avant_cov <- nrow(direct_admin2)
+
+sae_data_candidates <- direct_admin2 |>
+  left_join(covariables_admin2, by = "admin2Pcod")
+
+cat("Communes avant jointure des covariables :", n_avant_cov, "\n")
+cat("Communes apres :", nrow(sae_data_candidates),
+    "| duplications :", nrow(sae_data_candidates) - n_avant_cov, "\n")
+
+candidats <- c(
+  "ntl_mean_adm2", "population_adm2", "ndvi_mean_adm2", "precip_2018_adm2",
+  "no2_adm2", "lc_13_urbain_adm2", "lc_12_cultures_adm2",
+  "lc_8_savane_boisee_adm2", "lc_11_zones_humides_adm2"
+)
+
+# CONTROLE : toutes les candidates existent-elles vraiment, et sans NA ?
+cat("\nCandidates absentes du fichier :",
+    paste(setdiff(candidats, names(sae_data_candidates)), collapse = ", "),
+    "(vide = tout va bien)\n")
+cat("Valeurs manquantes par covariable :\n")
+print(colSums(is.na(sae_data_candidates[candidats])))
+
+# CRIBLAGE : correlation de chaque candidate avec l'estimation directe.
+correlations <- sapply(candidats, function(v) {
+  cor(sae_data_candidates$insecure_direct, sae_data_candidates[[v]],
+      use = "complete.obs")
+})
+correlations <- correlations[order(-abs(correlations))]
+
+cat("\nCorrelation avec l'insecurite alimentaire directe,\n")
+cat("triee par valeur absolue decroissante :\n")
+print(round(correlations, 3))
+```
+
+```{r}
+#| label: chunk-benin-colinearite
+# CONTROLE DE COLINEARITE : deux covariables tres correlees entre elles
+# apportent la MEME information deux fois. Le modele les departage mal, leurs
+# coefficients deviennent instables et peuvent changer de signe.
+matrice_cor <- cor(sae_data_candidates[candidats], use = "complete.obs")
+
+cat("Matrice de correlation entre candidates (arrondie) :\n")
+print(round(matrice_cor, 2))
+
+# Les paires problematiques, listees explicitement.
+paires <- which(abs(matrice_cor) > 0.7 & upper.tri(matrice_cor), arr.ind = TRUE)
+cat("\nPaires de covariables correlees a plus de 0,7 (en valeur absolue) :\n")
+if (nrow(paires) == 0) {
+  cat("  aucune\n")
+} else {
+  for (k in seq_len(nrow(paires))) {
+    cat("  ", rownames(matrice_cor)[paires[k, 1]], "<->",
+        colnames(matrice_cor)[paires[k, 2]], ":",
+        round(matrice_cor[paires[k, 1], paires[k, 2]], 2), "\n")
+  }
+}
+
+# DECISION : deux covariables retenues -- part urbaine et part de savane boisee.
+cat("\nCorrelation entre les DEUX covariables retenues :",
+    round(cor(sae_data_candidates$lc_13_urbain_adm2,
+              sae_data_candidates$lc_8_savane_boisee_adm2,
+              use = "complete.obs"), 3), "\n")
+
+sae_data <- sae_data_candidates |>
+  select(
+    admin2Pcod, n_menages, n_grappes,
+    insecure_direct, se_direct, var_direct,
+    lc_13_urbain_adm2, lc_8_savane_boisee_adm2
+  ) |>
+  as.data.frame()
+
+cat("\nTableau pret pour le modele :", nrow(sae_data), "communes x",
+    ncol(sae_data), "colonnes\n")
+cat("Lignes incompletes (NA sur une variable du modele) :",
+    sum(!complete.cases(sae_data)), "\n")
+```
+
+::: {.callout-tip}
+## Lecture du criblage
+
+**Ce qu'il code.** Une corrélation de Pearson entre l'estimation directe et chaque
+covariable, calculée sur les communes retenues.
+
+**Ce que les choix techniques font.** Pearson mesure une association **linéaire** :
+une relation en U parfaite donnerait une corrélation nulle. Sur des variables aussi
+dissymétriques que la luminosité nocturne ou la population — quelques communes
+énormes, beaucoup de petites — un coefficient de **Spearman** (sur les rangs) serait
+souvent plus honnête. Le criblage par corrélation lui-même est une méthode **faible** :
+il examine les covariables une par une, alors que le modèle les utilisera ensemble.
+Un projet opérationnel sélectionnerait par Lasso avec validation croisée, ce que fait
+le dépôt d'origine.
+
+Le seuil de colinéarité à 0,7 est **conventionnel**, pas théorique. Il sert à
+déclencher une discussion, pas à trancher automatiquement.
+
+**Ce qui se lit.** L'ordre des candidates, et surtout le **signe** : une corrélation
+positive avec la part urbaine et négative avec la savane boisée (ou l'inverse) est le
+premier élément à confronter aux coefficients du modèle, au Module 7.
+
+**Ce qui ne se lit pas — et c'est capital.** Aucune causalité. Avec 76 communes et
+neuf candidates, on trouvera **toujours** quelque chose de corrélé. Que la part de
+sol urbain prédise l'insécurité alimentaire ne signifie pas que l'urbanisation la
+cause : elle capte probablement un faisceau — densité, prix, dépendance au marché,
+composition des ménages. Pour le modèle, cela suffit. Pour une politique publique,
+non. La phrase à répéter en salle : **le modèle emprunte de la force, il n'explique
+rien.**
+:::
+
+
+# Module 7 — Fay-Herriot : emprunter de la force aux autres communes
+
+::: {.callout-note}
+## Le modèle, en trois lignes
+
+Pour chaque commune *i*, l'enquête fournit une estimation directe *p_i* et sa variance
+d'échantillonnage *psi_i*, connue. Fay et Herriot (1979) écrivent :
+
+> *p_i = x_i · beta + u_i + e_i*, avec *u_i ~ N(0, sigma²_u)* et *e_i ~ N(0, psi_i)*
+
+Deux sources d'écart y sont **séparées** : *e_i* est l'erreur due au fait qu'on a
+enquêté un échantillon et non toute la commune (elle est connue, c'est `var_direct`) ;
+*u_i* est ce qui, dans la commune, échappe aux covariables — l'hétérogénéité réelle
+entre communes (elle est estimée).
+
+L'estimateur **EBLUP** (*Empirical Best Linear Unbiased Predictor*) est alors une
+moyenne pondérée entre l'estimation directe et la prédiction du modèle *x_i · beta*,
+avec un poids qui dépend du rapport entre les deux variances :
+
+- **variance d'échantillonnage grande** (petit échantillon) → l'estimation est tirée
+  vers le modèle : on « emprunte de la force » aux autres communes ;
+- **variance d'échantillonnage petite** (grand échantillon) → l'estimation directe est
+  déjà fiable, le modèle la corrige à peine.
+
+`sae::mseFH()` fait les deux choses en un appel : il ajuste le modèle **et** calcule
+l'**EQM** (erreur quadratique moyenne) estimée de chaque prédiction. C'est cette EQM,
+et non la seule valeur estimée, qui rend le résultat publiable : une estimation sans
+mesure d'incertitude n'est pas un résultat statistique.
+:::
+
+```{r}
+#| label: chunk-fh-ajustement
+# AJUSTEMENT DU MODELE DE FAY-HERRIOT.
+#   formula : estimation directe expliquee par les deux covariables retenues
+#   vardir  : la variance d'echantillonnage CONNUE de chaque commune
+#             (c'est elle qui distingue un modele SAE d'une simple regression)
+fh <- mseFH(
+  insecure_direct ~ lc_13_urbain_adm2 + lc_8_savane_boisee_adm2,
+  vardir = var_direct,
+  data   = sae_data
+)
+
+cat("Convergence de l'ajustement :", fh$est$fit$convergence, "\n")
+cat("Nombre d'iterations :", fh$est$fit$iterations, "\n")
+cat("Variance estimee des effets aleatoires (sigma2_u) :",
+    round(fh$est$fit$refvar, 4), "\n")
+cat("Variance d'echantillonnage moyenne (psi) :",
+    round(mean(sae_data$var_direct), 4), "\n")
+cat("-> Rapport sigma2_u / psi_moyen :",
+    round(fh$est$fit$refvar / mean(sae_data$var_direct), 2), "\n")
+
+cat("\nCoefficients du modele :\n")
+print(fh$est$fit$estcoef)
+
+cat("\nMesures d'ajustement (log-vraisemblance, AIC, BIC, KIC) :\n")
+print(fh$est$fit$goodness)
+```
+
+::: {.callout-tip}
+## Lire le tableau de coefficients, sans le surinterpréter
+
+**Ce qu'il code.** Quatre colonnes : `beta` (le coefficient), `std.error`, `tvalue`,
+`pvalue`. Le `beta` est l'effet, en points de pourcentage d'insécurité, d'une
+augmentation d'une unité de la covariable — ici les covariables sont des **parts**
+entre 0 et 1, donc `beta` est l'écart attendu entre une commune à 0 % et une commune à
+100 % de la classe de sol concernée. Un écart énorme, jamais observé : c'est une
+extrapolation de la pente, pas une prédiction.
+
+**Le contrôle immédiat.** Le signe de chaque `beta` doit correspondre au signe de la
+corrélation du Module 6. Une inversion de signe signale une **colinéarité** ou un effet
+de confusion entre les deux covariables — à investiguer avant d'aller plus loin, pas à
+ignorer.
+
+**Le rapport sigma²_u / psi imprimé ci-dessus** est la clé de tout ce qui suit. S'il
+est **grand**, l'hétérogénéité réelle entre communes domine le bruit
+d'échantillonnage : les estimations directes étaient déjà proches de la vérité, et le
+modèle corrigera peu. S'il est **petit**, le bruit domine et le lissage sera fort. Un
+gain moyen modeste n'est donc **pas** un échec du modèle — c'est une propriété de la
+donnée, et il faut savoir le dire.
+
+**Ce qui ne se lit pas.** Les `pvalue`. Avec 76 communes et deux covariables, la
+puissance statistique est faible ; une p-valeur négligeable ne fait pas d'une
+corrélation une cause. Quant à `AIC`, `BIC`, `KIC`, ils n'ont **aucun sens en valeur
+absolue** : ce sont des instruments de **comparaison** entre spécifications (avec ou
+sans la deuxième covariable, autre paire de covariables). Le modèle au BIC le plus
+faible est préféré — encore faut-il en avoir ajusté deux.
+:::
+
+```{r}
+#| label: chunk-fh-eblup
+# Recuperer l'EBLUP et l'EQM, puis passer en RMSE (racine de l'EQM) pour rester
+# dans l'unite de la variable : des POINTS DE POURCENTAGE, comparables a
+# l'erreur-type de l'estimation directe.
+sae_data <- sae_data |>
+  mutate(
+    insecure_fh = fh$est$eblup[, 1],
+    rmse_direct = sqrt(var_direct),
+    rmse_fh     = sqrt(fh$mse),
+    gain_rmse   = rmse_direct - rmse_fh,
+    gain_pct    = 100 * gain_rmse / rmse_direct,
+    deplacement = insecure_fh - insecure_direct
+  )
+
+cat("Gain de precision (RMSE direct - RMSE FH), en points :\n")
+cat("  moyen  :", round(mean(sae_data$gain_rmse), 3), "\n")
+cat("  median :", round(median(sae_data$gain_rmse), 3), "\n")
+cat("  min    :", round(min(sae_data$gain_rmse), 3), "\n")
+cat("  max    :", round(max(sae_data$gain_rmse), 3), "\n")
+cat("Communes ou le gain est NEGATIF (FH moins precis) :",
+    sum(sae_data$gain_rmse < 0), "sur", nrow(sae_data), "\n")
+cat("Reduction relative moyenne du RMSE :",
+    sprintf("%.1f %%", mean(sae_data$gain_pct)), "\n")
+
+cat("\nDeplacement de l'estimation (FH - direct), en points :\n")
+cat("  amplitude maximale :", round(max(abs(sae_data$deplacement)), 2), "\n")
+cat("  ecart-type         :", round(sd(sae_data$deplacement), 2), "\n")
+
+cat("\nLes 10 communes les plus corrigees par le modele :\n")
+print(
+  sae_data |>
+    arrange(desc(abs(deplacement))) |>
+    select(admin2Pcod, n_menages, n_grappes, insecure_direct, rmse_direct,
+           insecure_fh, rmse_fh, gain_rmse, deplacement) |>
+    head(10)
+)
+```
+
+## 7.1 — Comparaison commune par commune
+
+```{r}
+#| label: chunk-fh-comparaison
+#| fig-height: 12
+# Mettre en regard les deux estimations et leurs intervalles, commune par commune.
+# pivot_longer avec names_pattern separe la VALEUR (insecure / rmse) de la
+# METHODE (direct / fh) en une seule operation.
+comparaison_long <- sae_data |>
+  left_join(
+    st_drop_geometry(ben_communes) |> select(admin2Pcod, adm2_name),
+    by = "admin2Pcod"
+  ) |>
+  select(adm2_name, insecure_direct, rmse_direct, insecure_fh, rmse_fh) |>
+  tidyr::pivot_longer(
+    cols          = -adm2_name,
+    names_to      = c(".value", "methode"),
+    names_pattern = "(.*)_(direct|fh)"
+  ) |>
+  mutate(methode = recode(methode,
+                          direct = "Estimation directe",
+                          fh     = "Fay-Herriot (EBLUP)"))
+
+cat("Lignes du tableau de comparaison :", nrow(comparaison_long),
+    "(attendu : 2 x", nrow(sae_data), "=", 2 * nrow(sae_data), ")\n")
+cat("Noms de commune manquants apres jointure :",
+    sum(is.na(comparaison_long$adm2_name)), "\n")
+
+graphe_comparaison <- ggplot(
+  comparaison_long,
+  aes(x = reorder(adm2_name, insecure), y = insecure,
+      ymin = insecure - 1.96 * rmse, ymax = insecure + 1.96 * rmse,
+      colour = methode)
+) +
+  geom_pointrange(position = position_dodge(width = 0.5), size = 0.25) +
+  coord_flip() +
+  scale_colour_manual(values = c("Estimation directe" = "#CB181D",
+                                 "Fay-Herriot (EBLUP)" = "#2171B5")) +
+  labs(
+    title    = "Insecurite alimentaire par commune -- Benin",
+    subtitle = "EHCVM 2018-2019. Barres : intervalles a 95 % (estimation +/- 1,96 x RMSE).",
+    x = NULL, y = "Menages en insecurite alimentaire (%)", colour = NULL
+  ) +
+  theme_minimal(base_size = 8) +
+  theme(legend.position = "top")
+
+print(graphe_comparaison)
+```
+
+::: {.callout-tip}
+## Lecture de la figure — deux estimations et leurs intervalles
+
+**Ce que la figure code.** Une ligne par commune, triée par niveau d'insécurité. Deux
+points par commune : l'estimation directe (rouge) et l'EBLUP (bleu). La barre est
+l'intervalle à 95 %, construit comme *estimation ± 1,96 × RMSE*.
+
+**Ce que les choix techniques font.** Les deux barres ne sont **pas** de même nature.
+Côté direct, le RMSE est l'erreur-type d'échantillonnage : l'intervalle a une
+interprétation fréquentiste classique. Côté Fay-Herriot, c'est la **racine de l'EQM**
+estimée d'un prédicteur, qui mêle erreur d'échantillonnage, erreur de modèle et erreur
+d'estimation des paramètres. Superposer les deux dans le même graphique est **utile et
+légèrement abusif** : cela se dit à voix haute en salle. Le facteur 1,96 suppose en
+outre une normalité approximative, discutable pour une proportion proche de 0 ou de 1
+— un intervalle sur l'échelle logit serait plus rigoureux.
+
+Le tri par niveau (`reorder`) fait apparaître le gradient ; il empêche de repérer les
+communes par leur géographie. C'est exactement ce que la carte du Module 8 ajoutera.
+
+**Ce qui se lit.** Trois situations. Points confondus : le modèle n'a rien corrigé,
+l'estimation directe était fiable. Points éloignés : l'estimation a été fortement tirée
+vers le modèle — vérifiez `n_menages`, ce sera un petit échantillon. Barre bleue plus
+courte que la rouge : c'est le gain de précision, rendu visible.
+
+**Ce qui ne se lit pas.** Laquelle des deux valeurs est « la vraie ». Nous ne
+connaissons pas la vérité de terrain : nous comparons deux estimateurs, l'un sans
+biais mais bruité, l'autre plus précis mais **légèrement biaisé vers le modèle**. C'est
+l'arbitrage biais-variance, et il n'a pas de solution universelle.
+:::
+
+## 7.2 — Le vrai test du mécanisme
+
+::: {.callout-important}
+## La figure qui décide si le modèle fonctionne
+
+Le nuage ci-dessous n'est **pas une illustration de plus**. C'est le test du mécanisme
+même de l'estimation sur petits domaines, et il faut le présenter comme tel.
+
+Le raisonnement est le suivant. Fay-Herriot corrige d'autant plus que la variance
+d'échantillonnage est grande, et la variance d'échantillonnage est grande **là où
+l'échantillon est petit**. Donc : *si le lissage fonctionne comme la théorie le
+prévoit, le gain de précision doit être maximal à gauche du nuage — dans les communes
+les moins enquêtées — et tendre vers zéro à droite.*
+
+Trois lectures possibles, trois conclusions :
+
+| Ce qu'on voit | Ce que cela signifie |
+|---|---|
+| Courbe nettement **décroissante** | le mécanisme opère : le modèle aide là où l'enquête ne suffisait pas |
+| Courbe **plate** | les covariables n'apportent presque rien ; le modèle ne fait que recopier l'estimation directe |
+| Nuage **sans structure**, points négatifs nombreux | spécification à revoir : covariables mal choisies, ou variances directes mal estimées |
+
+Un point isolé sous zéro (gain négatif, Fay-Herriot moins précis que le direct) reste
+possible et acceptable : il signale une commune que la covariable prédit mal, sans que
+son échantillon soit assez petit pour que le lissage compense. Des points négatifs
+**nombreux** ou **très éloignés de zéro** sont, eux, un signal d'alarme.
+:::
+
+```{r}
+#| label: chunk-fh-gain-vs-n
+graphe_gain_n <- ggplot(sae_data, aes(x = n_menages, y = gain_rmse)) +
+  geom_hline(yintercept = 0, colour = "grey40", linetype = "dotted") +
+  geom_point(aes(size = n_grappes), colour = "#2171B5", alpha = 0.7) +
+  geom_smooth(method = "loess", se = FALSE, colour = "#CB181D",
+              linetype = "dashed") +
+  scale_x_log10() +
+  scale_size_continuous(range = c(1.5, 5), name = "Grappes") +
+  labs(
+    title    = "Le gain de precision se concentre dans les communes peu enquetees",
+    subtitle = "Chaque point = une commune. C'est le test du mecanisme de Fay-Herriot.",
+    x = "Nombre de menages enquetes (echelle log)",
+    y = "Gain de precision (RMSE direct - RMSE Fay-Herriot), en points"
+  ) +
+  theme_minimal()
+
+print(graphe_gain_n)
+
+# Le meme test, en chiffres : gain moyen par tiers de taille d'echantillon.
+sae_data <- sae_data |>
+  mutate(tiers_n = cut(n_menages,
+                       breaks = quantile(n_menages, probs = c(0, 1/3, 2/3, 1)),
+                       include.lowest = TRUE,
+                       labels = c("petit echantillon", "moyen", "grand")))
+
+cat("Gain moyen de precision par tiers de taille d'echantillon :\n")
+print(
+  sae_data |>
+    group_by(tiers_n) |>
+    summarise(
+      communes      = n(),
+      n_menages_med = median(n_menages),
+      gain_moyen    = round(mean(gain_rmse), 3),
+      gain_pct_moy  = round(mean(gain_pct), 1),
+      .groups = "drop"
+    )
+)
+
+cat("\nCorrelation (log n_menages, gain_rmse) :",
+    round(cor(log(sae_data$n_menages), sae_data$gain_rmse), 3),
+    " -> NEGATIVE attendue\n")
+```
+
+::: {.callout-tip}
+## Lecture de la figure — gain de précision contre taille d'échantillon
+
+**Ce que la figure code.** En abscisse, le nombre de ménages enquêtés (échelle log) ;
+en ordonnée, la différence `rmse_direct − rmse_fh`, en points de pourcentage. La
+taille du point ajoute le nombre de grappes : deux communes ayant autant de ménages
+mais 2 ou 8 grappes n'ont pas la même variance directe.
+
+**Ce que les choix techniques font.** La ligne pointillée à zéro est la **frontière de
+décision** : au-dessus, le modèle apporte quelque chose ; en dessous, il coûte. Le
+LOESS résume la tendance sans l'imposer — mais avec 76 points il est sensible aux
+extrémités du nuage, où il repose sur peu d'observations : ne lisez pas ses tout
+derniers centimètres. Le tableau par tiers imprimé sous la figure dit la **même chose
+en chiffres**, sans dépendre du lissage : c'est lui qui fait foi.
+
+**Ce qui se lit.** Que le gain n'est pas réparti au hasard : il est **structuré par la
+taille de l'échantillon**. C'est la signature du mécanisme, et la seule preuve
+empirique que le modèle fait ce qu'il prétend faire.
+
+**Ce qui ne se lit pas.** Que les estimations lissées seraient plus **justes**. Elles
+sont plus **précises** — de variance plus faible — au prix d'un biais vers le modèle.
+Précision et justesse sont deux propriétés différentes ; le RMSE les combine, il ne
+les sépare pas. Et rien ici ne compare les estimations à une vérité de terrain : une
+validation externe (recensement, enquête indépendante) serait nécessaire pour cela.
+:::
+
+# Module 8 — Trois cartes à échelle commune
+
+## 8.1 — Joindre les estimations à la géométrie, sans effacer les absentes
+
+```{r}
+#| label: chunk-sae-jointure-carte
+# ON PART DE LA COUCHE : ben_communes |> left_join(sae_data).
+# Toutes les communes du pays restent presentes, y compris celles qui n'ont
+# aucune estimation. Un inner_join() les ferait disparaitre de la carte --
+# c'est-a-dire du raisonnement.
+communes_sae <- ben_communes |>
+  left_join(sae_data, by = "admin2Pcod") |>
+  mutate(
+    statut = case_when(
+      !is.na(insecure_fh)              ~ "Estimee",
+      admin2Pcod %in% communes_exclues ~ "Exclue (une seule grappe)",
+      TRUE                             ~ "Non enquetee"
+    )
+  )
+
+cat("Communes de la couche :", nrow(communes_sae), "\n")
+cat("Repartition des statuts :\n")
+print(table(communes_sae$statut))
+
+cat("\nCommunes SANS estimation Fay-Herriot :",
+    sum(is.na(communes_sae$insecure_fh)), "\n")
+cat("Elles resteront GRISES sur les cartes -- jamais a zero, jamais effacees.\n")
+```
+
+::: {.callout-important}
+## Gris, zéro, absent : trois choses différentes
+
+Sur une choroplèthe, trois situations sont visuellement confondues si l'on n'y prend
+pas garde :
+
+- **la commune estimée à une valeur faible** : elle est mesurée, et elle va bien ;
+- **la commune non enquêtée** : nous n'en savons rien ;
+- **la commune exclue du modèle** faute de variance estimable : l'enquête l'a touchée,
+  mais une seule fois — nous avons un chiffre sans savoir combien il vaut.
+
+Les colorer toutes les trois sur la même échelle, ou remplacer les deux dernières par
+zéro, revient à publier de l'ignorance déguisée en mesure. La convention retenue ici :
+**valeur en couleur, absence en gris, statut dans la légende**. Le lecteur doit pouvoir
+distinguer « peu d'insécurité » de « pas de mesure » sans lire le code.
+:::
+
+## 8.2 — Les trois cartes
+
+```{r}
+#| label: chunk-sae-cartes
+#| fig-height: 6
+# ECHELLE COMMUNE aux deux premieres cartes : sans cela, deux palettes calculees
+# separement donneraient au meme niveau d'insecurite deux couleurs differentes,
+# et la comparaison visuelle -- qui est TOUT l'objet de la figure -- serait
+# fausse. C'est l'erreur la plus frequente des cartes comparatives.
+limites_insecurite <- range(
+  c(communes_sae$insecure_direct, communes_sae$insecure_fh),
+  na.rm = TRUE
+)
+cat("Echelle commune imposee aux cartes 1 et 2 :",
+    round(limites_insecurite[1], 2), "a", round(limites_insecurite[2], 2),
+    "points de pourcentage\n")
+
+# value.na / label.na : les communes SANS estimation sont peintes en gris et
+# nommees dans la legende. Elles ne sont ni a zero, ni effacees.
+carte_direct <- tm_shape(communes_sae) +
+  tm_polygons(
+    fill        = "insecure_direct",
+    fill.scale  = tm_scale_continuous(values   = "brewer.blues",
+                                      limits   = limites_insecurite,
+                                      value.na = "grey85",
+                                      label.na = "Sans estimation"),
+    fill.legend = tm_legend(title = "Insecurite (%)"),
+    col = "white", lwd = 0.4
+  ) +
+  tm_title("1. Estimation directe (enquete seule)")
+
+carte_fh <- tm_shape(communes_sae) +
+  tm_polygons(
+    fill        = "insecure_fh",
+    fill.scale  = tm_scale_continuous(values   = "brewer.blues",
+                                      limits   = limites_insecurite,
+                                      value.na = "grey85",
+                                      label.na = "Sans estimation"),
+    fill.legend = tm_legend(title = "Insecurite (%)"),
+    col = "white", lwd = 0.4
+  ) +
+  tm_title("2. Estimation Fay-Herriot (EBLUP)")
+
+carte_gain <- tm_shape(communes_sae) +
+  tm_polygons(
+    fill        = "gain_rmse",
+    fill.scale  = tm_scale_continuous(values   = "-brewer.rd_bu",
+                                      midpoint = 0,
+                                      value.na = "grey85",
+                                      label.na = "Non estimable"),
+    fill.legend = tm_legend(title = "Gain de precision\n(points)"),
+    col = "white", lwd = 0.4
+  ) +
+  tm_title("3. Gain de precision")
+
+carte_sae <- tmap_arrange(carte_direct, carte_fh, carte_gain, ncol = 3)
+print(carte_sae)
+```
+
+::: {.callout-tip}
+## Lecture des trois cartes
+
+**Ce qu'elles codent.** Carte 1 : ce que l'enquête dit toute seule, commune par
+commune. Carte 2 : ce que l'enquête dit une fois lissée par le modèle. Carte 3 : la
+réduction du RMSE, c'est-à-dire **le résultat du travail statistique**, pas le
+phénomène.
+
+**Ce que les choix techniques font.** Les cartes 1 et 2 partagent une échelle
+**imposée** (`limits = limites_insecurite`) : c'est ce qui autorise à les comparer du
+regard. La palette `brewer.blues` est **séquentielle** — elle code une quantité
+ordonnée du peu au beaucoup, ce qui convient à un taux. La carte 3 utilise une palette
+**divergente** centrée sur zéro (`midpoint = 0`) : ici, zéro est un seuil qualitatif
+(le modèle aide / le modèle coûte), et une palette divergente est le seul choix
+correct. Employer une palette séquentielle sur la carte 3 masquerait le signe.
+
+**Ce qui se lit.** L'écart entre les cartes 1 et 2 est plus informatif que chacune
+prise isolément : c'est là qu'on voit **où** le modèle est intervenu. Et la carte 3
+dit **pourquoi** : le gain doit se concentrer sur les mêmes communes que celles qui
+bougent entre 1 et 2 — cohérence à vérifier à voix haute devant les participants.
+
+**Ce qui ne se lit pas.** Une carte lisse n'est pas une carte juste. Le lissage
+Fay-Herriot rend la carte 2 plus régulière que la carte 1, et l'œil interprète
+spontanément la régularité comme de la qualité. C'est un artefact du modèle, pas une
+propriété du territoire.
+
+**En quoi le spatial est utile ici.** Le tableau du Module 7 donnait déjà les valeurs.
+La carte ajoute deux choses qu'aucun tableau ne contient. D'abord la **contiguïté** :
+si les communes fortement corrigées se touchent, l'échantillonnage a été déficient sur
+une zone entière, pas au hasard — c'est un défaut de plan de sondage, pas de commune.
+Ensuite le **repérage des trous** : les communes grises forment-elles un bloc ? Si oui,
+tout un territoire est absent du diagnostic national, et c'est une information de
+politique publique en soi.
+:::
+
+```{r}
+#| label: chunk-sae-exports-cartes
+write_csv(sae_data, "outputs/J10_sae_estimations_communes.csv")
+write_csv(
+  data.frame(admin2Pcod = communes_exclues),
+  "outputs/J10_sae_communes_exclues.csv"
+)
+st_write(communes_sae, "outputs/J10_sae_communes.gpkg",
+         delete_dsn = TRUE, quiet = TRUE)
+
+ggsave("outputs/J10_sae_comparaison.png", graphe_comparaison,
+       width = 8, height = 12, dpi = 180)
+ggsave("outputs/J10_sae_gain_vs_echantillon.png", graphe_gain_n,
+       width = 8, height = 5, dpi = 180)
+ggsave("outputs/J10_sae_precision_vs_taille.png", graphe_precision,
+       width = 8, height = 5, dpi = 180)
+tmap_save(carte_sae, "outputs/J10_sae_cartes_communes.png",
+          width = 2400, height = 1000, dpi = 200)
+
+cat("Exports SAE ecrits dans outputs/.\n")
+```
+
+
+# Module 9 — Précision n'est pas résolution
+
+::: {.callout-important}
+## Deux problèmes distincts, une même solution — et une confusion à éviter
+
+C'est le meilleur moment pédagogique de la journée. Prenez le temps.
+
+**Problème 1 — la PRÉCISION.** L'estimation directe est bruitée là où l'échantillon
+est petit. Fay-Herriot la lisse en empruntant de la force à un modèle. Résultat : un
+chiffre plus fiable, mais **toujours un chiffre par commune**. La résolution
+géographique n'a pas bougé d'un mètre. C'est ce que les Modules 7 et 8 ont fait.
+
+**Problème 2 — la RÉSOLUTION.** Même parfaitement précis, un chiffre par commune reste
+une moyenne sur toute sa superficie. Une commune de 800 km² peut contenir une ville
+dense et de vastes zones rurales vides, et l'enquête ne dit **rien** de cette variation
+interne — peut-être aucun ménage n'a-t-il été enquêté dans la moitié du territoire.
+
+**La même solution appliquée aux deux.** La covariable, elle, varie **en continu dans
+l'espace** : elle est connue pour chaque cellule de 3 km. On peut donc appliquer la
+relation ajustée à l'échelle communale à chaque cellule, et obtenir une surface plus
+fine que l'enquête elle-même.
+
+**Et voici la confusion à interdire.** Ce n'est **pas une nouvelle mesure**. C'est une
+**extrapolation du modèle** à l'intérieur de chaque commune. Rien n'a été observé à
+3 km. La carte qui suit est la plus impressionnante de la journée, et la moins mesurée.
+
+Notez enfin que cette grille de 3 km n'a **rien à voir** avec les grilles de population
+à 100 m vues au J08 (WorldPop, GHS-POP). Là-bas, 100 m était la résolution d'un produit
+dérivé d'imagerie ; ici, 3 km est un choix d'extraction des covariables sur Google
+Earth Engine, un compromis entre finesse et temps de calcul. Deux grilles, deux
+significations : ne pas les confondre.
+:::
+
+## 9.1 — Reconstruire l'effet aléatoire et prédire
+
+```{r}
+#| label: chunk-grille-prediction
+# a) Recuperer les coefficients ajustes au niveau COMMUNE.
+betas     <- fh$est$fit$estcoef[, "beta"]
+beta0     <- betas["(Intercept)"]
+beta_lc13 <- betas["lc_13_urbain_adm2"]
+beta_lc8  <- betas["lc_8_savane_boisee_adm2"]
+
+cat("Coefficients ajustes :\n")
+cat("  intercept                :", round(beta0, 3), "\n")
+cat("  part urbaine (lc_13)     :", round(beta_lc13, 3), "\n")
+cat("  savane boisee (lc_8)     :", round(beta_lc8, 3), "\n")
+
+# b) Reconstruire l'effet aleatoire de commune u_hat par difference :
+#    u_hat = EBLUP - partie expliquee par les covariables.
+#    C'est ce qui, dans la commune, echappe aux covariables : contexte local,
+#    marches, histoire, variables omises. Il est CONSTANT dans la commune.
+sae_data <- sae_data |>
+  mutate(
+    partie_fixe = beta0 +
+      beta_lc13 * lc_13_urbain_adm2 +
+      beta_lc8  * lc_8_savane_boisee_adm2,
+    u_hat = insecure_fh - partie_fixe
+  )
+
+cat("\nEffet aleatoire u_hat -- moyenne :", round(mean(sae_data$u_hat), 3),
+    "| ecart-type :", round(sd(sae_data$u_hat), 3),
+    "| etendue :", round(min(sae_data$u_hat), 2), "a",
+    round(max(sae_data$u_hat), 2), "\n")
+cat("Part de la variation de l'EBLUP portee par u_hat plutot que par les\n")
+cat("covariables (ecart-type u_hat / ecart-type EBLUP) :",
+    round(sd(sae_data$u_hat) / sd(sae_data$insecure_fh), 2), "\n")
+
+# c) Appliquer la formule a CHAQUE CELLULE.
+#    PIEGE DE NOMMAGE : les colonnes de la grille n'ont PAS le suffixe _adm2.
+#    lc_13_urbain_adm2 (commune) <-> lc_13_urbain (cellule).
+cat("\nColonnes de covariables cote grille :",
+    paste(intersect(names(covariables_grille),
+                    c("lc_13_urbain", "lc_8_savane_boisee")), collapse = ", "),
+    "\n")
+
+n_cellules_total <- nrow(covariables_grille)
+
+grille_pred <- covariables_grille |>
+  left_join(sae_data |> select(admin2Pcod, u_hat), by = "admin2Pcod") |>
+  mutate(
+    insecure_pred = beta0 +
+      beta_lc13 * lc_13_urbain +
+      beta_lc8  * lc_8_savane_boisee +
+      u_hat
+  )
+
+cat("\nCellules totales :", n_cellules_total, "\n")
+cat("Cellules sans u_hat (commune exclue ou non enquetee) :",
+    sum(is.na(grille_pred$u_hat)),
+    sprintf("(%.1f %%)", 100 * mean(is.na(grille_pred$u_hat))), "\n")
+
+grille_pred <- grille_pred |> filter(!is.na(u_hat))
+
+cat("Cellules predites :", nrow(grille_pred), "sur", n_cellules_total, "\n")
+cat("Prediction -- min :", round(min(grille_pred$insecure_pred), 2),
+    "| median :", round(median(grille_pred$insecure_pred), 2),
+    "| max :", round(max(grille_pred$insecure_pred), 2), "\n")
+
+# CONTROLE INDISPENSABLE : une proportion predite peut sortir de [0, 100].
+# Le modele est lineaire, rien ne l'en empeche. On COMPTE, on ne tronque pas
+# en silence.
+cat("Cellules predites HORS de l'intervalle [0, 100] :",
+    sum(grille_pred$insecure_pred < 0 | grille_pred$insecure_pred > 100), "\n")
+```
+
+::: {.callout-warning}
+## Trois contrôles que cette prédiction impose
+
+**1. Les cellules sans `u_hat`.** Une commune exclue du modèle (une seule grappe) ou
+jamais enquêtée n'a pas d'effet aléatoire : ses cellules ne peuvent pas être prédites.
+Elles sont retirées — et le compteur ci-dessus dit combien de territoire disparaît
+ainsi de la carte finale. Ce chiffre doit figurer dans toute présentation du résultat.
+
+**2. Les valeurs hors bornes.** Le modèle est linéaire et la variable est une
+proportion : rien n'interdit mathématiquement une prédiction à −4 % ou 112 %. Les
+tronquer silencieusement à `[0, 100]` embellirait la carte tout en dissimulant que le
+modèle est extrapolé hors de son domaine de validité. On les compte, on les montre.
+
+**3. L'effet aléatoire est constant dans la commune.** `u_hat` ne varie pas d'une
+cellule à l'autre : **toute** la variation interne visible sur la carte vient des
+covariables. Autrement dit, la carte de grille montre exactement la géographie de la
+part de sol urbain et de savane boisée, translatée et mise à l'échelle. Si les
+participants ne retiennent qu'une phrase du module, c'est celle-là.
+:::
+
+## 9.2 — La carte la plus impressionnante, et la moins mesurée
+
+```{r}
+#| label: chunk-grille-carte
+#| fig-height: 8
+n_grille_avant <- nrow(ben_grille)
+
+grille_sae <- ben_grille |>
+  inner_join(grille_pred |> select(id, insecure_pred), by = "id")
+
+cat("Cellules de la couche :", n_grille_avant, "\n")
+cat("Cellules cartographiees :", nrow(grille_sae),
+    sprintf("(%.1f %%)", 100 * nrow(grille_sae) / n_grille_avant), "\n")
+cat("Cellules perdues a la jointure geometrique :",
+    nrow(grille_pred) - nrow(grille_sae), "\n")
+
+carte_grille <- tm_shape(grille_sae) +
+  tm_fill(
+    fill        = "insecure_pred",
+    fill.scale  = tm_scale_continuous(values = "brewer.blues",
+                                      limits = limites_insecurite),
+    fill.legend = tm_legend(title = "Insecurite alim.\nPREDITE (%)")
+  ) +
+  tm_shape(ben_communes) +
+  tm_borders(col = "grey20", lwd = 0.6) +
+  tm_title("Prediction du modele a l'echelle de la grille de 3 km") +
+  tm_layout(legend.outside = TRUE)
+
+print(carte_grille)
+```
+
+::: {.callout-important}
+## Lecture de la figure — et l'avertissement qui doit toujours l'accompagner
+
+**Ce que la figure code.** Chaque cellule de 3 km porte une valeur **prédite par un
+modèle ajusté sur 76 communes**, à partir de deux variables d'occupation du sol et
+d'un effet aléatoire communal constant. Aucune de ces valeurs n'a été observée. Ce
+n'est pas une mesure à 3 km : c'est la formule du modèle, évaluée en 15 000 points.
+
+**Ce que les choix techniques font.** L'échelle de couleurs est **la même** que celle
+des cartes communales du Module 8 : c'est délibéré, et c'est ce qui permet de dire
+« la même valeur donne la même couleur » — sans cela, la comparaison entre les deux
+résolutions serait purement illusoire. Le rendu fin et continu de la grille est
+esthétiquement supérieur à la choroplèthe communale, et c'est précisément le danger :
+**la finesse graphique se lit spontanément comme de la finesse de mesure**. Le contour
+des communes est maintenu par-dessus pour rappeler l'unité à laquelle le modèle a
+réellement été ajusté.
+
+**Ce qui se lit.** À l'intérieur d'une commune, la géographie des **covariables** —
+zones urbaines, savane boisée — traduite en niveaux d'insécurité. Et, entre communes,
+les sauts brusques aux frontières : ce sont les `u_hat`, discontinus par construction.
+Ces discontinuités sont un aveu du modèle : elles montrent où le modèle s'arrête.
+
+**Ce qui ne se lit pas.** Aucune variation infra-communale réellement mesurée. Aucune
+incertitude — la carte n'affiche pas d'EQM, et il n'en existe pas de simple à ce
+niveau. Aucun ménage. **Précision ≠ résolution** : le Module 7 a amélioré la
+précision, ce module a augmenté la résolution, et ce sont deux opérations sans rapport.
+Une carte peut être très fine et très fausse ; c'est même la combinaison la plus
+dangereuse, parce qu'elle est la plus convaincante.
+
+**La phrase à faire écrire aux participants sur la carte, en légende :** *« Valeurs
+prédites par un modèle ajusté sur 76 communes — non mesurées à cette résolution. »*
+:::
+
+```{r}
+#| label: chunk-grille-export
+write_csv(
+  grille_pred |> select(id, admin2Pcod, insecure_pred),
+  "outputs/J10_sae_estimations_grille.csv"
+)
+st_write(grille_sae, "outputs/J10_sae_grille.gpkg",
+         delete_dsn = TRUE, quiet = TRUE)
+tmap_save(carte_grille, "outputs/J10_sae_carte_grille.png",
+          width = 1600, height = 1600, dpi = 200)
+
+cat("Exports de la grille ecrits dans outputs/.\n")
+cat("\nTous les fichiers produits par la journee :\n")
+print(list.files("outputs"))
+```
+
+
+# Module 10 — Accessibilité aux services : la journée revient au terrain
+
+::: {.callout-warning}
+## Module réactivé le 01/09/2026 — à lire avec attention
+
+Ce module était en `eval: false` faute de `DS.geojson`, retrouvé depuis et remis
+dans `datasets/`. Les cinq chunks sont repassés en exécution.
+
+**Conséquence à assumer : c'est la partie la moins éprouvée du document.** Elle
+vient de l'ancien matériel, elle n'a jamais tourné, et deux bugs y ont déjà été
+corrigés à la lecture (voir ci-dessous). Ses compteurs `cat()` méritent donc une
+lecture plus attentive que ceux des modules 1 à 9 — en particulier le nombre de
+géométries réparées et les effectifs après jointure.
+
+**Deuxième raison, indépendante de la première.** Le matériel d'origine construisait
+ses isochrones autour des coordonnées lues dans `CMGC72FL.csv`. Or ce fichier ne
+contient **aucune coordonnée** : c'est le fichier des 130 covariables contextuelles
+par grappe DHS. Les positions se trouvent dans `CMGE71FL.shp`. Le code d'origine était
+donc faux, et il aurait échoué même avec toutes les données présentes. La version
+ci-dessous est réécrite sur une autre base, décrite au 10.2.
+:::
+
+## 10.1 — Pourquoi ce module reste dans la journée
+
+::: {.callout-note}
+## De la mesure à la décision
+
+Les neuf modules précédents produisent des **diagnostics** : où sont les événements, où
+il fait chaud, où l'insécurité alimentaire est forte. Un diagnostic n'est pas encore
+une politique publique. L'accessibilité fait le pas suivant : elle transforme une
+géographie en **question d'allocation**. Combien de personnes vivent à plus de
+15 km d'un service ? Où faut-il ouvrir la prochaine structure ? Quel gain de couverture
+attendre de chaque ouverture possible ?
+
+C'est le seul module de la journée dont le résultat s'écrit directement en termes de
+décision — et c'est pour cela qu'il est conservé alors même que ses données manquent.
+
+**Le vocabulaire, d'abord.** Un « isochrone » est une courbe reliant les points
+atteignables en un **même temps** de trajet. Ce que nous calculons ci-dessous n'en est
+pas un : ce sont des **tampons de distance euclidienne** (5, 10, 15 km à vol d'oiseau).
+La différence n'est pas un détail de langage. Un tampon ignore le relief, les cours
+d'eau, l'état des pistes, la saison des pluies et l'absence de pont. En zone de
+montagne ou de mangrove, deux points distants de 5 km à vol d'oiseau peuvent demander
+une demi-journée. Un vrai calcul d'isochrone passe par un réseau routier et un moteur
+de routage (`osrm`, OpenRouteService) — c'est le prolongement naturel de ce module,
+hors du périmètre d'une journée.
+:::
+
+## 10.2 — Chargement des couches (non exécuté)
+
+```{r}
+#| label: chunk-acces-lecture
+# Reactive le 01/09/2026 : DS.geojson a ete retrouve et remis dans datasets/.
+# Ce module est le MOINS teste du document -- il vient de l'ancien materiel et
+# n'a jamais tourne. Lire ses compteurs avec une attention particuliere.
+#
+# sf_use_s2(FALSE) : DS.geojson compte 135 geometries invalides sur 200. Le
+# moteur spherique s2 refuse ce que le moteur planaire GEOS accepte. On repasse
+# donc en planaire ET on repare a la lecture. Cela n'autorise PAS a mesurer sur
+# des degres : toute distance ci-dessous passe par une reprojection en UTM.
+sf::sf_use_s2(FALSE)
+
+districts <- st_read("datasets/DS.geojson", quiet = TRUE) |>
+  st_make_valid()
+
+cat("Districts sanitaires :", nrow(districts), "\n")
+cat("Champs disponibles :", paste(names(districts), collapse = ", "), "\n")
+cat("CRS :", st_crs(districts)$input, "\n")
+cat("Geometries valides apres reparation :",
+    sum(st_is_valid(districts)), "sur", nrow(districts), "\n")
+
+# ATTENTION AUX NOMS DE CHAMPS. Ce fichier ne porte ni NomDS ni CodeDS :
+# ses champs sont "name" et "parentName", prefixes. Le code d'origine
+# interrogeait nom_ds / code_ds -- des colonnes qui n'existent pas.
+# On adapte donc apres avoir LU names(districts) ci-dessus.
+
+departements <- st_read("datasets/gadm41_CMR_2.shp", quiet = TRUE) |>
+  st_make_valid()
+cat("\nDepartements (GADM niveau 2) :", nrow(departements), "\n")
+```
+
+```{r}
+#| label: chunk-acces-superficies
+# NON EXECUTE. MESURER EXIGE DE REPROJETER : EPSG:4326 est en degres, une
+# superficie calculee dessus n'a aucun sens. UTM 33N (EPSG:32633) pour le
+# Cameroun.
+districts_utm <- st_transform(districts, 32633)
+
+districts_utm <- districts_utm |>
+  mutate(superficie_km2 = as.numeric(st_area(geometry)) / 1e6)
+
+cat("Superficie des districts (km2) :\n")
+print(summary(districts_utm$superficie_km2))
+
+# CONTROLE PAR REFERENCE EXTERNE : la somme doit approcher les 475 442 km2
+# officiels du Cameroun. Un ecart de plus de quelques pour cent signale une
+# mauvaise projection ou des trous dans le decoupage.
+cat("\nSuperficie totale calculee :",
+    format(round(sum(districts_utm$superficie_km2)), big.mark = " "), "km2\n")
+cat("Superficie officielle du Cameroun : 475 442 km2\n")
+cat("Ecart relatif :",
+    sprintf("%.1f %%",
+            100 * (sum(districts_utm$superficie_km2) - 475442) / 475442), "\n")
+```
+
+## 10.3 — Points de service et tampons de distance (non exécuté)
+
+```{r}
+#| label: chunk-acces-buffers
+# NON EXECUTE.
+#
+# HYPOTHESE DE TRAVAIL, A ENONCER EN SALLE. Nous ne disposons pas d'un
+# repertoire geolocalise des formations sanitaires. Nous utilisons le CENTROIDE
+# de chaque district sanitaire comme point de service approche : c'est le
+# chef-lieu presume du district.
+#
+# Ce n'est PAS un hopital. Un centroide de polygone peut tomber en pleine
+# foret, ou hors du polygone lui-meme s'il est concave. La carte produite
+# mesure donc "la distance au centre geometrique du district", pas "la distance
+# au service" -- une approximation acceptable pour enseigner la methode, jamais
+# pour dimensionner une politique. Avec un repertoire reel (SNIS, HeRAMS,
+# healthsites.io), la meme chaine de code donne un resultat exploitable.
+points_service <- st_centroid(districts_utm)
+cat("Points de service (centroides de district) :", nrow(points_service), "\n")
+
+# Tampons de 5, 10 et 15 km, unis en une seule geometrie par distance.
+buffer_5km  <- st_union(st_buffer(points_service, dist =  5000))
+buffer_10km <- st_union(st_buffer(points_service, dist = 10000))
+buffer_15km <- st_union(st_buffer(points_service, dist = 15000))
+
+# Anneaux EXCLUSIFS : sans le st_difference(), les zones se superposeraient et
+# la carte compterait deux fois les memes territoires.
+anneau_5_10  <- st_difference(buffer_10km, buffer_5km)
+anneau_10_15 <- st_difference(buffer_15km, buffer_10km)
+
+pays_utm  <- st_union(districts_utm)
+hors_15km <- st_difference(pays_utm, buffer_15km)
+
+# Bilan surfacique, en km2 et en part du territoire.
+surf <- function(g) as.numeric(st_area(g)) / 1e6
+surf_totale <- surf(pays_utm)
+
+bilan_acces <- data.frame(
+  zone = c("moins de 5 km", "5 a 10 km", "10 a 15 km", "plus de 15 km"),
+  km2  = c(surf(buffer_5km), surf(anneau_5_10),
+           surf(anneau_10_15), surf(hors_15km))
+) |>
+  mutate(part_pct = round(100 * km2 / surf_totale, 1))
+
+print(bilan_acces)
+cat("\nSuperficie de controle :", round(sum(bilan_acces$km2)),
+    "km2 contre", round(surf_totale), "km2 pour le pays entier\n")
+```
+
+::: {.callout-warning}
+## Superficie couverte n'est pas population couverte
+
+Le tableau ci-dessus mesure des **kilomètres carrés**. Une politique publique se
+décide sur des **habitants**. Les deux divergent fortement : les zones éloignées de
+tout service sont généralement les moins peuplées, si bien qu'une couverture
+territoriale médiocre peut correspondre à une couverture démographique très correcte —
+ou l'inverse, si les populations mal desservies sont concentrées.
+
+Le chunk suivant fait donc la seule chose défendable : il **pondère par la population**.
+C'est un cas d'école de la règle « dire de quoi on prend la moyenne ». Publier
+« 38 % du territoire est à plus de 15 km d'un service » à la place de « 12 % de la
+population est à plus de 15 km d'un service » n'est pas une approximation : c'est une
+autre affirmation, sur un autre sujet.
+:::
+
+```{r}
+#| label: chunk-acces-population
+# NON EXECUTE. Population non couverte, par intersection ponderee par la
+# superficie. HYPOTHESE FORTE ET FAUSSE, mais explicite : la population est
+# supposee REPARTIE UNIFORMEMENT dans chaque district. Elle ne l'est jamais.
+#
+# La bonne methode, vue au J08, est de croiser les tampons avec une GRILLE DE
+# POPULATION (WorldPop 100 m) par exact_extract() : la population est alors
+# prise la ou elle est reellement. Ce module montre la methode approchee pour
+# rendre visible ce qu'elle coute.
+districts_pop <- districts_utm |>
+  mutate(
+    zone_non_couverte  = st_difference(geometry, buffer_5km),
+    part_non_couverte  = as.numeric(st_area(zone_non_couverte)) /
+                         as.numeric(st_area(geometry))
+  )
+
+# population : colonne a rattacher depuis une source d'effectifs par district.
+# Sans elle, ce bloc ne calcule que des PARTS DE SUPERFICIE -- ce qui doit etre
+# dit tel quel, et non presente comme un resultat de population.
+cat("Part moyenne de superficie a plus de 5 km d'un point de service :",
+    sprintf("%.1f %%", 100 * mean(districts_pop$part_non_couverte)), "\n")
+cat("Districts entierement au-dela de 5 km :",
+    sum(districts_pop$part_non_couverte > 0.99), "\n")
+```
+
+## 10.4 — Carte de couverture (non exécutée)
+
+```{r}
+#| label: chunk-acces-carte
+# NON EXECUTE. Carte en quatre zones exclusives, du vert (proche) au rouge
+# (eloigne). Les couleurs sont ORDONNEES : c'est une echelle sequentielle
+# deguisee en categories, ce qui est legitime ici puisque les classes de
+# distance sont ordonnees.
+#
+# Retour en WGS84 pour l'affichage seulement -- les MESURES, elles, ont ete
+# faites en UTM.
+en_wgs <- function(g) st_sf(geometry = st_transform(g, 4326))
+
+carte_acces <- tm_shape(en_wgs(pays_utm)) +
+  tm_borders(col = "black", lwd = 2) +
+  tm_shape(en_wgs(hors_15km)) +
+  tm_polygons(fill = "#D73027", fill_alpha = 0.75, col = NA) +
+  tm_shape(en_wgs(anneau_10_15)) +
+  tm_polygons(fill = "#FC8D59", fill_alpha = 0.75, col = NA) +
+  tm_shape(en_wgs(anneau_5_10)) +
+  tm_polygons(fill = "#FEE08B", fill_alpha = 0.75, col = NA) +
+  tm_shape(en_wgs(buffer_5km)) +
+  tm_polygons(fill = "#1A9850", fill_alpha = 0.65, col = NA) +
+  tm_shape(st_transform(points_service, 4326)) +
+  tm_dots(fill = "#004529", size = 0.15) +
+  tm_add_legend(
+    type   = "polygons",
+    fill   = c("#1A9850", "#FEE08B", "#FC8D59", "#D73027"),
+    labels = c("moins de 5 km", "5 a 10 km", "10 a 15 km", "plus de 15 km"),
+    title  = "Distance a vol d'oiseau\nau centre du district"
+  ) +
+  tm_title("Couverture theorique des services de sante -- Cameroun") +
+  tm_layout(legend.outside = TRUE)
+
+tmap_save(carte_acces, "outputs/J10_accessibilite_sante.png",
+          width = 1600, height = 1800, dpi = 200)
+print(carte_acces)
+```
+
+::: {.callout-tip}
+## Lecture de la figure — carte de couverture (à commenter même non rendue)
+
+**Ce que la figure code.** Quatre classes de distance **euclidienne** à un point de
+service approché par un centroïde de district. Pas un temps de trajet, pas une distance
+routière, pas une accessibilité réelle.
+
+**Ce que les choix techniques font.** Les anneaux sont **exclusifs** : sans
+`st_difference()`, les tampons se superposeraient et les surfaces se compteraient
+plusieurs fois. Les seuils 5 / 10 / 15 km sont conventionnels et se justifient par le
+mode de déplacement (marche, deux-roues, véhicule) : ils doivent être **déclarés**, car
+déplacer un seuil de 5 à 8 km change entièrement le message de la carte. La palette
+vert-jaune-rouge est ordonnée et lisible, mais elle porte un jugement — le rouge
+signale un manque, ce qui est exactement l'intention ici, et serait déplacé sur une
+carte descriptive.
+
+**Ce qui se lit.** La géographie du manque, et son caractère **contigu** : les zones
+mal couvertes forment des blocs, pas un semis. C'est ce qui les rend actionnables — on
+n'ouvre pas un service par commune isolée, on couvre une zone.
+
+**Ce qui ne se lit pas.** Le relief, la saison, l'état des pistes, l'existence d'un
+pont, le coût du transport, les horaires d'ouverture, la disponibilité du personnel et
+des médicaments. Une structure ouverte sans personnel produit exactement la même tache
+verte sur cette carte qu'un hôpital de référence. C'est la limite fondamentale de
+toute carte d'accessibilité géométrique : elle mesure la **distance**, pas l'**accès**.
+
+**En quoi le spatial est utile ici.** De façon décisive : la question posée — « qui est
+loin de quoi ? » — n'a **aucune** formulation tabulaire. Un tableau d'effectifs par
+district ne peut pas répondre, parce que la réponse dépend de la position relative de
+deux couches. C'est le cas le plus net de la journée où la carte n'est pas une
+illustration du résultat : elle **est** le calcul.
+:::
+
+# Fin de journée
+
+## Ce que la journée a établi, module par module
+
+```{r}
+#| label: chunk-recapitulatif
+recapitulatif <- data.frame(
+  module = 1:10,
+  titre = c(
+    "ACLED : lire une base d'evenements",
+    "Du point au polygone : la jointure qui echoue en silence",
+    "ERA5 : ouvrir un NetCDF, convertir les Kelvin",
+    "Extraction zonale temporelle",
+    "Plan de sondage et estimation directe (Benin)",
+    "Choisir une covariable auxiliaire",
+    "Fay-Herriot : EBLUP, EQM, gain de precision",
+    "Trois cartes a echelle commune",
+    "Precision n'est pas resolution",
+    "Accessibilite aux services (non execute)"
+  ),
+  piege_enseigne = c(
+    "un evenement est un fait RAPPORTE, pas verifie",
+    "libelles FR non accentues contre libelles EN : NA silencieux",
+    "Kelvin ; une difference de temperature ne trahit pas l'unite",
+    "les noms de couches ne se trient pas dans l'ordre chronologique",
+    "sans poids on decrit l'echantillon ; une grappe unique = variance nulle",
+    "correlation n'est pas causalite ; colinearite",
+    "un gain moyen faible n'est pas un echec du modele",
+    "deux cartes a echelles differentes ne se comparent pas",
+    "une carte fine n'est pas une carte mesuree",
+    "distance euclidienne n'est pas accessibilite"
+  )
+)
+print(recapitulatif)
+```
+
+## Glossaire, par domaine
+
+::: {.callout-note}
+## Statistique d'enquête
+
+**Plan de sondage** — l'ensemble des règles selon lesquelles l'échantillon a été tiré :
+strates, degrés, probabilités d'inclusion. Il doit être déclaré (`svydesign()`) avant
+tout calcul, sinon toutes les erreurs-types sont fausses.
+
+**Poids de sondage** (`hhweight`) — le nombre d'unités de la population que représente
+une unité de l'échantillon. Sans lui, on décrit l'échantillon, pas la population.
+
+**Grappe** (*cluster*) — unité primaire de tirage, typiquement une zone de dénombrement.
+Les unités d'une même grappe se ressemblent ; l'ignorer produit des erreurs-types
+artificiellement petites.
+
+**Effet de grappe** (*design effect*) — rapport entre la variance obtenue avec le plan
+réel et celle qu'aurait donné un tirage aléatoire simple de même taille. Au-dessus de
+1, la structure du plan coûte de la précision.
+
+**Estimation directe** — l'estimation calculée dans un domaine à partir des seules
+observations de ce domaine, pondérées. Sans biais, mais bruitée quand l'échantillon est
+petit.
+
+**Erreur-type** — écart-type de l'estimateur, c'est-à-dire l'incertitude due au fait
+qu'on a enquêté un échantillon plutôt que toute la population.
+
+**Biais de taille** — parcourir un fichier d'individus surreprésente les grands
+ménages ; les statistiques par individu et par ménage ne répondent pas à la même
+question.
+
+**Non-réponse** — absence de réponse d'une unité tirée. Les poids corrigent le tirage,
+pas la non-réponse.
+:::
+
+::: {.callout-note}
+## Estimation sur petits domaines
+
+**Petit domaine** — unité pour laquelle l'enquête n'a pas été dimensionnée : trop peu
+d'observations pour une estimation directe fiable. « Petit » qualifie l'échantillon,
+pas la superficie.
+
+**Modèle de Fay-Herriot (1979)** — modèle **d'aire** : il travaille sur les estimations
+agrégées par domaine et leur variance, pas sur les observations individuelles.
+
+**Modèle unitaire** (Battese-Harter-Fuller, EBP) — modèle sur les observations
+individuelles. Plus riche, plus exigeant en données. C'est celui du dépôt d'origine ;
+nous avons simplifié vers le modèle d'aire.
+
+**EBLUP** (*Empirical Best Linear Unbiased Predictor*) — le prédicteur du modèle :
+moyenne pondérée entre estimation directe et prédiction du modèle, avec un poids
+gouverné par le rapport des variances.
+
+**Emprunter de la force** (*borrowing strength*) — le fait, pour un domaine mal
+enquêté, d'utiliser l'information des autres domaines via le modèle.
+
+**EQM / MSE** (erreur quadratique moyenne) — mesure d'incertitude de l'EBLUP,
+combinant erreur d'échantillonnage, erreur de modèle et erreur d'estimation des
+paramètres. Sa racine, le **RMSE**, s'exprime dans l'unité de la variable.
+
+**`vardir`** — la variance d'échantillonnage **connue** de chaque domaine, fournie en
+entrée du modèle. C'est elle qui distingue un modèle SAE d'une régression ordinaire.
+
+**Effet aléatoire de domaine** (`u_hat`) — ce qui, dans un domaine, échappe aux
+covariables. Constant à l'intérieur du domaine, discontinu à ses frontières.
+
+**Arbitrage biais-variance** — l'EBLUP est plus précis (variance plus faible) mais
+légèrement biaisé vers le modèle. Précision et justesse sont deux propriétés
+distinctes.
+:::
+
+::: {.callout-note}
+## Données événementielles
+
+**Événement (au sens ACLED)** — un fait **rapporté** par au moins une source, codé
+selon une typologie, daté et localisé. Ni un fait vérifié, ni un fait exhaustif.
+
+**`geo_precision`** — 1 : lieu précis ; 2 : ville la plus proche ; 3 : région. Sur une
+carte de points, les trois se ressemblent.
+
+**`time_precision`** — 1 : jour connu ; 2 : semaine ; 3 : mois.
+
+**Biais de couverture médiatique** — la base mesure conjointement le phénomène et
+l'activité des sources qui le rapportent. Un territoire sans presse produit peu
+d'événements.
+
+**Sentinelle** — valeur conventionnelle codant une absence : `-9999`, `99`, ou des
+coordonnées `(0, 0)`. À recoder en `NA` **avant** tout calcul.
+:::
+
+::: {.callout-note}
+## Réanalyse climatique
+
+**Réanalyse** — reconstruction d'un état atmosphérique passé par un modèle contraint
+par toutes les observations disponibles. Ni observation, ni prévision : une
+interpolation physiquement cohérente, complète et régulière.
+
+**ERA5** — réanalyse de l'ECMWF, ~31 km, depuis 1940, distribuée par le Copernicus
+Climate Data Store.
+
+**NetCDF** — format de tableau multidimensionnel (longitude × latitude × temps). Lu
+par `terra::rast()` comme une pile de couches ; les dates sont portées par `time()`.
+
+**Kelvin** — unité native des températures ERA5. `T_C = T_K − 273,15`. Une **différence**
+de températures a la même valeur dans les deux unités, ce qui rend l'oubli de
+conversion indétectable sur les anomalies.
+
+**Normale climatique** — moyenne sur trente ans, période de référence conventionnelle.
+Dix ans ne suffisent pas à établir une tendance.
+:::
+
+::: {.callout-note}
+## Vocabulaire spatial et cartographique
+
+**CRS** (système de coordonnées de référence) — ce qui donne un sens aux nombres d'une
+géométrie. EPSG:4326 est en **degrés** : aucune mesure de distance ou de superficie
+n'y est valide. EPSG:32633 (UTM 33N) est en mètres, adapté au Cameroun.
+
+**`st_within`** — prédicat spatial : le point est-il à l'intérieur du polygone ? Une
+jointure spatiale n'utilise aucun libellé, donc ne souffre ni des accents ni des
+langues.
+
+**`exact_extract()`** — statistique zonale **pondérée par la fraction** de cellule
+couverte par le polygone. Sur une maille grossière, la différence avec une extraction
+par centroïde est loin d'être négligeable.
+
+**Discrétisation** — découpage d'une variable continue en classes de couleur.
+*Quantiles* : contraste garanti, seuils arbitraires. *Intervalles égaux* : seuils
+lisibles, classes parfois vides. *Jenks* : ruptures naturelles, seuils non comparables
+d'une carte à l'autre. Aucun choix n'est neutre ; un choix déclaré suffit.
+
+**Palette séquentielle / divergente / qualitative** — respectivement : une quantité
+ordonnée ; un écart de part et d'autre d'une référence ; des catégories sans ordre.
+
+**MAUP** (*Modifiable Areal Unit Problem*) — les résultats dépendent de la maille
+d'agrégation (effet d'échelle) et du tracé des limites (effet de zonage). On agrège à
+la maille de la décision.
+
+**Erreur écologique** — attribuer à un individu ce qui n'est vrai que de l'agrégat.
+Risque permanent de la choroplèthe.
+
+**Isochrone** — courbe des points atteignables en un même temps de trajet. À ne pas
+confondre avec un **tampon** de distance euclidienne.
+
+**Précision** — faible variance de l'estimation. **Résolution** — finesse de la maille
+d'affichage. Une carte peut être très résolue et très imprécise.
+:::
+
+## Fonctions clés de la journée
+
+| Fonction | Package | Ce qu'elle fait | Le piège associé |
+|---|---|---|---|
+| `read_csv()` | readr | lit un CSV | vérifier le séparateur : une colonne unique = erreur silencieuse |
+| `st_read()` / `st_layers()` | sf | lit une couche / liste les couches d'un GeoPackage | ne jamais deviner le nom d'une couche |
+| `st_as_sf()` | sf | crée une couche de points | `coords = c(longitude, latitude)`, jamais l'inverse |
+| `st_crs()` / `st_transform()` | sf | lit / change le CRS | mesurer exige de reprojeter |
+| `st_join(join = st_within)` | sf | jointure spatiale | compter les lignes avant/après : `st_join` peut dupliquer |
+| `st_make_valid()` | sf | répare les géométries | à appliquer à la lecture des fichiers sales |
+| `st_buffer()` / `st_difference()` | sf | tampons / anneaux exclusifs | sans `st_difference()`, les surfaces se comptent deux fois |
+| `left_join()` | dplyr | jointure attributaire | partir de la couche ; compter les `NA` après |
+| `replace_na()` | tidyr | remplace les `NA` | légitime après jointure spatiale, dangereux après jointure par libellé |
+| `pivot_longer()` | tidyr | passe au format long | `names_pattern` sépare valeur et méthode en une opération |
+| `rast()` | terra | lit un raster ou un NetCDF | vérifier `nlyr()`, `res()`, `time()` et l'**unité** |
+| `crop()` + `mask()` | terra | découpe rectangulaire puis par polygone | les deux sont nécessaires |
+| `exact_extract()` | exactextractr | statistique zonale pondérée | harmoniser les CRS d'abord |
+| `svydesign()` | survey | déclare le plan de sondage | ne calcule rien ; conditionne tout ce qui suit |
+| `svymean()` / `svyby()` | survey | estimation pondérée, globale / par domaine | fournit l'erreur-type réelle, indispensable au SAE |
+| `mseFH()` | sae | ajuste Fay-Herriot et calcule l'EQM | charger `sae` **avant** `dplyr` (masquage de `select()`) |
+| `tm_polygons()` + `tm_scale_*()` | tmap | choroplèthe et discrétisation | API tmap 4 ; imposer `limits` pour comparer deux cartes |
+| `tmap_arrange()` | tmap | juxtapose des cartes | inutile si les échelles diffèrent |
+
+## Exercices — chacun porte un piège nommé
+
+::: {.callout-note}
+## Exercice 1 — Le piège de la jointure par libellé (Module 2)
+
+Reprenez `acled_clean` et `cmr1`. Agrégez les événements par `admin2` (départements
+ACLED) et tentez de les joindre à la couche `ADM_ADM_2` du GeoPackage GADM par le
+libellé. Comptez les `NA`, puis les événements orphelins.
+
+**Question de méthode.** Le taux d'échec sera-t-il plus élevé ou plus faible qu'au
+niveau régional ? Formulez votre hypothèse **avant** de lancer le code, puis expliquez
+l'écart. Indice : les noms de départements sont-ils traduits par GADM, ou repris tels
+quels ? Un `left_join` peut échouer pour deux raisons différentes — la langue et
+l'orthographe — qui ne se corrigent pas de la même façon.
+:::
+
+::: {.callout-note}
+## Exercice 2 — Le piège du MAUP (Modules 2 et 6)
+
+Refaites l'agrégation ACLED par `st_within` sur les **départements** (ADM_ADM_2, 58
+unités) au lieu des régions (10 unités). Produisez la même choroplèthe, avec la même
+discrétisation en quantiles.
+
+**Question de méthode.** Les 5 unités les plus touchées à l'échelle départementale
+appartiennent-elles aux 5 régions les plus touchées ? Calculez la corrélation entre
+« nombre d'événements » et « superficie de l'unité » aux deux mailles. Laquelle des
+deux cartes présenteriez-vous à un ministre — et quelle phrase mettriez-vous en note
+de bas de page ?
+:::
+
+::: {.callout-note}
+## Exercice 3 — Le piège de l'unité (Module 3)
+
+Calculez, pour chaque région, l'**anomalie** de température : écart entre la moyenne
+de la dernière année du fichier et la moyenne de toute la période. Faites-le une
+première fois sur `era5_brut` (Kelvin) et une seconde sur `era5_cmr` (Celsius).
+
+**Question de méthode.** Comparez les deux résultats. Pourquoi sont-ils identiques ?
+Quelle conséquence pratique cela a-t-il sur la détectabilité d'un oubli de conversion ?
+Construisez ensuite un calcul où l'oubli **serait** visible.
+:::
+
+::: {.callout-note}
+## Exercice 4 — Le piège de la moyenne non pondérée (Modules 4 et 5)
+
+La série nationale du Module 4 est une moyenne **non pondérée** des dix régions.
+Recalculez-la en pondérant chaque région par sa superficie (`st_area()` après
+reprojection en UTM 32N ou 33N).
+
+**Question de méthode.** De combien de dixièmes de degré les deux séries diffèrent-elles ?
+Laquelle répond à la question « quelle est la température moyenne du territoire
+camerounais ? », et laquelle à « quelle est la température moyenne d'une région
+camerounaise ? ». Quelle troisième pondération faudrait-il pour répondre à « quelle
+température subit un Camerounais moyen ? », et où trouver la donnée nécessaire ?
+:::
+
+::: {.callout-note}
+## Exercice 5 — Le piège de la variance non estimable (Module 5)
+
+Modifiez le seuil d'exclusion : au lieu de retirer les communes à une seule grappe,
+retirez celles qui ont **moins de trois grappes**. Réajustez le modèle.
+
+**Question de méthode.** Combien de communes perdez-vous ? Le gain moyen de précision
+augmente-t-il ou diminue-t-il, et pourquoi ? Que devient la carte : plus fiable, ou
+simplement plus vide ? Rédigez en trois lignes la note méthodologique que vous
+joindriez à cette carte.
+:::
+
+::: {.callout-note}
+## Exercice 6 — Le piège de la colinéarité (Modules 6 et 7)
+
+Ajustez un second modèle de Fay-Herriot avec **une seule** covariable
+(`insecure_direct ~ lc_13_urbain_adm2`), puis un troisième avec les deux covariables
+les plus corrélées **entre elles** que vous aurez repérées dans la matrice du Module 6.
+
+**Question de méthode.** Comparez les `AIC` et `BIC` des trois modèles — et rappelez
+pourquoi ces valeurs n'ont de sens qu'en comparaison. Les coefficients du troisième
+modèle changent-ils de signe par rapport aux corrélations simples ? Que signifierait
+une telle inversion ?
+:::
+
+::: {.callout-note}
+## Exercice 7 — Le piège de la résolution (Module 9)
+
+Sur la carte de grille du Module 9, calculez pour chaque commune l'**écart-type des
+valeurs prédites** de ses cellules, puis cartographiez-le.
+
+**Question de méthode.** Que mesure exactement cette carte : l'hétérogénéité interne
+réelle de la commune, ou l'hétérogénéité de ses covariables ? Une commune dont
+l'écart-type est nul est-elle homogène, ou simplement couverte par une seule classe
+d'occupation du sol ? Formulez la légende honnête de cette carte.
+:::
+
+::: {.callout-note}
+## Exercice 8 — Le piège de la population uniforme (Module 10)
+
+*À faire lorsque `DS.geojson` sera disponible, ou dès aujourd'hui en le transposant à
+un découpage présent dans `datasets/`.* Reprenez le calcul de population non couverte
+du 10.3, qui suppose la population uniformément répartie dans chaque district.
+Refaites-le en croisant les tampons avec une **grille de population** (WorldPop 100 m,
+J08) par `exact_extract(fun = "sum")`.
+
+**Question de méthode.** De combien les deux estimations diffèrent-elles ? Dans quel
+sens l'hypothèse d'uniformité se trompe-t-elle, et pourquoi cette direction n'est-elle
+pas aléatoire ?
+:::
+
+## Prolongements vers J11
+
+::: {.callout-note}
+## Ce que la journée ouvre
+
+**Vers la restitution (J11).** Les trois familles de données du jour se prêtent à trois
+registres d'argumentation différents devant un décideur : l'événementiel raconte une
+**dynamique** (ce qui s'est passé, et quand), la réanalyse installe un **contexte**
+(structurel, lent, incontestable), l'enquête modélisée fournit un **ciblage**
+(où affecter des moyens). Le J11 travaille l'assemblage des trois en un argumentaire
+chiffré, et la manière de dire l'incertitude sans se faire oublier.
+
+**Trois compétences directement réutilisables dans les mini-projets :**
+
+1. **La chaîne événement → polygone → carte.** Applicable telle quelle à toute base
+   géolocalisée : structures sanitaires, écoles, incidents, prix de marché, points
+   d'eau. Le piège de la jointure par libellé s'y reproduira à l'identique.
+2. **La chaîne enquête → estimation directe → modèle → carte.** C'est l'ossature d'une
+   carte de pauvreté, de scolarisation ou d'accès à l'eau à une maille fine. Il faut
+   trois ingrédients : les poids, les grappes, une covariable connue partout.
+3. **Le vocabulaire de l'incertitude.** RMSE, EQM, intervalle, taille d'échantillon,
+   commune non estimable. C'est ce qui distingue une carte qu'on peut défendre en
+   réunion d'une carte qu'on doit retirer dès la première question.
+
+**Trois extensions techniques à explorer après l'atelier :**
+
+- **Isochrones réels** par réseau routier (`osrm`, OpenRouteService), pour remplacer
+  les tampons euclidiens du Module 10.
+- **Modèle unitaire** (`povmap`, EBP) au lieu du modèle d'aire, quand on dispose des
+  microdonnées et d'un recensement — la méthode du dépôt d'origine.
+- **Autocorrélation spatiale** : ajouter un effet aléatoire **spatialement corrélé**
+  au modèle de Fay-Herriot (SFH), pour que deux communes voisines s'informent
+  mutuellement. C'est le prolongement naturel du constat que les cartes du Module 8
+  montrent des blocs contigus.
+
+**Une question à emporter.** Toutes les cartes de cette journée ont été produites à
+partir de données que quelqu'un d'autre a construites : ACLED code des dépêches, ERA5
+fait tourner un modèle, l'EHCVM interroge des ménages selon un plan. Avant de
+présenter l'une de ces cartes, la question n'est jamais « est-elle jolie ? » mais
+**« qu'est-ce qui a été mesuré, par qui, sur quoi, et que reste-t-il non mesuré ? »**
+:::
+
+```{r}
+#| label: chunk-fin
+cat("=== FIN DE LA JOURNEE J10 ===\n\n")
+cat("Sorties produites dans outputs/ :", length(list.files("outputs")), "fichiers\n")
+print(list.files("outputs"))
+cat("\nSession :\n")
+cat("  R          :", R.version.string, "\n")
+cat("  sf         :", as.character(packageVersion("sf")), "\n")
+cat("  terra      :", as.character(packageVersion("terra")), "\n")
+cat("  tmap       :", as.character(packageVersion("tmap")),
+    ifelse(packageVersion("tmap") >= "4.0.0", "(API 4, OK)",
+           "(ATTENTION : API 3, les cartes echoueront)"), "\n")
+cat("  survey     :", as.character(packageVersion("survey")), "\n")
+cat("  sae        :", as.character(packageVersion("sae")), "\n")
+```
+
+
+
+
+

@@ -1,0 +1,518 @@
+---
+title: "J06 · L'art de la cartographie — runtime navigateur"
+subtitle: "Discrétiser, colorer, habiller — la même donnée, plusieurs messages · Atelier IFORD × GDSG 2026"
+# engine: knitr est OBLIGATOIRE. Sans lui, Quarto ne detecte aucun bloc R
+# et se rabat sur Jupyter, le rendu echoue.
+engine: knitr
+webr:
+  packages:
+    - sf
+    - dplyr
+    - tidyr
+    - ggplot2
+  # Chemins RELATIFS AU .qmd (prefixe ../). Dans les blocs {webr}, on lit les
+  # MEMES fichiers SANS le ../.
+  # Tous produits par _commons/data/J06_extraits/00_extraire_J06.R
+  resources:
+    - ../_commons/data/J06_extraits/cmr_adm1_carto.geojson
+    - ../_commons/data/J06_extraits/cmr_adm2_carto.geojson
+    - ../_commons/data/J06_extraits/cmr_ds_carto.geojson
+    - ../_commons/data/J06_extraits/eds_grappes_points.csv
+    - ../_commons/data/J06_extraits/bornes_discretisation.csv
+---
+
+::: {.callout-note}
+## Comment utiliser cette page
+
+Les cellules **Run code** (blocs bleus `{webr}`) s'exécutent **dans votre navigateur** :
+cliquez, changez une couleur, un nombre de classes, une palette, relancez. C'est le meilleur
+usage possible de cette page — une journée sur l'art de la carte se travaille en modifiant,
+pas en lisant.
+
+Les blocs gris ordinaires sont en **lecture seule** : ils montrent `tmap`, `leaflet` et
+`mapview`, qui ne tournent pas dans le navigateur. Le déroulé complet est dans
+`demo_formateur_J6.qmd` (ce même dossier), sous RStudio desktop.
+
+**Pourquoi `ggplot2` et non `tmap` ici ?** `tmap` embarque trop de dépendances pour un
+chargement navigateur fluide. Ce n'est pas une perte : `ggplot2` + `geom_sf()` oblige à
+rendre **explicite** chaque décision cartographique — l'échelle de couleur, la
+discrétisation, la légende, l'habillage sont des objets qu'on écrit. C'est exactement ce
+qu'une journée sur la sémiologie graphique doit faire apparaître.
+
+**Ce qui a été calculé en amont.** Le script `_commons/data/J06_extraits/00_extraire_J06.R`
+a lu les fichiers Stata et SPSS (`haven`), pondéré les indicateurs, et calculé les bornes de
+**Jenks** — que `classInt`, absent du navigateur, est seul à savoir produire. Les quantiles
+et les intervalles égaux, eux, se recalculent ici en direct : vous verrez la différence.
+:::
+
+::: {.callout-warning}
+Les indicateurs issus d'ECAM5 (`tx_pauvrete`, `tx_insatisf_alim`) proviennent d'un **extrait
+de formation non représentatif à l'intérieur des régions** : ils servent à apprendre la
+carte, **pas à décrire le Cameroun**. Ne les citez pas. Les indicateurs EDS
+(`tx_eau_amelioree`) et WorldPop (`pop_total`) sont, eux, exploitables avec les précautions
+énoncées sous chaque figure.
+:::
+
+## 1. Charger les trois mailles, et la carte la plus simple possible
+
+```{webr}
+#| autorun: true
+library(sf)
+library(dplyr)
+library(ggplot2)
+
+# Trois decoupages du meme territoire, du plus grossier au plus fin.
+regions      <- read_sf("_commons/data/J06_extraits/cmr_adm1_carto.geojson")
+departements <- read_sf("_commons/data/J06_extraits/cmr_adm2_carto.geojson")
+districts    <- read_sf("_commons/data/J06_extraits/cmr_ds_carto.geojson")
+
+c(regions = nrow(regions), departements = nrow(departements),
+  districts = nrow(districts))
+```
+
+```{webr}
+# La grammaire cartographique minimale : une geometrie, une esthetique.
+# geom_sf() sait dessiner points, lignes et polygones sans qu'on le lui dise :
+# il lit le type de la colonne geometry.
+ggplot() +
+  geom_sf(data = departements, fill = "grey96", color = "grey70", linewidth = 0.15) +
+  geom_sf(data = regions, fill = NA, color = "grey20", linewidth = 0.5) +
+  labs(title = "Cameroun — 58 départements sur 10 régions",
+       subtitle = "Deux niveaux d'un même découpage administratif, superposés",
+       caption = "Source : GADM 4.1 · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+::: {.iford-callout}
+**Ce que la figure code.** Rien d'autre qu'une géométrie : aucune variable n'est encodée en
+couleur. C'est une **carte de repérage**, pas une carte thématique. Le fin trait gris dessine
+les 58 **départements** — pas les arrondissements, contrairement à ce qu'affirmait le
+matériel d'origine ; le trait épais, les 10 régions.
+
+**Ce que les choix techniques font.** L'ordre des `geom_sf()` compte : la seconde couche se
+dessine **par-dessus** la première. `fill = NA` sur les régions laisse voir les départements
+en dessous. `theme_minimal()` retire la grille et les graduations, qui n'ont aucun sens sur
+une carte thématique de pays.
+
+**Ce qui ne se lit pas.** Rien de thématique, et c'est volontaire. Une carte de repérage
+sert à savoir **où** on est avant de savoir **combien** — la sauter, c'est demander au
+lecteur d'interpréter des couleurs sur une géographie qu'il ne reconnaît pas encore.
+:::
+
+## 2. Discrétiser — quatre découpages du même tableau, quatre cartes
+
+C'est la décision la plus lourde de conséquences de toute la journée, et la moins souvent
+discutée. **La donnée ne change pas ; la carte, si.**
+
+```{webr}
+#| autorun: true
+# Les bornes de Jenks et d'ecart-type ont ete pre-calculees (classInt n'existe
+# pas dans le navigateur). Quantiles et intervalles egaux, eux, se calculent ici.
+bornes <- read.csv("_commons/data/J06_extraits/bornes_discretisation.csv")
+
+bornes |>
+  filter(variable == "tx_eau_amelioree", maille == "region") |>
+  mutate(across(c(borne_inf, borne_sup), \(x) round(x, 1)))
+```
+
+```{webr}
+x <- regions$tx_eau_amelioree
+N <- 5   # nombre de classes -- changez-le et relancez : la carte bouge.
+
+# QUANTILES : chaque classe contient le MEME NOMBRE d'unites.
+br_quant <- unique(quantile(x, probs = seq(0, 1, length.out = N + 1), na.rm = TRUE))
+
+# INTERVALLES EGAUX : chaque classe couvre la MEME LARGEUR de valeurs.
+br_egal <- seq(min(x, na.rm = TRUE), max(x, na.rm = TRUE), length.out = N + 1)
+
+# JENKS (« natural breaks ») : les bornes sont placees la ou la distribution
+# se creuse, pour minimiser la variance intra-classe. Lu depuis le CSV.
+lignes_j <- bornes |>
+  filter(variable == "tx_eau_amelioree", maille == "region", methode == "jenks") |>
+  arrange(classe)
+br_jenks <- unique(c(lignes_j$borne_inf, tail(lignes_j$borne_sup, 1)))
+
+rbind(quantiles = round(br_quant, 1)[seq_len(N + 1)],
+      egaux     = round(br_egal, 1),
+      jenks     = round(br_jenks, 1)[seq_len(N + 1)])
+```
+
+```{webr}
+# On construit une seule couche empilee : la MEME geometrie, trois fois,
+# avec trois colonnes de classes differentes. facet_wrap fait le reste.
+classer <- function(couche, bornes_v, nom) {
+  couche |>
+    mutate(methode = nom,
+           classe  = cut(tx_eau_amelioree, breaks = bornes_v,
+                         include.lowest = TRUE, dig.lab = 3))
+}
+
+comparaison <- rbind(
+  classer(regions, br_quant, "1. Quantiles (effectifs égaux)"),
+  classer(regions, br_egal,  "2. Intervalles égaux"),
+  classer(regions, br_jenks, "3. Jenks (seuils naturels)")
+)
+
+ggplot(comparaison) +
+  geom_sf(aes(fill = classe), color = "white", linewidth = 0.25) +
+  facet_wrap(~ methode) +
+  scale_fill_viridis_d(option = "D", name = "Classe", na.value = "grey88") +
+  labs(title = "Une donnée, trois discrétisations, trois cartes",
+       subtitle = "Accès à une source d'eau améliorée par région (EDS-MICS 2018)",
+       caption = "Source : EDS-MICS 2018 (DHS) · GADM 4.1 · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank(), legend.position = "bottom")
+```
+
+::: {.callout-important}
+## Ce que chaque discrétisation raconte du **même** tableau
+
+**Ce que la figure code.** Trois fois la même variable, sur la même géométrie, avec la même
+palette. Seule la **règle de découpage en classes** change.
+
+**Ce que les choix techniques font.**
+
+- **Quantiles.** Chaque classe reçoit le même nombre d'unités. La carte est toujours
+  « équilibrée » visuellement — toutes les couleurs sont représentées. Elle raconte des
+  **rangs** : qui est dans le cinquième supérieur. Danger : deux unités aux valeurs presque
+  identiques peuvent tomber de part et d'autre d'une borne et apparaître très différentes.
+- **Intervalles égaux.** Chaque classe couvre la même largeur de valeurs. La carte raconte
+  des **niveaux** et respecte les distances entre valeurs. Danger : sur une distribution
+  asymétrique, presque toutes les unités s'entassent dans une ou deux classes, et la carte
+  paraît vide.
+- **Jenks.** Les bornes se placent là où la distribution se **creuse** : l'algorithme
+  minimise la variance à l'intérieur des classes. La carte respecte la **structure** des
+  données. Danger : les bornes sont propres à ce jeu de données, donc **deux cartes Jenks ne
+  sont jamais comparables entre elles** — ni entre deux années, ni entre deux pays.
+
+**Ce qui se lit.** Le classement des régions les unes par rapport aux autres bouge peu ; ce
+qui bouge, c'est **l'impression de contraste**, c'est-à-dire le message. Un lecteur pressé ne
+lit pas les bornes : il lit les couleurs.
+
+**Ce qui ne se lit pas — et la règle qui en découle.** Aucune de ces trois cartes n'est
+« la vraie ». Une discrétisation est un **argument**, pas une propriété de la donnée. D'où
+trois obligations : afficher les bornes dans la légende, dire la méthode dans la note de la
+carte, et fixer les bornes **à la main** dès qu'on veut comparer deux cartes entre elles.
+:::
+
+## 3. Les trois familles de palettes — et le contresens à ne jamais commettre
+
+```{webr}
+# PALETTE SEQUENTIELLE : une seule direction de lecture, du clair au fonce.
+# Pour une grandeur qui va simplement de "bas" a "eleve".
+p_seq <- ggplot(regions) +
+  geom_sf(aes(fill = tx_eau_amelioree), color = "white", linewidth = 0.25) +
+  scale_fill_viridis_c(option = "D", name = "Eau améliorée (%)",
+                       na.value = "grey88") +
+  labs(title = "Séquentielle — un niveau",
+       subtitle = "Part des ménages ayant accès à une source améliorée") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+p_seq
+```
+
+```{webr}
+# PALETTE DIVERGENTE : deux directions autour d'un CENTRE NEUTRE.
+# La colonne ecart_eau_moyenne a un vrai zero : l'ecart a la moyenne des
+# regions. C'est ce zero qui autorise la divergente -- et l'interdit ailleurs.
+ggplot(regions) +
+  geom_sf(aes(fill = ecart_eau_moyenne), color = "white", linewidth = 0.25) +
+  scale_fill_gradient2(low = "#B2182B", mid = "grey95", high = "#2166AC",
+                       midpoint = 0, name = "Écart à la\nmoyenne (pts)",
+                       na.value = "grey88") +
+  labs(title = "Divergente — un écart de part et d'autre d'un centre",
+       subtitle = "Écart (en points) à la moyenne nationale des régions",
+       caption = "Source : EDS-MICS 2018 · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+```{webr}
+# PALETTE QUALITATIVE : des modalites SANS ordre. Teintes distinctes, jamais
+# des nuances d'un meme ton -- une nuance suggere un classement qui n'existe pas.
+grappes <- read.csv("_commons/data/J06_extraits/eds_grappes_points.csv")
+pts <- st_as_sf(grappes[!is.na(grappes$lon), ],
+                coords = c("lon", "lat"), crs = 4326, remove = FALSE)
+
+ggplot() +
+  geom_sf(data = regions, fill = "grey96", color = "white", linewidth = 0.3) +
+  geom_sf(data = pts, aes(color = milieu), size = 1.1, alpha = 0.8) +
+  scale_color_manual(values = c("U" = "#0F4C81", "R" = "#C1662F"),
+                     labels = c("U" = "Urbain", "R" = "Rural"),
+                     name = "Milieu") +
+  labs(title = "Qualitative — des catégories, pas des niveaux",
+       subtitle = "430 grappes EDS-MICS 2018 par milieu de résidence",
+       caption = "Source : EDS-MICS 2018 (DHS) · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+::: {.iford-callout}
+**Ce que les trois figures codent.** Trois **types de variables**, donc trois familles de
+palettes. Le choix n'est pas esthétique : il annonce au lecteur la **nature** de ce qu'il
+regarde, avant même qu'il lise la légende.
+
+**Ce que les choix techniques font.**
+
+- **Séquentielle** (`viridis`, ici) — une seule direction de lecture. `viridis` a deux
+  propriétés qu'un dégradé arbitraire n'a pas : elle est **perceptivement uniforme** (un
+  même écart de valeur produit un même écart visuel sur toute l'échelle) et **lisible en
+  vision daltonienne** comme en noir et blanc. Sur un rapport photocopié, c'est décisif.
+- **Divergente** — deux directions autour d'un centre neutre. Elle exige un **vrai point
+  zéro** : un écart, une différence, un solde. La poser sur un taux brut, dont la valeur
+  centrale serait arbitrairement choisie, revient à **fabriquer** deux camps qui n'existent
+  pas dans la donnée. C'est le contresens de sémiologie le plus fréquent.
+- **Qualitative** — des teintes franchement distinctes. Utiliser deux nuances d'un même ton
+  pour « urbain » et « rural » suggérerait que l'un est *plus* que l'autre.
+
+**Ce qui ne se lit pas.** Aucune palette ne corrige une mauvaise discrétisation, et aucune
+ne compense l'absence de données. Notez que sur les trois cartes, les unités sans valeur
+restent **grises** (`na.value`) : elles ne sont pas « à zéro », elles sont **non mesurées**.
+:::
+
+## 4. Symboles proportionnels — quand la choroplèthe ment
+
+```{webr}
+#| autorun: true
+# La choroplethe colore des SURFACES. Pour un EFFECTIF (une population, un
+# nombre de menages), elle est trompeuse : un grand departement peu peuple
+# occupe plus de place a l'ecran qu'un petit departement tres peuple.
+ggplot() +
+  geom_sf(data = departements, fill = "grey96", color = "grey80", linewidth = 0.12) +
+  geom_sf(data = regions, fill = NA, color = "grey40", linewidth = 0.35) +
+  geom_point(data = st_drop_geometry(departements),
+             aes(x = lon_c, y = lat_c, size = pop_total),
+             shape = 21, fill = "#0F4C81", color = "white",
+             alpha = 0.75, stroke = 0.3) +
+  # L'aire du cercle doit etre proportionnelle a la valeur, pas son rayon :
+  # scale_size_area() impose cette regle (et fait passer la valeur 0 par une
+  # aire nulle).
+  scale_size_area(max_size = 12, name = "Population\n(WorldPop)",
+                  labels = scales::comma) +
+  coord_sf() +
+  labs(title = "Population par département — symboles proportionnels",
+       subtitle = "L'aire du cercle est proportionnelle à l'effectif ; les surfaces ne codent rien",
+       x = NULL, y = NULL,
+       caption = "Source : WorldPop admin level 2 · GADM 4.1 · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+```{webr}
+# La MEME donnee en choroplethe -- mais rapportee a la superficie, donc
+# transformee en DENSITE. Un effectif se cartographie en cercles ; un
+# rapport (taux, densite, part) se cartographie en aplats.
+ggplot(departements) +
+  geom_sf(aes(fill = densite), color = "white", linewidth = 0.12) +
+  # Transformation racine carree : sans elle, Douala et Yaounde ecrasent
+  # toutes les autres unites et la carte devient uniformement pale.
+  scale_fill_viridis_c(option = "B", trans = "sqrt",
+                       name = "Densité\n(hab/km²)", na.value = "grey88") +
+  labs(title = "Densité de population par département",
+       subtitle = "Choroplèthe — échelle racine carrée pour rendre les écarts lisibles",
+       caption = "Source : WorldPop (effectifs modélisés) · GADM 4.1 · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+::: {.iford-callout}
+**Ce que les figures codent.** La première encode un **effectif** (nombre d'habitants) par
+l'aire d'un cercle posé au centroïde du département. La seconde encode un **rapport**
+(habitants par km²) par la couleur du polygone.
+
+**La règle, et elle est absolue.** Une **choroplèthe se réserve aux rapports** — taux, parts,
+densités, moyennes. Colorier un effectif brut donne à voir la superficie autant que la
+valeur : les grands départements ruraux dominent visuellement des départements urbains
+beaucoup plus peuplés. Symétriquement, `scale_size_area()` garantit que c'est l'**aire** du
+cercle, non son rayon, qui est proportionnelle à la valeur — un rayon proportionnel
+exagérerait les grandes valeurs d'un facteur considérable.
+
+**Ce qui se lit.** Les deux figures ensemble : les cercles montrent **où sont les gens**, la
+choroplèthe montre **à quelle intensité ils y sont**. Douala et Yaoundé apparaissent sur les
+deux, mais pour des raisons différentes.
+
+**Ce qui ne se lit pas.** Les effectifs WorldPop sont **modélisés**, pas dénombrés : ils sont
+construits par désagrégation d'un recensement à l'aide d'imagerie satellitaire et de
+covariables. Le fichier source porte d'ailleurs un intervalle `lower`–`upper` et un indice
+d'incertitude. Un cercle est donc une estimation, avec une marge que la figure n'affiche pas.
+Et la densité est une moyenne sur tout le département : elle ne dit rien de la répartition
+interne — le J08 y revient avec des grilles de population à 100 mètres.
+:::
+
+## 5. Facettes — comparer sans changer d'échelle
+
+```{webr}
+# La MEME variable, la MEME echelle de couleur, sur DEUX mailles.
+# Astuce de construction : on empile deux couches en harmonisant les colonnes,
+# puis facet_wrap. Comme l'echelle est unique, les couleurs sont comparables
+# d'un panneau a l'autre -- ce qui n'est PAS le cas de deux cartes cote a cote
+# produites separement.
+a <- regions   |> transmute(maille = "10 régions",             valeur = tx_eau_amelioree)
+b <- districts |> transmute(maille = "200 districts sanitaires", valeur = tx_eau_amelioree)
+deux <- rbind(a, b)
+
+ggplot(deux) +
+  geom_sf(aes(fill = valeur), color = "white", linewidth = 0.12) +
+  facet_wrap(~ maille) +
+  scale_fill_viridis_c(option = "D", name = "Eau améliorée (%)",
+                       na.value = "grey88", limits = range(deux$valeur, na.rm = TRUE)) +
+  labs(title = "Même indicateur, même échelle de couleur, deux mailles",
+       subtitle = "Gris = aucune grappe enquêtée dans l'unité",
+       caption = "Source : EDS-MICS 2018 · GADM 4.1 · DHIS2 MINSANTE · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank(), legend.position = "bottom")
+```
+
+::: {.callout-important}
+## MAUP et non-mesuré : ce que cette paire met en scène
+
+**Ce que la figure code.** Une seule variable, une seule échelle de couleur (`limits` la
+force à être commune), deux découpages du même territoire.
+
+**Ce qui se lit.** Monter d'échelle **lisse** : l'amplitude se resserre, les contrastes
+locaux disparaissent dans la moyenne régionale. C'est le **MAUP** — *Modifiable Areal Unit
+Problem* : le résultat dépend de la maille d'agrégation, et **aucune maille n'est neutre**.
+Il a deux composantes : l'effet d'**échelle** (la finesse du découpage) et l'effet de
+**zonage** (à finesse égale, un autre tracé donne un autre résultat). La règle pratique :
+choisir la maille de la **décision** qu'on éclaire.
+
+**Ce qui ne se lit pas — et qu'il faut dire sous la carte.** Les plages grises du panneau de
+droite. 430 grappes pour 200 districts : de nombreux districts n'ont **aucune** observation.
+Un polygone gris n'est pas « à zéro », il est **non mesuré** — et une carte qui les
+colorierait en clair mentirait. C'est aussi la protection contre l'**erreur écologique** :
+la couleur d'un district décrit l'agrégat, jamais un ménage particulier de ce district.
+
+**En quoi le spatial apporte ici ce que le tableau ne contient pas.** Les **trous
+d'échantillonnage** se voient sur une carte et nulle part ailleurs. Un tableau de 200 lignes
+avec des `NA` ne dit pas si ces `NA` sont dispersés au hasard ou concentrés sur une région
+entière. La carte le montre en un regard — et si les trous forment un bloc, l'indicateur
+national qu'on en tire est biaisé, pas seulement imprécis.
+:::
+
+## 6. L'habillage — ce qui transforme un graphique en document
+
+```{webr}
+# Une carte destinee a un rapport officiel porte SIX elements obligatoires :
+# titre, sous-titre disant l'indicateur exact, legende titree avec unite,
+# source datee, mention de la methode, et note sur le non-mesure.
+ggplot() +
+  geom_sf(data = districts, aes(fill = tx_eau_amelioree),
+          color = "white", linewidth = 0.1) +
+  geom_sf(data = regions, fill = NA, color = "grey25", linewidth = 0.45) +
+  scale_fill_viridis_c(option = "D", name = "Ménages ayant accès\nà une source améliorée (%)",
+                       na.value = "grey88") +
+  labs(
+    title    = "Accès à une source d'eau améliorée, par district sanitaire",
+    subtitle = "Définition JMP (OMS/UNICEF) · estimations pondérées par le plan de sondage EDS",
+    caption  = paste("Sources : EDS-MICS Cameroun 2018 (DHS) ; districts sanitaires DHIS2 (MINSANTE) ;",
+                     "limites régionales GADM 4.1.\n",
+                     "Discrétisation : échelle continue. Gris = aucune grappe enquêtée.",
+                     "Géométries simplifiées pour l'affichage.\n",
+                     "Réalisation : atelier IFORD × GDSG 2026.")
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title    = element_text(face = "bold", size = 13),
+    plot.subtitle = element_text(color = "grey30", size = 9.5),
+    plot.caption  = element_text(color = "grey40", size = 7, hjust = 0),
+    legend.position = "right",
+    axis.text = element_blank(), axis.ticks = element_blank(),
+    panel.grid = element_blank()
+  )
+```
+
+::: {.iford-callout}
+**Ce que la figure code.** La même donnée que la section 5, mais **prête à insérer dans un
+rapport**. Ce qui a changé n'est pas la donnée : c'est ce que la carte **déclare d'elle-même**.
+
+**Ce que les choix techniques font.** Le `subtitle` porte la **définition exacte** de
+l'indicateur — « source améliorée » au sens du JMP n'est pas « eau potable » — et le fait
+qu'il est pondéré. Le `caption` porte les trois sources avec leurs dates, la méthode de
+discrétisation, la signification du gris, et l'avertissement sur la simplification des
+géométries. Le titre de la légende porte l'**unité**. Une carte sans unité dans sa légende
+n'est pas interprétable ; une carte sans source n'est pas vérifiable ; une carte sans date
+n'est pas comparable.
+
+**Ce qui ne se lit pas, et qu'aucun habillage ne répare.** L'incertitude d'échantillonnage
+n'apparaît pas. Deux districts de couleurs voisines peuvent être statistiquement
+indiscernables. Si la décision porte sur des unités précises, il faut soit afficher les
+effectifs, soit masquer sous un seuil déclaré — et le dire.
+:::
+
+## 7. Ce qui reste sous RStudio : `tmap`, l'interactif et l'export
+
+```r
+# --- Lecture seule : RStudio desktop. Voir demo_formateur_J6.qmd.
+# tmap raisonne en couches empilees, comme un logiciel SIG. Syntaxe tmap 4.
+library(tmap)
+
+tm_shape(ds_indicateurs) +
+  tm_polygons(
+    fill = "tx_eau",
+    fill.scale  = tm_scale_intervals(style = "jenks", n = 5,
+                                     values = "viridis", value.na = "grey85"),
+    fill.legend = tm_legend(title = "Eau améliorée (%)")) +
+  tm_shape(regions) + tm_borders(col = "grey20", lwd = 1.2) +
+  tm_text("NAME_1", size = 0.5) +
+  # Les ornements que ggplot2 n'a pas nativement :
+  tm_compass(type = "arrow", position = c("right", "top")) +
+  tm_scalebar(breaks = c(0, 100, 200), position = c("left", "bottom")) +
+  tm_credits("Source : EDS-MICS 2018 · DHIS2 MINSANTE", position = c("left", "bottom")) +
+  tm_layout(title = "Accès à une source d'eau améliorée")
+```
+
+```r
+# --- Lecture seule. Export haute resolution pour un rapport imprime.
+# 300 dpi est le minimum pour l'impression ; 96 dpi suffit a l'ecran.
+tmap_save(ma_carte, "outputs/eau_districts.png",
+          dpi = 300, width = 20, height = 16, units = "cm")
+
+# Avec ggplot2, l'equivalent :
+ggsave("outputs/eau_districts.png", plot = ma_carte_gg,
+       dpi = 300, width = 20, height = 16, units = "cm")
+```
+
+```r
+# --- Lecture seule, et VOLONTAIREMENT non execute meme sous RStudio quand on
+# rend un document a distribuer. leaflet et mapview embarquent TOUTES les
+# geometries dans le HTML : 200 districts + 430 points font passer un fichier
+# de quelques centaines de kilooctets a plusieurs dizaines de megaoctets.
+# Utiliser ces outils pour EXPLORER en console, jamais dans un livrable.
+library(leaflet); library(mapview)
+
+mapview(ds_indicateurs, zcol = "tx_eau") + mapview(dhs_points, zcol = "milieu")
+
+leaflet(ds_indicateurs) |>
+  addProviderTiles("CartoDB.Positron") |>
+  addPolygons(fillColor = ~pal(tx_eau), fillOpacity = 0.7, weight = 0.5,
+              popup = ~paste0("<b>", ds_nom, "</b><br>Eau : ",
+                              round(tx_eau, 1), " %"))
+```
+
+## Checklist de fin de J06
+
+- [ ] Je choisis la **discrétisation** en connaissance de cause, j'affiche les bornes, et je
+      fixe les bornes à la main dès que je veux comparer deux cartes.
+- [ ] Je réserve la **choroplèthe aux rapports** (taux, parts, densités) et les **symboles
+      proportionnels aux effectifs**, avec l'aire — jamais le rayon — proportionnelle.
+- [ ] Ma palette correspond à la **nature de la variable** : séquentielle pour un niveau,
+      divergente **seulement** s'il existe un vrai zéro, qualitative pour des catégories.
+- [ ] Le **non-mesuré est gris**, et je le dis dans la note.
+- [ ] Titre, définition de l'indicateur, unité en légende, sources datées, méthode de
+      discrétisation : les six mentions y sont.
+- [ ] Je sais nommer **MAUP** et **erreur écologique**, et dire lequel menace ma carte.
+
+**Demain (J07)** : les statistiques spatiales. On cesse de décrire la carte pour la
+**tester** — l'autocorrélation, l'indice de Moran, les points chauds. La question devient :
+ce bloc de couleurs contiguës est-il autre chose que du hasard ?
+
+[← Retour à l'accueil](../INDEX.md)

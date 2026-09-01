@@ -1,0 +1,550 @@
+---
+title: "J02 · Penser l'espace — runtime navigateur"
+subtitle: "Des données tabulaires aux données géographiques — code R exécutable dans le navigateur (WebR)"
+# Sans engine: knitr, Quarto ne detecte aucun bloc R et se rabat sur Jupyter
+# (erreur "No module named 'yaml'"). Reglage obligatoire.
+engine: knitr
+webr:
+  packages:
+    - sf
+    - ggplot2
+    - dplyr
+    - tidyr
+    - tibble
+  resources:
+    # Chemins relatifs au .qmd (donc ../). Dans un bloc {webr}, le meme
+    # fichier se lit SANS le ../ : read_sf("_commons/data/...").
+    - ../_commons/data/gadm41_CMR_0.json
+    - ../_commons/data/gadm41_CMR_1.json
+    - ../_commons/data/gadm41_CMR_2.json
+    - ../_commons/data/dhs_cmr/indicateurs_dhs_cmr_2018.csv
+---
+
+::: {.iford-callout}
+**Mode d'emploi.** Cliquez **Run code** dans chaque cellule pour exécuter. Modifiez le
+code librement, recliquez pour relancer. Rien n'est envoyé sur un serveur — tout tourne
+dans votre navigateur.
+
+**Exécutez les blocs dans l'ordre** : les objets créés dans un bloc servent aux suivants.
+
+Les blocs **non bleus** sont en **lecture seule**. Ils montrent le code qui ne peut pas
+tourner en WASM — `terra` pour le raster, `tmap` pour la cartographie thématique
+publiable, `readr` sur les fichiers du dossier-jour. Exécutez-les sous RStudio desktop
+à partir de **`demo_formateur_J02.qmd`** (ce même dossier).
+:::
+
+## 1. R comme calculatrice
+
+```{webr}
+#| autorun: true
+# Un *vecteur* est une séquence ordonnée de valeurs de même type.
+# On le crée avec c() (= "combine"). Ici un vecteur de chaînes de caractères.
+regions <- c("Adamaoua", "Centre", "Est", "Extrême-Nord", "Littoral",
+             "Nord", "Nord-Ouest", "Ouest", "Sud", "Sud-Ouest")
+# Vecteur numérique parallèle : 1 valeur par région, dans le MÊME ordre.
+pop_est <- c(1340000, 4400000, 870000, 4200000, 3400000,
+             2700000, 2000000, 2000000, 800000, 1700000)
+
+length(regions)   # nombre d'éléments
+sum(pop_est)      # somme totale (population du Cameroun)
+mean(pop_est)     # moyenne arithmétique par région
+```
+
+**À essayer :** changez les valeurs de `pop_est`, ou ajoutez une 11ᵉ région imaginaire — puis relancez.
+
+## 2. Vecteurs et opérations vectorielles
+
+```{webr}
+# R vectorise : on divise les 10 valeurs d'un coup, pas besoin de boucle.
+pop_millions <- pop_est / 1e6
+round(pop_millions, 2)   # arrondi à 2 décimales
+
+# Indexation booléenne : on garde les noms là où la condition est vraie.
+regions[pop_est > 3e6]
+```
+
+## 3. Tibble : la table de données moderne
+
+```{webr}
+library(tibble)   # tibble = tableau moderne, affichage plus lisible
+library(dplyr)    # verbes de manipulation : filter, mutate, select...
+
+# On crée un tibble : un tableau où chaque colonne est un vecteur de même longueur.
+tbl_cmr <- tibble(
+  region   = regions,
+  pop_2019 = pop_est,
+  capitale = c("Ngaoundéré", "Yaoundé", "Bertoua", "Maroua", "Douala",
+               "Garoua", "Bamenda", "Bafoussam", "Ebolowa", "Buea")
+)
+
+tbl_cmr   # afficher le tableau
+```
+
+## 4. Les verbes dplyr en pratique démographique
+
+```{webr}
+# Le pipe |> se lit "puis". On enchaîne les verbes dplyr de haut en bas.
+tbl_cmr |>
+  mutate(                                # mutate = ajouter / modifier une colonne
+    pop_millions = pop_2019 / 1e6,
+    classe = case_when(                  # case_when = IF / ELSE IF / ELSE lisible
+      pop_2019 < 1e6 ~ "Moins de 1M",
+      pop_2019 < 3e6 ~ "1 à 3M",
+      TRUE           ~ "Plus de 3M"      # TRUE = clause par défaut
+    )
+  ) |>
+  arrange(desc(pop_2019))                # tri décroissant par population
+```
+
+```{webr}
+# filter = garder certaines LIGNES (selon une condition).
+# select = garder certaines COLONNES (par leur nom).
+tbl_cmr |>
+  filter(pop_2019 > 3e6) |>
+  select(region, capitale, pop_2019)
+```
+
+## 5. Indicateurs DHS Cameroun 2018 (vraies données)
+
+On charge directement le CSV agrégé par région issu de l'API DHS StatCompiler
+(`rdhs::dhs_data`). Le fichier a été pré-chargé dans la VM WebR au démarrage de la page
+(déclaré dans `webr.resources` du YAML) — pas de téléchargement runtime, ça marche en
+ligne **et** hors-ligne en preview locale.
+
+```{webr}
+library(tidyr)   # pivot_wider / pivot_longer pour réorganiser un tableau
+
+# Lecture du CSV pré-chargé dans le runtime WebR (pas de réseau ici).
+dhs <- read.csv("_commons/data/dhs_cmr/indicateurs_dhs_cmr_2018.csv")
+
+# Le CSV est en format LONG (1 ligne = 1 indicateur d'1 région).
+# pivot_wider transforme en format LARGE (1 ligne = 1 région, 1 col par indicateur).
+dhs_wide <- dhs |>
+  select(region, indicateur, valeur) |>
+  pivot_wider(names_from = indicateur, values_from = valeur) |>
+  rename(tx_eau_ameliore = WS_SRCE_H_IMP,   # on renomme les codes DHS
+         tx_electricite  = HC_ELEC_H_ELC,   # en noms parlants en français
+         tx_alpha_femmes = ED_LITR_W_LIT,
+         tx_alpha_hommes = ED_LITR_M_LIT,
+         taille_menage   = HC_HHSZ_H_AVG)
+dhs_wide
+```
+
+```{webr}
+# On crée un indicateur dérivé (écart H-F) puis on classe par électrification.
+dhs_wide |>
+  mutate(ecart_alpha_hf = round(tx_alpha_hommes - tx_alpha_femmes, 1)) |>
+  arrange(desc(tx_electricite)) |>
+  select(region, tx_alpha_femmes, tx_electricite,
+         taille_menage, ecart_alpha_hf)
+```
+
+::: {.takeaway}
+**À retenir.** `filter` filtre les lignes, `select` choisit les colonnes, `mutate` crée
+une variable, `group_by + summarise` agrège, `pivot_wider` réorganise. Cinq verbes pour
+80 % de l'analyse de données. Les valeurs ci-dessus sont **les vraies estimations DHS
+2018**, déjà pondérées par le plan de sondage.
+
+**Attention au vocabulaire.** « Source d'eau améliorée » au sens du JMP n'est pas
+« eau potable » : la définition porte sur le **type d'ouvrage** (robinet, forage, puits
+protégé), pas sur la qualité bactériologique de l'eau. Un indicateur ne vaut que ce que
+vaut sa définition, et c'est elle qu'il faut citer sous la carte.
+
+**Ce qu'un tableau ne dit pas.** Ces lignes classent les régions ; elles ne disent pas
+**où** elles sont, ni lesquelles se touchent. Deux régions voisines mal électrifiées
+posent une question — un réseau qui s'arrête quelque part — qu'aucun tri ne fait
+apparaître. C'est le sujet des sections suivantes.
+:::
+
+## 6. Vecteur et raster : les deux familles du géospatial
+
+Avant la première carte, un partage du monde en deux.
+
+| | **Vecteur** | **Raster** |
+|---|---|---|
+| Ce que ça décrit | des **entités discrètes** | un **phénomène continu** |
+| La forme | points, lignes, polygones | une grille de pixels |
+| Exemples | départements, routes, grappes d'enquête | altitude, pluviométrie, densité, indice de végétation |
+| L'unité | l'entité, avec ses attributs | le pixel, avec une valeur |
+| En R | `sf` | `terra` |
+
+Ce runtime est **entièrement vectoriel** : `sf` est disponible en WebR, `terra` ne l'est
+pas. Le raster est traité au J04, et son code figure ici en lecture seule (section 10).
+
+::: {.iford-callout}
+**La règle d'or des SIG.** Un **CRS** (*Coordinate Reference System*, système de
+référence des coordonnées) dit ce que mesurent les nombres d'une géométrie. Deux
+familles :
+
+- **géographique** (EPSG:4326, WGS 84) : des **degrés**. C'est ce que donne un GPS.
+  Rien de mesurable en l'état — un degré de longitude ne vaut pas la même longueur
+  au sol selon la latitude.
+- **projeté** (EPSG:32632, UTM zone 32N) : des **mètres**. Mesurable, mais exact
+  seulement autour de son méridien central.
+
+On **stocke** en 4326, on **mesure** après reprojection. Et on n'effectue jamais une
+opération entre deux couches de CRS différents sans les avoir harmonisées — `sf` ne
+prévient pas toujours.
+:::
+
+## 7. Première carte — vraies limites GADM Cameroun
+
+Le fichier GADM v4.1 du Cameroun (10 régions, ~190 Ko) est pré-chargé dans la VM WebR
+au démarrage de la page. On l'ouvre directement avec `sf::read_sf()` — pas de réseau au
+runtime, ça marche aussi quand vous n'avez pas internet.
+
+```{webr}
+#| autorun: true
+library(sf)        # sf = "simple features" : objets spatiaux vectoriels
+library(ggplot2)   # grammaire graphique de référence en R
+library(dplyr)
+
+# read_sf() lit un fichier SIG (ici GeoJSON) et renvoie un objet sf =
+# un data.frame + une colonne "geometry" attachée à chaque ligne.
+adm0 <- read_sf("_commons/data/gadm41_CMR_0.json")   # silhouette du pays
+adm1 <- read_sf("_commons/data/gadm41_CMR_1.json")   # 10 régions
+adm2 <- read_sf("_commons/data/gadm41_CMR_2.json")   # 58 départements
+
+# Un compteur apres chaque lecture : on ne suppose jamais un effectif.
+cat("ADM0 :", nrow(adm0), "| ADM1 :", nrow(adm1), "| ADM2 :", nrow(adm2), "\n")
+cat("EPSG :", st_crs(adm1)$epsg, "(4326 = WGS 84, des degrés)\n")
+head(adm1$NAME_1)       # quelques noms de régions
+
+# Les géométries sont-elles saines ? Un polygone auto-intersecté ne se voit
+# PAS à l'affichage : il ne se manifeste qu'au premier calcul géométrique.
+cat("Géométries valides :", sum(st_is_valid(adm1)), "sur", nrow(adm1), "\n")
+```
+
+Et maintenant la vraie carte des 10 régions du Cameroun, avec les contours
+administratifs officiels :
+
+```{webr}
+ggplot(adm1) +
+  # geom_sf dessine la géométrie ; fill = NAME_1 attribue 1 couleur par région.
+  geom_sf(aes(fill = NAME_1), color = "white", linewidth = 0.3, show.legend = FALSE) +
+  # geom_sf_label pose une étiquette au centroïde de chaque polygone.
+  geom_sf_label(aes(label = NAME_1),
+                size = 2.4, colour = "black",
+                fill = scales::alpha("white", 0.75), label.size = 0,
+                fontface = "bold", label.padding = unit(0.1, "lines")) +
+  # Palette viridis discrète : daltonien-friendly, lisible en N&B.
+  scale_fill_viridis_d(option = "G") +
+  labs(title = "Les 10 régions du Cameroun",
+       subtitle = "Limites administratives ADM1 — GADM v4.1",
+       caption = "Source : GADM v4.1 · Atelier IFORD × GDSG 2026") +
+  theme_minimal()   # retire les axes/grille parasites
+```
+
+::: {.takeaway}
+**Ce que la figure code.** Rien de statistique. La couleur est **qualitative** : elle
+sert uniquement à distinguer dix polygones voisins, et il serait faux d'y lire un
+ordre. Une palette qualitative répond à « lesquels sont différents » ; une palette
+séquentielle (section 8) répond à « lesquels sont plus grands ».
+
+**Ce qui se lit.** La géographie du découpage : trois régions du Nord très étendues,
+un Ouest densément découpé, un littoral étroit.
+
+**Ce qui ne se lit pas.** La superficie apparente **n'est pas** la superficie réelle :
+elle dépend de la projection d'affichage. Pour comparer des surfaces, il faut les
+calculer — c'est l'objet de la section suivante.
+:::
+
+## 8. Mesurer : superficie, centroïdes, densité
+
+```{webr}
+# Une projection (CRS) "plane" en mètres est NÉCESSAIRE pour mesurer surfaces
+# et distances. EPSG:32632 = UTM zone 32N, adapté à l'ouest du Cameroun.
+adm1_utm <- st_transform(adm1, 32632)
+
+# st_area renvoie une surface en m² (unité du CRS) ; on convertit en km².
+adm1_utm$superficie_km2 <- as.numeric(st_area(adm1_utm)) / 1e6
+
+# Contrôle de cohérence : total attendu ~475 442 km² (superficie officielle).
+# Comparer un résultat à un chiffre publié vérifie d'un coup la projection,
+# la validité des géométries et la lecture du fichier.
+cat("Superficie totale calculée :", round(sum(adm1_utm$superficie_km2)), "km²\n")
+cat("Référence officielle       : 475 442 km²\n")
+
+# Le CENTROÏDE : le "centre de gravité" d'un polygone. Utile pour poser une
+# étiquette ou un symbole proportionnel. Attention : pour un polygone en
+# croissant, le centroïde peut tomber HORS du polygone.
+centres <- st_centroid(adm1_utm)
+head(st_coordinates(centres), 3)
+```
+
+```{webr}
+# On bâtit une table population minimale (clé = nom de région).
+pop_tbl <- tibble::tibble(NAME_1 = regions, pop_2019 = pop_est)
+
+# left_join = jointure SQL "à gauche" : on garde toutes les régions de adm1_utm
+# et on attache la population correspondante via la clé commune NAME_1.
+adm1_pop <- adm1_utm |>
+  left_join(pop_tbl, by = "NAME_1") |>
+  mutate(densite = pop_2019 / superficie_km2,       # densité = hab / km²
+         # Échelle racine carrée calculée EN AMONT plutôt que via
+         # scale_fill_*(trans = ), déprécié selon les versions de ggplot2.
+         densite_sqrt = sqrt(densite))
+
+# left_join ne prévient JAMAIS d'un non-appariement : il remplit avec NA.
+# Compter les NA après chaque jointure est le réflexe qui sauve une analyse.
+cat("Régions sans population après jointure :", sum(is.na(adm1_pop$pop_2019)),
+    "sur", nrow(adm1_pop), "\n")
+
+# st_drop_geometry : on retire la colonne géométrie pour avoir un tableau pur.
+adm1_pop |>
+  st_drop_geometry() |>
+  select(NAME_1, pop_2019, superficie_km2, densite) |>
+  mutate(superficie_km2 = round(superficie_km2), densite = round(densite, 1)) |>
+  arrange(desc(densite))
+```
+
+```{webr}
+ggplot(adm1_pop) +
+  # Carte choroplèthe : la couleur du polygone encode la VALEUR (ici densité).
+  geom_sf(aes(fill = densite_sqrt), color = "white", linewidth = 0.3) +
+  geom_sf_label(aes(label = NAME_1),
+                size = 2.2, colour = "black",
+                fill = scales::alpha("white", 0.75), label.size = 0,
+                fontface = "bold", label.padding = unit(0.08, "lines")) +
+  # Palette continue ; échelle racine carrée pour aplatir les écarts extrêmes
+  # (Littoral et Centre écrasent sinon toutes les autres régions).
+  # na.value : une région sans donnée reste GRISE, elle n'est pas "à zéro".
+  scale_fill_viridis_c(option = "B", name = "Densité\n(√ hab/km²)",
+                       na.value = "grey85") +
+  labs(title = "Densité de population par région — Cameroun (estim. 2019)",
+       subtitle = "Choroplèthe — échelle racine carrée pour visibilité",
+       caption = "Source : BUCREP (estim.), GADM v4.1 · IFORD × GDSG 2026") +
+  theme_minimal()
+```
+
+::: {.takeaway}
+**Ce que la figure code.** La couleur d'une région code sa densité = population
+estimée ÷ superficie calculée en UTM 32N.
+
+**Ce que les choix techniques font.** *Choroplèthe* : une carte où la couleur d'une
+unité administrative code une valeur. *Échelle racine carrée* : sans elle, deux régions
+écrasent les huit autres et la carte devient uniformément sombre — la transformation ne
+change pas les données, elle change ce que l'œil distingue, et doit donc être annoncée
+dans la légende, comme ici.
+
+**Ce qui se lit.** Un gradient : le Littoral et l'Ouest se détachent nettement du
+Nord et de l'Est.
+
+**Ce qui ne se lit pas.** (1) Les chiffres de population utilisés ici sont des
+**estimations d'illustration**, pas des données de recensement — la carte ne doit pas
+être citée. (2) La densité est une **moyenne** : elle écrase entièrement
+l'hétérogénéité interne, une région où tout le monde vit dans une seule ville prend la
+même couleur qu'une région uniformément peuplée. (3) Attribuer à un habitant ce qui
+n'est vrai que de la région serait une **erreur écologique**.
+:::
+
+## 9. Changer de maille : les 58 départements
+
+::: {.iford-callout}
+**Le MAUP** (*Modifiable Areal Unit Problem*) : les résultats dépendent de la maille
+d'agrégation, et **aucune maille n'est neutre**. La même donnée agrégée en 10 régions
+ou en 58 départements ne raconte pas la même histoire. La règle : choisir la maille de
+la **décision** qu'on éclaire, pas celle qui donne la plus jolie carte.
+:::
+
+```{webr}
+# Le même geste, une maille plus fine. Les colonnes GADM ADM2 : NAME_1 porte
+# la région d'appartenance, NAME_2 le département.
+adm2_utm <- st_transform(adm2, 32632)
+adm2_utm$superficie_km2 <- as.numeric(st_area(adm2_utm)) / 1e6
+
+cat("Départements :", nrow(adm2_utm), "\n")
+cat("Superficie totale ADM2 :", round(sum(adm2_utm$superficie_km2)), "km²",
+    "— à comparer au total ADM1 ci-dessus\n")
+
+# Combien de départements par région ?
+adm2_utm |> st_drop_geometry() |> count(NAME_1, name = "nb_departements")
+```
+
+```{webr}
+ggplot() +
+  geom_sf(data = adm2_utm, aes(fill = superficie_km2),
+          color = "white", linewidth = 0.15) +
+  # Les limites de région superposées, pour situer le découpage fin.
+  geom_sf(data = st_transform(adm1, 32632), fill = NA,
+          color = "grey20", linewidth = 0.5) +
+  scale_fill_viridis_c(option = "D", name = "Superficie\n(km²)",
+                       na.value = "grey85") +
+  labs(title = "Les 58 départements du Cameroun",
+       subtitle = "Maille fine (ADM2) ; en trait épais, les 10 régions (ADM1)",
+       caption = "Source : GADM v4.1 · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+::: {.takeaway}
+**Ce que la figure code.** La couleur code une superficie en km², donc une propriété
+purement géométrique — pas un phénomène social.
+
+**En quoi le changement de maille est utile.** Mettez cette carte à côté de celle de la
+section 8 : les régions du Nord, uniformes en ADM1, se révèlent composées de
+départements très inégaux. Une moyenne régionale calculée sur des départements de
+tailles aussi différentes pèse implicitement chaque département de la même façon — ce
+qui est rarement ce qu'on veut.
+
+**Ce qui ne se lit pas.** Rien sur la population. Un grand département peut être
+quasiment vide ; c'est précisément pourquoi on rapporte les effectifs à la surface
+avant de comparer.
+
+**Un piège de lecture des données, à connaître.** Dans ce fichier GeoJSON, les noms de
+départements composés ont perdu leurs espaces : on y lit `MefouetAfamba`,
+`NyongetSo'o`, `ValléeduNtem`. Cela n'a aucune conséquence sur la géométrie, mais rend
+toute jointure sur le libellé impossible sans normalisation préalable. Le J03 en fait
+un exercice complet.
+:::
+
+## 10. Points et distance : la démonstration du CRS
+
+```{webr}
+# st_point(c(lon, lat)) crée 1 point ; st_sfc l'enveloppe dans une "simple
+# feature collection" étiquetée par un CRS. 4326 = WGS 84 (degrés GPS).
+# ORDRE : c(longitude, latitude). L'inversion ne lève AUCUNE erreur.
+yaounde <- st_sfc(st_point(c(11.5021, 3.8480)), crs = 4326)
+douala  <- st_sfc(st_point(c(9.7679,  4.0511)), crs = 4326)
+
+# st_distance détecte que le CRS est géographique et calcule la distance
+# géodésique sur l'ellipsoïde (en mètres).
+dist_m <- st_distance(yaounde, douala)
+dist_m
+
+# Comparaison avec un calcul "naïf" type Pythagore sur les degrés.
+# C'EST FAUX : un degré de longitude ne mesure pas la même chose qu'un degré
+# de latitude (et ça dépend en plus de la latitude).
+cat("Distance naïve (degrés - sans dimension):",
+    round(sqrt((11.5021-9.7679)^2 + (3.8480-4.0511)^2), 4), "\n")
+cat("Distance correcte (km):", round(as.numeric(dist_m) / 1000, 1), "km\n")
+```
+
+::: {.takeaway}
+La distance Yaoundé–Douala **par la route** est d'environ 240 km ; à vol d'oiseau, elle
+est nécessairement plus courte — c'est ce que calcule `st_distance()`. Le calcul
+« naïf » sur les degrés donne un nombre **sans dimension** : il ne se compare à rien,
+et pourtant aucune erreur n'a été levée. C'est le prototype de l'échec silencieux :
+plus dangereux que ce qui plante, parce qu'il produit un résultat plausible.
+:::
+
+## 11. Ce qui ne tourne pas dans le navigateur
+
+Les blocs ci-dessous sont en **lecture seule**. Ils s'exécutent sous RStudio desktop, à
+partir de **`demo_formateur_J02.qmd`** (ce même dossier), dont ils sont extraits.
+
+### 11.1 Importer les CSV du dossier-jour — le piège du séparateur
+
+```r
+library(readr); library(dplyr); library(janitor)
+
+# PIEGE : les deux fichiers WorldPop de ce dossier n'ont PAS le meme
+# separateur. La population est en POINTS-VIRGULES, les menages en VIRGULES.
+# read_csv() sur le premier renvoie UNE SEULE COLONNE, sans lever d'erreur.
+# Reflexe : ouvrir un CSV inconnu dans un editeur avant de l'importer, et
+# verifier ncol() juste apres la lecture.
+pop_adm2 <- read_delim("datasets/CMR_population_v1_0_admin_level2.csv",
+                       delim = ";", show_col_types = FALSE) |> clean_names()
+men_adm2 <- read_csv("datasets/CMR_household_v1_0_admin_level2.csv",
+                     show_col_types = FALSE) |> clean_names()
+
+ncol(pop_adm2); ncol(men_adm2)
+
+# Colonnes reelles : id, names1, total, lower, median, upper, uncertainty.
+# lower / upper : l'intervalle de credibilite -- ces chiffres sont MODELISES,
+# pas recenses. Plus l'intervalle est large, moins l'estimation est sure.
+```
+
+### 11.2 Les grappes GPS de l'EDS : d'un tableau à des points
+
+```r
+library(sf)
+
+# Les fichiers DHS separent la GEOMETRIE et les ATTRIBUTS :
+#   CMGE71FL.shp -> les points (coordonnees des grappes)
+#   CMGC72FL.csv -> 130 covariables contextuelles, SANS coordonnees
+# La cle commune est le numero de grappe, DHSCLUST.
+# ATTENTION : les coordonnees GPS EDS sont volontairement DEPLACEES
+# (2 km en urbain, 5 km en rural) pour proteger l'anonymat.
+dhs_gps <- st_read("datasets/CMGE71FL.shp", quiet = TRUE)
+covar   <- readr::read_csv("datasets/CMGC72FL.csv", show_col_types = FALSE)
+
+dhs_enrichi <- dhs_gps |>
+  dplyr::left_join(covar, by = "DHSCLUST")
+
+# Jointure SPATIALE : dans quelle region tombe chaque grappe ?
+# La cle n'est plus un identifiant, c'est la POSITION elle-meme.
+cmr1 <- st_read("datasets/gadm41_CMR_1.shp", quiet = TRUE)
+grappes_region <- st_join(st_transform(dhs_enrichi, 4326),
+                          st_transform(cmr1, 4326),
+                          join = st_within)
+sum(is.na(grappes_region$NAME_1))   # grappes hors de tout polygone
+```
+
+### 11.3 Le raster : Sentinel-2 avec terra
+
+```r
+# terra n'est pas disponible en WebR (GDAL/PROJ/GEOS compiles en WASM,
+# ~15 Mo, et une regression connue de WebR 0.6 au telechargement).
+library(terra)
+
+b08 <- rast("datasets/2026-06-26-00_00_2026-06-26-23_59_Sentinel-2_L2A_B08_(Raw).tiff")
+b11 <- rast("datasets/2026-06-26-00_00_2026-06-26-23_59_Sentinel-2_L2A_B11_(Raw).tiff")
+
+# Toujours verifier l'emprise, le CRS et la resolution REELS avant d'ecrire
+# un exercice : cette tuile ne couvre qu'une fraction du pays.
+ext(b08); crs(b08, describe = TRUE)$code; res(b08)
+
+# NDMI = (NIR - SWIR) / (NIR + SWIR) : humidite de la vegetation.
+ndmi <- (b08 - b11) / (b08 + b11)
+plot(ndmi, main = "NDMI — humidité de la végétation")
+```
+
+### 11.4 Cartographie thématique avec tmap 4
+
+```r
+# tmap est volontairement absent du runtime : trop de dependances pour un
+# chargement navigateur fluide. Les cartes ci-dessus sont donc en ggplot2.
+library(tmap)
+tm_shape(adm1_pop) +
+  tm_polygons(fill = "densite",
+              fill.scale  = tm_scale_intervals(style = "quantile", n = 5,
+                                               values = "brewer.yl_or_rd"),
+              fill.legend = tm_legend(title = "Densité (hab/km²)"),
+              col = "white", lwd = 0.3) +
+  tm_title("Densité de population par région — Cameroun") +
+  tm_scalebar(position = c("left", "bottom")) +
+  tm_compass(type = "4star", position = c("right", "top"))
+
+# NE PAS mettre tmap_mode("view") dans un document diffuse : le widget
+# leaflet embarque toutes les geometries dans le HTML. Le J02 est monte
+# a 17 Mo pour cette raison. A lancer en direct, uniquement.
+```
+
+## 12. Vocabulaire de la journée
+
+| Terme | Ce qu'il désigne |
+|---|---|
+| **Vecteur / raster** | entités discrètes (`sf`) / grille de pixels (`terra`) |
+| **CRS / EPSG** | système de référence des coordonnées, et son code |
+| **Géographique / projeté** | en **degrés** (non mesurable) / en **mètres** (mesurable) |
+| **Centroïde** | centre de gravité d'un polygone — peut tomber hors du polygone |
+| **Choroplèthe** | carte où la couleur d'un polygone code une valeur numérique |
+| **Palette qualitative / séquentielle** | distinguer / ordonner |
+| **MAUP** | le résultat dépend de la maille ; aucune maille n'est neutre |
+| **Erreur écologique** | attribuer à un individu ce qui n'est vrai que de l'agrégat |
+| **Intervalle de crédibilité** | l'incertitude d'un chiffre **modélisé** (WorldPop) |
+
+## 13. Pour aller plus loin
+
+- **`demo_formateur_J02.qmd`** (ce dossier) : la démonstration complète sous RStudio —
+  import des CSV WorldPop, grappes EDS géolocalisées, raster Sentinel-2, cartographie
+  `tmap` et tableau de bord national.
+- **`script_etudiant_J02.R`** : la trame à trous à compléter en salle ;
+  **`script_etudiant_J02_corrige.R`** : le corrigé.
+- **J03 — L'univers vectoriel** : lecture de couches, prédicats spatiaux, jointures
+  attributaires et spatiales. Tout ce que cette page effleure y est repris en détail,
+  et entièrement exécutable dans le navigateur.
+
+[← Retour à l'accueil](../INDEX.md)

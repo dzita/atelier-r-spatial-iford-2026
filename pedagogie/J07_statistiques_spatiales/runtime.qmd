@@ -1,0 +1,610 @@
+---
+title: "J07 · Statistiques spatiales — runtime navigateur"
+subtitle: "Autocorrélation, LISA, points chauds, processus ponctuels — lire des résultats, pas seulement les produire · Atelier IFORD × GDSG 2026"
+# engine: knitr est OBLIGATOIRE. Sans lui, Quarto se rabat sur Jupyter et le
+# rendu echoue.
+engine: knitr
+webr:
+  packages:
+    - sf
+    - dplyr
+    - tidyr
+    - ggplot2
+  # Chemins RELATIFS AU .qmd (prefixe ../). Dans les blocs {webr}, on lit les
+  # MEMES fichiers SANS le ../.
+  # Tous produits par _commons/data/J07_extraits/00_extraire_J07.R
+  resources:
+    - ../_commons/data/J07_extraits/ds_autocorrelation.geojson
+    - ../_commons/data/J07_extraits/moran_global.csv
+    - ../_commons/data/J07_extraits/voisinage_liens.csv
+    - ../_commons/data/J07_extraits/fonctions_ponctuelles.csv
+    - ../_commons/data/J07_extraits/kde_grappes_grille.csv
+    - ../_commons/data/J07_extraits/quadrat_test.csv
+---
+
+::: {.callout-note}
+## Comment utiliser cette page
+
+Les cellules **Run code** (blocs bleus `{webr}`) s'exécutent **dans votre navigateur** :
+cliquez, modifiez, relancez. Les blocs gris ordinaires sont en **lecture seule**.
+
+**Le parti pris de cette journée, et il est particulier.** Aucune des statistiques du J07 ne
+peut être *calculée* dans un navigateur : ni `spdep` (voisinages, Moran, LISA, Getis-Ord),
+ni `spatstat` (processus ponctuels, K de Ripley, densité de noyau) n'existent en WebR. Le
+script `_commons/data/J07_extraits/00_extraire_J07.R` les a donc calculées **en amont**, et
+en a écrit les résultats comme **colonnes d'un GeoJSON** et comme **courbes dans des CSV**.
+
+Ce que cette page fait à la place : elle **cartographie ces résultats** et travaille leur
+**interprétation** — ce qu'est un quadrant « haut-haut », pourquoi une carte LISA n'est pas
+une carte de valeurs, ce que le nombre de voisins change au résultat. C'est le point
+difficile de la journée, et il n'est pas dans le calcul : il est dans la lecture. Le code de
+calcul reste montré, en lecture seule, à chaque étape.
+
+Le déroulé complet et exécutable est dans `demo_formateur_J7.qmd` (ce même dossier).
+:::
+
+::: {.callout-warning}
+## Deux décisions prises en amont, qu'il faut connaître avant de lire une seule carte
+
+**1. L'imputation.** 430 grappes EDS pour 200 districts sanitaires : de nombreux districts
+n'ont **aucune** observation. Or `spdep` ne sait pas traiter un `NA` — une seule unité sans
+valeur interromprait le calcul du I de Moran. Les districts non observés ont donc reçu la
+**moyenne de leur région**, et la colonne `impute` le trace. Conséquence à garder en tête
+tout du long : imputer par une moyenne **écrase la variance**, et des voisins imputés par la
+même valeur se ressemblent **par construction**. L'autocorrélation mesurée est donc tirée
+vers le haut. Ce n'est pas un défaut caché, c'est une hypothèse déclarée.
+
+**2. L'ordre des opérations.** Le graphe de voisinage a été construit sur les géométries
+**non simplifiées**. Simplifier d'abord aurait pu séparer deux polygones qui se touchaient,
+donc changer le voisinage, donc changer le I de Moran. Les couches servies ici sont
+simplifiées **après** le calcul, pour l'affichage seulement.
+:::
+
+## 1. Le voisinage — la décision qui commande tout le reste
+
+Une statistique d'autocorrélation ne mesure rien « en soi ». Elle mesure la ressemblance
+entre unités **selon une définition du voisinage**. Changer cette définition change le
+résultat. Deux matrices ont été calculées, pour qu'on puisse le constater.
+
+```r
+# --- Lecture seule : s'execute sous RStudio desktop, pas dans le navigateur.
+library(spdep)
+
+# (a) Contiguite « Queen » : voisins si les polygones partagent au moins un
+#     point de frontiere. Le nombre de voisins est VARIABLE d'une unite a
+#     l'autre -- une unite centrale en a beaucoup, une unite cotiere peu.
+nb_queen <- poly2nb(ds, queen = TRUE)
+
+# (b) k plus proches voisins : chaque unite a EXACTEMENT k voisins, meme
+#     s'ils sont loin. Le nombre est CONSTANT, la distance ne l'est pas.
+nb_knn4 <- knn2nb(knearneigh(st_coordinates(st_centroid(ds)), k = 4))
+
+# style = "W" : ligne-standardisee. La somme des poids d'une ligne vaut 1,
+# donc chaque unite pese autant, quel que soit son nombre de voisins.
+lw_queen <- nb2listw(nb_queen, style = "W", zero.policy = TRUE)
+lw_knn4  <- nb2listw(nb_knn4,  style = "W", zero.policy = TRUE)
+```
+
+```{webr}
+#| autorun: true
+library(sf)
+library(dplyr)
+library(ggplot2)
+
+ds    <- read_sf("_commons/data/J07_extraits/ds_autocorrelation.geojson")
+liens <- read.csv("_commons/data/J07_extraits/voisinage_liens.csv")
+
+cat("Districts :", nrow(ds),
+    "| imputés :", sum(ds$impute),
+    "| voisins (contiguïté) : de", min(ds$nb_voisins), "à", max(ds$nb_voisins), "\n")
+table(liens$matrice)
+```
+
+```{webr}
+# Dessiner le graphe : chaque arete relie deux centroides voisins.
+ggplot() +
+  geom_sf(data = ds, fill = "grey97", color = "grey80", linewidth = 0.1) +
+  geom_segment(data = liens,
+               aes(x = de_lon, y = de_lat, xend = vers_lon, yend = vers_lat),
+               color = "#0F4C81", linewidth = 0.18, alpha = 0.6) +
+  facet_wrap(~ matrice) +
+  labs(title = "Deux définitions du voisinage sur les mêmes 200 districts",
+       subtitle = "À gauche : contiguïté (nombre de voisins variable). À droite : 4 plus proches voisins.",
+       x = NULL, y = NULL,
+       caption = "Source : DHIS2 MINSANTE · calcul spdep · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+::: {.iford-callout}
+**Ce que la figure code.** Chaque segment est une **relation de voisinage** retenue par la
+matrice de poids. Ce n'est pas une donnée du terrain : c'est une **hypothèse de modélisation**
+qu'on vient de rendre visible.
+
+**Ce que les choix techniques font.** La contiguïté produit un graphe qui épouse la
+géographie : les districts denses (autour des villes) ont beaucoup de voisins, les districts
+étendus du Nord et de l'Est en ont peu. Les k plus proches voisins produisent un graphe
+**régulier** — quatre liens partout — mais dont les liens sont très longs là où les
+districts sont vastes : on y déclare voisines des unités séparées de dizaines de kilomètres.
+
+**Ce qui se lit.** Les deux graphes ne se recouvrent pas. Un district isolé peut n'avoir
+aucun voisin contigu (une **île** au sens du graphe) et pourtant quatre voisins en k-ppv.
+C'est pourquoi la même variable donnera **deux valeurs différentes** du I de Moran —
+section 2.
+
+**Ce qui ne se lit pas.** Le graphe ne dit rien de l'intensité réelle des échanges entre
+districts : il n'y a ni route, ni flux, ni temps de trajet là-dedans. Deux districts
+séparés par un massif montagneux sans route sont ici « voisins » au même titre que deux
+districts reliés par une nationale. Une matrice de poids fondée sur le **temps de parcours**
+serait souvent plus pertinente — et c'est une bonne extension pour le J10.
+:::
+
+## 2. L'indice de Moran global — et sa dépendance à la matrice
+
+```r
+# --- Lecture seule : RStudio desktop.
+# Le test analytique suppose la normalite ; le test de PERMUTATION ne suppose
+# rien : il compare le I observe a 999 redistributions au hasard des memes
+# valeurs sur les memes unites. Sur des taux bornes a [0, 100], c'est celui
+# qu'il faut lire.
+moran.test(ds$tx_eau, lw_queen, zero.policy = TRUE)
+moran.mc(ds$tx_eau, lw_queen, nsim = 999, zero.policy = TRUE)
+```
+
+```{webr}
+moran <- read.csv("_commons/data/J07_extraits/moran_global.csv")
+
+moran |>
+  mutate(across(where(is.numeric), \(x) signif(x, 3))) |>
+  select(variable, matrice, n, moran_i, esperance, z,
+         p_normalite, p_permutation, voisins_moyen)
+```
+
+::: {.iford-callout}
+**Ce que le tableau code.** `moran_i` est l'**indice de Moran global** : une corrélation
+entre la valeur de chaque unité et la moyenne des valeurs de ses voisins. Il varie
+approximativement entre −1 et +1.
+
+- **I > 0** — les valeurs semblables se touchent : agrégation spatiale.
+- **I < 0** — damier : les voisins se ressemblent **moins** que le hasard ne le voudrait.
+- **I ≈ E[I] = −1/(n−1)** — indiscernable d'une répartition aléatoire. Notez que l'espérance
+  n'est **pas** zéro : c'est un petit nombre négatif, que la colonne `esperance` affiche.
+
+**Ce que les choix techniques font.** `p_normalite` provient du test analytique, qui suppose
+la normalité de la variable ; `p_permutation` provient de 999 redistributions au hasard des
+mêmes valeurs sur les mêmes unités. Le second ne fait aucune hypothèse de forme — c'est
+celui à publier sur un taux.
+
+**Ce qui se lit — et c'est la leçon de la section.** Comparez les deux lignes de
+`tx_eau_amelioree` : **même variable, mêmes unités, deux valeurs de I**, parce que la matrice
+de poids diffère. Un indice de Moran ne se cite jamais seul : il se cite **avec sa matrice
+de poids**, son style de standardisation, et sa méthode de test. Un article qui écrit
+« I = 0,34, p < 0,001 » sans dire comment le voisinage a été défini n'est pas reproductible.
+
+**Ce qui ne se lit pas.** Un I global positif dit qu'**il existe** de la structure
+spatiale ; il ne dit pas **où**. C'est un chiffre unique pour tout le pays : il peut masquer
+un point chaud au Nord et un point froid au Sud qui se compensent. C'est précisément pour
+cela qu'existent les statistiques **locales** — section 4. Et rappel : l'imputation par la
+moyenne régionale tire ce chiffre vers le haut.
+:::
+
+## 3. Le diagramme de Moran — les quatre quadrants avant la carte
+
+```{webr}
+# En abscisse : la valeur de l'unite, centree-reduite (tx_eau_std).
+# En ordonnee : la moyenne des valeurs de ses voisins (lag_std).
+# La pente de la droite de regression EST le I de Moran global.
+i_queen <- moran$moran_i[moran$variable == "tx_eau_amelioree" &
+                         moran$matrice == "contiguite_queen"]
+
+ggplot(ds, aes(x = tx_eau_std, y = lag_std)) +
+  geom_hline(yintercept = 0, color = "grey60", linewidth = 0.3) +
+  geom_vline(xintercept = 0, color = "grey60", linewidth = 0.3) +
+  geom_point(aes(color = quadrant), size = 1.6, alpha = 0.85) +
+  geom_smooth(method = "lm", formula = y ~ x, se = FALSE,
+              color = "grey20", linewidth = 0.6) +
+  annotate("text", x = Inf, y = Inf, hjust = 1.1, vjust = 1.5, size = 3.2,
+           label = paste("pente = I de Moran =", signif(i_queen, 3))) +
+  scale_color_manual(values = c(
+    "HH - haut entoure de haut" = "#B2182B",
+    "LL - bas entoure de bas"   = "#2166AC",
+    "HL - haut entoure de bas"  = "#EF8A62",
+    "LH - bas entoure de haut"  = "#67A9CF",
+    "non significatif"          = "grey80"), name = "Quadrant LISA") +
+  labs(title = "Diagramme de Moran — accès à une source d'eau améliorée",
+       subtitle = "Chaque point est un district : sa valeur, contre la moyenne de ses voisins",
+       x = "valeur du district (centrée-réduite)",
+       y = "moyenne des voisins (décalage spatial)",
+       caption = "Matrice : contiguïté Queen, style W · Source : EDS-MICS 2018 · IFORD × GDSG 2026") +
+  theme_minimal()
+```
+
+::: {.iford-callout}
+**Ce que la figure code.** L'axe horizontal porte la valeur du district, **centrée-réduite** :
+zéro = la moyenne nationale, une unité = un écart-type. L'axe vertical porte le **décalage
+spatial** (*spatial lag*) : la moyenne pondérée des valeurs de ses voisins, dans la même
+unité. Les deux droites à zéro découpent le plan en **quatre quadrants**.
+
+**Ce que les choix techniques font.** Comme les deux axes sont centrés-réduits, la **pente de
+la droite d'ajustement est exactement le I de Moran global** — l'annotation le rappelle.
+Autrement dit, le nuage et l'indice sont deux vues du même objet : le premier est
+diagnostique, le second résumé.
+
+**Ce qui se lit.**
+
+- **Quadrant supérieur droit (HH)** — un district au-dessus de la moyenne, entouré de
+  districts au-dessus de la moyenne. Un **point chaud**.
+- **Quadrant inférieur gauche (LL)** — en dessous, entouré d'en dessous. Un **point froid**.
+- **Quadrant inférieur droit (HL)** — au-dessus, entouré d'en dessous : un **atypique**, une
+  poche isolée. Souvent une ville dans un environnement rural.
+- **Quadrant supérieur gauche (LH)** — en dessous, entouré d'au-dessus : l'atypique inverse.
+
+Les points gris sont ceux dont la statistique locale n'atteint pas le seuil de
+significativité déclaré (5 %) : leur position dans un quadrant n'est **pas** interprétable.
+
+**Ce qui ne se lit pas.** Un point situé loin sur la droite n'est pas « plus significatif » :
+la significativité vient du test local, pas de la distance à l'origine. Et les districts
+imputés (`impute == TRUE`) se tiennent mécaniquement près de la diagonale, puisqu'ils
+portent la moyenne de leur région : leur position n'est pas une observation.
+:::
+
+## 4. La carte LISA — et le contresens qu'elle provoque
+
+```r
+# --- Lecture seule : RStudio desktop.
+# localmoran() decompose le I global en contributions locales : une par unite.
+lm_res <- localmoran(ds$tx_eau, lw_queen, zero.policy = TRUE)
+
+# Le quadrant se lit sur le signe de la valeur centree-reduite ET sur celui
+# de son decalage spatial -- puis on ne garde que ce qui passe le seuil.
+z   <- as.numeric(scale(ds$tx_eau))
+lag <- lag.listw(lw_queen, z, zero.policy = TRUE)
+quadrant <- ifelse(lm_res[, 5] > 0.05, "non significatif",
+            ifelse(z > 0 & lag > 0, "HH",
+            ifelse(z < 0 & lag < 0, "LL",
+            ifelse(z > 0 & lag < 0, "HL", "LH"))))
+```
+
+```{webr}
+ggplot(ds) +
+  geom_sf(aes(fill = quadrant), color = "white", linewidth = 0.12) +
+  scale_fill_manual(values = c(
+    "HH - haut entoure de haut" = "#B2182B",
+    "LL - bas entoure de bas"   = "#2166AC",
+    "HL - haut entoure de bas"  = "#EF8A62",
+    "LH - bas entoure de haut"  = "#67A9CF",
+    "non significatif"          = "grey88"), name = "Quadrant LISA") +
+  labs(title = "Carte LISA — accès à une source d'eau améliorée",
+       subtitle = "Seuil déclaré : p < 0,05 · matrice de contiguïté Queen, style W",
+       caption = "Attention : ceci n'est PAS une carte de valeurs. Voir la note ci-dessous.\nSource : EDS-MICS 2018 · DHIS2 MINSANTE · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+::: {.callout-important}
+## Une carte LISA n'est pas une carte de valeurs
+
+**Ce que la figure code.** Une **catégorie de relation au voisinage**, pas un niveau. La
+couleur ne dit pas « ici l'accès à l'eau est élevé » : elle dit « ici, une valeur
+au-dessus de la moyenne est entourée d'autres valeurs au-dessus de la moyenne, et cette
+configuration est trop régulière pour être attribuée au hasard ». La palette est
+**qualitative** — cinq modalités sans ordre — et c'est délibéré : un dégradé suggérerait un
+classement.
+
+**Le contresens à éviter, et il est systématique.** Un district « HH » **n'est pas le mieux
+doté du pays**. Il peut être moyen en valeur absolue, et se retrouver HH parce que ses
+voisins lui ressemblent. Symétriquement, le district le mieux doté du Cameroun peut
+apparaître **gris** si ses voisins sont dissemblables. Pour connaître les niveaux, il faut
+la choroplèthe de la valeur — les deux cartes se lisent **ensemble**, jamais l'une à la
+place de l'autre.
+
+**Ce qui se lit utilement.** Les blocs contigus de même couleur. Un ensemble LL désigne une
+**zone de politique publique** : le problème n'y est pas celui d'un district isolé mais
+d'un territoire, et une action ciblée sur une seule unité y sera absorbée par son
+environnement. Les atypiques HL et LH, eux, désignent des **frontières** : quelque chose
+change brusquement là, et vaut d'être expliqué.
+
+**Ce qui ne se lit pas.**
+
+1. **La significativité n'est pas la causalité.** Un cluster HH ne dit rien de *pourquoi*.
+2. **Le problème des tests multiples.** On effectue 200 tests locaux ; au seuil de 5 %, une
+   dizaine de districts ressortiraient « significatifs » **par pur hasard**. Toute publication
+   sérieuse applique une correction (Bonferroni, ou taux de fausse découverte) et le déclare.
+3. **La dépendance à la matrice.** Refaire la même carte avec les 4 plus proches voisins
+   déplacerait des unités d'un quadrant à l'autre. Un cluster qui survit aux deux
+   définitions est solide ; un cluster qui disparaît est un artefact de modélisation.
+4. **L'erreur écologique**, toujours : la couleur qualifie un agrégat de districts, jamais
+   un ménage.
+:::
+
+## 5. Getis-Ord Gi* — la même famille, une autre question
+
+```{webr}
+ggplot(ds) +
+  geom_sf(aes(fill = gi_classe), color = "white", linewidth = 0.12) +
+  # Palette DIVERGENTE : le z-score a un vrai centre neutre (zero).
+  scale_fill_manual(values = c(
+    "froid 99 %"       = "#2166AC",
+    "froid 95 %"       = "#92C5DE",
+    "non significatif" = "grey90",
+    "chaud 95 %"       = "#F4A582",
+    "chaud 99 %"       = "#B2182B"), name = "Gi* (z-score)",
+    na.value = "grey90") +
+  labs(title = "Points chauds et points froids — Getis-Ord Gi*",
+       subtitle = "Seuils du z-score : 1,96 (5 %) et 2,58 (1 %), bilatéral",
+       caption = "Source : EDS-MICS 2018 · calcul spdep::localG · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+```{webr}
+# Tableau de concordance : les deux methodes ne classent pas pareil.
+table(LISA = ds$quadrant, Gi_etoile = ds$gi_classe)
+```
+
+::: {.iford-callout}
+**Ce que la figure code.** Un **z-score** : de combien d'écarts-types la somme locale
+(l'unité **et** ses voisins) s'écarte de ce qu'on attendrait sous répartition aléatoire.
+`localG` avec `include.self()` — c'est l'étoile de Gi\* : l'unité entre dans son propre
+voisinage.
+
+**Ce qui distingue Gi\* du LISA.** Le LISA répond à « **cette unité ressemble-t-elle à ses
+voisins ?** » ; Gi\* répond à « **la somme locale est-elle anormalement haute ou basse ?** ».
+Conséquence pratique : Gi\* ne produit **pas** de catégorie « atypique ». Un district élevé
+entouré de districts bas (un HL au LISA) donnera un Gi\* proche de zéro, les deux effets se
+compensant dans la somme. Le tableau de concordance le montre : ce n'est pas du bruit, c'est
+la différence de définition.
+
+**Ce que les choix techniques font.** La palette est **divergente** parce que le z-score a un
+vrai zéro. Les seuils 1,96 et 2,58 sont ceux de la loi normale à 5 % et 1 % — ils sont
+**déclarés**, pas subis, et pourraient être resserrés si l'on corrigeait les tests multiples.
+
+**Ce qui se lit.** Les zones « chaud » désignent des concentrations locales fortes ; les
+zones « froid », des concentrations de valeurs basses. Pour cibler une intervention, Gi\* est
+souvent plus direct que le LISA : il désigne des **poches**, pas des relations.
+
+**Ce qui ne se lit pas.** Gi\* hérite de tout ce qui précède : dépendance à la matrice de
+poids, tests multiples non corrigés, imputation des districts non observés, et MAUP — refaire
+l'exercice à la maille régionale donnerait une autre carte, avec 10 unités et une puissance
+statistique très différente.
+:::
+
+## 6. Processus ponctuels — les grappes se regroupent-elles ?
+
+Jusqu'ici on a travaillé sur des **polygones** avec des valeurs. On change d'objet : on
+regarde maintenant la **position des points** eux-mêmes, sans aucune valeur attachée. La
+question devient : ce semis est-il compatible avec le hasard ?
+
+```r
+# --- Lecture seule : RStudio desktop.
+library(spatstat.geom); library(spatstat.explore)
+
+# spatstat travaille en coordonnees PLANES : on reprojette en UTM 33N.
+# Sur des degres, K(r) et G(r) n'auraient aucun sens metrique.
+fen <- as.owin(st_as_sfc(st_union(st_transform(ds, 32633))))
+pp  <- ppp(x = xy[, 1], y = xy[, 2], window = fen)
+
+# G(r) : probabilite que le plus proche voisin soit a moins de r.
+# K(r) : nombre attendu de points dans un rayon r, rapporte a l'intensite.
+# L(r) = sqrt(K(r)/pi) - r : transformation qui stabilise la variance et
+#        rend la valeur de reference plate a zero -- plus facile a lire.
+# envelope() rejoue le semis sous hypothese de hasard complet (CSR) et
+# construit une bande de reference.
+env_L <- envelope(pp, Lest, nsim = 39)
+```
+
+```{webr}
+#| autorun: true
+fonctions <- read.csv("_commons/data/J07_extraits/fonctions_ponctuelles.csv")
+
+# On trace L(r) : la reference CSR y est une droite horizontale a zero.
+L <- subset(fonctions, fonction == "L")
+L$obs_c  <- L$obs  - L$r      # L(r) - r : ecart a la reference
+L$theo_c <- L$theo - L$r
+L$lo_c   <- L$lo   - L$r
+L$hi_c   <- L$hi   - L$r
+
+ggplot(L, aes(x = r / 1000)) +
+  geom_ribbon(aes(ymin = lo_c / 1000, ymax = hi_c / 1000),
+              fill = "grey80", alpha = 0.7) +
+  geom_line(aes(y = theo_c / 1000), color = "grey30", linetype = "dashed") +
+  geom_line(aes(y = obs_c / 1000), color = "#B2182B", linewidth = 0.8) +
+  labs(title = "Fonction L de Ripley — semis des grappes EDS-MICS 2018",
+       subtitle = "Rouge : observé · pointillé : hasard complet (CSR) · gris : enveloppe de 39 simulations",
+       x = "rayon r (km)", y = "L(r) − r  (km)",
+       caption = "Calcul spatstat, projection UTM 33N · IFORD × GDSG 2026") +
+  theme_minimal()
+```
+
+```{webr}
+# La fonction G, sur le meme principe : distance au PLUS PROCHE voisin.
+G <- subset(fonctions, fonction == "G")
+
+ggplot(G, aes(x = r / 1000)) +
+  geom_ribbon(aes(ymin = lo, ymax = hi), fill = "grey80", alpha = 0.7) +
+  geom_line(aes(y = theo), color = "grey30", linetype = "dashed") +
+  geom_line(aes(y = obs), color = "#0F4C81", linewidth = 0.8) +
+  labs(title = "Fonction G — distance au plus proche voisin",
+       subtitle = "Bleu : observé · pointillé : CSR · gris : enveloppe de 39 simulations",
+       x = "rayon r (km)", y = "G(r) = P(plus proche voisin ≤ r)",
+       caption = "Calcul spatstat · IFORD × GDSG 2026") +
+  theme_minimal()
+```
+
+::: {.iford-callout}
+**Ce que les figures codent.** Deux résumés de la même géométrie de points, à toutes les
+échelles à la fois.
+
+- **G(r)** est la probabilité que le plus proche voisin d'un point soit à moins de *r*.
+  Elle décrit l'échelle **la plus fine** : les distances entre plus proches voisins.
+- **L(r)** est une transformation de **K(r)**, laquelle compte le nombre moyen de points dans
+  un cercle de rayon *r* autour de chaque point. Elle décrit **toutes** les échelles à la
+  fois. `L(r) − r` a été tracé plutôt que `L(r)` parce que la référence devient alors une
+  droite horizontale à zéro : l'œil compare à une ligne droite, pas à une courbe.
+
+**Comment lire.** Au-dessus de la bande grise = **agrégation** à cette échelle : il y a plus
+de voisins proches que le hasard n'en produirait. En dessous = **régularité** : les points
+s'évitent. À l'intérieur = compatible avec le **hasard complet** (CSR). La bande grise
+n'est pas un intervalle de confiance : c'est l'**enveloppe** des valeurs extrêmes de 39
+semis simulés sous CSR, ce qui correspond à un test bilatéral au seuil de 5 %.
+
+**Ce qui se lit.** L'échelle à laquelle la courbe sort de l'enveloppe est informative : elle
+donne l'**ordre de grandeur** du regroupement — quelques kilomètres, quelques dizaines de
+kilomètres.
+
+**Ce qui ne se lit pas, et c'est décisif ici.** Les grappes EDS **ne sont pas un semis
+naturel** : ce sont des unités primaires **tirées par un plan de sondage stratifié**, avec
+une allocation par région et par milieu. Toute structure observée reflète d'abord le plan de
+sondage et la répartition de la population, pas un processus spontané. La méthode s'apprend
+ici sur des points réels ; **la conclusion substantielle, elle, ne se transpose pas**. Sur un
+vrai semis — cas de choléra, points d'eau, incidents ACLED — la même lecture serait
+directement interprétable.
+:::
+
+## 7. Le test du quadrat — le même diagnostic, en plus simple
+
+```{webr}
+quadrat <- read.csv("_commons/data/J07_extraits/quadrat_test.csv")
+
+cat("Test du quadrat", quadrat$nx[1], "x", quadrat$ny[1],
+    ": X² =", round(quadrat$statistique[1], 1),
+    "| ddl =", quadrat$ddl[1],
+    "| p =", signif(quadrat$p_value[1], 3), "\n")
+
+ggplot(quadrat, aes(x = observe)) +
+  geom_histogram(binwidth = 2, fill = "#0F4C81", color = "white") +
+  geom_vline(xintercept = quadrat$attendu_csr[1],
+             color = "#B2182B", linewidth = 0.8, linetype = "dashed") +
+  labs(title = "Distribution des effectifs par cellule de quadrat",
+       subtitle = "Pointillé rouge : effectif attendu sous hasard complet (CSR)",
+       x = "nombre de grappes dans la cellule", y = "nombre de cellules",
+       caption = "Calcul spatstat::quadrat.test · IFORD × GDSG 2026") +
+  theme_minimal()
+```
+
+::: {.iford-callout}
+**Ce que la figure code.** La fenêtre a été découpée en cellules régulières ; on compte les
+points dans chacune, et on compare cette distribution à celle qu'un processus de Poisson
+homogène produirait — soit un effectif identique partout, la ligne rouge.
+
+**Ce qui se lit.** Une distribution étalée, avec beaucoup de cellules vides et quelques
+cellules très chargées, signe l'**agrégation**. Une distribution concentrée autour de la
+ligne rouge est compatible avec le hasard.
+
+**Ce qui ne se lit pas.** Le test du quadrat dépend entièrement de la **taille des
+cellules** : c'est le MAUP appliqué à un semis de points. Avec des cellules très grandes,
+tout paraît homogène ; très petites, tout paraît agrégé. Il ne dit pas non plus **à quelle
+échelle** se produit le regroupement — c'est ce que G et K apportent en plus. Et il suppose
+l'**homogénéité** de l'intensité sous l'hypothèse nulle, ce qui n'a guère de sens sur un
+pays où la population n'est pas uniformément répartie.
+:::
+
+## 8. La densité de noyau — et le paramètre qui décide de la carte
+
+```{webr}
+#| autorun: true
+kde <- read.csv("_commons/data/J07_extraits/kde_grappes_grille.csv")
+
+# La grille est en UTM 33N (EPSG:32633), en METRES : c'est ce qui la garde
+# reguliere, donc tracable par geom_raster(). On reprojette donc la COUCHE
+# des districts vers la grille, jamais l'inverse.
+ds_utm <- st_transform(ds, 32633)
+
+kde_tous <- subset(kde, sous_population == "tous")
+kde_tous$bandwidth <- factor(kde_tous$bandwidth,
+                             levels = c("petit", "scott", "grand"))
+
+ggplot() +
+  geom_raster(data = kde_tous, aes(x = x, y = y, fill = densite)) +
+  geom_sf(data = ds_utm, fill = NA, color = "white", linewidth = 0.08) +
+  facet_wrap(~ bandwidth) +
+  scale_fill_viridis_c(option = "A", name = "Densité\n(grappes/km²)") +
+  labs(title = "Trois largeurs de bande, un seul semis de points",
+       subtitle = "La carte change ; les points, eux, n'ont pas bougé",
+       x = NULL, y = NULL,
+       caption = "Calcul spatstat::density.ppp · projection UTM 33N · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank(), legend.position = "bottom")
+```
+
+```{webr}
+# La meme surface, separee par milieu de residence. L'ecart entre deux
+# surfaces est souvent plus informatif que chacune prise isolement.
+kde_mil <- subset(kde, bandwidth == "scott" & sous_population != "tous")
+
+ggplot() +
+  geom_raster(data = kde_mil, aes(x = x, y = y, fill = densite)) +
+  geom_sf(data = ds_utm, fill = NA, color = "white", linewidth = 0.08) +
+  facet_wrap(~ sous_population) +
+  scale_fill_viridis_c(option = "A", name = "Densité\n(grappes/km²)") +
+  labs(title = "Densité des grappes urbaines et rurales",
+       subtitle = "Largeur de bande de Scott, identique dans les deux panneaux",
+       x = NULL, y = NULL,
+       caption = "Calcul spatstat::density.ppp · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank(), legend.position = "bottom")
+```
+
+::: {.iford-callout}
+**Ce que les figures codent.** Une **surface continue** estimée à partir de points discrets :
+on pose un noyau (une petite cloche) sur chaque point et on les additionne. L'unité est un
+nombre de grappes par km² — pas un nombre d'habitants.
+
+**Ce que les choix techniques font.** La **largeur de bande** *h* est le seul paramètre qui
+compte, et c'est un choix, pas une propriété des données :
+
+- *h* trop petit — la surface suit chaque point ; on lit du bruit d'échantillonnage comme
+  s'il s'agissait de structure (**sur-ajustement**) ;
+- *h* trop grand — la surface se lisse ; les concentrations locales disparaissent
+  (**sous-ajustement**) ;
+- la règle de Scott (`bw.scott`) est un compromis automatique, rapide ; la validation croisée
+  (`bw.diggle`) est plus fine et beaucoup plus lente.
+
+Les deux panneaux du second graphique partagent la **même** largeur de bande et la **même**
+échelle de couleur : sans cela, les comparer n'aurait aucun sens.
+
+**Ce qui se lit.** Le second graphique met en scène un argument central de la journée :
+**l'écart entre deux cartes est souvent plus informatif que chacune**. Là où la surface
+urbaine est intense et la rurale plate, on lit une géographie du peuplement ; là où les deux
+se superposent, on lit une zone de transition.
+
+**Ce qui ne se lit pas.** Trois limites. D'abord, une KDE dépasse la fenêtre d'observation :
+près des frontières, la densité est **sous-estimée** parce qu'une partie du noyau tombe hors
+du pays (effet de bord). Ensuite, comme en section 6, ces points sont **tirés par un plan de
+sondage** : la surface décrit où l'enquête a échantillonné, pas où vivent les gens. Enfin,
+les positions sont **déplacées** par le DHS de 2 à 10 km — un lissage supplémentaire, subi
+et non choisi, qui s'ajoute à celui de la largeur de bande.
+:::
+
+## Ce qui reste sous RStudio
+
+`demo_formateur_J7.qmd` contient, en plus de ce qui précède : la construction complète des
+matrices de poids et leur visualisation, les tests de Moran sur d'autres indicateurs, les
+enveloppes de simulation avec un nombre de simulations réglable, la comparaison
+systématique LISA / Gi\*, et l'export des districts prioritaires en GeoPackage.
+
+## Checklist de fin de J07
+
+- [ ] Je ne cite jamais un indice de Moran sans dire **quelle matrice de poids** l'a produit,
+      avec quel style de standardisation et quel test.
+- [ ] Je sais expliquer qu'une carte **LISA n'est pas une carte de valeurs**, et je la
+      présente **à côté** de la choroplèthe des valeurs, jamais à sa place.
+- [ ] Je distingue **LISA** (ressemblance au voisinage, avec atypiques) de **Gi\*** (somme
+      locale anormale, sans atypiques).
+- [ ] Je mentionne le problème des **tests multiples** : 200 tests locaux à 5 %, ce sont une
+      dizaine de faux positifs attendus.
+- [ ] Je déclare l'**imputation** des unités non observées et je dis dans quel sens elle
+      biaise le résultat.
+- [ ] Je sais nommer **MAUP**, **erreur écologique** et **effet de bord**, et dire lequel
+      menace la figure que je montre.
+
+**Demain (J08)** : la population en haute résolution — on descend sous la maille
+administrative, avec des grilles de population à 100 mètres, et le MAUP devient une
+ressource plutôt qu'un obstacle.
+
+[← Retour à l'accueil](../INDEX.md)

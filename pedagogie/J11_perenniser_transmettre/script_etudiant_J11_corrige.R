@@ -1,0 +1,961 @@
+## ============================================================================
+## SCRIPT ÉTUDIANT — CORRIGÉ — J11 · Pérenniser et transmettre : la formation ne s'arrête pas ici
+## Atelier IFORD × GDSG 2026 · Vendredi 7 août 2026
+## Version complète du script étudiant (distribution en fin de journée).
+## ============================================================================
+
+## ============================================================================
+## [PREPARATION ATELIER - GDSG, juillet 2026]
+## Ce script s'execute depuis la RACINE du projet RStudio :
+##   1. Ouvrir atelier-r-spatial-iford-2026.Rproj (les chemins sont relatifs).
+##   2. Donnees : datasets/ (fournies avec ce dossier ; chemins relatifs)
+##   3. Les sorties de ce script sont ecrites dans outputs/.
+## NB : fichiers references mais PAS ENCORE dans le Drive (voir README donnees) :
+##      - datasets/FIES_Cameroun.csv
+for (d in c("outputs/indices", "outputs/metadata", "outputs/tableaux"))
+  dir.create(d, recursive = TRUE, showWarnings = FALSE)
+## ============================================================================
+
+################################################################################
+# ATELIER IFORD - DONNÉES SPATIALES, ANALYSE ET MANIPULATION DANS R
+# Jour 10 : Flux de travail reproductibles
+# Script complet 
+# Author: Marcial TEDA
+################################################################################
+
+#Séquence 1 — Introduction : La reproductibilité en science des données géospatiales
+# Voir les explications élaborer sur Word
+
+#Séquence 2 — R Markdown : créer des rapports dynamiques avec données ECAM5
+
+#2.1 Architecture d'un fichier R Markdown
+#Un fichier R Markdown (.Rmd) est composé de trois éléments fondamentaux : l'en-tête YAML (métadonnées), les chunks R (blocs de code exécutable) et le texte Markdown (narration). Quand vous cliquez sur 'Knit', R exécute tous les chunks dans l'ordre, injecte les sorties (tableaux, graphiques, valeurs) dans le texte, puis convertit le tout via Pandoc vers le format cible (Word, HTML, PDF).
+
+#Concept clé : le flux R Markdown
+#Fichier .Rmd → [knitr exécute les chunks R] → Fichier .md intermédiaire → [Pandoc convertit] → Word / HTML / PDF
+
+#2.2 Créer votre premier rapport ECAM5
+#Ouvrez RStudio → File → New File → R Markdown. Copiez le code ci-dessous dans votre fichier rapport_ecam5.Rmd :
+
+# ---
+# title: "Analyse des Conditions de Vie des Ménages — ECAM5 2022"
+# subtitle: "Rapport de synthèse régionale"
+# author: "Institut National de la Statistique du Cameroun"
+# date: "`r format(Sys.Date(), '%d %B %Y')`"
+# output:
+#   word_document:
+#     toc: true
+#     toc_depth: 3
+#     reference_docx: modele_ins.docx  # Template Word personnalisé
+#   html_document:
+#     toc: true
+#     toc_float: true
+#     theme: flatly
+#     code_folding: hide
+# bibliography: references.bib
+# lang: fr
+# ---
+
+# ```{r setup, include=FALSE}
+# Options globales — s'appliquent à tous les chunks suivants
+knitr::opts_chunk$set(
+  echo    = TRUE,    # Afficher le code R dans le rapport
+  warning = FALSE,   # Masquer les avertissements
+  message = FALSE,   # Masquer les messages packages
+  fig.width  = 8,
+  fig.height = 5,
+  dpi = 300,         # Résolution haute pour publication
+  fig.align = 'center'
+)
+
+# Chargement des packages
+library(haven)        # Lire les fichiers .dta (Stata)
+library(tidyverse)    # Manipulation + visualisation de données
+library(sf)           # Données spatiales vectorielles
+library(kableExtra)   # Tableaux HTML/Word améliorés
+library(flextable)    # Tableaux Word professionnels
+library(janitor)      # Nettoyage des noms de variables
+library(labelled)     # Gestion des labels Stata dans R
+library(scales)       # Formatage des axes ggplot2
+# ```
+
+#2.3 Chargement et exploration initiale des données ECAM5
+#L'enquête ECAM5 (Enquête Camerounaise Auprès des Ménages, 5ème édition, 2022) couvre l'ensemble du territoire national. Elle contient des modules sur la consommation des ménages, l'accès aux services de base, l'emploi et la pauvreté. Le fichier ecam5.dta est au format Stata et conserve les labels de variables.
+
+# ```{r chargement-ecam5}
+# ── Chargement des données ECAM5 ──────────────────────────────────────
+# Le fichier .dta conserve les labels Stata — haven les lit correctement
+ecam5 <- haven::read_dta("datasets/ecam5.dta")
+
+# Aperçu de la structure
+cat("Dimensions:", nrow(ecam5), "ménages ×", ncol(ecam5), "variables\n")
+cat("Régions:", n_distinct(ecam5$region), "\n")
+cat("Milieux:", paste(unique(as_factor(ecam5$milieu)), collapse = ", "), "\n")
+
+# Extraction d'un tableau de présentation
+ecam5 |>
+  group_by(region = as_factor(region)) |>
+  summarise(
+    N_menages  = n(),
+    Taille_moy = round(mean(size_hh, na.rm = TRUE), 1),
+    Pct_urbain = round(mean(milieu == 1, na.rm = TRUE) * 100, 1)
+  ) |>
+  flextable() |>
+  set_header_labels(
+    region     = "Région",
+    N_menages  = "Ménages enquêtés",
+    Taille_moy = "Taille moy. ménage",
+    Pct_urbain = "% Urbain"
+  ) |>
+  theme_vanilla() |>
+  autofit()
+# ```
+
+#2.4 Intégrer des statistiques inline et des graphiques
+#La puissance de R Markdown réside dans l'injection de valeurs calculées directement dans le texte narratif, éliminant tout risque d'erreur de 
+
+# ```{r calculs-inline}
+# Calculs préalables stockés dans des objets R
+taux_pauvrete_nat <- ecam5 |>
+  summarise(tp = weighted.mean(pauvre == 1, w = ponderation, na.rm = TRUE)) |>
+  pull(tp) * 100
+
+region_plus_pauvre <- ecam5 |>
+  group_by(reg = as_factor(region)) |>
+  summarise(tp = weighted.mean(pauvre == 1, w = ponderation, na.rm = TRUE)) |>
+  slice_max(tp, n = 1) |> pull(reg)
+# ```
+
+## Utilisation dans le texte Markdown :
+# Selon l'ECAM5 (2022), le taux de pauvreté national s'établit à
+# `r round(taux_pauvrete_nat, 1)`% de la population. La région la
+# plus touchée est `r region_plus_pauvre`.
+
+# ```{r graphique-pauvrete-region, fig.cap="Taux de pauvreté par région (ECAM5, 2022)"}
+# Graphique en barres horizontales — taux de pauvreté régional
+ecam5 |>
+  group_by(region = as_factor(region)) |>
+  summarise(tp = weighted.mean(pauvre == 1, w = ponderation, na.rm = TRUE) * 100) |>
+  mutate(region = fct_reorder(region, tp)) |>
+  ggplot(aes(x = tp, y = region, fill = tp)) +
+  geom_col(width = 0.7, show.legend = FALSE) +
+  geom_text(aes(label = paste0(round(tp, 1), "%")),
+            hjust = -0.1, size = 3.5, fontface = "bold") +
+  scale_fill_gradient(low = "#FEE8C8", high = "#D7301F") +
+  scale_x_continuous(limits = c(0, 75), labels = label_percent(scale = 1)) +
+  labs(
+    title    = "Taux de pauvreté monétaire par région",
+    subtitle = "Pondéré par les coefficients d'extrapolation ECAM5 2022",
+    x = "Taux de pauvreté (%)",
+    y = NULL,
+    caption = "Source : INS Cameroun — ECAM5 2022"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title    = element_text(face = "bold", colour = "#1F497D"),
+    plot.subtitle = element_text(colour = "grey40"),
+    panel.grid.major.y = element_blank()
+  )
+# ```
+
+#2.5 Cartographie inline avec les données gadm41_CMR et ECAM5
+#Il est possible d'intégrer des cartes choroplèthes directement dans le rapport R Markdown. La carte est générée par R à chaque compilation, garantissant qu'elle reflète toujours les données les plus récentes.
+
+
+# ```{r carte-pauvrete, fig.cap="Carte du taux de pauvreté par région — ECAM5 2022", fig.width=9, fig.height=7}
+library(sf)
+
+# Chargement du fond de carte administratif
+cmr_reg <- st_read("datasets/gadm41_CMR_1.shp", quiet = TRUE)
+
+# Calcul du taux de pauvreté par région
+tp_region <- ecam5 |>
+  group_by(region = as_factor(region)) |>
+  summarise(
+    taux_pauvrete = weighted.mean(pauvre == 1, w = ponderation, na.rm = TRUE) * 100,
+    n_menages = n()
+  )
+
+# Jointure spatiale — harmoniser les noms de régions
+# Adapter les noms selon les données réelles
+cmr_carte <- cmr_reg |>
+  left_join(tp_region, by = c("NAME_1" = "region"))
+
+# Carte choroplèthe
+ggplot(cmr_carte) +
+  geom_sf(aes(fill = taux_pauvrete), colour = "white", linewidth = 0.4) +
+  scale_fill_gradient2(
+    low = "#2ECC71", mid = "#F39C12", high = "#C0392B",
+    midpoint = median(cmr_carte$taux_pauvrete, na.rm = TRUE),
+    labels = label_percent(scale = 1),
+    name = "Taux (%)"
+  ) +
+  geom_sf_text(aes(label = paste0(round(taux_pauvrete, 0), "%")),
+               size = 3, colour = "black", fontface = "bold") +
+  labs(
+    title    = "Taux de pauvreté monétaire par région",
+    subtitle = "ECAM5 2022 — Pondération nationale",
+    caption  = "Sources : INS (ECAM5) · GADM 4.1"
+  ) +
+  theme_void(base_size = 12) +
+  theme(
+    plot.title    = element_text(face = "bold", size = 14, colour = "#1F497D"),
+    legend.position = "right"
+  )
+# ```
+#Séquence 3 — Quarto : la génération suivante des documents reproductibles
+
+#3.1 Quarto vs R Markdown — Comprendre les différences
+#Quarto est le successeur officiel de R Markdown, développé par Posit (ex-RStudio). Il supporte nativement R, Python, Julia et Observable JS dans le même document. La syntaxe est légèrement différente mais la philosophie est identique.
+
+#Caractéristique	R Markdown	Quarto
+#Fichier	.Rmd	.qmd
+#Langages supportés	R (principalement)	R, Python, Julia, Observable JS
+#Options de chunk	Dans l'en-tête ```{r option=val}	YAML inline : #| option: val
+#Formats de sortie	Word, HTML, PDF, Slides	Idem + sites web, livres, dashboards
+#Installation	Package R knitr	Logiciel indépendant (quarto.org)
+#Recommandé pour	Projets R purs existants	Nouveaux projets, multi-langages
+
+#3.2 Structure d'un fichier Quarto
+#Créez le fichier rapport_eesi3.qmd pour analyser l'enquête sur l'emploi et le secteur informel (EESI3) :
+
+# ---
+# title: "Emploi et Secteur Informel au Cameroun — EESI3"
+# author:
+#   - name: "Département des Statistiques Économiques"
+#     affiliation: "Institut National de la Statistique — Cameroun"
+# date: today
+# date-format: "DD MMMM YYYY"
+# lang: fr
+# format:
+#   html:
+#     toc: true
+#     toc-depth: 4
+#     code-fold: true
+#     theme: cosmo
+#     embed-resources: true  # Document HTML autonome (pas de dépendances externes)
+#   docx:
+#     toc: true
+#     reference-doc: template_ins.docx
+# execute:
+#   echo: true
+#   warning: false
+#   message: false
+#   cache: true   # Mettre en cache les calculs lourds
+# ---
+
+# ```{r}
+#| label: setup
+#| include: false
+
+library(haven)
+library(tidyverse)
+library(sf)
+library(flextable)
+library(janitor)
+library(labelled)
+
+# Chargement EESI3 — Enquête sur l'Emploi et le Secteur Informel
+eesi3 <- haven::read_dta("datasets/eesi3.dta") |>
+  janitor::clean_names()  # Noms de variables en minuscules sans espaces
+
+cat("EESI3 chargée:", nrow(eesi3), "individus ×", ncol(eesi3), "variables\n")
+# ```
+
+#3.3 Analyse du secteur informel avec EESI3
+#L'EESI3 permet de distinguer les travailleurs du secteur formel et informel selon des critères de protection sociale, de contrat de travail et de couverture fiscale. Le code suivant produit une analyse régionale complète.
+
+# ```{r}
+#| label: secteur-informel
+#| fig-cap: "Part du secteur informel dans l'emploi — EESI3"
+#| fig-width: 9
+#| fig-height: 6
+
+# Calcul du taux d'informalité par région et sexe
+# (adapter les noms de variables selon le vrai codebook EESI3)
+info_region <- eesi3 |>
+  filter(!is.na(secteur_activite)) |>
+  group_by(
+    region = as_factor(region),
+    sexe   = as_factor(sexe)
+  ) |>
+  summarise(
+    pct_informel = weighted.mean(
+      secteur_activite == 2,  # 2 = secteur informel dans EESI3
+      w  = ponderation,
+      na.rm = TRUE
+    ) * 100,
+    n_obs = n(),
+    .groups = "drop"
+  )
+
+# Visualisation
+ggplot(info_region, aes(x = pct_informel, y = fct_reorder(region, pct_informel),
+                        fill = sexe, colour = sexe)) +
+  geom_col(position = position_dodge(0.7), width = 0.6, alpha = 0.85) +
+  geom_text(
+    aes(label = paste0(round(pct_informel, 1), "%")),
+    position = position_dodge(0.7),
+    hjust = -0.15, size = 3, fontface = "bold"
+  ) +
+  scale_fill_manual(values = c("Homme" = "#2E74B5", "Femme" = "#C55A11")) +
+  scale_colour_manual(values = c("Homme" = "#2E74B5", "Femme" = "#C55A11")) +
+  scale_x_continuous(limits = c(0, 100), labels = label_percent(scale = 1)) +
+  labs(
+    title    = "Taux d'emploi dans le secteur informel par région et sexe",
+    subtitle = "EESI3 — Pondération nationale",
+    x = "Part du secteur informel (%)", y = NULL,
+    fill = "Sexe", colour = "Sexe",
+    caption = "Source : INS Cameroun — EESI3"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    legend.position  = "bottom",
+    panel.grid.major.y = element_blank(),
+    plot.title = element_text(face = "bold", colour = "#1F497D")
+  )
+# ```
+
+#3.4 Paramétrer un rapport Quarto
+#Les rapports paramétrés permettent de générer automatiquement un rapport différent pour chaque région avec le même fichier .qmd. C'est une fonctionnalité clé pour les INS qui produisent des rapports régionaux.
+
+
+# ── En-tête YAML avec paramètres ─────────────────────────────────────────
+# ---
+# params:
+#   region_cible: "Centre"
+#   annee: 2022
+# ---
+
+# ```{r}
+#| label: filtre-region
+
+# Le paramètre est accessible via params$region_cible
+eesi3_reg <- eesi3 |>
+  filter(as_factor(region) == params$region_cible)
+
+cat("Rapport pour la région :", params$region_cible, "\n")
+cat("N observations :", nrow(eesi3_reg), "\n")
+# ```
+
+# ── Compilation paramétrée depuis R (dans la console RStudio) ────────────
+
+# Générer les rapports pour toutes les régions
+regions <- c("Adamaoua", "Centre", "Est", "Extrême-Nord",
+             "Littoral", "Nord", "Nord-Ouest", "Ouest",
+             "Sud", "Sud-Ouest")
+
+purrr::walk(regions, function(reg) {
+  quarto::quarto_render(
+    input  = "rapport_eesi3.qmd",
+    output_file = paste0("rapports/eesi3_", reg, "_", 2022, ".docx"),
+    execute_params = list(region_cible = reg, annee = 2022)
+  )
+  cat("✓ Rapport généré pour :", reg, "\n")
+})
+
+#Exercice pratique 3.4
+#Créez un rapport Quarto paramétré pour l'analyse de la pauvreté par région (données ECAM5). Le rapport doit générer automatiquement :
+#Un titre personnalisé avec le nom de la région
+#Un tableau des indicateurs de pauvreté pour cette région uniquement
+#Une carte du district sanitaire correspondant (DS.geojson)
+#Un graphique de comparaison avec la moyenne nationale
+#Utilisez purrr::walk() pour générer les 10 rapports régionaux en une seule commande.
+
+
+#Module 4 — Automatisation et traitement par lots de données d'enquêtes
+
+#4.1 Le principe DRY — Don't Repeat Yourself
+#Toute analyse qui doit être répétée (même code, paramètres différents) doit être transformée en fonction. En INS, cela concerne typiquement : l'analyse par région, l'analyse par quintile de consommation, l'analyse par cycle d'enquête, etc.
+#4.2 Créer des fonctions d'analyse réutilisables
+
+## ── Fonctions d'analyse pour données d'enquêtes ──────────────────────────
+
+# Fonction 1 : Calculer les principaux indicateurs de bien-être
+calcul_indicateurs <- function(data, var_groupe, ponderation = "poids") {
+  data |>
+    group_by(across(all_of(var_groupe))) |>
+    summarise(
+      n_obs           = n(),
+      taux_pauvrete   = weighted.mean(pauvre == 1, w = .data[[ponderation]], na.rm = TRUE) * 100,
+      depense_moy     = weighted.mean(depense_pc, w = .data[[ponderation]], na.rm = TRUE),
+      acces_eau       = weighted.mean(eau_potable == 1, w = .data[[ponderation]], na.rm = TRUE) * 100,
+      acces_elec      = weighted.mean(electricite == 1, w = .data[[ponderation]], na.rm = TRUE) * 100,
+      scolarisation   = weighted.mean(enfant_scolarise == 1, w = .data[[ponderation]], na.rm = TRUE) * 100,
+      .groups = "drop"
+    ) |>
+    mutate(across(where(is.numeric), ~ round(.x, 2)))
+}
+
+# Fonction 2 : Exporter un tableau flextable vers Word
+export_tableau_word <- function(df, titre, fichier_sortie) {
+  ft <- df |>
+    flextable() |>
+    set_caption(titre) |>
+    theme_vanilla() |>
+    bg(part = "header", bg = "#1F497D") |>
+    color(part = "header", color = "white") |>
+    bold(part = "header") |>
+    autofit()
+
+  save_as_docx(ft, path = fichier_sortie)
+  cat("Tableau exporté :", fichier_sortie, "\n")
+}
+
+
+#4.3 Traitement par lots avec purrr
+#Le package purrr permet d'appliquer une fonction à une liste d'objets (régions, groupes, fichiers) sans boucle for explicite. C'est plus lisible, plus sûr et plus performant.
+
+# ── Analyse multidimensionnelle par lots — ECAM5 ─────────────────────────
+
+library(purrr)
+library(fs)     # Gestion de fichiers (fs::dir_create, fs::path)
+
+# Créer le dossier de sortie
+fs::dir_create("resultats/tableaux")
+
+# Définir les groupes d'analyse
+groupes_analyse <- list(
+  par_region = c("region"),
+  par_milieu = c("milieu"),
+  region_milieu = c("region", "milieu"),
+  par_quintile = c("quintile_conso")
+)
+
+# Appliquer la fonction à chaque groupe et exporter
+resultats_tous <- imap(groupes_analyse, function(groupes, nom_groupe) {
+  cat("Traitement:", nom_groupe, "\n")
+
+  # Calcul des indicateurs
+  df_result <- calcul_indicateurs(ecam5, groupes, ponderation = "ponderation")
+
+  # Export CSV
+  write.csv(df_result,
+            file = paste0("resultats/tableaux/ecam5_", nom_groupe, ".csv"),
+            row.names = FALSE, fileEncoding = "UTF-8")
+
+  # Export Word (tableau formaté)
+  export_tableau_word(
+    df_result,
+    titre = paste("Indicateurs ECAM5 —", nom_groupe),
+    fichier_sortie = paste0("resultats/tableaux/ecam5_", nom_groupe, ".docx")
+  )
+
+  return(df_result)
+})
+
+cat("✓ Traitement par lots terminé !",
+    length(resultats_tous), "groupes analysés\n")
+
+#4.4 Intégration des données FIES (FAO) pour la sécurité alimentaire
+#Les données FIES (Food Insecurity Experience Scale) de la FAO pour le Cameroun permettent de mesurer l'insécurité alimentaire à différents niveaux de sévérité. Voici comment les intégrer dans un pipeline automatisé.
+
+# ── Pipeline FIES FAO — Sécurité alimentaire ────────────────────────────
+
+# Chargement des données FIES
+# Le fichier FIES contient les réponses aux 8 questions de l'échelle
+fies <- readr::read_csv("datasets/FIES_Cameroun.csv", locale = locale(encoding = "UTF-8"))
+
+# Les 8 items FIES (nommés fies_1 à fies_8 dans le fichier)
+items_fies <- paste0("fies_", 1:8)
+
+# Calcul du score FIES brut (somme des réponses positives)
+fies <- fies |>
+  mutate(
+    score_fies = rowSums(across(all_of(items_fies), ~ as.integer(.x == "Oui")),
+                          na.rm = TRUE),
+    # Classification FAO :
+    # 0-2 : Sécurité alimentaire
+    # 3-4 : Insécurité légère à modérée
+    # 5-8 : Insécurité sévère
+    classe_fies = case_when(
+      score_fies <= 2 ~ "Sécurité alimentaire",
+      score_fies <= 4 ~ "Insécurité modérée",
+      TRUE             ~ "Insécurité sévère"
+    ) |> factor(levels = c("Sécurité alimentaire", "Insécurité modérée", "Insécurité sévère"))
+  )
+
+# Taux d'insécurité alimentaire par région
+ia_region <- fies |>
+  group_by(region) |>
+  summarise(
+    pct_sec  = mean(classe_fies == "Sécurité alimentaire", na.rm = TRUE) * 100,
+    pct_mod  = mean(classe_fies == "Insécurité modérée",  na.rm = TRUE) * 100,
+    pct_sev  = mean(classe_fies == "Insécurité sévère",   na.rm = TRUE) * 100,
+    .groups = "drop"
+  )
+
+# Export automatique
+write.csv(ia_region, "outputs/tableaux/fies_region.csv",
+          row.names = FALSE, fileEncoding = "UTF-8")
+
+
+#Module 5 — Traitement par lots de données spatiales : images Sentinel-2
+
+#5.1 Présentation des bandes Sentinel-2 disponibles
+#Nous disposons des images Sentinel-2 Level-2A du 26 juin 2026 pour le Cameroun. Ces images atmosphériquement corrigées sont prêtes pour l'analyse de la végétation et de l'occupation des sols.
+# Pour la suite, voir fichier Word
+
+#5.2 Pipeline de calcul d'indices végétation automatisé
+#Le NDVI (Normalized Difference Vegetation Index) et le NDWI (Normalized Difference Water Index) sont les deux indices les plus utilisés en télédétection agricole et environnementale. Nous allons les calculer automatiquement et exporter les cartes.
+
+# ── Calcul automatisé d'indices spectraux — Sentinel-2 ───────────────────
+
+library(terra)   # Traitement raster (successeur de raster)
+library(sf)
+library(tidyverse)
+library(fs)
+
+# Répertoire des images Sentinel-2
+rep_sentinel <- "data/sentinel2/"
+prefix_date  <- "2026-06-26-00_00_2026-06-26-23_59_Sentinel-2_L2A_"
+
+# ── Chargement des bandes ────────────────────────────────────────────────
+charger_bande <- function(bande) {
+  fichier <- paste0(rep_sentinel, prefix_date, bande, "_(Raw).tiff")
+  if (!file.exists(fichier)) stop("Fichier introuvable : ", fichier)
+  terra::rast(fichier)
+}
+
+# Charger toutes les bandes
+B03 <- charger_bande("B03")
+B04 <- charger_bande("B04")
+B08 <- charger_bande("B08")
+B11 <- charger_bande("B11")
+
+cat("Bandes chargées ✓ | Résolution :", terra::res(B04)[1], "m\n")
+cat("Système de projection :", terra::crs(B04, describe = TRUE)$code, "\n")
+
+# ── Définition et calcul des indices spectraux ───────────────────────────
+
+# Dictionnaire des indices à calculer
+indices_spectraux <- list(
+  NDVI = list(
+    formule = function(B04, B08, ...) (B08 - B04) / (B08 + B04),
+    description = "Normalized Difference Vegetation Index",
+    interpretation = "[-1, 0] eau/sol; [0.2, 0.5] végétation clairsemée; [>0.5] forêt dense"
+  ),
+  NDWI = list(
+    formule = function(B03, B08, ...) (B03 - B08) / (B03 + B08),
+    description = "Normalized Difference Water Index (Gao, 1996)",
+    interpretation = "Valeurs positives = eaux libres; négatif = végétation/sol sec"
+  ),
+  NDMI = list(
+    formule = function(B08, B11, ...) (B08 - B11) / (B08 + B11),
+    description = "Normalized Difference Moisture Index",
+    interpretation = "Teneur en eau de la végétation — utile pour stress hydrique"
+  ),
+  EVI = list(
+    formule = function(B04, B08, B03, ...) {
+      2.5 * (B08 - B04) / (B08 + 6 * B04 - 7.5 * B03 + 1)
+    },
+    description = "Enhanced Vegetation Index — moins sensible à la saturation",
+    interpretation = "Améliore le NDVI en zones de végétation dense"
+  )
+)
+
+# Calcul automatisé de tous les indices
+fs::dir_create("resultats/indices")
+
+rasters_indices <- imap(indices_spectraux, function(idx, nom) {
+  cat("Calcul de", nom, "—", idx$description, "\n")
+
+  # Calcul de l'indice
+  r_indice <- idx$formule(B04 = B04, B08 = B08, B03 = B03, B11 = B11)
+
+  # Nettoyage : limiter aux valeurs [-1, 1]
+  r_indice <- terra::clamp(r_indice, lower = -1, upper = 1)
+  names(r_indice) <- nom
+
+  # Export en GeoTIFF
+  fichier_sortie <- paste0("resultats/indices/CMR_", nom, "_20260626.tif")
+  terra::writeRaster(r_indice, fichier_sortie, overwrite = TRUE,
+                     datatype = "FLT4S",
+                     gdal = c("COMPRESS=LZW", "TILED=YES"))
+  cat("  → Exporté :", fichier_sortie, "\n")
+
+  r_indice
+})
+
+cat("\n✓", length(rasters_indices), "indices calculés et exportés !\n")
+
+#5.3 Extraction zonale par district sanitaire
+#L'extraction zonale permet d'obtenir les statistiques (moyenne, écart-type, min, max) d'un indice spectral pour chaque unité géographique (district sanitaire, région, département). C'est une opération fondamentale en analyse spatiale pour la santé publique.
+
+# ── Extraction zonale NDVI par district sanitaire ────────────────────────
+
+# Chargement des districts sanitaires
+districts <- sf::st_read("datasets/DS.geojson", quiet = TRUE)
+cat("Districts sanitaires chargés :", nrow(districts), "\n")
+
+# Vérification et harmonisation des projections
+crs_raster <- terra::crs(rasters_indices$NDVI, describe = TRUE)$code
+crs_vecteur <- sf::st_crs(districts)$epsg
+
+if (crs_raster != crs_vecteur) {
+  cat("Reprojection nécessaire :", crs_vecteur, "→", crs_raster, "\n")
+  districts <- sf::st_transform(districts, crs = as.integer(crs_raster))
+}
+
+# Extraction zonale pour chaque indice
+extraction_zonale <- function(r_indice, vecteur, id_col = "NOM_DS") {
+  # Conversion sf → SpatVector (terra)
+  vect_terra <- terra::vect(vecteur)
+
+  # Extraction (fun = liste des statistiques voulues)
+  stats <- terra::extract(
+    r_indice, vect_terra,
+    fun = function(x) c(
+      mean = mean(x, na.rm = TRUE),
+      sd   = sd(x,   na.rm = TRUE),
+      min  = min(x,  na.rm = TRUE),
+      max  = max(x,  na.rm = TRUE),
+      p25  = quantile(x, 0.25, na.rm = TRUE),
+      p75  = quantile(x, 0.75, na.rm = TRUE)
+    ),
+    bind = TRUE  # Conserver les colonnes du vecteur
+  )
+  as.data.frame(stats)
+}
+
+# Application à tous les indices
+ndvi_ds  <- extraction_zonale(rasters_indices$NDVI, districts)
+ndwi_ds  <- extraction_zonale(rasters_indices$NDWI, districts)
+
+# Export CSV
+write.csv(ndvi_ds, "outputs/indices/NDVI_par_district_sanitaire.csv",
+          row.names = FALSE, fileEncoding = "UTF-8")
+
+# Affichage des 5 districts avec le NDVI moyen le plus bas (stress végétatif)
+ndvi_ds |>
+  arrange(mean) |>
+  head(5) |>
+  select(NOM_DS, mean, sd) |>
+  rename(NDVI_moyen = mean, NDVI_ecart_type = sd) |>
+  flextable() |> theme_vanilla() |> autofit()
+
+#5.4 Analyse croisée : NDVI × Données DHS (santé maternelle)
+#Nous pouvons croiser les indices Sentinel-2 avec les données DHS (Demographic and Health Surveys) pour analyser les liens entre environnement végétal et indicateurs de santé.
+
+# ── Croisement NDVI × DHS — Indicateurs de santé maternelle ─────────────
+
+library(haven)  # Pour lire le fichier CMIR71FL.SAV (femmes DHS)
+
+# Chargement des données DHS — module femmes
+dhs_femmes <- haven::read_sav("datasets/CMIR71FL.SAV") |>
+  janitor::clean_names()
+
+# Variables d'intérêt :
+# v024 = région, v005 = pondération, v201 = nb enfants nés vivants
+# v212 = âge 1er accouchement, m15 = lieu de l'accouchement
+
+# Extraction des coordonnées GPS (fichier CMGE71FL.shp)
+dhs_gps <- sf::st_read("datasets/CMGE71FL.shp", quiet = TRUE)
+
+# Extraction du NDVI aux points GPS des grappes DHS
+ndvi_grappes <- terra::extract(
+  rasters_indices$NDVI,
+  terra::vect(dhs_gps),
+  bind = TRUE
+)
+
+# Jointure avec les données femmes via l'identifiant de grappe
+dhs_ndvi <- dhs_femmes |>
+  left_join(
+    as.data.frame(ndvi_grappes) |> select(DHSCLUST, NDVI),
+    by = c("v001" = "DHSCLUST")  # v001 = numéro de grappe dans DHS
+  )
+
+# Analyse : corrélation NDVI moyen de la grappe × CPN (consultations prénatales)
+cor_ndvi_cpn <- dhs_ndvi |>
+  filter(!is.na(NDVI), !is.na(m14)) |>  # m14 = nb consultations prénatales
+  summarise(
+    correlation_pearson = cor(NDVI, m14, use = "complete.obs"),
+    p_value = cor.test(NDVI, m14)$p.value
+  )
+
+cat("Corrélation NDVI × Consultations prénatales :",
+    round(cor_ndvi_cpn$correlation_pearson, 3),
+    "(p =", round(cor_ndvi_cpn$p_value, 4), ")\n")
+
+
+#Module 6 — Normes de publication : métadonnées et principes FAIR
+
+#6.1 Les principes FAIR — Définition et enjeux
+#Les principes FAIR ont été formalisés en 2016 dans la revue Scientific Data (Wilkinson et al., 2016). Ils constituent désormais le standard international pour la gestion et le partage des données de recherche et statist
+
+#Principe	Signification	Traduction	Exigence concrète
+#F	Findable	Trouvable	Identifiant unique (DOI/URI), métadonnées riches, indexé dans catalogue
+#A	Accessible	Accessible	Protocole ouvert, authentification explicite, métadonnées persistantes même si données retirées
+#I	Interoperable	Interopérable	Formats standards (CSV, GeoJSON, GeoTIFF), vocabulaires contrôlés, liens vers d'autres données
+#R	Reusable	Réutilisable	Licence claire, provenance documentée, standards disciplinaires respectés
+
+#6.2 Créer des métadonnées avec R
+#En R, le package dataspice (rOpenSci) et les formats Dublin Core / ISO 19139 permettent de générer des métadonnées conformes aux standards internationaux directement depuis vos scripts.
+
+# ── Génération de métadonnées FAIR avec R ────────────────────────────────
+
+# Installation si nécessaire :
+# install.packages("dataspice")  # Métadonnées pour datasets
+# install.packages("geometa")    # Métadonnées géospatiales ISO 19115/19139
+
+library(jsonlite)
+
+# ── Approche 1 : Métadonnées JSON-LD (format web sémantique) ──────────────
+# Compatible avec schema.org — indexé par Google Dataset Search
+
+meta_ecam5 <- list(
+  `@context`   = "https://schema.org/",
+  `@type`      = "Dataset",
+  name         = "Enquête Camerounaise Auprès des Ménages — ECAM5 (2022)",
+  description  = paste(
+    "L'ECAM5 est la cinquième édition de l'enquête nationale sur les conditions de vie
+     des ménages au Cameroun, réalisée en 2022 par l'Institut National de la Statistique.
+     Elle couvre 10 régions, tous milieux confondus (urbain et rural)."
+  ),
+  url          = "https://ins.cm/ecam5",
+  creator = list(
+    `@type` = "Organization",
+    name    = "Institut National de la Statistique du Cameroun",
+    url     = "https://ins.cm"
+  ),
+  datePublished = "2023-06-01",
+  dateModified  = format(Sys.Date(), "%Y-%m-%d"),
+  spatialCoverage = list(
+    `@type`       = "Place",
+    name          = "Cameroun",
+    geo = list(
+      `@type`    = "GeoShape",
+      box        = "1.66 8.50 12.37 16.19"  # Bbox Cameroun [lat_min lon_min lat_max lon_max]
+    )
+  ),
+  temporalCoverage = "2022-01-01/2022-12-31",
+  license          = "https://creativecommons.org/licenses/by/4.0/",
+  distribution = list(list(
+    `@type`       = "DataDownload",
+    encodingFormat = "application/x-stata",
+    contentUrl    = "https://ins.cm/data/ecam5.dta"
+  ))
+)
+
+# Écriture du fichier de métadonnées
+jsonlite::write_json(
+  meta_ecam5,
+  path = "outputs/metadata/ecam5_metadata.json",
+  pretty = TRUE,
+  auto_unbox = TRUE
+)
+cat("Métadonnées ECAM5 écrites → metadata/ecam5_metadata.json\n")
+
+# ── Approche 2 : Métadonnées géospatiales ISO 19115 avec geometa ─────────
+
+library(geometa)
+
+# Création d'un objet de métadonnées ISO 19115
+md <- ISOMetadata$new()
+
+# Identifiant unique de la ressource
+md$setFileIdentifier(paste0("CMR-INS-ECAM5-2022-", format(Sys.Date(), "%Y%m%d")))
+
+# Informations sur la ressource
+ident <- ISODataIdentification$new()
+ident$setAbstract(
+  "Enquête sur les conditions de vie des ménages au Cameroun, 5ème édition (2022)"
+)
+
+# Étendue spatiale (bounding box du Cameroun)
+bbox <- ISOGeographicBoundingBox$new(
+  minx = 8.50,   # Longitude minimale (Est)
+  miny = 1.66,   # Latitude minimale (Nord)
+  maxx = 16.19,  # Longitude maximale
+  maxy = 12.37   # Latitude maximale
+)
+extent <- ISOExtent$new()
+extent$addGeographicElement(bbox)
+ident$addExtent(extent)
+
+# Mots-clés thématiques
+keywords <- ISOKeywords$new()
+keywords$addKeyword("pauvreté")
+keywords$addKeyword("ménages")
+keywords$addKeyword("conditions de vie")
+keywords$addKeyword("Cameroun")
+keywords$addKeyword("ECAM5")
+ident$addKeywords(keywords)
+
+md$addIdentificationInfo(ident)
+
+# Export XML ISO 19139
+md$save("metadata/ecam5_iso19139.xml", validate = FALSE)
+cat("Métadonnées ISO 19115/19139 → metadata/ecam5_iso19139.xml\n")
+
+#6.3 Métadonnées pour les données spatiales Sentinel-2
+#Les données raster issues de Sentinel-2 doivent être accompagnées de métadonnées précisant la date d'acquisition, le satellite, le niveau de traitement, la projection et les indices calculés.
+
+# ── Métadonnées pour les indices Sentinel-2 exportés ─────────────────────
+
+# Fonction générique de génération de métadonnées raster
+creer_meta_raster <- function(nom_indice, description, unite, raster_obj) {
+  list(
+    identifiant    = paste0("CMR-S2-", nom_indice, "-20260626"),
+    titre          = paste("Cameroun —", nom_indice, "— Sentinel-2 — 26 juin 2026"),
+    description    = description,
+    source = list(
+      satellite      = "Sentinel-2 (ESA Copernicus)",
+      niveau         = "Level-2A (réflectance de surface, corrigée atmosphériquement)",
+      date_image     = "2026-06-26",
+      heure_UTC      = "00:00 – 23:59"
+    ),
+    spatial = list(
+      projection     = terra::crs(raster_obj, describe = TRUE)$code,
+      resolution_m   = terra::res(raster_obj)[1],
+      extent         = as.list(terra::ext(raster_obj)),
+      couverture     = "République du Cameroun"
+    ),
+    valeurs = list(
+      unite          = unite,
+      plage_theorique = c(-1, 1),
+      nodata         = -9999
+    ),
+    traitement = list(
+      logiciel       = paste("R", R.version$major, R.version$minor, sep="."),
+      package        = paste("terra", packageVersion("terra")),
+      date_calcul    = format(Sys.time(), "%Y-%m-%d %H:%M:%S UTC"),
+      auteur         = "Formation Géospatiale R — INS Cameroun"
+    ),
+    licence        = "CC BY 4.0 — Données Copernicus Open Access"
+  )
+}
+
+# Générer et sauvegarder les métadonnées pour chaque indice
+fs::dir_create("metadata")
+
+meta_indices <- list(
+  NDVI = creer_meta_raster("NDVI", "Indice de végétation normalisé (NIR-Red)/(NIR+Red)", "sans unité [-1,1]", rasters_indices$NDVI),
+  NDWI = creer_meta_raster("NDWI", "Indice d'eau normalisé (Green-NIR)/(Green+NIR)", "sans unité [-1,1]", rasters_indices$NDWI),
+  NDMI = creer_meta_raster("NDMI", "Indice d'humidité normalisé (NIR-SWIR)/(NIR+SWIR)", "sans unité [-1,1]", rasters_indices$NDMI)
+)
+
+jsonlite::write_json(
+  meta_indices,
+  path = "outputs/metadata/indices_sentinel2_metadata.json",
+  pretty = TRUE, auto_unbox = TRUE
+)
+cat("✓ Métadonnées Sentinel-2 exportées\n")
+
+#6.4 Gestion de l'environnement R avec renv
+#Un des obstacles majeurs à la reproductibilité est l'évolution des packages R. Le package renv crée un instantané (snapshot) de toutes les versions de packages utilisées dans un projet, permettant de les restaurer identiquement sur une autre machine ou dans six mois.
+
+# ── Gestion d'environnement avec renv ────────────────────────────────────
+
+# Installation (une seule fois)
+# install.packages("renv")
+
+library(renv)
+
+# ── Initialisation d'un projet renv ───────────────────────────────────────
+# À faire au début de tout nouveau projet
+# renv::init()  # Crée renv.lock, .Rprofile, et renv/
+
+# ── Enregistrer l'état actuel des packages ────────────────────────────────
+# Après avoir installé/mis à jour des packages
+renv::snapshot()
+
+# Le fichier renv.lock contient :
+# {
+#   "R": { "Version": "4.4.0" },
+#   "Packages": {
+#     "sf": { "Version": "1.0-16", "Source": "CRAN" },
+#     "terra": { "Version": "1.7-71", "Source": "CRAN" },
+#     ...
+#   }
+# }
+
+# ── Restaurer l'environnement (sur une autre machine) ─────────────────────
+# Un collègue clone le projet et exécute :
+# renv::restore()  # Installe exactement les mêmes versions
+
+# ── Vérifier l'état de l'environnement ───────────────────────────────────
+renv::status()
+# Indique quels packages sont installés mais pas dans le lock, et vice versa
+
+
+#Module 7 — Présentations de projets de groupe
+
+#7.1 Organisation des groupes et thèmes
+#Les participants se répartissent en 4 groupes de travail. Chaque groupe reçoit un jeu de données réel et un objectif d'analyse. Le livrable est un rapport Quarto (.qmd) qui produit un fichier Word (.docx) reproductible.
+
+#Groupe	Thème	Données	Indicateurs attendus
+#G1	Pauvreté et accès aux services de base	ecam5.dta + gadm41_CMR	Taux de pauvreté / région, carte choroplèthe, décomposition milieu
+#G2	Sécurité alimentaire et insécurité	FIES FAO + ecam5.dta	Prévalence insécurité modérée/sévère, comparaison FIES × dépenses alimentaires ECAM5
+#G3	Santé maternelle et environnement	CMIR71FL.SAV + NDVI + DS.geojson	CPN par district, corrélation NDVI × mortalité infantile, carte
+#G4	Emploi informel et végétation	eesi3.dta + NDWI + gadm41_CMR	Informalité par région, carte NDWI, croisement emploi agricole × végétation
+
+
+#7.2 Structure attendue du rapport de groupe
+#Chaque groupe produit un fichier Quarto structuré comme suit. Le respect de cette structure garantit la reproductibilité et facilite l'évaluation.
+
+
+# ── Structure type du rapport de groupe ─────────────────────────────────
+
+# rapport_groupe_G1.qmd
+# ├── 1. Introduction (contexte, questions de recherche, hypothèses)
+# ├── 2. Sources de données (description, date, source, accès)
+# ├── 3. Méthodologie
+# │   ├── 3.1 Nettoyage et préparation des données
+# │   ├── 3.2 Indicateurs construits et formules
+# │   └── 3.3 Méthodes d'analyse spatiale utilisées
+# ├── 4. Résultats
+# │   ├── 4.1 Tableaux statistiques (flextable)
+# │   ├── 4.2 Graphiques (ggplot2)
+# │   └── 4.3 Cartes thématiques (ggplot2 + sf)
+# ├── 5. Discussion et limites
+# ├── 6. Conclusion et recommandations
+# └── 7. Références et métadonnées
+
+# ── Critères d'évaluation ─────────────────────────────────────────────────
+# ✓ Le document se compile sans erreur (quarto render rapport.qmd)
+# ✓ Toutes les données sont chargées depuis des chemins relatifs
+# ✓ Aucune valeur codée en dur dans le texte (tout est calculé dynamiquement)
+# ✓ Les cartes incluent une légende, un titre, une source
+# ✓ Un fichier metadata.json accompagne le rapport
+
+
+#7.3 Script de présentation avec Quarto Reveal.js
+#Quarto permet également de créer des présentations reproductibles en format HTML (Reveal.js), qui sont directement projetables depuis le navigateur sans installation de PowerPoint.
+
+# ── En-tête YAML pour présentation Quarto Reveal.js ─────────────────────
+# ---
+# title: "Analyse de la Pauvreté au Cameroun"
+# subtitle: "Résultats ECAM5 2022 — Groupe 1"
+# author: "Institut National de la Statistique"
+# format:
+#   revealjs:
+#     theme: moon
+#     slide-number: true
+#     chalkboard: true
+#     code-fold: true
+#     transition: fade
+#     footer: "Formation Géospatiale R — Jour 10"
+# ---
+
+# ## Slide 1 : Contexte
+# La pauvreté au Cameroun affecte **37.5%** de la population selon l'ECAM5 2022.
+# Elle présente une forte **dimension régionale** et **rurale/urbaine**.
+
+# ## Slide 2 : Carte des résultats {.scrollable}
+# ```{r}
+#| echo: false
+#| fig-width: 10
+#| fig-height: 7
+# [insérer ici le code de la carte choroplèthe]
+# ```
+
+#Séquence 8 — Synthèse : bonnes pratiques et feuille de route
+
+#Voir fichier Word
+
+#The End
+
+
+

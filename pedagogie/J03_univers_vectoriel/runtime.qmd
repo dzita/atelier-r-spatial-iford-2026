@@ -1,0 +1,913 @@
+---
+title: "J03 · L'univers vectoriel — runtime navigateur"
+subtitle: "Points, lignes et territoires — code exécutable dans le navigateur (WebR) · Atelier IFORD × GDSG 2026"
+# Sans engine: knitr, Quarto ne detecte aucun bloc R et se rabat sur Jupyter
+# (erreur "No module named 'yaml'"). Reglage obligatoire dans tous les
+# runtime.qmd de ce site.
+engine: knitr
+webr:
+  packages:
+    - sf
+    - dplyr
+    - ggplot2
+    - tibble
+    - stringr
+  resources:
+    # Chemins RELATIFS AU .qmd (donc prefixes ../), mais dans les blocs
+    # {webr} le meme fichier se lit SANS le ../ : la VM WebR monte
+    # l'arborescence a partir de _commons/.
+    - ../_commons/data/gadm41_CMR_0.json
+    - ../_commons/data/gadm41_CMR_1.json
+    - ../_commons/data/gadm41_CMR_2.json
+    - ../_commons/data/J03_extraits/ds_sante_cmr.geojson
+    - ../_commons/data/J03_extraits/dhs_grappes_cmr2018.geojson
+    - ../_commons/data/J03_extraits/pays_limitrophes_cmr.geojson
+    - ../_commons/data/J03_extraits/CMR_population_v1_0_admin_level2.csv
+    - ../_commons/data/J03_extraits/CMR_household_v1_0_admin_level2.csv
+    - ../_commons/data/J03_extraits/covar_dhs_grappes_extrait.csv
+---
+
+::: {.callout-note}
+## Comment utiliser cette page
+
+Chaque bloc bleu s'exécute **directement dans votre navigateur** (WebR) : cliquez sur
+*Run code*, modifiez librement le code, recliquez. Rien n'est installé sur votre poste,
+rien n'est envoyé sur un serveur.
+
+**Exécutez les blocs dans l'ordre** : le premier charge les couches, tous les suivants
+s'en servent. Si un bloc se plaint d'un objet introuvable, remontez et relancez le
+bloc 1.
+
+Les blocs **non bleus** (fond clair, pas de bouton) sont en **lecture seule** : ils
+montrent du code qui ne tourne pas dans un navigateur — `haven` pour les fichiers SPSS,
+`tmap` et `mapview` pour la cartographie interactive. Ce code s'exécute sous **RStudio
+desktop**, à partir de `demo_formateur_J03.qmd` (même dossier).
+
+**Avant le premier rendu** : les couches lues ici sont produites par
+`_commons/data/J03_extraits/00_extraire_J03.R`, à lancer une fois sous RStudio.
+:::
+
+::: {.iford-callout}
+**La question de la journée.** Un tableau statistique classe des unités ; il ne les
+situe pas. Le J03 apprend à passer d'une **liste de lignes** à un **système de
+territoires** : lire une couche, savoir en quelles unités elle est exprimée, la
+mesurer, la filtrer par la position plutôt que par un identifiant, et la joindre à
+des données d'enquête. C'est la journée la plus « vectorielle » de l'atelier, et
+c'est aussi celle qui tourne le mieux dans un navigateur : `sf`, `dplyr` et
+`ggplot2` suffisent.
+:::
+
+## 1. Le réglage de départ, et les couches du jour
+
+```{webr}
+#| autorun: true
+library(sf)
+library(dplyr)
+library(ggplot2)
+
+# --- Pourquoi cette ligne, des le depart -----------------------------------
+# Par defaut, sf traite les coordonnees en degres sur une SPHERE, via la
+# bibliotheque s2. C'est plus juste mathematiquement, mais beaucoup plus
+# exigeant sur la proprete des geometries : la moindre auto-intersection
+# fait echouer le calcul ("Loop 0 is not valid: Edge 3010 ..."). Les donnees
+# reelles ne sont presque jamais assez propres. On repasse au moteur planaire
+# GEOS, plus tolerant.
+# Ce que cela N'AUTORISE PAS : mesurer sur des degres. Toute superficie de
+# cette page est calculee APRES reprojection en metres.
+sf_use_s2(FALSE)
+
+# --- Les couches, lues UNE fois et reutilisees partout ----------------------
+# Regle WebR : dans un bloc {webr}, on lit le fichier SANS le "../" qui
+# figure dans webr.resources du YAML.
+ds     <- read_sf("_commons/data/J03_extraits/ds_sante_cmr.geojson")
+pays   <- read_sf("_commons/data/J03_extraits/pays_limitrophes_cmr.geojson")
+grappes<- read_sf("_commons/data/J03_extraits/dhs_grappes_cmr2018.geojson")
+cmr0   <- read_sf("_commons/data/gadm41_CMR_0.json")   # silhouette du pays
+cmr1   <- read_sf("_commons/data/gadm41_CMR_1.json")   # 10 regions
+cmr2   <- read_sf("_commons/data/gadm41_CMR_2.json")   # 58 departements
+
+# st_crs(x)$epsg renvoie NULL quand la couche n'a pas de CRS declare :
+# NULL disparaitrait silencieusement du vecteur et decalerait le tableau.
+# On le convertit explicitement en NA -- un trou visible vaut mieux qu'un
+# decalage invisible.
+epsg <- function(x) { e <- st_crs(x)$epsg; if (is.null(e)) NA_integer_ else e }
+
+# Un compteur apres chaque lecture : on ne suppose jamais un effectif.
+data.frame(
+  couche  = c("districts sanitaires", "pays limitrophes", "grappes EDS",
+              "CMR ADM0", "CMR ADM1", "CMR ADM2"),
+  entites = c(nrow(ds), nrow(pays), nrow(grappes),
+              nrow(cmr0), nrow(cmr1), nrow(cmr2)),
+  epsg    = c(epsg(ds), epsg(pays), epsg(grappes),
+              epsg(cmr0), epsg(cmr1), epsg(cmr2))
+)
+```
+
+::: {.takeaway}
+**Ce que ce tableau dit.** Trois nombres par couche : combien d'entités, et dans quel
+système de coordonnées. Le code **EPSG** est l'immatriculation d'un système de
+référence : `4326` = WGS 84, des **degrés** de longitude et de latitude — la même
+chose que ce qu'affiche un GPS. Tant que deux couches n'ont pas le même EPSG, aucune
+opération spatiale entre elles n'a de sens.
+
+**Ce que ce tableau ne dit pas.** Ni la qualité des géométries (section 4), ni ce que
+les colonnes contiennent (section 2). Un `nrow()` juste ne garantit rien d'autre que
+le nombre de lignes.
+:::
+
+## 2. Les cinq types de géométrie, construits à la main
+
+Avant de lire des fichiers, il faut savoir de quoi ils sont faits. Le standard
+*Simple Features* (ISO 19125) définit une poignée de types. Voici les quatre qui
+comptent en démographie appliquée.
+
+```{webr}
+# POINT : une localisation unique. Un menage enquete, une formation sanitaire.
+# ATTENTION a l'ordre : c(longitude, latitude). L'inversion ne leve AUCUNE
+# erreur -- elle place simplement le point ailleurs.
+yaounde <- st_point(c(11.5021, 3.8480))
+douala  <- st_point(c(9.7679,  4.0511))
+
+# MULTIPOINT : plusieurs localisations traitees comme UNE entite.
+deux_villes <- st_multipoint(rbind(c(11.5021, 3.8480), c(9.7679, 4.0511)))
+
+# LINESTRING : un axe. Route, fleuve, trajet.
+axe_yde_dla <- st_linestring(rbind(c(11.5021, 3.8480), c(9.7679, 4.0511)))
+
+# POLYGON : une surface. La matrice doit etre FERMEE : dernier point = premier.
+carre <- st_polygon(list(rbind(c(11, 3), c(12, 3), c(12, 4), c(11, 4), c(11, 3))))
+
+# Une geometrie nue (sfg) porte son type dans sa classe : class(g)[2].
+sapply(list(yaounde, deux_villes, axe_yde_dla, carre), function(g) class(g)[2])
+```
+
+```{webr}
+# Une geometrie seule ne sait pas OU elle est : il lui manque son CRS.
+# st_sfc() l'emballe dans une collection etiquetee par un systeme.
+villes <- st_sfc(yaounde, douala, crs = 4326)
+
+# st_sf() ajoute les attributs : on obtient un tableau + une geometrie.
+villes_sf <- st_sf(
+  ville  = c("Yaoundé", "Douala"),
+  statut = c("capitale politique", "capitale économique"),
+  geometry = villes
+)
+villes_sf
+
+# Le reflexe de securite : TRACER la couche immediatement apres l'avoir
+# creee. Une inversion longitude/latitude se voit sur une carte, jamais
+# dans un tableau.
+ggplot() +
+  geom_sf(data = cmr0, fill = "grey95", color = "grey40") +
+  geom_sf(data = villes_sf, size = 3, color = "#C0392B") +
+  geom_sf_text(data = villes_sf, aes(label = ville),
+               nudge_y = 0.4, size = 3.2, fontface = "bold") +
+  labs(title = "Contrôle visuel immédiat après création de points",
+       subtitle = "Si les points tombent hors du pays, c'est lon/lat qui est inversé",
+       caption = "Source : GADM v4.1 · IFORD × GDSG 2026") +
+  theme_minimal()
+```
+
+::: {.takeaway}
+**Ce que la figure code.** Deux points posés sur la silhouette nationale. La position
+est la seule information portée ; la couleur ne code rien.
+
+**Ce qui se lit.** Les deux points tombent dans le pays, au sud-ouest : l'ordre
+`c(longitude, latitude)` était le bon.
+
+**Ce qui ne se lit pas.** Rien sur les villes elles-mêmes. C'est un test de plomberie,
+pas une carte thématique — et c'est exactement à cela qu'il sert : on trace **avant**
+de croire.
+:::
+
+## 3. Un objet `sf` est un tableau, avec une colonne en plus
+
+```{webr}
+# class() donne la reponse la plus importante de la journee.
+class(ds)
+
+# "sf" ET "data.frame" : tous les verbes dplyr de la veille fonctionnent
+# dessus sans adaptation.
+names(ds)
+head(st_drop_geometry(ds), 5)
+
+# Les metadonnees geographiques, que n'a aucun data.frame ordinaire :
+st_crs(ds)$input          # le systeme de reference
+st_bbox(ds)               # l'emprise (xmin, ymin, xmax, ymax)
+table(st_geometry_type(ds))   # le type de chaque entite
+```
+
+::: {.iford-callout}
+**Un fichier réel n'a jamais les colonnes qu'on espère.** `DS.geojson`, la source de
+cette couche, est un export **DHIS2** — le système d'information sanitaire. Il ne
+contient **aucune colonne nommée `region`** : l'information est dans `parentName`,
+sous la forme « Region Littoral », et le nom du district dans `name`, sous la forme
+« District Abo ». Le script d'extraction retire ces préfixes et crée `district` et
+`region`.
+
+La leçon dépasse ce fichier : **inspecter avant de supposer**. Un `names()` coûte dix
+secondes ; un script écrit sur des noms de colonnes imaginés coûte une demi-journée.
+:::
+
+```{webr}
+# Combien de districts par region ? dplyr, directement sur l'objet sf.
+# st_drop_geometry() d'abord : sinon dplyr recolle les geometries a chaque
+# groupe, ce qui est lent et inutile pour un simple comptage.
+ds |>
+  st_drop_geometry() |>
+  count(region, name = "nb_districts", sort = TRUE)
+```
+
+## 4. Les géométries invalides — le défaut qui ne se voit pas
+
+```{webr}
+# Une geometrie INVALIDE, c'est un polygone qui se croise lui-meme, ou qui
+# repete deux fois le meme sommet. La carte s'affiche normalement : le
+# defaut ne se manifeste qu'au premier calcul geometrique, par un message
+# enigmatique du type "Edge 3010 has duplicate vertex with edge 3012".
+valides <- st_is_valid(ds)
+cat("Geometries valides :", sum(valides, na.rm = TRUE), "sur", nrow(ds), "\n")
+cat("Invalides          :", sum(!valides, na.rm = TRUE), "\n")
+
+# st_make_valid() les repare. Sous GEOS (s2 desactive en section 1), il en
+# repare davantage que sous s2 : le moteur geometrique change le resultat.
+ds <- st_make_valid(ds)
+cat("Apres st_make_valid() -- invalides restantes :",
+    sum(!st_is_valid(ds), na.rm = TRUE), "\n")
+
+# Geometries VIDES : un autre defaut silencieux, different de l'invalidite.
+cat("Geometries vides   :", sum(st_is_empty(ds)), "\n")
+```
+
+::: {.takeaway}
+**Ce que ces compteurs disent.** Le nombre affiché dépend de la tolérance de
+simplification appliquée par le script d'extraction : sur la couche **d'origine**
+(`datasets/DS.geojson`, 20 Mo), 135 géométries sur 200 sont invalides pour le moteur
+sphérique. La leçon est le **geste**, pas le chiffre : compter avant, réparer,
+recompter après.
+
+**Ce qui ne se lit pas.** Une géométrie redevenue valide n'est pas pour autant
+*juste* : `st_make_valid()` répare la topologie, pas la donnée. Un district mal
+numérisé reste mal numérisé.
+:::
+
+## 5. Le CRS, et pourquoi on ne mesure jamais sur des degrés
+
+::: {.iford-callout}
+**La règle d'or.** EPSG:4326 est exprimé en **degrés**. Un degré de latitude vaut
+partout ~111 km ; un degré de longitude vaut 111 km à l'équateur et 0 au pôle. Toute
+superficie ou distance calculée directement sur des degrés est donc **fausse**, et
+`sf` ne vous préviendra pas. On reprojette d'abord dans un système **métrique** —
+pour le Cameroun, UTM zone 32N (EPSG:32632) à l'ouest, 33N (EPSG:32633) à l'est.
+:::
+
+```{webr}
+# Reprojection : les coordonnees changent de nature (degres -> metres),
+# la geometrie reste la meme surface au sol.
+cmr1_utm <- st_transform(cmr1, 32632)
+
+cat("CRS avant :", st_crs(cmr1)$input,  "\n")
+cat("CRS apres :", st_crs(cmr1_utm)$input, "\n")
+
+# st_area() renvoie des m2 (l'unite du CRS) ; on convertit en km2.
+cmr1_utm$superficie_km2 <- as.numeric(st_area(cmr1_utm)) / 1e6
+
+# --- Le controle qui vaut d'etre fait ---------------------------------------
+# La superficie officielle du Cameroun est de 475 442 km2. Comparer le total
+# calcule a cette reference, c'est verifier d'un coup la projection, la
+# validite des geometries et la simplification.
+cat("Superficie totale calculee :",
+    round(sum(cmr1_utm$superficie_km2)), "km2\n")
+cat("Reference officielle       : 475 442 km2\n")
+
+cmr1_utm |>
+  st_drop_geometry() |>
+  select(NAME_1, superficie_km2) |>
+  mutate(superficie_km2 = round(superficie_km2)) |>
+  arrange(desc(superficie_km2))
+```
+
+```{webr}
+# La meme demonstration sur une DISTANCE, avec les deux villes de la section 2.
+villes_utm <- st_transform(villes_sf, 32632)
+d_metrique <- st_distance(villes_utm[1, ], villes_utm[2, ])
+
+# Le calcul "naif" de Pythagore sur les degres : un nombre SANS DIMENSION.
+d_naive <- sqrt((11.5021 - 9.7679)^2 + (3.8480 - 4.0511)^2)
+
+cat("Distance Yaoundé-Douala, en UTM 32N :",
+    round(as.numeric(d_metrique) / 1000, 1), "km\n")
+cat("Le meme calcul sur des degres bruts :", round(d_naive, 4),
+    "-- ce nombre n'est ni des km, ni des degres utiles.\n")
+```
+
+::: {.takeaway}
+**Ce qui se lit.** Le trajet routier Yaoundé–Douala fait environ 240 km ; la distance
+à vol d'oiseau calculée ici est plus courte, ce qui est attendu. Le nombre « naïf »
+n'a aucune unité : il ne se compare à rien.
+
+**Ce qui ne se lit pas.** UTM 32N est exact autour de son méridien central et se
+dégrade en s'en éloignant. Pour l'Extrême-Nord, UTM 33N (32633) serait plus juste.
+Aucune projection plane n'est correcte partout : c'est le théorème de Gauss, pas un
+défaut du logiciel.
+:::
+
+## 6. Filtrer : par attribut, puis par position
+
+```{webr}
+# --- Filtrage ATTRIBUTAIRE : la condition porte sur une colonne -------------
+centre <- cmr1 |> filter(NAME_1 == "Centre")
+cat("Region Centre :", nrow(centre), "polygone(s)\n")
+
+# Sur les grappes EDS : URBAN_RURA vaut "U" (urbain) ou "R" (rural).
+if ("URBAN_RURA" %in% names(grappes)) {
+  print(table(grappes$URBAN_RURA, useNA = "ifany"))
+}
+```
+
+```{webr}
+# --- Sous-reglage SPATIAL : la condition porte sur la POSITION --------------
+# Aucune cle, aucun identifiant commun : on demande a la geometrie.
+# Prealable non negociable : les deux couches dans le MEME CRS.
+cat("Meme CRS ? ", st_crs(grappes) == st_crs(centre), "\n")
+grappes_wgs <- st_transform(grappes, st_crs(centre))
+
+# st_filter() garde les entites de la premiere couche qui satisfont le
+# predicat vis-a-vis de la seconde. Par defaut : st_intersects.
+g_centre <- st_filter(grappes_wgs, centre, .predicate = st_within)
+
+cat("Grappes EDS tombant dans la region Centre :", nrow(g_centre),
+    "sur", nrow(grappes_wgs), "\n")
+
+# --- Le predicat change le resultat -----------------------------------------
+# st_within   : le point est STRICTEMENT a l'interieur du polygone.
+# st_intersects : accepte aussi les points poses exactement sur la frontiere.
+# Sur donnees reelles l'ecart est faible, jamais nul, et toujours au bord.
+n_within     <- nrow(st_filter(grappes_wgs, centre, .predicate = st_within))
+n_intersects <- nrow(st_filter(grappes_wgs, centre, .predicate = st_intersects))
+cat("st_within :", n_within, "| st_intersects :", n_intersects, "\n")
+```
+
+```{webr}
+ggplot() +
+  geom_sf(data = cmr1, fill = "grey96", color = "grey70", linewidth = 0.2) +
+  geom_sf(data = centre, fill = "#FDEBD0", color = "#B9770E", linewidth = 0.6) +
+  geom_sf(data = grappes_wgs, color = "grey65", size = 0.5) +
+  geom_sf(data = g_centre, color = "#B9770E", size = 1.4) +
+  labs(title = "Sous-réglage spatial : les grappes EDS de la région Centre",
+       subtitle = "En orange, les points retenus par st_within() ; en gris, les autres",
+       caption = "Source : EDS-MICS Cameroun 2018 (coordonnées déplacées), GADM v4.1") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+::: {.takeaway}
+**Ce que la figure code.** Chaque point est une **grappe** d'enquête — une zone de
+dénombrement, pas un ménage. La couleur code l'appartenance au polygone orange,
+décidée par la géométrie et non par une colonne.
+
+**Ce que le choix technique fait.** `st_within` est un **prédicat spatial** : une
+question binaire posée à chaque couple (point, polygone). Changer de prédicat
+(`st_intersects`, `st_touches`, `st_contains`) change la population retenue.
+
+**Ce qui se lit.** L'opération est faisable sans qu'aucune table ne contienne le nom
+de la région : la position suffit. C'est ce qu'aucun logiciel statistique classique
+ne sait faire, et la raison d'être de la journée.
+
+**Ce qui ne se lit pas.** Les coordonnées EDS sont **volontairement déplacées** de 2 km
+en milieu urbain et 5 km en rural (10 km pour 1 % des grappes rurales) afin de protéger
+l'anonymat. Une grappe proche d'une limite peut donc être attribuée au mauvais côté.
+Ce déplacement est une propriété de la donnée, pas un bruit à corriger.
+:::
+
+## 7. La zone tampon (*buffer*) et la distance à la frontière
+
+```{webr}
+# st_buffer() exige un CRS METRIQUE : un buffer de 10 000 "degres" n'a
+# aucun sens. On projette, on tamponne, on revient si besoin.
+grappes_utm <- st_transform(grappes, 32632)
+buf_10km    <- st_buffer(grappes_utm, dist = 10000)
+
+# st_union() fusionne les 430 disques en UNE seule geometrie : c'est
+# l'aire "couverte a moins de 10 km d'une grappe".
+zone_couverte <- st_union(buf_10km)
+aire_km2 <- as.numeric(st_area(zone_couverte)) / 1e6
+
+cat("Aire a moins de 10 km d'une grappe EDS :", round(aire_km2), "km2\n")
+cat("Part du territoire national            :",
+    round(100 * aire_km2 / 475442, 1), "%\n")
+```
+
+```{webr}
+# Distance de chaque grappe a la frontiere nationale.
+# st_boundary() transforme le POLYGONE pays en LIGNE frontiere.
+frontiere <- st_boundary(st_transform(cmr0, 32632))
+
+# st_distance() renvoie une matrice (430 x 1) en metres.
+d <- st_distance(grappes_utm, frontiere)
+grappes_utm$dist_frontiere_km <- as.numeric(d) / 1000
+
+summary(grappes_utm$dist_frontiere_km)
+cat("Grappes a moins de 30 km de la frontiere :",
+    sum(grappes_utm$dist_frontiere_km < 30), "sur", nrow(grappes_utm), "\n")
+```
+
+```{webr}
+ggplot() +
+  geom_sf(data = cmr0, fill = "grey97", color = "grey30", linewidth = 0.6) +
+  geom_sf(data = st_transform(grappes_utm, 4326),
+          aes(color = dist_frontiere_km), size = 0.9) +
+  scale_color_viridis_c(option = "D", name = "Distance à la\nfrontière (km)") +
+  labs(title = "Distance de chaque grappe EDS à la frontière nationale",
+       subtitle = "Calcul en UTM 32N — st_boundary() + st_distance()",
+       caption = "Source : EDS-MICS Cameroun 2018, GADM v4.1 · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+::: {.takeaway}
+**Ce que la figure code.** Une couleur par grappe, codant une distance **euclidienne**
+en kilomètres jusqu'au trait de frontière — pas une distance de trajet.
+
+**En quoi le spatial est utile ici.** « Distance à la frontière » n'existe dans aucune
+table d'enquête. C'est une variable **fabriquée par la géométrie**, et elle est
+directement interprétable en démographie : accès aux marchés transfrontaliers,
+exposition aux déplacements de population, éloignement des services centraux.
+
+**Ce qui ne se lit pas.** Une distance à vol d'oiseau ignore le relief, les routes et
+les points de passage. Deux grappes à 20 km de la frontière peuvent avoir des temps
+d'accès très différents.
+:::
+
+## 8. Jointure attributaire — quand la clé est un nom
+
+::: {.iford-callout}
+**Le piège du séparateur.** Les deux fichiers WorldPop de cette journée n'ont **pas**
+le même séparateur : la population est en **points-virgules**, les ménages en
+**virgules**. Lu avec le mauvais séparateur, un CSV renvoie **une colonne unique** —
+sans lever la moindre erreur. Le réflexe : ouvrir un CSV inconnu avant de l'importer,
+et vérifier `ncol()` juste après la lecture.
+:::
+
+```{webr}
+chemin_pop <- "_commons/data/J03_extraits/CMR_population_v1_0_admin_level2.csv"
+chemin_men <- "_commons/data/J03_extraits/CMR_household_v1_0_admin_level2.csv"
+
+# La demonstration du piege : le MEME fichier, deux separateurs.
+cat("Population lue avec ',' :", ncol(read.csv(chemin_pop, sep = ",")), "colonne(s)\n")
+cat("Population lue avec ';' :", ncol(read.csv(chemin_pop, sep = ";")), "colonne(s)\n")
+
+pop <- read.csv(chemin_pop, sep = ";")
+men <- read.csv(chemin_men, sep = ",")
+
+cat("\nColonnes population :", paste(names(pop), collapse = ", "), "\n")
+cat("Departements dans le CSV :", nrow(pop), "| dans GADM ADM2 :", nrow(cmr2), "\n")
+head(pop, 4)
+```
+
+```{webr}
+# --- Tentative naive : joindre sur le libelle brut --------------------------
+essai <- cmr2 |>
+  st_drop_geometry() |>
+  select(NAME_1, NAME_2) |>
+  left_join(pop, by = c("NAME_2" = "names1"))
+
+# left_join() ne previent JAMAIS d'un non-appariement : il remplit avec NA.
+# Compter les NA apres chaque jointure est le reflexe qui sauve une analyse.
+cat("Jointure naive -- departements sans population :",
+    sum(is.na(essai$total)), "sur", nrow(essai), "\n\n")
+
+# Pourquoi ? Regardons les deux ecritures cote a cote.
+cat("GADM (json) :", paste(head(cmr2$NAME_2, 5), collapse = " | "), "\n")
+cat("WorldPop    :", paste(head(pop$names1,  5), collapse = " | "), "\n")
+```
+
+::: {.iford-callout}
+**Deux écritures du même département.** WorldPop écrit sans accents (« Benoue »,
+« Nyong et Soo »). GADM écrit avec l'orthographe officielle. Et le fichier **GeoJSON**
+de GADM utilisé ici a en plus perdu les **espaces** des noms composés : on y lit
+`MefouetAfamba`, `NyongetSo'o`, `ValléeduNtem`. C'est le genre d'accident qu'aucune
+relecture de code ne révèle — seule l'inspection de la donnée le montre.
+
+Conséquence : la clé de jointure ne peut être ni l'un ni l'autre libellé. Il faut
+fabriquer une **clé technique**, appliquée identiquement aux deux sources.
+:::
+
+```{webr}
+library(stringr)
+
+# --- Une cle technique, illisible et c'est normal ---------------------------
+# Elle ne sert qu'a joindre ; le libelle d'affichage reste NAME_2.
+# 1) minuscules  2) accents retires  3) on ne garde que les lettres
+# 4) on retire les particules de liaison, qu'elles soient collees ou non.
+# chartr() remplace caractere par caractere : c'est l'equivalent en R de base
+# de stringi::stri_trans_general("Latin-ASCII"), qui n'est pas disponible ici.
+sans_accents <- function(x) {
+  chartr("àáâãäåçèéêëìíîïñòóôõöùúûüýÿ",
+         "aaaaaaceeeeiiiinooooouuuuyy", tolower(x))
+}
+normaliser <- function(x) {
+  x |>
+    sans_accents() |>
+    str_replace_all("[^a-z]", "") |>
+    str_remove_all("et|de|du|la|le")
+}
+
+# Verification sur les cas qui echouaient
+tibble::tibble(
+  gadm     = c("Bénoué", "Ndé", "NyongetSo'o", "KoupéManengouba"),
+  worldpop = c("Benoue", "Nde", "Nyong et Soo", "Koupe et Manengouba")
+) |>
+  mutate(cle_gadm = normaliser(gadm),
+         cle_wp   = normaliser(worldpop),
+         concorde = cle_gadm == cle_wp)
+```
+
+```{webr}
+# --- Controle de collision : une cle doit rester UNIQUE ---------------------
+# Le mangling est agressif ; il pourrait fusionner deux departements
+# distincts. On le verifie plutot que de l'esperer.
+cle_gadm <- normaliser(cmr2$NAME_2)
+cle_wp   <- normaliser(pop$names1)
+cat("Cles GADM distinctes     :", n_distinct(cle_gadm), "sur", length(cle_gadm), "\n")
+cat("Cles WorldPop distinctes :", n_distinct(cle_wp),   "sur", length(cle_wp),   "\n")
+
+# --- Jointure sur la cle normalisee -----------------------------------------
+cmr2_pop <- cmr2 |>
+  mutate(cle = normaliser(NAME_2)) |>
+  left_join(pop |> mutate(cle = normaliser(names1)) |>
+              select(cle, pop_total = total, pop_bas = lower,
+                     pop_haut = upper, incertitude = uncertainty),
+            by = "cle") |>
+  left_join(men |> mutate(cle = normaliser(names1)) |>
+              select(cle, menages = total),
+            by = "cle")
+
+cat("\nApres normalisation -- departements sans population :",
+    sum(is.na(cmr2_pop$pop_total)), "sur", nrow(cmr2_pop), "\n")
+
+# S'il en reste, on les NOMME : un residu se traite a la main, par une table
+# de correspondance, pas en le laissant filer.
+restants <- cmr2_pop |> st_drop_geometry() |>
+  filter(is.na(pop_total)) |> pull(NAME_2)
+if (length(restants)) cat("Non apparies :", paste(restants, collapse = ", "), "\n")
+```
+
+```{webr}
+# Superficie en km2 (UTM), puis densite et taille moyenne des menages.
+cmr2_pop$superficie_km2 <- as.numeric(st_area(st_transform(cmr2_pop, 32632))) / 1e6
+cmr2_pop <- cmr2_pop |>
+  mutate(densite      = pop_total / superficie_km2,
+         taille_menage = pop_total / menages,
+         # Echelle racine carree calculee EN AMONT plutot que via scale_*(trans=),
+         # deprecie selon les versions de ggplot2 embarquees par WebR.
+         densite_sqrt = sqrt(densite))
+
+cmr2_pop |>
+  st_drop_geometry() |>
+  select(NAME_1, NAME_2, pop_total, menages, superficie_km2, densite, taille_menage) |>
+  mutate(across(c(pop_total, menages, superficie_km2, densite), round),
+         taille_menage = round(taille_menage, 2)) |>
+  arrange(desc(densite)) |>
+  head(12)
+```
+
+```{webr}
+ggplot(cmr2_pop) +
+  geom_sf(aes(fill = densite_sqrt), color = "white", linewidth = 0.15) +
+  geom_sf(data = cmr1, fill = NA, color = "grey25", linewidth = 0.45) +
+  # na.value : un departement sans donnee reste GRIS. Il n'est pas "a zero".
+  scale_fill_viridis_c(option = "B", name = "Densité\n(√ hab/km²)",
+                       na.value = "grey85") +
+  labs(title = "Densité de population par département — Cameroun",
+       subtitle = "WorldPop (estimations modélisées) ÷ superficie UTM 32N · échelle racine carrée",
+       caption = "Source : WorldPop v1.0, GADM v4.1 · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+::: {.takeaway}
+**Ce que la figure code.** La couleur d'un département code sa densité, c'est-à-dire
+population estimée ÷ superficie. Les traits noirs épais sont les limites de région,
+superposées pour situer.
+
+**Ce que les choix techniques font.** L'échelle est en **racine carrée** : sans elle,
+les deux départements urbains (Wouri, Mfoundi) écrasent les 56 autres et la carte
+devient uniformément sombre. Une transformation d'échelle ne change pas les données,
+elle change ce que l'œil peut distinguer — et elle doit toujours être annoncée dans
+la légende, comme ici. Un département en **gris** est un département **sans donnée**,
+jamais un département à zéro.
+
+**Ce qui ne se lit pas.** (1) Les chiffres WorldPop sont **modélisés**, pas recensés :
+le fichier fournit un intervalle de crédibilité (`lower`/`upper`) que la carte n'affiche
+pas. (2) La densité est une moyenne : un département où toute la population tient dans
+une ville a la même couleur qu'un département également peuplé mais dispersé — c'est le
+**MAUP**, l'effet du découpage sur le résultat. (3) Attribuer à un habitant ce qui n'est
+vrai que du département serait une **erreur écologique**.
+:::
+
+## 9. Jointure spatiale — demander à la carte plutôt qu'à une clé
+
+```{webr}
+# Les deux couches dans le meme CRS, toujours, et on l'affiche.
+ds_wgs      <- st_transform(ds,      4326)
+grappes_wgs <- st_transform(grappes, 4326)
+cat("CRS harmonises ? ", st_crs(ds_wgs) == st_crs(grappes_wgs), "\n")
+
+# st_join() pose a chaque grappe : "dans quel district suis-je tombee ?"
+# et rapatrie les attributs du polygone gagnant.
+g_ds <- st_join(grappes_wgs, ds_wgs, join = st_within)
+
+cat("Grappes avec district assigne :",
+    sum(!is.na(g_ds$district)), "sur", nrow(g_ds), "\n")
+
+# ATTENTION : st_join() peut DUPLIQUER des lignes si deux polygones se
+# recouvrent. On compare donc avant / apres.
+cat("Lignes avant :", nrow(grappes_wgs), "| apres st_join :", nrow(g_ds), "\n")
+```
+
+```{webr}
+# Compter les grappes par district, puis ramener ce compte dans la couche.
+# On part de la COUCHE GEOGRAPHIQUE : l'inverse perdrait la geometrie.
+nb_par_ds <- g_ds |>
+  st_drop_geometry() |>
+  filter(!is.na(district)) |>
+  count(district, name = "nb_grappes")
+
+ds_grappes <- ds_wgs |> left_join(nb_par_ds, by = "district")
+
+cat("Districts sans aucune grappe EDS :",
+    sum(is.na(ds_grappes$nb_grappes)), "sur", nrow(ds_grappes), "\n")
+summary(ds_grappes$nb_grappes)
+```
+
+```{webr}
+ggplot(ds_grappes) +
+  geom_sf(aes(fill = nb_grappes), color = "white", linewidth = 0.12) +
+  geom_sf(data = cmr1, fill = NA, color = "grey20", linewidth = 0.4) +
+  geom_sf(data = grappes_wgs, color = "#C0392B", size = 0.35, alpha = 0.8) +
+  scale_fill_viridis_c(option = "G", name = "Grappes EDS\npar district",
+                       na.value = "grey88") +
+  labs(title = "Couverture de l'EDS 2018 par district sanitaire",
+       subtitle = "En gris : districts sans aucune grappe — non mesurés, pas « à zéro »",
+       caption = "Source : EDS-MICS 2018, districts sanitaires DHIS2, GADM v4.1") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+::: {.takeaway}
+**Ce que la figure code.** La couleur code un **effectif d'échantillon**, pas un
+phénomène : le nombre de grappes EDS tombées dans chaque district. Les points rouges
+sont ces mêmes grappes, superposées.
+
+**En quoi le spatial est utile ici.** Cette carte ne dit rien sur la santé — elle dit
+**où l'enquête regarde**. Les trous d'échantillonnage se voient sur une carte et jamais
+dans un tableau. C'est le contrôle à faire **avant** toute carte thématique tirée de
+l'EDS : un indicateur calculé sur un district gris n'existe pas.
+
+**Ce qui ne se lit pas.** Un district gris n'est pas un district sans population ni
+sans problème de santé : c'est un district non couvert par le plan de sondage, qui n'a
+jamais prétendu être représentatif à ce niveau. L'EDS est représentative à l'échelle
+**régionale**, pas à celle du district.
+:::
+
+## 10. Les covariables contextuelles — et les valeurs manquantes déguisées
+
+```{webr}
+covar <- read.csv("_commons/data/J03_extraits/covar_dhs_grappes_extrait.csv")
+cat("Covariables :", nrow(covar), "grappes x", ncol(covar), "colonnes\n")
+cat("Ce fichier porte-t-il des coordonnees ? ",
+    any(grepl("^lat|^lon", names(covar), ignore.case = TRUE)), "\n")
+# Reponse attendue : FALSE. La geometrie est dans la couche des grappes ;
+# les deux se recollent par DHSCLUST. Jointure attributaire classique.
+
+# --- Le piege, montre plutot que raconte ------------------------------------
+# Ces covariables codent l'absence par des valeurs NEGATIVES. Une moyenne
+# calculee sans les avoir recodees traverse mean() sans un mot.
+for (v in setdiff(names(covar), "DHSCLUST")) {
+  cat(sprintf("%-32s min = %10.2f | valeurs < 0 : %3d\n",
+              v, min(covar[[v]], na.rm = TRUE), sum(covar[[v]] < 0, na.rm = TRUE)))
+}
+```
+
+```{webr}
+# Recodage : tout negatif devient NA, AVANT tout calcul.
+covar_propre <- covar |>
+  mutate(across(-DHSCLUST, ~ ifelse(.x < 0, NA_real_, .x)))
+
+# L'ecart entre les deux moyennes mesure exactement le cout du piege.
+comparer <- function(v) {
+  data.frame(variable = v,
+             moy_brute  = round(mean(covar[[v]],        na.rm = TRUE), 3),
+             moy_propre = round(mean(covar_propre[[v]], na.rm = TRUE), 3),
+             na_apres   = sum(is.na(covar_propre[[v]])))
+}
+do.call(rbind, lapply(setdiff(names(covar), "DHSCLUST"), comparer))
+```
+
+::: {.takeaway}
+**Trois natures d'absence, trois traitements.** *Hors champ* (la question ne
+s'appliquait pas) : on restreint le champ, on n'impute jamais. *Non-réponse* : on
+impute ou on pondère. *Sentinelle* (codée `-1`, `-9999`…) : on recode en `NA`
+**avant** tout calcul — c'est le cas ici.
+
+**Ce qui ne se lit pas dans un tableau de moyennes.** Deux de ces variables portent
+tellement de sentinelles qu'elles sont **inexploitables** ; le tableau ci-dessus le
+montre par la colonne `na_apres`. Elles restent dans l'extrait comme
+**contre-exemples**, pas comme variables d'analyse. La règle : on ne cartographie pas
+une variable dont on n'a pas d'abord compté les manquants.
+:::
+
+```{webr}
+# Jointure attributaire par DHSCLUST, puis carte des points.
+grappes_cov <- grappes_wgs |>
+  mutate(DHSCLUST = as.integer(DHSCLUST)) |>
+  left_join(covar_propre, by = "DHSCLUST")
+
+cat("Grappes appariees :",
+    sum(!is.na(grappes_cov$Nightlights_Composite)), "sur", nrow(grappes_cov), "\n")
+
+ggplot() +
+  geom_sf(data = cmr1, fill = "grey96", color = "grey70", linewidth = 0.25) +
+  geom_sf(data = grappes_cov, aes(color = Travel_Times_2015), size = 1) +
+  scale_color_viridis_c(option = "A", direction = -1,
+                        name = "Temps d'accès\nà une ville (min)",
+                        na.value = "grey60") +
+  labs(title = "Accessibilité des grappes EDS 2018",
+       subtitle = "Temps de trajet modélisé jusqu'à la ville la plus proche (covariable DHS)",
+       caption = "Source : DHS Spatial Covariates 2015, GADM v4.1 · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+::: {.takeaway}
+**Ce que la figure code.** Une couleur par grappe codant un **temps de trajet modélisé**
+vers la ville la plus proche, en minutes. Ce n'est pas une mesure de terrain : c'est la
+sortie d'un modèle de friction (relief, routes, occupation du sol).
+
+**En quoi le spatial est utile.** La superposition d'échelles — fond régional agrégé
++ points d'enquête — rend visible l'**hétérogénéité interne** des régions. Une région
+« moyennement accessible » peut abriter à la fois des grappes urbaines à dix minutes
+d'une ville et des grappes rurales à plusieurs heures. La moyenne régionale efface
+exactement cela.
+
+**Ce qui ne se lit pas.** Le déplacement volontaire des coordonnées EDS (2 à 10 km)
+brouille les valeurs extraites au point : une grappe peut hériter de la valeur du
+pixel voisin. Sur une covariable lisse comme l'accessibilité, l'effet est modéré ; sur
+une variable qui change brutalement d'un pixel à l'autre, il serait grave.
+:::
+
+## 11. Ce qui ne tourne pas dans un navigateur
+
+Les blocs qui suivent sont en **lecture seule**. Ils dépendent de paquets absents de
+`repo.r-wasm.org` — `haven` (import SPSS/Stata), `tmap` et `mapview` (cartographie
+thématique et interactive). Exécutez-les sous **RStudio desktop** : le pipeline complet,
+commenté ligne à ligne, est dans **`demo_formateur_J03.qmd`** (ce même dossier).
+
+### 11.1 Lire les fichiers EDS au format SPSS
+
+```r
+# haven n'est pas disponible en WebR : cette lecture se fait sous RStudio.
+library(haven); library(dplyr)
+
+# PIEGE DE NOMMAGE : DHS nomme ses variables en MAJUSCULES dans les .sav
+# (SPSS) et en minuscules dans les .dta (Stata). Un col_select ecrit en
+# minuscules echoue silencieusement sur un .sav.
+noms <- names(read_sav("datasets/CMHR71FL.SAV", n_max = 0))
+voulues <- c("hv001", "hv005", "hv009", "hv024", "hv025", "hv270")
+vars <- noms[match(toupper(voulues), toupper(noms))]
+
+menages <- read_sav("datasets/CMHR71FL.SAV",
+                    col_select = all_of(na.omit(vars))) |>
+  mutate(across(where(haven::is.labelled), haven::as_factor))
+
+# Ne JAMAIS faire str() ou summary() sur un fichier EDS complet :
+# CMHR71FL.SAV pese 72 Mo et compte plus de 4 000 colonnes.
+dim(menages)
+table(menages$HV025)
+```
+
+### 11.2 Agréger par grappe, puis joindre à la géométrie
+
+```r
+# Le pont entre l'enquete et la carte : agreger au niveau de la GRAPPE,
+# seule unite qui porte des coordonnees.
+# hv005 est le poids de sondage du menage : il se divise par 1e6.
+par_grappe <- menages |>
+  mutate(poids = HV005 / 1e6) |>
+  group_by(DHSCLUST = HV001) |>
+  summarise(taille_moy   = weighted.mean(HV009, poids),
+            n_menages    = n(),
+            .groups = "drop")
+
+grappes_enrichies <- grappes |>
+  mutate(DHSCLUST = as.integer(DHSCLUST)) |>
+  left_join(par_grappe, by = "DHSCLUST")
+
+# Compter les NA apres la jointure, toujours.
+sum(is.na(grappes_enrichies$taille_moy))
+```
+
+### 11.3 Cartographie thématique avec tmap 4
+
+```r
+# tmap est volontairement absent du runtime : trop de dependances pour un
+# chargement navigateur fluide. Les cartes ci-dessus sont donc en ggplot2.
+library(tmap)
+tm_shape(cmr2_pop) +
+  tm_polygons(fill = "densite",
+              fill.scale  = tm_scale_intervals(style = "quantile", n = 5,
+                                               values = "brewer.yl_or_rd"),
+              fill.legend = tm_legend(title = "Densité (hab/km²)"),
+              col = "white", lwd = 0.3) +
+  tm_shape(cmr1) + tm_borders(col = "grey20", lwd = 0.8) +
+  tm_title("Densité de population par département — Cameroun") +
+  tm_scalebar(position = c("left", "bottom")) +
+  tm_compass(type = "4star", position = c("right", "top"))
+```
+
+### 11.4 Exploration interactive et export
+
+```r
+# mapview : verifier une couche en un appel. A LANCER EN DIRECT, jamais
+# dans un document diffuse -- le widget embarque toutes les geometries
+# dans le HTML (le J02 est monte a 17 Mo pour cette raison).
+library(mapview)
+mapview(ds, zcol = "region") + mapview(grappes, col.regions = "red", cex = 3)
+
+# Export : le GeoPackage est le format moderne recommande -- un seul
+# fichier, plusieurs couches, pas de limite a 10 caracteres sur les noms
+# de colonnes (contrairement au shapefile).
+st_write(ds,      "outputs/couches_J03.gpkg", layer = "districts",  delete_dsn = TRUE)
+st_write(grappes, "outputs/couches_J03.gpkg", layer = "grappes_eds", append = TRUE)
+st_layers("outputs/couches_J03.gpkg")
+```
+
+## 12. Vocabulaire de la journée
+
+| Terme | Ce qu'il désigne |
+|---|---|
+| **Simple Features** | standard ISO 19125 : une géométrie + des attributs, dans un tableau |
+| **Géométrie** | la forme : `POINT`, `LINESTRING`, `POLYGON`, `MULTIPOLYGON` |
+| **CRS / EPSG** | système de référence des coordonnées, désigné par un code (4326, 32632) |
+| **Géographique / projeté** | en **degrés** (non mesurable) / en **mètres** (mesurable) |
+| **Emprise (*bbox*)** | le rectangle englobant d'une couche |
+| **Géométrie invalide** | polygone auto-intersecté ou à sommets dupliqués — invisible, bloquant |
+| **Prédicat spatial** | question binaire posée à un couple d'objets : `st_within`, `st_intersects` |
+| **Jointure attributaire** | recoller deux tables par une **clé** commune |
+| **Jointure spatiale** | recoller deux couches par la **position** — `st_join()` |
+| **Zone tampon** | l'ensemble des points à moins de *d* d'une entité — `st_buffer()` |
+| **Choroplèthe** | carte où la couleur d'un polygone code une valeur numérique |
+| **MAUP** | le résultat dépend de la maille d'agrégation ; aucune maille n'est neutre |
+| **Erreur écologique** | attribuer à un individu ce qui n'est vrai que de l'agrégat |
+| **Sentinelle** | code numérique (`-1`, `-9999`) signifiant « manquant » |
+
+## 13. Les fonctions à retenir
+
+| Fonction | Ce qu'elle fait |
+|---|---|
+| `read_sf()` / `st_read()` | lire une couche (GeoJSON, shapefile, GeoPackage…) |
+| `st_crs()` / `st_transform()` | lire / changer le système de coordonnées |
+| `st_is_valid()` / `st_make_valid()` | diagnostiquer et réparer les géométries |
+| `st_area()` / `st_distance()` | mesurer — **après** reprojection en mètres |
+| `st_drop_geometry()` | revenir à un tableau ordinaire |
+| `filter()` / `st_filter()` | filtrer par attribut / par position |
+| `st_buffer()` / `st_union()` | tamponner / fusionner |
+| `st_boundary()` / `st_centroid()` | contour / centre d'une géométrie |
+| `left_join()` | jointure attributaire — **toujours suivie d'un compteur de `NA`** |
+| `st_join()` | jointure spatiale — **toujours suivie d'un `nrow()` avant/après** |
+| `geom_sf()` / `geom_sf_label()` | dessiner une couche / l'étiqueter |
+
+## 14. Trois exercices, trois pièges
+
+1. **Le piège de la maille.** Reprenez la carte de densité de la section 8 et refaites-la
+   au niveau **région** (`cmr1`) plutôt que département. Le classement des territoires
+   les plus denses change-t-il ? *Question de méthode* : quelle maille l'analyste
+   doit-il choisir — celle qui a les plus jolies données, ou celle de la **décision**
+   qu'il éclaire ?
+
+2. **Le piège du prédicat.** Refaites la section 6 avec `st_intersects` puis
+   `st_touches`. Comptez les grappes retenues à chaque fois. *Question de méthode* :
+   sachant que les coordonnées EDS sont déplacées de 2 à 10 km, l'écart entre prédicats
+   est-il le vrai problème, ou un détail à côté du déplacement ?
+
+3. **Le piège de la jointure.** Modifiez `normaliser()` pour qu'elle ne retire **pas**
+   les particules de liaison, et recomptez les `NA`. Puis retirez `sans_accents()` et
+   recomptez encore. *Question de méthode* : combien de départements auriez-vous perdus
+   **sans le savoir** si vous n'aviez pas instrumenté la jointure ?
+
+## 15. Pour la suite
+
+- **J04 — La Terre en pixels** : le raster, et le pont entre grille et polygone
+  (extraction zonale). La couche vectorielle d'aujourd'hui devient la maille
+  d'agrégation de demain.
+- **`demo_formateur_J03.qmd`** (ce dossier) : la démonstration complète sous RStudio,
+  avec les fichiers d'origine non simplifiés, `haven`, `tmap` et `mapview`.
+- **`script_etudiant_J03.R`** : la trame à trous à compléter en salle.
+
+[← Retour à l'accueil](../INDEX.md)

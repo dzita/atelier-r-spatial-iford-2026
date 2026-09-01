@@ -1,0 +1,78 @@
+# =====================================================================
+# .gitattributes — Atelier IFORD × GDSG 2026
+# Révision du 01/09/2026.
+# ---------------------------------------------------------------------
+# GIT LFS N'EST PAS UTILISÉ. Le routage LFS mis en place plus tôt dans
+# la journée a été retiré : vérification faite, aucun fichier du dépôt
+# ne dépasse 100 Mo, seuil au-delà duquel GitHub refuse un push en Git
+# nu (erreur GH001). Git ordinaire suffit donc, et évite la dépendance
+# à un quota LFS (1 Go en compte gratuit).
+#
+# CE QU'IL FAUT SAVOIR MALGRÉ TOUT. En Git nu, chaque version d'un
+# binaire reste dans l'historique pour toujours : un raster remplacé
+# n'écrase pas l'ancien, il s'y ajoute. Le dépôt ne peut donc que
+# grossir si les données sont régénérées plusieurs fois. Si vous relancez
+# souvent outils/distribuer_donnees.R ou le .bat d'installation, surveillez
+# la taille du dépôt (Settings > General, ou `git count-objects -vH`).
+#
+# Si un fichier venait à dépasser 100 Mo, deux options : le réduire, ou
+# rétablir LFS. Les motifs sont conservés ci-dessous en commentaire.
+#
+#   *.tif  *.tiff  *.img  *.hdf     filter=lfs diff=lfs merge=lfs -text
+#   *.zip  *.gz  *.tar  *.7z  *.rar filter=lfs diff=lfs merge=lfs -text
+#   *.gpkg  *.nc                    filter=lfs diff=lfs merge=lfs -text
+#   *.SAV  *.sav  *.dta  *.DTA      filter=lfs diff=lfs merge=lfs -text
+#   *.shp  *.shx  *.dbf  *.sbn  *.sbx  *.qix
+#   DS.geojson
+#
+# En cas de rétablissement : ne pas router pedagogie/_commons/data/**,
+# car actions/checkout ne descend que des pointeurs LFS par défaut — le
+# site se rendrait alors sans erreur avec des fichiers vides.
+# =====================================================================
+
+# ---- Binaires : pas de conversion de fins de ligne -------------------
+# Sans cela, Git peut corrompre un raster ou un shapefile en croyant y
+# normaliser des CRLF. C'est la seule règle vraiment indispensable ici.
+*.tif      binary
+*.tiff     binary
+*.img      binary
+*.hdf      binary
+*.nc       binary
+*.gpkg     binary
+*.zip      binary
+*.gz       binary
+*.tar      binary
+*.7z       binary
+*.rar      binary
+*.SAV      binary
+*.sav      binary
+*.dta      binary
+*.DTA      binary
+*.xls      binary
+*.xlsx     binary
+*.pptx     binary
+*.pdf      binary
+*.jpg      binary
+*.jpeg     binary
+*.png      binary
+*.shp      binary
+*.shx      binary
+*.dbf      binary
+*.sbn      binary
+*.sbx      binary
+*.qix      binary
+
+# ---- Fins de ligne des sources ---------------------------------------
+# Le dépôt est édité sous Windows et rendu sous Linux (runner GitHub).
+*.R      text eol=lf
+*.qmd    text eol=lf
+*.md     text eol=lf
+*.yml    text eol=lf
+*.yaml   text eol=lf
+*.scss   text eol=lf
+*.json   text eol=lf
+*.geojson text eol=lf
+*.csv    text eol=lf
+*.prj    text eol=lf
+*.cpg    text eol=lf
+*.bat    text eol=crlf

@@ -1,0 +1,79 @@
+# =====================================================================
+# Publish runtime WebR site to GitHub Pages
+# Atelier IFORD x GDSG 2026
+#
+# Declenchement :
+#   - push sur la branche main
+#   - manuellement depuis l'onglet Actions (workflow_dispatch)
+#
+# Sortie : le projet Quarto a pedagogie/ est rendu, puis pousse
+# sur la branche gh-pages. GitHub Pages doit etre configure dans
+# Settings > Pages > Source = "gh-pages" branche, dossier "/ (root)".
+#
+# URL publique attendue :
+#   https://dzita.github.io/atelier-r-spatial-iford-2026/
+# =====================================================================
+
+name: Publish runtime WebR site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # Pas de `lfs: true` : le depot n'utilise pas Git LFS
+          # (verification du 01/09/2026, aucun fichier > 100 Mo).
+          # Si LFS etait retabli un jour, il faudrait AJOUTER `lfs: true`
+          # ici : sans cela actions/checkout ne descend que des pointeurs
+          # de 130 octets, le rendu passerait SANS ERREUR et les pages
+          # seraient vides.
+
+      - name: Setup Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          # On epingle la version pour eviter qu'une montee de version
+          # Quarto cote runner casse un build qui marche en local.
+          version: "1.9.38"
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - name: Install R packages required by knitr
+        # runtime.qmd declare engine: knitr ; meme si les cellules webr
+        # ne sont pas executees au build (elles tournent dans le navigateur
+        # cote client via WebR), Quarto a besoin de knitr installe pour
+        # parser l'AST des fichiers .qmd.
+        run: Rscript -e 'install.packages(c("knitr", "rmarkdown"))'
+
+      - name: Render Quarto project
+        run: |
+          cd pedagogie
+          quarto render
+
+      - name: Deploy built site to gh-pages branch
+        # On utilise peaceiris/actions-gh-pages plutot que
+        # quarto-dev/quarto-actions/publish : ce dernier exige que la branche
+        # gh-pages existe deja sur le remote (probleme classique au premier
+        # deploiement). peaceiris la cree si necessaire et y publie le dossier
+        # _site rendu par Quarto. force_orphan=true garde la branche legere
+        # (uniquement le dernier build, pas d'historique).
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./pedagogie/_site
+          publish_branch: gh-pages
+          force_orphan: true

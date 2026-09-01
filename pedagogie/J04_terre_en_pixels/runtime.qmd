@@ -1,0 +1,535 @@
+---
+title: "J04 · La Terre en pixels — runtime navigateur"
+subtitle: "Données raster avec terra — vecteur exécutable, raster en lecture seule"
+# Sans engine: knitr, Quarto ne detecte aucun bloc R et se rabat sur Jupyter
+# (erreur "No module named 'yaml'"). Reglage obligatoire.
+engine: knitr
+webr:
+  packages:
+    - sf
+    - dplyr
+    - ggplot2
+  resources:
+    # Chemins relatifs au .qmd (donc ../). Dans un bloc {webr}, le meme
+    # fichier se lit SANS le ../ : read_sf("_commons/data/...").
+    - ../_commons/data/gadm41_CMR_0.json
+    - ../_commons/data/gadm41_CMR_1.json
+    - ../_commons/data/gadm41_CMR_2.json
+---
+
+::: {.iford-callout}
+**Mode d'emploi.** Les cellules **Run code** (cellules bleues `{webr}`) tournent dans le
+navigateur — cliquez pour exécuter, et **exécutez-les dans l'ordre** : les objets créés
+dans un bloc servent aux suivants. Les blocs `r` simples (non bleus) sont en
+**lecture seule** : ils montrent le code raster à étudier et à exécuter dans RStudio
+desktop.
+
+**Pourquoi cette séparation ?** Le package R `terra` (raster + GDAL/PROJ/GEOS compilés
+en WASM, ~15 Mo) déclenche une régression connue de WebR 0.6 : `TypeError: resolved is
+not a function` au moment du téléchargement. Tant que ce bug amont n'est pas corrigé,
+**la partie raster ne peut pas s'exécuter dans le navigateur** — mais les lignes
+restent visibles pour la lecture et la copie vers desktop. Il en va de même pour
+`exactextractr` et `tmap`.
+
+**Données 100 % réelles** : limites administratives officielles GADM v4.1, images
+Sentinel-2 L2A du 26 juin 2026 (dossier `datasets/` de cette journée), MNT SRTM agrégé
+30 arc-sec (~1 km) du Cameroun (NASA/USGS).
+:::
+
+## 1. Charger la silhouette, les régions et les départements
+
+```{webr}
+#| autorun: true
+# sf = "simple features" : objets spatiaux vectoriels (points, lignes, polygones).
+library(sf)
+library(dplyr)
+library(ggplot2)
+
+# Limites administratives GADM v4.1 pre-chargees dans la VM via webr.resources.
+# ADM0 = silhouette du pays (1 polygone). ADM1 = 10 regions. ADM2 = 58 departements.
+adm0 <- read_sf("_commons/data/gadm41_CMR_0.json")
+adm1 <- read_sf("_commons/data/gadm41_CMR_1.json")
+adm2 <- read_sf("_commons/data/gadm41_CMR_2.json")
+
+# Un compteur apres chaque lecture : on ne suppose jamais un effectif.
+c(adm0 = nrow(adm0), adm1 = nrow(adm1), adm2 = nrow(adm2))
+```
+
+## 2. Carte de référence — silhouette + régions
+
+```{webr}
+ggplot() +
+  # Silhouette du pays en arriere-plan (contour gris epais).
+  geom_sf(data = adm0, fill = NA, color = "grey30", linewidth = 0.8) +
+  # Regions ADM1 en remplissage colore.
+  geom_sf(data = adm1, aes(fill = NAME_1),
+          color = "white", linewidth = 0.3, alpha = 0.9,
+          show.legend = FALSE) +
+  scale_fill_viridis_d(option = "G") +
+  labs(title = "Cameroun — silhouette ADM0 + 10 régions ADM1",
+       subtitle = "Base spatiale vectorielle commune à toutes les analyses raster (J04)",
+       caption = "Source : GADM v4.1 · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+::: {.takeaway}
+**Ce que la figure code.** Une palette **qualitative** : la couleur distingue dix
+polygones voisins, elle ne code aucune quantité et ne se lit pas comme un ordre.
+
+**À quoi elle sert dans une journée raster.** Un raster couvre une emprise
+rectangulaire indifférente aux frontières. Cette couche vectorielle est ce qui lui
+donnera un sens administratif : c'est elle qui découpe (`crop`), masque (`mask`) et
+agrège (`extract`). Sans elle, une image satellite ne produit aucun chiffre publiable.
+
+**Ce qui ne se lit pas.** Rien du phénomène étudié — ni altitude, ni humidité, ni
+population. La carte est un fond, pas un résultat.
+:::
+
+## 3. Vecteur et raster : deux façons de décrire le monde
+
+Le **vecteur** (points, lignes, polygones) décrit des **entités discrètes** : un
+département, une route, une ville. Le **raster** (grille de pixels) décrit des
+**phénomènes continus** : altitude, température, densité, indice de végétation.
+
+| | **Vecteur** (`sf`) | **Raster** (`terra`) |
+|---|---|---|
+| L'unité | l'entité, avec ses attributs | le pixel, avec une valeur |
+| Le nombre clé | le nombre d'entités | la **résolution** (taille d'un pixel au sol) |
+| L'emprise | quelconque | toujours un rectangle |
+| L'opération type | jointure, filtrage, buffer | crop, mask, algèbre de pixels |
+| Ce qui se perd | le continu entre deux entités | la limite exacte d'une entité |
+
+Pour la plupart des analyses utiles à la statistique publique, on **combine** les deux :
+on prend un raster continu (un MNT SRTM, une grille WorldPop, un indice satellitaire),
+et on l'**agrège par polygone administratif** — l'**extraction zonale**. C'est le pont
+entre l'image et le tableau, et le geste central de cette journée.
+
+Les sections **4** et **5** ci-dessous présentent les deux pipelines `terra` à
+reproduire dans RStudio desktop : le MNT SRTM, puis les images Sentinel-2 de
+`datasets/`. Le code y est commenté ligne à ligne, et il est exécuté en direct dans
+**`demo_formateur_J04.qmd`** (ce même dossier).
+
+## 4. Pipeline A — le MNT SRTM (lecture seule)
+
+### 4.1 Charger terra et le SRTM Cameroun
+
+```r
+# sf = vecteur ; terra = raster (grille de pixels, successeur de l'ancien package raster).
+library(sf)
+library(terra)
+library(dplyr)
+library(ggplot2)
+
+# Limites administratives du Cameroun (GADM v4.1).
+adm0 <- read_sf("../_commons/data/gadm41_CMR_0.json")
+
+# MNT = Modele Numerique de Terrain : une image ou chaque pixel = une altitude.
+# SRTM = mission satellite NASA/USGS qui a mesure l'altitude du globe en 2000.
+# Le fichier est produit une fois par _commons/data/cmr_srtm/00_telecharger_srtm.R.
+# rast() ouvre le fichier sans tout charger en RAM (juste un pointeur sur disque).
+srtm <- rast("../_commons/data/cmr_srtm/srtm_cmr_30s.tif")
+names(srtm) <- "elevation_m"
+srtm
+```
+
+### 4.2 Inspecter le SpatRaster
+
+```r
+# Resolution = taille d'un pixel au sol. nlyr = nombre de "couches" (bandes).
+# Pour un MNT, 1 bande suffit (l'altitude) ; une image satellite peut en avoir 13.
+c(resolution = res(srtm)[1],
+  nb_cellules = ncell(srtm),
+  nb_bandes   = nlyr(srtm),
+  EPSG        = crs(srtm, describe = TRUE)$code)
+
+# ext() = emprise geographique (xmin, xmax, ymin, ymax) couverte par le raster.
+# PREMIER REFLEXE : savoir OU se trouve l'image avant de vouloir la decouper.
+# Une emprise ecrite en dur, jamais confrontee au raster, est la source
+# d'erreur numero un des exercices raster.
+ext(srtm)
+```
+
+### 4.3 Crop + mask sur la silhouette du Cameroun
+
+```r
+# crop() = decoupe le raster a l'emprise rectangulaire (bbox) du vecteur.
+# mask() = met NA sur tous les pixels hors des polygones (silhouette pays).
+# On enchaine TOUJOURS crop puis mask : crop reduit la taille, mask nettoie les bords.
+srtm_cmr        <- crop(srtm, adm0)
+srtm_cmr_masked <- mask(srtm_cmr, vect(adm0))
+
+plot(srtm_cmr_masked,
+     main = "Altitude (m) — Cameroun",
+     plg  = list(title = "m"),
+     sub  = "Source : NASA SRTM 30 arc-sec · IFORD × GDSG 2026")
+```
+
+### 4.4 Algèbre raster — zones de basse altitude
+
+```r
+# Algebre raster : on applique une operation a chaque pixel (cellule par cellule).
+# Ici "< 500" renvoie 1 (vrai) si l'altitude est < 500 m, 0 sinon, NA hors masque.
+basse_alt <- srtm_cmr_masked < 500
+plot(basse_alt,
+     main = "Zones de basse altitude (< 500 m) — Cameroun",
+     plg  = list(title = "classe"),
+     sub  = "Source : NASA SRTM 30 arc-sec · IFORD × GDSG 2026")
+```
+
+### 4.5 Classification multi-niveaux
+
+```r
+# Classification = regrouper les pixels par tranches (ici 4 classes d'altitude).
+# ifel() est l'equivalent raster de if_else() : SI condition ALORS x SINON y.
+# Le choix des seuils N'EST PAS neutre : il decide de ce que la carte montre.
+zones <- ifel(srtm_cmr_masked < 200, 1,
+        ifel(srtm_cmr_masked < 500, 2,
+        ifel(srtm_cmr_masked < 1000, 3, 4)))
+plot(zones,
+     main = "Classes d'altitude — Cameroun",
+     plg  = list(title = "classe (1=<200m, 2=200-500, 3=500-1000, 4=>1000)"),
+     sub  = "Source : NASA SRTM 30 arc-sec · IFORD × GDSG 2026")
+```
+
+### 4.6 Statistique globale
+
+```r
+# global() = statistique calculee sur TOUS les pixels valides du raster.
+# Renvoie un data.frame ; ici on arrondit en m.
+global(srtm_cmr_masked, c("mean", "min", "max", "sd"), na.rm = TRUE) |> round()
+```
+
+### 4.7 Extraction zonale par région + choroplèthe
+
+```r
+adm1 <- read_sf("../_commons/data/gadm41_CMR_1.json")
+
+# Extraction zonale = pour chaque polygone (region), on resume les pixels
+# qui tombent dedans (ici la moyenne d'altitude). Pont raster <-> vecteur.
+elev_par_region <- terra::extract(srtm_cmr_masked, vect(adm1),
+                                   fun = "mean", na.rm = TRUE)
+elev_par_region$NAME_1 <- adm1$NAME_1
+
+elev_par_region |>
+  select(NAME_1, elev_moy = elevation_m) |>
+  mutate(elev_moy = round(elev_moy)) |>
+  arrange(desc(elev_moy))
+
+# Choroplethe = carte ou la couleur de chaque polygone code une valeur numerique.
+adm1_elev <- adm1 |>
+  mutate(elev_moy = round(elev_par_region$elevation_m))
+
+ggplot(adm1_elev) +
+  geom_sf(aes(fill = elev_moy), color = "white", linewidth = 0.3) +
+  scale_fill_viridis_c(option = "G", name = "Élévation\nmoyenne (m)",
+                       na.value = "grey85") +
+  geom_sf_label(aes(label = NAME_1), size = 2.1,
+                color = "white", fontface = "bold") +
+  labs(title    = "Élévation moyenne par région — Cameroun",
+       subtitle = "MNT SRTM 30 arc-sec (NASA/USGS) · terra::extract",
+       caption  = "Source : NASA SRTM 30 arc-sec · GADM v4.1 · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+## 5. Pipeline B — les images Sentinel-2 de la journée (lecture seule)
+
+C'est le pipeline effectivement exécuté dans `demo_formateur_J04.qmd`, sur les fichiers
+du sous-dossier `datasets/`.
+
+::: {.iford-callout}
+**Deux avertissements sur ces images, à connaître avant d'écrire le moindre exercice.**
+
+1. **La tuile ne couvre pas le pays.** Elle porte sur une fraction de l'Est et du Sud.
+   Un exercice écrit sur une région absente de l'image renverra `NA` partout — sans
+   erreur. On **dérive toujours la zone d'étude de l'emprise du raster**
+   (`terra::ext()`), jamais de coordonnées écrites en dur.
+2. **B03 et B04 sont absentes**, donc le **NDVI n'est pas calculable**. On calcule le
+   **NDMI**, qui utilise B08 (proche infrarouge) et B11 (moyen infrarouge). Et l'image
+   *True color* est une image de **visualisation 8 bits** : elle ne porte **aucune
+   réflectance** et ne doit jamais servir à calculer un indice, quel que soit son nom.
+:::
+
+### 5.1 Charger et inspecter les bandes
+
+```r
+library(terra); library(sf); library(dplyr)
+
+b08 <- rast("datasets/2026-06-26-00_00_2026-06-26-23_59_Sentinel-2_L2A_B08_(Raw).tiff")
+b11 <- rast("datasets/2026-06-26-00_00_2026-06-26-23_59_Sentinel-2_L2A_B11_(Raw).tiff")
+
+# Verifier l'emprise, le CRS et la resolution REELS -- pas ceux qu'on suppose.
+ext(b08)
+crs(b08, describe = TRUE)$code      # 4326 : l'image est en degres, pas en UTM
+res(b08)                            # resolution reelle au sol
+c(nrow(b08), ncol(b08), nlyr(b08))
+```
+
+### 5.2 Aligner deux grilles avant de les combiner
+
+```r
+# Deux rasters ne se combinent QUE s'ils partagent resolution, emprise et CRS.
+# resample() aligne la grille de b11 sur celle de b08.
+# Methode "bilinear" : adaptee a des valeurs continues (reflectance).
+# Pour une carte d'occupation du sol (classes), ce serait "near".
+res(b08); res(b11)
+b11_align <- resample(b11, b08, method = "bilinear")
+res(b11_align)
+```
+
+### 5.3 NDMI, et le piège des bordures de nodata
+
+```r
+# NDMI = (NIR - SWIR) / (NIR + SWIR) = (B08 - B11) / (B08 + B11).
+# Lecture : > 0.3 vegetation bien alimentee en eau ; -0.3 a 0.3 moderement
+# hydratee ; < -0.3 vegetation seche, sol nu, bati.
+
+# PIEGE : la ou une bande vaut 0 (bordure de tuile, pixel sans donnee), la
+# fraction degenere en exactement -1 ou +1. Ces valeurs ne sont pas des
+# mesures. Quelques pixels de bord suffisent a etirer l'echelle de couleurs
+# sur [-1, 1] et a aplatir toute la carte.
+# On les ecarte AVANT de calculer.
+b08m <- ifel(b08 <= 0, NA, b08)
+b11m <- ifel(b11_align <= 0, NA, b11_align)
+ndmi <- (b08m - b11m) / (b08m + b11m)
+
+global(ndmi, c("mean", "min", "max", "sd"), na.rm = TRUE)
+
+# On borne l'affichage sur les centiles 1 et 99 : une carte se lit sur la
+# MASSE des valeurs, pas sur ses accidents.
+bornes <- global(ndmi, fun = \(x) quantile(x, c(0.01, 0.99), na.rm = TRUE))
+plot(ndmi, range = as.numeric(bornes),
+     main = "NDMI — humidité de la végétation",
+     col  = colorRampPalette(c("#A0522D", "#F5DEB3", "#006994"))(256))
+```
+
+### 5.4 Extraction zonale par département + jointure WorldPop
+
+```r
+library(readr); library(stringr); library(stringi)
+
+cam_depts <- read_sf("datasets/gadm41_CMR_2.shp")
+
+# Pour chaque departement, la moyenne des pixels NDMI qui tombent dedans.
+ndmi_dept <- terra::extract(ndmi, vect(cam_depts), fun = mean, na.rm = TRUE)
+cam_depts$NDMI_moy <- ndmi_dept[, 2]
+
+# COMBIEN de departements sont reellement couverts par la tuile ?
+# La question se pose AVANT de cartographier, pas apres.
+sum(!is.na(cam_depts$NDMI_moy))
+
+# --- PIEGE 1 : les nombres WorldPop sont stockes en TEXTE ------------------
+pop <- read_delim("datasets/CMR_population_v1_0_admin_level2.csv",
+                  delim = ";", show_col_types = FALSE) |>
+  mutate(across(c(total, lower, upper), as.numeric))
+
+# --- PIEGE 2 : les libelles ne concordent pas ------------------------------
+# WorldPop ecrit sans accents ("Benoue", "Nyong et Soo"), GADM avec
+# l'orthographe officielle. Une jointure naive perd 11 departements sur 58,
+# SANS lever la moindre erreur : left_join() remplit avec NA.
+normaliser <- function(x) {
+  x |>
+    stri_trans_general("Latin-ASCII") |> tolower() |>
+    str_replace_all("[^a-z ]", " ") |>
+    str_replace_all("\\b(et|de|du|la|le)\\b", " ") |>
+    str_replace_all("\\s+", "")
+}
+cam_depts <- cam_depts |>
+  mutate(cle = normaliser(NAME_2)) |>
+  left_join(pop |> mutate(cle = normaliser(names1)) |>
+              select(cle, pop_total = total),
+            by = "cle")
+sum(is.na(cam_depts$pop_total))     # le compteur qui sauve l'analyse
+
+# --- NDMI pondere par la population ----------------------------------------
+# La moyenne simple traite un departement de 50 000 habitants comme un
+# departement d'un million. Ponderer par la population repond a une AUTRE
+# question : quelle humidite pour l'habitant MOYEN du pays ?
+# L'ecart entre les deux mesure la correlation entre humidite et peuplement.
+couverts <- cam_depts |> filter(!is.na(NDMI_moy), !is.na(pop_total))
+c(simple   = mean(couverts$NDMI_moy),
+  pondere  = weighted.mean(couverts$NDMI_moy, couverts$pop_total))
+```
+
+## 6. Substitut vecteur — le même geste, sans raster
+
+En attendant que `terra` soit utilisable en WebR, voici l'équivalent vecteur du pattern
+d'extraction zonale : on calcule une grandeur **par polygone**, directement avec `sf`.
+
+```{webr}
+# Calcul de la superficie de chaque region en km^2 (operation 100% sf).
+# On reprojete d'abord en UTM 32N (metres) pour mesurer correctement :
+# EPSG:4326 est en DEGRES, toute surface calculee dessus est fausse.
+adm1_utm <- st_transform(adm1, 32632)
+adm1_utm$superficie_km2 <- as.numeric(st_area(adm1_utm)) / 1e6
+
+# Le controle qui vaut d'etre fait : total attendu ~475 442 km2.
+cat("Superficie totale calculée :", round(sum(adm1_utm$superficie_km2)), "km²\n")
+cat("Référence officielle       : 475 442 km²\n")
+
+# Classement des regions par superficie decroissante.
+adm1_utm |>
+  st_drop_geometry() |>
+  select(NAME_1, superficie_km2) |>
+  mutate(superficie_km2 = round(superficie_km2)) |>
+  arrange(desc(superficie_km2))
+```
+
+## 7. Carte choroplèthe — superficie des régions
+
+L'équivalent vecteur d'une choroplèthe raster : la couleur encode une valeur calculée
+par polygone.
+
+```{webr}
+ggplot(adm1_utm) +
+  geom_sf(aes(fill = superficie_km2), color = "white", linewidth = 0.3) +
+  geom_sf_label(aes(label = NAME_1), size = 2.1,
+                color = "white", fontface = "bold",
+                label.padding = unit(0.08, "lines")) +
+  # na.value : un polygone sans donnee reste GRIS, il n'est pas "a zero".
+  scale_fill_viridis_c(option = "C", name = "Superficie\n(km²)",
+                       na.value = "grey85") +
+  labs(title    = "Superficie des régions du Cameroun",
+       subtitle = "Calcul vectoriel (st_area) — préfigure le pattern d'extraction zonale raster",
+       caption  = "Source : GADM v4.1 · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+::: {.takeaway}
+**Ce que la figure code.** La couleur d'une région code sa superficie en km², calculée
+après reprojection en UTM 32N. La palette est **séquentielle** (viridis) : elle est
+faite pour ordonner, contrairement à la palette qualitative de la section 2.
+
+**Ce que le choix technique fait.** La superficie *apparente* sur une carte dépend de
+la projection d'affichage ; la superficie *calculée* dépend du CRS de mesure. Les deux
+ne coïncident pas. C'est pourquoi on ne juge jamais une surface à l'œil sur une carte.
+
+**Ce qui se lit.** Trois régions du Nord dominent largement en étendue.
+
+**Ce qui ne se lit pas.** Rien sur la population : le Nord vaste peut être peu peuplé,
+le Littoral étroit très dense. Comparer des effectifs bruts entre polygones de tailles
+aussi inégales n'a pas de sens — c'est pour cela qu'on rapporte toujours à la surface,
+ou qu'on pondère par la population comme au §5.4.
+:::
+
+## 8. Agréger une maille fine vers une maille large
+
+Deuxième geste emprunté au raster, transposé au vecteur : passer des 58 départements
+aux 10 régions. C'est l'exact analogue d'un `terra::aggregate()`, qui réduit la
+résolution d'une grille.
+
+```{webr}
+adm2_utm <- st_transform(adm2, 32632)
+adm2_utm$superficie_km2 <- as.numeric(st_area(adm2_utm)) / 1e6
+
+# group_by + summarise sur un objet sf FUSIONNE les geometries du groupe
+# (st_union implicite). Une seule ligne de code fait le travail geometrique
+# et le travail statistique.
+regions_agg <- adm2_utm |>
+  group_by(NAME_1) |>
+  summarise(nb_departements = n(),
+            superficie_km2  = sum(superficie_km2),
+            .groups = "drop")
+
+cat("Départements :", nrow(adm2_utm), "-> régions agrégées :", nrow(regions_agg), "\n")
+
+# Controle : l'agregation conserve-t-elle la superficie totale ?
+cat("Total ADM2 :", round(sum(adm2_utm$superficie_km2)),
+    "km² | total agrégé :", round(sum(regions_agg$superficie_km2)), "km²\n")
+
+regions_agg |>
+  st_drop_geometry() |>
+  mutate(superficie_km2 = round(superficie_km2)) |>
+  arrange(desc(superficie_km2))
+```
+
+```{webr}
+ggplot() +
+  geom_sf(data = adm2_utm, fill = "grey96", color = "grey75", linewidth = 0.15) +
+  geom_sf(data = regions_agg, aes(fill = nb_departements),
+          color = "grey15", linewidth = 0.5, alpha = 0.75) +
+  scale_fill_viridis_c(option = "E", name = "Départements\npar région",
+                       na.value = "grey85") +
+  labs(title = "Agrégation vectorielle : 58 départements → 10 régions",
+       subtitle = "L'équivalent, côté vecteur, d'un changement de résolution raster",
+       caption = "Source : GADM v4.1 · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+::: {.takeaway}
+**Ce que la figure code.** Le fond gris montre la maille fine ; la couleur code, pour
+chaque région agrégée, le **nombre de départements** qui la composent.
+
+**Ce que l'agrégation fait — et ce qu'elle coûte.** Elle simplifie et stabilise : une
+moyenne sur dix départements est moins bruitée qu'une valeur départementale isolée.
+Mais elle **détruit de l'information** : une région composée de deux départements très
+contrastés et une région homogène peuvent afficher la même moyenne. C'est le **MAUP** —
+le résultat dépend de la maille, et aucune maille n'est neutre. Côté raster, changer de
+résolution avec `aggregate()` produit exactement le même effet.
+
+**Ce qui ne se lit pas.** La qualité du découpage lui-même. Un découpage administratif
+n'a aucune raison de coïncider avec la géographie du phénomène étudié : les bassins
+d'emploi, les zones agro-écologiques et les aires de santé traversent les frontières
+départementales.
+:::
+
+## 9. Vocabulaire de la journée
+
+| Terme | Ce qu'il désigne |
+|---|---|
+| **Raster / SpatRaster** | grille régulière de pixels ; l'objet de `terra` |
+| **Résolution** | taille d'un pixel au sol — 30 arc-sec ≈ 1 km, Sentinel-2 ≈ 10 m |
+| **Bande / couche (`nlyr`)** | une grille de valeurs ; une image satellite en a plusieurs |
+| **Emprise (`ext`)** | le rectangle couvert par le raster — **toujours la vérifier** |
+| **`crop` / `mask`** | découper au rectangle / mettre `NA` hors du polygone |
+| **Algèbre raster** | une opération appliquée pixel par pixel |
+| **Rééchantillonnage** | aligner deux grilles ; `bilinear` (continu) ou `near` (classes) |
+| **Agrégation** | réduire la résolution en regroupant les pixels |
+| **Extraction zonale** | résumer les pixels d'un polygone — le pont raster ↔ vecteur |
+| **Nodata** | pixel sans mesure ; à masquer **avant** tout calcul d'indice |
+| **NDVI / NDMI** | indices normalisés de végétation / d'humidité |
+| **Réflectance** | grandeur physique mesurée ; **absente** d'une image 8 bits de visualisation |
+| **MAUP** | le résultat dépend de la maille ou de la résolution |
+
+## 10. Les fonctions à retenir
+
+| Fonction (`terra`) | Ce qu'elle fait |
+|---|---|
+| `rast()` | ouvrir un raster sans le charger en RAM |
+| `res()` / `ext()` / `crs()` / `nlyr()` | résolution, emprise, système, nombre de bandes |
+| `crop()` / `mask()` | découper / masquer — dans cet ordre |
+| `resample()` | aligner deux grilles avant de les combiner |
+| `aggregate()` | réduire la résolution |
+| `ifel()` | `if_else()` appliqué pixel par pixel |
+| `classify()` | regrouper des valeurs continues en classes |
+| `global()` | statistique sur tous les pixels valides |
+| `extract()` | extraction zonale : le pont vers le vecteur |
+| `vect()` | convertir un objet `sf` en `SpatVector` |
+
+## 11. Pour la suite
+
+Ouvrez **`demo_formateur_J04.qmd`** (ce même dossier) dans RStudio desktop pour
+l'expérience raster **exécutable** :
+
+- **Sentinel-2 L2A** (B08, B11, True color) chargées via `rast()`, emprise et
+  résolution réelles vérifiées.
+- **Crop + mask** sur un département, puis sur une région.
+- **Rééchantillonnage** de B11 sur la grille de B08, et **empilage** multi-bandes.
+- **Agrégation** aux facteurs 3, 10 et 50 : ce que coûte chaque perte de résolution.
+- **NDMI** avec masquage du nodata et bornage sur les centiles 1 et 99.
+- **Extraction zonale** par département, **jointure WorldPop** sur clé normalisée, et
+  **NDMI pondéré par la population**.
+- Le pipeline **MNT SRTM** de la section 4, si vous avez exécuté
+  `_commons/data/cmr_srtm/00_telecharger_srtm.R`.
+
+Les trames de travail sont dans `script_etudiant_J04.R` (à trous) et
+`script_etudiant_J04_corrige.R`.
+
+[← Retour à l'accueil](../INDEX.md)

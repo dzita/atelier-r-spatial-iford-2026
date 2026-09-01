@@ -1,0 +1,1487 @@
+---
+title: "J7 · Le hasard a-t-il une géographie ? Statistiques spatiales — démonstration formateur"
+subtitle: "Atelier IFORD × GDSG 2026 · Lundi 3 août 2026 · Référents : J.S. Alogo, M. Teda, R. Dzita"
+author: "Geospatial Data Science Group — IFORD"
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    toc-location: left
+    number-sections: false
+    code-tools: true
+    code-fold: false
+    df-print: paged
+    theme:
+      - cosmo
+      - ../_commons/styles/demo_report.scss
+execute:
+  eval: true       # exécute le code ET affiche les sorties
+  echo: true
+  error: true      # un chunk en erreur n'interrompt pas le rendu
+  warning: false
+  message: true
+  fig-width: 8
+  fig-height: 5
+---
+
+::: {.callout-note}
+## Comment lire ce document
+
+Ce rapport est le **miroir exécuté** de `script_formateur_J7.R` : chaque section montre
+le code **et sa sortie**. Ce dossier est **autonome** : ouvrez-le directement dans RStudio
+(ou double-cliquez le `.qmd`). Les données sont dans le sous-dossier `datasets/` et les
+sorties vont dans `outputs/` — **tous les chemins sont relatifs à ce dossier**.
+
+1. Une fois : `source("install_packages_day.R")` (packages du jour).
+2. Vérifier que `datasets/` contient bien les fichiers listés dans le README du jour.
+3. Cliquer **Render**. Les imports protégés par `file.exists()` laissent le rendu aboutir
+   même si une donnée manque (la sortie concernée affiche alors un message).
+:::
+
+```{r}
+#| label: setup
+#| include: false
+for (d in c("outputs"))
+  dir.create(d, recursive = TRUE, showWarnings = FALSE)
+```
+
+## SECTION 0 : INSTALLATION ET CONFIGURATION
+
+## 0.1 Packages requis pour le Jour 6
+
+```{r}
+#| label: chunk-01
+#Le Jour 6 mobilise une large palette de packages spécialisés en statistiques spatiales. Voici les principaux :
+
+#Package	Version min.	Usage principal
+#sf	1.0+	Lecture, manipulation, écriture de données vectorielles (geojson, shp)
+#terra	1.7+	Données raster (Sentinel-2), rééchantillonnage, calcul du NDMI, masquage
+#spdep	1.3+	Matrices de poids spatiaux, Moran's I, LISA, Gi*
+#spatstat	3.0+	Processus ponctuels, test CSR, fonctions G, K, L
+#tmap	4.0+	Cartographie thématique — API v4 OBLIGATOIRE (tm_scale_*, tm_title, tm_scalebar)
+#ggplot2	3.4+	Graphiques statistiques (diagramme de Moran, etc.)
+#haven	2.5+	Lecture fichiers .sav (SPSS) et .dta (Stata) DHS/ECAM
+#dplyr	1.1+	Manipulation et agrégation des données tabulaires
+#KernSmooth	2.23+	Estimation noyau 2D classique
+#classInt	0.4+	Discrétisation des variables (Jenks, quantiles, etc.)
+
+
+# ---- 0. CHARGEMENT DES PACKAGES --------------------------
+#
+# CORRECTIF 01/09/2026 (regle 6.6) : cette section contenait une boucle
+# install.packages() sur 21 paquets, EXECUTEE A CHAQUE RENDU. Deux defauts :
+#   - elle reinstalle en cours de rendu, ce qui peut durer des dizaines de
+#     minutes et echouer sans reseau, en pleine seance ;
+#   - elle installait 6 paquets que cette journee ne charge JAMAIS
+#     (tmaptools, tidyr, leaflet, mapview, spatialreg, gstat), qui
+#     appartiennent au J05, J06 et J11.
+# L'installation se fait desormais UNE FOIS, hors rendu, par
+#   source("install_packages_day.R")
+# aligne sur les 15 library() ci-dessous et rien de plus.
+
+# Controle non bloquant : on signale ce qui manque, on n'installe pas.
+packages_requis <- c("sf", "terra", "sp", "spdep", "spatstat",
+                     "ggplot2", "tmap", "dplyr", "readr", "haven",
+                     "KernSmooth", "SpatialKDE", "RColorBrewer",
+                     "viridis", "classInt")
+
+manquants <- packages_requis[
+  !vapply(packages_requis, requireNamespace, logical(1), quietly = TRUE)]
+
+if (length(manquants)) {
+  cat("PACKAGES MANQUANTS :", paste(manquants, collapse = ", "), "\n")
+  cat("  -> lancer source(\"install_packages_day.R\") AVANT de re-rendre.\n")
+} else {
+  cat("Les", length(packages_requis), "packages du J07 sont installes.\n")
+}
+
+# Chargement des packages
+library(sf)          # Données vecteur (Simple Features)
+library(terra)       # Données raster
+library(sp)          # Classes spatiales legacy
+library(spdep)       # Dépendance spatiale, Moran's I
+library(spatstat)    # Analyse des processus ponctuels
+library(ggplot2)     # Visualisation
+library(tmap)        # Cartographie thématique
+library(dplyr)       # Manipulation de données
+library(readr)       # Lecture CSV
+library(haven)       # Lecture .sav, .dta
+library(KernSmooth)  # Estimation densité noyau
+library(SpatialKDE)  # KDE spatialisée sur raster
+library(RColorBrewer)# Palettes de couleurs
+library(viridis)     # Palettes perceptuelles
+library(classInt)    # Classes de discrétisation
+
+# Définir le répertoire de travail
+# setwd("C:/Formation_SIG_R/Jour6")  # Adapter selon votre machine   # [GDSG] desactive : ouvrir le .Rproj (chemins relatifs racine projet)
+
+# Options globales
+options(scipen = 999)  # Désactiver notation scientifique
+tmap_mode('plot')      # Mode statique par défaut
+```
+
+## SECTION 1 : CHARGEMENT ET PRÉPARATION DES DONNÉES
+
+```{r}
+#| label: chunk-02
+#Présentation du corpus de données
+#Ce module utilise un ensemble riche de données réelles couvrant le Cameroun. Chaque source apporte une dimension analytique complémentaire :
+```
+
+## SECTION 1 : CHARGEMENT ET PRÉPARATION DES DONNÉES
+
+```{r}
+#| label: chunk-03
+# ---- 1.1 Données géographiques de base du Cameroun ---------
+
+# Districts sanitaires (polygones)
+ds_cmr <- st_read("datasets/DS.geojson")
+cat("Districts sanitaires chargés :", nrow(ds_cmr), "districts\n")
+print(st_crs(ds_cmr))
+
+# Pays limitrophes
+pays_lim <- st_read("datasets/Pays_limitrophes_Cmr.shp")
+
+# Reprojeter en WGS84 si nécessaire
+wgs84 <- 4326
+if (st_crs(ds_cmr)$epsg != wgs84) {
+  ds_cmr <- st_transform(ds_cmr, wgs84)
+}
+if (st_crs(pays_lim)$epsg != wgs84) {
+  pays_lim <- st_transform(pays_lim, wgs84)
+}
+
+# ---- 1.2 Données DHS : Grappes ménages (points) -----------
+
+# Fichier géospatial DHS (localisation des grappes)
+dhs_geo <- st_read("datasets/CMGE71FL.shp")
+cat("Grappes DHS chargées :", nrow(dhs_geo), "grappes\n")
+head(dhs_geo)
+
+# Fichier ménages DHS
+dhs_hr <- read.csv("datasets/CMGC72FL.csv")
+
+# Fichier femmes DHS (.sav)
+dhs_ir <- haven::read_sav("datasets/CMHR71FL.SAV")
+
+# Fichier hommes DHS (.sav)
+dhs_mr <- haven::read_sav("datasets/CMIR71FL.SAV")
+
+# Enquête ménage (données ECAM)
+ecam <- haven::read_dta("datasets/ecam5.dta")
+
+# ---- 1.3 Données de population et ménages admin ----------
+
+pop_admin2 <- read.csv("datasets/CMR_population_v1_0_admin_level2.csv")
+hh_admin2  <- read.csv("datasets/CMR_household_v1_0_admin_level2.csv")
+
+# ---- 1.4 Insécurité alimentaire ---------------------------
+# Aucune lecture ici. Le matériel d'origine appelait un CSV FIES de la FAO
+# qui n'a jamais existé dans ce dépôt. Le substitut est construit en 1.6,
+# à partir de `ecam` (variable s09q13a), déjà lu ci-dessus — règle « une
+# lecture, une fois » : on ne relit pas ecam5.dta.
+
+# ---- 1.5 Données Sentinel-2 (raster) ----------------------
+
+# Les bandes B03 (vert) et B04 (rouge) ne sont pas chargées : elles n'ont jamais
+# été acquises — l'export Copernicus d'origine ne les avait pas cochées, elles
+# ne sont nulle part sur le poste. Conséquence en 8.4 : ni NDVI, ni NDWI.
+
+# Bande PIR (B08)
+b08 <- rast("datasets/2026-06-26-00_00_2026-06-26-23_59_Sentinel-2_L2A_B08_(Raw).tiff")
+# Bande SWIR (B11)
+b11 <- rast("datasets/2026-06-26-00_00_2026-06-26-23_59_Sentinel-2_L2A_B11_(Raw).tiff")
+# Composition colorée vraie
+true_color <- rast("datasets/2026-06-26-00_00_2026-06-26-23_59_Sentinel-2_L2A_True_color.tiff")
+
+# Afficher les métadonnées raster
+cat('=== Informations Sentinel-2 B08 ===\n')
+print(b08)
+cat('Résolution :', res(b08), 'm\n')
+cat('Étendue :', ext(b08)[1], ext(b08)[2], ext(b08)[3], ext(b08)[4], '\n')
+```
+
+## 1.6 Insécurité alimentaire — ce que ce dossier contient réellement
+
+::: {.callout-warning}
+## Le FIES n'a jamais été fourni — substitut et écart au substitut
+
+La version d'origine de ce module chargeait ici un CSV d'**échelle FIES**
+(*Food Insecurity Experience Scale*, FAO). **Ce fichier n'existe pas** : il
+n'est nulle part dans le dépôt, il n'a jamais été livré, et la ligne de lecture
+faisait donc échouer le chargement du corpus dès la section 1 — tout ce qui
+suivait tombait avec elle. Le fichier lu n'était d'ailleurs utilisé nulle part
+en aval.
+
+Le substitut est la variable **`s09q13a` d'ECAM5** — la satisfaction
+alimentaire déclarée du ménage —, déjà disponible dans l'objet `ecam` chargé
+en 1.2.
+
+**Un FIES et une question de satisfaction ne mesurent pas la même chose.** Le
+FIES est une **échelle validée à 8 items**, calibrée par un modèle de Rasch, et
+ses seuils « modérée » / « sévère » sont comparables entre pays. `s09q13a` est
+une **question unique** d'appréciation subjective : elle n'a ni items
+multiples, ni calibration, ni seuil international. On en tire donc
+une *part de ménages qui se déclarent non satisfaits de leur alimentation*, et
+rien de plus — jamais une « prévalence d'insécurité alimentaire ».
+
+Pour le contexte environnemental de la sécurité alimentaire, ce dossier dispose
+en outre des covariables déjà extraites de `CMGC72FL.csv`
+(`Malaria_Prevalence_2015`, `Aridity_2015`, `Annual_Precipitation_2015`) —
+attention à leurs sentinelles `-9999`.
+:::
+
+Le code ci-dessous **imprime la variable avant de la traiter** : `ecam5.dta`
+n'a pas été ouvert au moment d'écrire ce module, et la règle de recodage est
+donc dérivée des libellés que la sortie affiche, pas d'un ordre supposé des
+codes. L'unité est le **ménage** (`s01q3 == 1`) et l'agrégation régionale est
+**pondérée par `coefextr`** : sans les poids on décrirait l'échantillon, pas la
+population.
+
+```{r}
+#| label: chunk-03b
+# ---- 1.6 Indicateur de satisfaction alimentaire (ECAM5, s09q13a) -----
+# Bloc defensif : montrer la donnee AVANT de la recoder.
+
+ok_s09q13a <- 's09q13a' %in% names(ecam)
+cat('Colonne s09q13a presente dans ecam5.dta :', ok_s09q13a, '\n')
+
+# Sans libelle de valeur, la variable n est pas un haven_labelled :
+# haven::as_factor() n aurait rien a traduire. Garde-fou.
+en_facteur <- function(x)
+  if (is.null(attr(x, 'labels'))) factor(x) else haven::as_factor(x)
+
+lab_val <- NULL
+
+if (ok_s09q13a) {
+  lab_var <- attr(ecam$s09q13a, 'label')
+  cat('Libelle de variable :',
+      if (is.null(lab_var)) '(aucun libelle Stata)' else lab_var, '\n\n')
+
+  lab_val <- attr(ecam$s09q13a, 'labels')
+  cat('Libelles de valeurs :\n')
+  if (is.null(lab_val)) {
+    cat('  (aucun libelle de valeur)\n')
+  } else {
+    print(lab_val)
+  }
+
+  cat('\nDistribution, chefs de menage (s01q3 == 1), NA compris :\n')
+  print(table(en_facteur(ecam$s09q13a[ecam$s01q3 == 1]), useNA = 'ifany'))
+} else {
+  cat('ATTENTION : variable absente, indicateur non calculable.\n')
+}
+
+# --- Regle de recodage, DERIVEE DES LIBELLES ci-dessus ---
+# HYPOTHESE A VALIDER AU PREMIER RENDU : les modalites dont le libelle porte
+# une marque de negation ou d insatisfaction designent les menages NON
+# satisfaits ; les libelles de non-reponse passent a NA (non-reponse, pas
+# "satisfait"). Si les libelles reels different, corriger ces deux motifs.
+motif_horschamp <- 'ne sait|nsp|refus|sans objet|non concern|non declar|manquant|inconnu'
+motif_insatisf  <- 'pas|non|insatisf|peu|jamais|rarement|mauvais|mecontent|difficile'
+
+sans_accents <- function(x) {
+  chartr('àâäéèêëîïôöùûüç', 'aaaeeeeiioouuuc', tolower(as.character(x)))
+}
+
+if (ok_s09q13a && !is.null(lab_val)) {
+
+  noms_mod    <- sans_accents(names(lab_val))
+  est_hors    <- grepl(motif_horschamp, noms_mod)
+  est_insat   <- grepl(motif_insatisf, noms_mod) & !est_hors
+  codes_hors  <- unname(lab_val[est_hors])
+  codes_insat <- unname(lab_val[est_insat])
+
+  cat('\nRegle de recodage retenue\n')
+  cat('  Non satisfait (=1) :',
+      if (length(codes_insat)) paste(names(lab_val)[est_insat], collapse = ' | ')
+      else '(aucune modalite reconnue)', '\n')
+  cat('  Mis a NA (non-reponse / hors champ) :',
+      if (length(codes_hors)) paste(names(lab_val)[est_hors], collapse = ' | ')
+      else '(aucune)', '\n')
+  cat('  Satisfait (=0) : toutes les autres modalites\n\n')
+
+  if (length(codes_insat) > 0) {
+
+    men_ecam <- ecam[!is.na(ecam$s01q3) & ecam$s01q3 == 1, ]
+    cat('Menages retenus (chefs de menage) :', nrow(men_ecam), '\n')
+
+    v_brut <- as.numeric(haven::zap_labels(men_ecam$s09q13a))
+    insat  <- ifelse(v_brut %in% codes_hors, NA_real_,
+                     as.numeric(v_brut %in% codes_insat))
+    cat('Effectifs du binaire construit :\n')
+    print(table(c('0 = satisfait', '1 = non satisfait')[insat + 1],
+                useNA = 'ifany'))
+
+    insecurite_region <- data.frame(
+        region = as.character(en_facteur(men_ecam$s0q1)),
+        insat  = insat,
+        poids  = as.numeric(men_ecam$coefextr)
+      ) %>%
+      filter(!is.na(insat), !is.na(poids), !is.na(region)) %>%
+      group_by(region) %>%
+      summarise(
+        n_menages   = n(),
+        pct_pondere = weighted.mean(insat, w = poids) * 100,
+        pct_brut    = mean(insat) * 100,
+        .groups = 'drop'
+      )
+
+    cat('\nPart de menages non satisfaits de leur alimentation,\n',
+        'par region d enquete ECAM5 (12 modalites) :\n')
+    print(as.data.frame(insecurite_region))
+    cat('\nEcart maximal ponderé / non ponderé (points) :',
+        round(max(abs(insecurite_region$pct_pondere -
+                      insecurite_region$pct_brut)), 2), '\n')
+    cat('NOTE : ce dossier ne contient pas gadm41_CMR_1.shp — la mise en carte\n',
+        'regionale de cet indicateur appartient au J06. Ici, il sert de\n',
+        'variable d attribut pour les exercices d autocorrelation.\n')
+
+  } else {
+    insecurite_region <- NULL
+    cat('Recodage non concluant : renseigner codes_insat a la main apres\n',
+        'lecture des libelles imprimes ci-dessus.\n')
+  }
+
+} else {
+  insecurite_region <- NULL
+}
+```
+
+## SECTION 2 : PRÉPARATION DES DONNÉES PONCTUELLES DHS
+
+```{r}
+#| label: chunk-04
+# ---- 2.1 Vérification et nettoyage des grappes DHS ---------
+
+# Inspecter les colonnes disponibles
+names(dhs_geo)
+summary(dhs_geo)
+
+# Filtrer uniquement les coordonnées valides (lat/lon non nulles)
+dhs_points <- dhs_geo %>%
+  filter(!is.na(LATNUM) & !is.na(LONGNUM)) %>%
+  filter(LATNUM != 0 & LONGNUM != 0) %>%
+  st_transform(wgs84)
+
+cat('Grappes avec coordonnées valides :', nrow(dhs_points), '\n')
+
+# ---- 2.2 Jointure attributaire avec données ménages --------
+
+# Préparer un indicateur de santé par grappe
+# Exemple : taux de prévalence de la malnutrition (variable hv205)
+# Adapter les noms de variables selon le dictionnaire DHS
+
+if ('DHSCLUST' %in% names(dhs_hr) & 'DHSCLUST' %in% names(dhs_points)) {
+
+  # Calcul d'indicateurs par grappe
+  indicateurs_grappe <- dhs_hr %>%
+    group_by(DHSCLUST) %>%
+    summarise(
+      n_menages     = n(),
+      eau_amelioree = mean(hv201 %in% c(11,12,13,14,21,31,41,51,71), na.rm=TRUE) * 100,
+      elect_access  = mean(hv206 == 1, na.rm=TRUE) * 100
+    )
+
+  # Jointure avec données spatiales
+  dhs_points <- dhs_points %>%
+    left_join(indicateurs_grappe, by = 'DHSCLUST')
+
+  cat('Jointure réussie. Variables disponibles:\n')
+  print(names(dhs_points))
+}
+
+# ---- 2.3 Carte exploratoire des grappes DHS ----------------
+
+tmap_mode('plot')
+tm_shape(ds_cmr) +
+  tm_borders(col = 'grey60', lwd = 0.5) +
+tm_shape(dhs_points) +
+# MIGRATION TMAP 4 - A VERIFIER : values non nomme -> l'affectation suit l'ordre des niveaux (R puis U) ; verifier que 'red' tombe bien sur R comme en v3.
+  tm_dots(fill = 'URBAN_RURA',
+          fill.scale = tm_scale_categorical(values = c('red','blue')),
+          fill.legend = tm_legend(title = 'Milieu'),
+          size = 0.3, fill_alpha = 0.7) +
+tm_title('Localisation des grappes DHS - Cameroun') +
+# MIGRATION TMAP 4 - A VERIFIER : legend.outside est un nom d'option v3 ; en v4 l'equivalent documente est tm_legend(position = tm_pos_out()).
+tm_layout(legend.outside = TRUE)
+```
+
+## SECTION 2 : ANALYSE DES MOTIFS PONCTUELS
+
+```{r}
+#| label: chunk-05
+#Fondements théoriques
+#L'analyse des motifs ponctuels (Point Pattern Analysis) est une branche de la statistique spatiale qui s'intéresse à la distribution géographique d'événements discrets dans l'espace. Elle cherche à répondre à la question : la distribution observée des points est-elle le fruit du hasard, ou révèle-t-elle une structure spatiale (agrégation, régularité) ?
+
+#Hypothèse nulle : Complète Aléatoire Spatiale (CSR)
+#Un processus de Poisson Homogène (HPP) génère des points de manière :
+#  1) Indépendante : la présence d'un point n'influence pas les autres
+#  2) Homogène : intensité constante dans toute la zone
+#Si les données rejettent la CSR, on parle de :
+#  - Agrégation (clustering) : les points se regroupent - fréquent en santé publique
+#  - Régularité (over-dispersion) : les points s'évitent - fréquent pour les puits
+```
+
+## SECTION 3 : ANALYSE DES MOTIFS PONCTUELS (POINT PATTERNS)
+
+```{r}
+#| label: chunk-06
+# THÉORIE : Un processus ponctuel spatial est un mécanisme
+# stochastique qui génère un ensemble de points dans l'espace.
+# On cherche à tester si les points sont :
+#  - Aléatoires (CSR : Complete Spatial Randomness)
+#  - Agrégés (clusters)
+#  - Réguliers (dispersés)
+
+# ---- 3.1 Création d'un objet ppp (planar point pattern) ----
+
+# Extraire les coordonnées
+coords <- st_coordinates(dhs_points)
+x_pts  <- coords[,1]
+y_pts  <- coords[,2]
+
+# Définir la fenêtre d'observation = frontière du Cameroun
+cmr_union <- st_union(ds_cmr)
+cmr_owin  <- as.owin(cmr_union)
+
+# Créer l'objet ppp
+ppp_dhs <- ppp(x = x_pts, y = y_pts, window = cmr_owin)
+cat('Nombre de points dans ppp :', ppp_dhs$n, '\n')
+
+# Visualisation brute
+plot(ppp_dhs, main = 'Grappes DHS - Motif ponctuel brut',
+     cols = 'steelblue', cex = 0.5)
+
+# ---- 3.2 Test de complète aléatoire spatiale (CSR) ---------
+
+# Test quadrat : divise la zone en cellules, compare les
+# fréquences observées vs attendues sous HPP (Homogeneous Poisson)
+qt_test <- quadrat.test(ppp_dhs, nx = 10, ny = 10)
+print(qt_test)
+# Interprétation : p < 0.05 => rejet de la CSR
+
+plot(qt_test,
+     main = 'Test quadrat CSR - Grappes DHS',
+     cex = 0.5)
+
+# ---- 3.3 Statistique G (plus proches voisins) --------------
+
+# G(r) = P(distance au plus proche voisin <= r)
+# Si G(r) > G_CSR(r) => agrégation
+# Si G(r) < G_CSR(r) => régularité
+
+G_func <- Gest(ppp_dhs)
+plot(G_func,
+     main = 'Fonction G - Test d agrégation',
+     col = c('black','red','blue'),
+     lwd = 2)
+legend('topleft',
+       legend = c('G observée','G théorique CSR','G enveloppe'),
+       col = c('black','red','blue'), lty = 1)
+
+# ---- 3.4 Statistique K de Ripley (multi-échelle) -----------
+
+# K(r) = intensité^-1 * E[nb points dans cercle rayon r]
+# L(r) = sqrt(K(r)/pi) - r   (transformation stabilisante)
+# Si L(r) > 0 => agrégation à l'échelle r
+
+K_func <- Kest(ppp_dhs, correction = 'Ripley')
+L_func <- Lest(ppp_dhs, correction = 'Ripley')
+
+plot(L_func,
+     main = 'Fonction L de Ripley - Grappes DHS',
+     lwd = 2)
+abline(h = 0, col = 'red', lty = 2, lwd = 2)
+
+# ---- 3.5 Enveloppes de simulation (test Monte-Carlo) -------
+
+# Comparer l'observé à 99 simulations sous CSR
+# ATTENTION : long à calculer (réduire nsim si nécessaire)
+set.seed(42)
+env_L <- envelope(ppp_dhs, Lest,
+                  nsim = 99, rank = 1,
+                  correction = 'Ripley',
+                  verbose = FALSE)
+
+plot(env_L,
+     main = 'Test CSR par enveloppes Monte-Carlo (n=99)',
+     lwd = 2,
+     shade = c('lo','hi'))
+# Si la courbe noire sort de l'enveloppe grise => pas CSR
+```
+
+## SECTION 3 : ESTIMATION DE LA DENSITÉ DE NOYAU (KDE)
+
+```{r}
+#| label: chunk-07
+#Théorie de la KDE
+#L'estimation par noyau (Kernel Density Estimation) transforme un nuage de points discrets en une surface continue représentant l'intensité ou la densité du phénomène. Chaque point contribue à la densité locale selon une fonction noyau, généralement gaussienne, centrée sur ce point.
+
+#Choix de la largeur de bande (bandwidth h)
+#La largeur de bande h est le paramètre critique de la KDE :
+#  - h trop petit  : surface très irrégulière (surapprentissage), suit chaque point
+#  - h trop grand  : surface trop lisse (sous-apprentissage), perd les détails locaux
+#Méthodes automatiques disponibles dans R :
+#  bw.scott()    : règle de Scott (rapide, bonne pour distributions normales)
+#  bw.nrd()      : règle de Silverman (similaire à Scott)
+#  bw.diggle()   : validation croisée leave-one-out (plus précise, plus lente)
+#  bw.ppl()      : pseudo-vraisemblance (bon compromis vitesse/précision)
+#Recommandation : tester 3-4 valeurs et comparer visuellement
+```
+
+## SECTION 4 : ESTIMATION DE LA DENSITÉ DE NOYAU (KDE)
+
+```{r}
+#| label: chunk-08
+# THÉORIE : La KDE estime la densité de probabilité d'une
+# variable spatiale. Elle 'lisse' les points ponctuels pour
+# créer une surface continue.
+# Formule : f(x) = (1/nh) * SUM K((x - xi)/h)
+#   n = nb de points, h = bandwidth (fenêtre de lissage)
+#   K = fonction noyau (souvent gaussienne)
+
+# ---- 4.1 KDE avec spatstat (objets ppp) --------------------
+
+# Largeur de bande automatique (méthode de Scott)
+bw_scott <- bw.scott(ppp_dhs)
+cat('Bandwidth Scott :', bw_scott, '\n')
+
+# Largeur de bande par validation croisée
+# (plus précise mais plus lente)
+# bw_cv <- bw.diggle(ppp_dhs)  # décommenter si nécessaire
+
+# Calcul de la densité
+kde_dhs <- density.ppp(ppp_dhs,
+                        sigma = bw_scott,
+                        kernel = 'gaussian')
+
+# Visualisation
+par(mfrow = c(1,2))
+plot(kde_dhs,
+     main = paste0('KDE Grappes DHS\n(bandwidth = ',
+                   round(bw_scott,3), ')'),
+     col = viridis::viridis(100))
+plot(ppp_dhs, add = TRUE, cex = 0.2, col = 'white')
+
+# Tester plusieurs bandwidth
+plot(density(ppp_dhs, sigma = 0.5),
+     main = 'KDE sigma=0.5°', col = viridis::inferno(100))
+par(mfrow = c(1,1))
+
+# ---- 4.2 KDE avec données Sentinel-2 comme fond -----------
+
+# Convertir kde en raster terra pour superposer Sentinel-2
+kde_raster <- rast(kde_dhs)
+crs(kde_raster) <- 'EPSG:4326'
+
+# Reprojeter true_color si nécessaire
+true_color_wgs <- project(true_color, kde_raster, method = 'bilinear')
+
+# Affichage combiné
+plotRGB(true_color_wgs, r=1, g=2, b=3, stretch='lin',
+        main = 'Densité grappes DHS sur image Sentinel-2')
+plot(kde_raster, add = TRUE, alpha = 0.5, col = viridis::plasma(50))
+
+# ---- 4.3 KDE par milieu urbain/rural ---------------------
+
+# Séparer urbain et rural
+dhs_urbain <- dhs_points %>% filter(URBAN_RURA == 'U')
+dhs_rural  <- dhs_points %>% filter(URBAN_RURA == 'R')
+
+coords_u <- st_coordinates(dhs_urbain)
+coords_r <- st_coordinates(dhs_rural)
+
+ppp_urbain <- ppp(coords_u[,1], coords_u[,2], window = cmr_owin)
+ppp_rural  <- ppp(coords_r[,1], coords_r[,2], window = cmr_owin)
+
+par(mfrow = c(1,2))
+plot(density(ppp_urbain, sigma = 0.3),
+     main = 'Densité - Grappes URBAINES',
+     col = viridis::magma(100))
+plot(density(ppp_rural, sigma = 0.3),
+     main = 'Densité - Grappes RURALES',
+     col = viridis::viridis(100))
+par(mfrow = c(1,1))
+
+#KDE et données Sentinel-2 : intégration raster
+#La combinaison KDE + Sentinel-2 permet de contextualiser les densités de peuplement.
+#L'indice disponible ici est le NDMI (B08/B11) — teneur en eau de la végétation —,
+#et non le NDVI ni le NDWI, qui exigent B04 et B03, absentes du dossier (voir 8.4).
+#Lecture prudente, et seulement là où la tuile couvre le terrain :
+#  - forte densité KDE sur NDMI bas   => végétation sèche ou surface bâtie
+#  - forte densité KDE sur NDMI élevé => peuplement en milieu forestier humide
+#  - un NDMI bas ne dit PAS « pas de végétation » : il dit « végétation peu hydratée »
+#Fonctions utiles : project(), resample(), crop(), mask(), plotRGB() du package terra
+```
+
+## SECTION 4 : AUTOCORRÉLATION SPATIALE - MORAN'S I
+
+```{r}
+#| label: chunk-09
+#Fondements de l'autocorrélation spatiale
+#La Première loi de Tobler en géographie stipule : 'tout est lié à tout, mais les choses proches sont plus liées que les choses éloignées'. L'autocorrélation spatiale mesure formellement cette tendance des valeurs similaires à se regrouper dans l'espace.
+
+#Matrice de poids spatiaux : le coeur de l'analyse
+#Avant tout calcul d'autocorrélation, il faut définir qui est le 'voisin' de qui. Cette définition de voisinage est encodée dans la matrice de poids spatiaux W.
+
+#Type de voisinage	Fonction R	Quand l'utiliser ?
+#Contiguïté Reine (Queen)	poly2nb(..., queen=TRUE)	Polygones qui partagent un côté OU un sommet (recommandé par défaut)
+#Contiguïté Tour (Rook)	poly2nb(..., queen=FALSE)	Polygones qui partagent uniquement un côté (plus strict)
+#K plus proches voisins	knn2nb(knearneigh(...))	Données ponctuelles ou polygones irréguliers (garantit des voisins)
+#Seuil de distance	dnearneigh(...)	Quand la distance a une signification physique (ex: 50 km de rayon)
+
+#Interprétation du Moran's I
+#Valeur de I	Signification	Exemple concret
+#I proche de +1	Forte autocorrélation positive	Les zones riches entourent des zones riches (ségrégation)
+#I proche de 0	Distribution aléatoire	Pas de structure spatiale détectable
+#I proche de -1	Forte autocorrélation négative	Alternance régulière haute/basse valeur (rare en pratique)
+#I attendu sous H0	E(I) = -1/(n-1)	Pour n=100 unités, E(I) = -0.010, proche de 0
+```
+
+## SECTION 5 : AUTOCORRÉLATION SPATIALE - MORAN'S I
+
+```{r}
+#| label: chunk-10
+# THÉORIE : L'autocorrélation spatiale mesure dans quelle
+# mesure les valeurs similaires (élevées ou faibles) sont
+# regroupées dans l'espace.
+# Moran's I :
+#   I > 0 => autocorrélation positive (clusters de valeurs similaires)
+#   I < 0 => autocorrélation négative (dispersion en échiquier)
+#   I ≈ 0 => distribution spatiale aléatoire
+#
+# Formule : I = (n/S0) * (sum_ij w_ij*(xi-xbar)*(xj-xbar))
+#               / sum_i (xi-xbar)^2
+
+# ---- 5.1 Agréger les données DHS par district sanitaire ----
+
+# Jointure spatiale : attribuer chaque grappe à son district
+dhs_ds_join <- st_join(dhs_points, ds_cmr, join = st_within)
+
+# Calculer un indicateur moyen par district
+# (adapter le nom du district selon le fichier DS.geojson)
+var_id_ds <- names(ds_cmr)[1]  # Première colonne = ID
+
+# Indicateurs par district
+resume_ds <- dhs_ds_join %>%
+  st_drop_geometry() %>%
+  group_by(across(all_of(var_id_ds))) %>%
+  summarise(
+    n_grappes      = n(),
+    pct_urbain     = mean(URBAN_RURA == 'U', na.rm=TRUE) * 100,
+    tx_eau         = mean(eau_amelioree, na.rm=TRUE),
+    tx_electricite = mean(elect_access, na.rm=TRUE)
+  ) %>%
+  ungroup()
+
+# Jointure avec couche ds_cmr
+ds_indicateurs <- ds_cmr %>%
+  left_join(resume_ds, by = var_id_ds)
+
+# Remplacer NA par la moyenne (imputation simple)
+ds_indicateurs$tx_eau[is.na(ds_indicateurs$tx_eau)] <-
+  mean(ds_indicateurs$tx_eau, na.rm=TRUE)
+
+# ---- 5.2 Construction de la matrice de poids spatiaux ------
+
+# MÉTHODE 1 : Contiguïté (voisins qui partagent une frontière)
+# Style 'W' = ligne-standardisée (somme = 1)
+nb_queen <- poly2nb(ds_indicateurs, queen = TRUE)
+lw_queen <- nb2listw(nb_queen, style = 'W', zero.policy = TRUE)
+
+cat('Nombre de districts :', length(nb_queen), '\n')
+cat('Nb moyen de voisins :', mean(card(nb_queen)), '\n')
+
+# Visualiser les liens de contiguïté
+coords_ds <- st_coordinates(st_centroid(ds_indicateurs))
+plot(st_geometry(ds_indicateurs),
+     col = 'lightyellow', border = 'grey60',
+     main = 'Matrice de contiguïté (Queen) - Districts sanitaires')
+plot(nb_queen, coords_ds, add = TRUE,
+     col = 'steelblue', lwd = 0.5)
+
+# MÉTHODE 2 : K plus proches voisins (k=4)
+nb_knn4 <- knn2nb(knearneigh(coords_ds, k = 4))
+lw_knn4 <- nb2listw(nb_knn4, style = 'W', zero.policy = TRUE)
+
+# ---- 5.3 Moran's I Global ---------------------------------
+
+# Test pour le taux d'accès à l'eau potable
+moran_eau <- moran.test(ds_indicateurs$tx_eau,
+                         listw = lw_queen,
+                         zero.policy = TRUE)
+print(moran_eau)
+# Interprétation : si p < 0.05 et I > 0 => clustering spatial
+
+# Test pour le taux d'électrification
+moran_elec <- moran.test(ds_indicateurs$tx_electricite,
+                          listw = lw_queen,
+                          zero.policy = TRUE)
+print(moran_elec)
+
+# ---- 5.4 Diagramme de Moran (Moran Plot) ------------------
+
+# Standardiser la variable
+z_eau <- scale(ds_indicateurs$tx_eau)[,1]
+
+# Calculer le lag spatial (moyenne des voisins)
+lag_z_eau <- lag.listw(lw_queen, z_eau, zero.policy = TRUE)
+
+# Créer le dataframe pour ggplot
+moran_df <- data.frame(
+  z          = z_eau,
+  lag_z      = lag_z_eau,
+  quadrant   = case_when(
+    z_eau > 0 & lag_z_eau > 0 ~ 'HH (Haut-Haut)',
+    z_eau < 0 & lag_z_eau < 0 ~ 'LL (Bas-Bas)',
+    z_eau > 0 & lag_z_eau < 0 ~ 'HL (Haut-Bas)',
+    z_eau < 0 & lag_z_eau > 0 ~ 'LH (Bas-Haut)',
+    TRUE ~ 'Neutre'
+  )
+)
+
+ggplot(moran_df, aes(x = z, y = lag_z, color = quadrant)) +
+  geom_point(size = 2, alpha = 0.7) +
+  geom_hline(yintercept = 0, linetype = 'dashed') +
+  geom_vline(xintercept = 0, linetype = 'dashed') +
+  geom_smooth(method = 'lm', se = FALSE, color = 'black', lwd=1) +
+  scale_color_manual(values = c(
+    'HH (Haut-Haut)' = '#d7191c',
+    'LL (Bas-Bas)'   = '#2c7bb6',
+    'HL (Haut-Bas)'  = '#fdae61',
+    'LH (Bas-Haut)'  = '#abd9e9'
+  )) +
+  labs(
+    title = "Diagramme de Moran - Accès à l'eau potable",
+    subtitle = paste0('I = ', round(moran_eau$estimate[1], 3),
+                      ' | p = ', round(moran_eau$p.value, 4)),
+    x = 'Valeur standardisée (z)',
+    y = 'Lag spatial (moyenne voisins)',
+    color = 'Quadrant LISA'
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+## SECTION 5 : STATISTIQUES LOCALES (LISA)
+
+```{r}
+#| label: chunk-11
+#Du global au local : les indicateurs LISA
+#Le Moran's I global résume l'autocorrélation en un seul chiffre pour tout le territoire. Les indicateurs LISA (Local Indicators of Spatial Association, Anselin 1995) décomposent cette mesure pour identifier précisément quels districts contribuent positivement ou négativement à l'autocorrélation globale.
+
+#Les quatre quadrants du diagramme de Moran
+#HH (Haut-Haut) : valeur élevée entourée de valeurs élevées => POINT CHAUD
+ #  Exemple : district avec bon accès à l'eau entouré de districts similaires
+
+#LL (Bas-Bas) : valeur faible entourée de valeurs faibles => POINT FROID
+#   Exemple : cluster de districts avec faible accès aux services
+
+#HL (Haut-Bas) : valeur élevée entourée de valeurs faibles => OUTLIER POSITIF
+ #  Exemple : ville (chef-lieu) bien équipée dans une région peu développée
+
+#LH (Bas-Haut) : valeur faible entourée de valeurs élevées => OUTLIER NÉGATIF
+ #  Exemple : enclave défavorisée dans une zone globalement bien équipée
+```
+
+## SECTION 6 : LISA - STATISTIQUES LOCALES DE MORAN
+
+```{r}
+#| label: chunk-12
+# THÉORIE : Les indicateurs LISA (Local Indicators of Spatial
+# Association) décomposent le Moran's I global en contributions
+# locales pour détecter des CLUSTERS et OUTLIERS spatiaux.
+# Quadrants LISA :
+#   HH = Haut-Haut (cluster de valeurs élevées = point chaud)
+#   LL = Bas-Bas   (cluster de valeurs faibles)
+#   HL = Haut entouré de bas (outlier spatial +)
+#   LH = Bas entouré de haut (outlier spatial -)
+
+# ---- 6.1 Calcul des statistiques locales de Moran ---------
+
+lisa_eau <- localmoran(ds_indicateurs$tx_eau,
+                        listw = lw_queen,
+                        zero.policy = TRUE)
+
+# Attacher les résultats au sf
+ds_indicateurs$lisa_I    <- lisa_eau[, 'Ii']
+ds_indicateurs$lisa_z    <- lisa_eau[, 'Z.Ii']
+ds_indicateurs$lisa_pval <- lisa_eau[, 'Pr(z != E(Ii))']
+
+# Seuil de significativité
+alpha_seuil <- 0.05
+
+# Assigner les quadrants
+z_eau   <- scale(ds_indicateurs$tx_eau)[,1]
+lag_eau <- lag.listw(lw_queen, z_eau, zero.policy = TRUE)
+
+ds_indicateurs$lisa_quad <- 'Non significatif'
+ds_indicateurs$lisa_quad[ds_indicateurs$lisa_pval < alpha_seuil &
+                           z_eau > 0 & lag_eau > 0] <- 'HH - Point chaud'
+ds_indicateurs$lisa_quad[ds_indicateurs$lisa_pval < alpha_seuil &
+                           z_eau < 0 & lag_eau < 0] <- 'LL - Point froid'
+ds_indicateurs$lisa_quad[ds_indicateurs$lisa_pval < alpha_seuil &
+                           z_eau > 0 & lag_eau < 0] <- 'HL - Outlier +'
+ds_indicateurs$lisa_quad[ds_indicateurs$lisa_pval < alpha_seuil &
+                           z_eau < 0 & lag_eau > 0] <- 'LH - Outlier -'
+
+cat('Distribution des quadrants LISA :\n')
+print(table(ds_indicateurs$lisa_quad))
+
+# ---- 6.2 Carte LISA (Points chauds) -----------------------
+
+palette_lisa <- c(
+  'HH - Point chaud'  = '#d7191c',
+  'LL - Point froid'  = '#2c7bb6',
+  'HL - Outlier +'    = '#fdae61',
+  'LH - Outlier -'    = '#abd9e9',
+  'Non significatif'  = '#f0f0f0'
+)
+
+tm_shape(ds_indicateurs) +
+# MIGRATION TMAP 4 - A VERIFIER : palette_lisa est un vecteur NOMME ; verifier que tm_scale_categorical() apparie bien par nom de modalite et non par ordre.
+  tm_fill(fill = 'lisa_quad',
+          fill.scale = tm_scale_categorical(values = palette_lisa),
+          fill.legend = tm_legend(title = 'Quadrant LISA')) +
+  tm_borders(col = 'white', lwd = 0.3) +
+tm_shape(pays_lim) +
+  tm_borders(col = 'black', lwd = 1.2) +
+tm_title("Carte LISA - Accès à l'eau potable\nDistricts sanitaires du Cameroun") +
+# MIGRATION TMAP 4 - A VERIFIER : legend.outside et legend.title.size sont des noms d'options v3 conserves tels quels ; controler qu'ils sont encore honores par tm_layout() en v4.
+tm_layout(
+  legend.outside = TRUE,
+  legend.title.size = 0.9
+) +
+tm_compass(position = c('left','top')) +
+tm_scalebar(position = c('left','bottom'))
+```
+
+## SECTION 6 : CARTOGRAPHIE DES POINTS CHAUDS
+
+```{r}
+#| label: chunk-13
+##Méthodes de détection des points chauds
+#La cartographie des points chauds (hot spot mapping) est devenue un outil central en santé publique, en planification du développement et en analyse de la sécurité alimentaire. Elle permet d'identifier rapidement les zones qui nécessitent une intervention prioritaire.
+
+#Méthode	Package R	Avantages / Limites
+#LISA HH (Moran local)	spdep::localmoran()	Testée statistiquement, décompose spatial / non-spatial. Sensible au découpage administratif.
+#Getis-Ord Gi*	spdep::localG()	Détecte les clusters de valeurs élevées. Z-score directement interprétable. Très utilisé en SIG.
+#KDE seuillé (percentile)	spatstat / terra	Flexible, visuel, indépendant du découpage. Sensible au bandwidth choisi.
+#SaTScan (local)	SpatialEpi::kulldorff()	Détecte des clusters circulaires optimaux. Très utilisé en épidémiologie spatiale.
+
+#Statistique de Getis-Ord Gi*
+#La statistique Gi* mesure, pour chaque unité spatiale, si les valeurs de cette unité et de ses voisines sont significativement élevées (hot spot) ou faibles (cold spot) par rapport à la moyenne globale.
+#Interprétation du z-score Gi*
+#z-score > +2.58  => Hot spot statistiquement significatif à 99% (p < 0.01)
+#z-score > +1.96  => Hot spot significatif à 95% (p < 0.05)
+#z-score > +1.65  => Hot spot significatif à 90% (p < 0.10)
+#z-score entre -1.65 et +1.65 => Non significatif (distribution aléatoire locale)
+#z-score < -1.65  => Cold spot significatif à 90%
+#z-score < -1.96  => Cold spot significatif à 95%
+#z-score < -2.58  => Cold spot significatif à 99%
+```
+
+## SECTION 7 : CARTOGRAPHIE DES POINTS CHAUDS
+
+```{r}
+#| label: chunk-14
+# THÉORIE : Un 'point chaud' (hot spot) est une zone où
+# la concentration d'un phénomène est significativement
+# plus élevée que partout ailleurs.
+# Méthodes :
+#  - LISA HH (section précédente)
+#  - Getis-Ord Gi* (alternative populaire)
+#  - KDE avec seuils de percentile
+
+# ---- 7.1 Statistique de Getis-Ord Gi* ---------------------
+
+# Gi* identifie les clusters de valeurs élevées (hot spots)
+# et faibles (cold spots) avec un z-score
+gi_star <- localG(ds_indicateurs$tx_eau,
+                   listw = lw_queen,
+                   zero.policy = TRUE)
+
+ds_indicateurs$gi_star  <- as.numeric(gi_star)
+
+# Classer selon z-score (z > 1.96 => p<0.05, z > 2.58 => p<0.01)
+ds_indicateurs$gi_class <- cut(
+  ds_indicateurs$gi_star,
+  breaks = c(-Inf, -2.58, -1.96, -1.65, 1.65, 1.96, 2.58, Inf),
+  labels = c(
+    'Cold Spot 99%', 'Cold Spot 95%', 'Cold Spot 90%',
+    'Non significatif',
+    'Hot Spot 90%', 'Hot Spot 95%', 'Hot Spot 99%'
+  )
+)
+
+# Carte Gi*
+palette_gi <- c(
+  'Cold Spot 99%' = '#084594', 'Cold Spot 95%' = '#2171b5',
+  'Cold Spot 90%' = '#6baed6', 'Non significatif' = '#f7f7f7',
+  'Hot Spot 90%'  = '#fdae6b', 'Hot Spot 95%'  = '#e6550d',
+  'Hot Spot 99%'  = '#a63603'
+)
+
+tm_shape(ds_indicateurs) +
+  tm_fill(fill = 'gi_class',
+          fill.scale = tm_scale_categorical(values = palette_gi),
+          fill.legend = tm_legend(title = 'Getis-Ord Gi*')) +
+  tm_borders(col = 'white', lwd = 0.3) +
+tm_shape(pays_lim) +
+  tm_borders(col = 'black', lwd = 1.2) +
+tm_title("Points chauds - Accès eau potable (Gi*)\nCameroun 2024") +
+# MIGRATION TMAP 4 - A VERIFIER : legend.outside, nom d'option v3 conserve tel quel dans tm_layout().
+tm_layout(legend.outside = TRUE) +
+tm_compass(position = c('left','top')) +
+tm_scalebar(position = c('left','bottom'))
+
+# ---- 7.2 Comparaison LISA vs Gi* --------------------------
+
+# Tableau de concordance
+table(LISA = ds_indicateurs$lisa_quad,
+      Gi   = ds_indicateurs$gi_class)
+
+# ---- 7.3 KDE comme surface de points chauds ---------------
+
+# Discrétiser la KDE en classes percentiles
+kde_vals   <- values(kde_raster)
+p90 <- quantile(kde_vals, 0.90, na.rm=TRUE)
+p95 <- quantile(kde_vals, 0.95, na.rm=TRUE)
+p99 <- quantile(kde_vals, 0.99, na.rm=TRUE)
+
+kde_hotspot <- classify(kde_raster,
+  rcl = matrix(c(
+    0,   p90, 1,
+    p90, p95, 2,
+    p95, p99, 3,
+    p99, Inf,  4
+  ), ncol=3, byrow=TRUE))
+
+plot(kde_hotspot,
+     main = 'Points chauds KDE - Grappes DHS',
+     col  = c('#f7f7f7','#fdae6b','#e6550d','#a63603'),
+     legend = TRUE)
+plot(st_geometry(ds_cmr), add=TRUE,
+     border = 'grey40', lwd = 0.4)
+```
+
+## SECTION 7 : PRATIQUE - RÉPARTITION SPATIALE DES ÉTABLISSEMENTS DE SANTÉ
+
+```{r}
+#| label: chunk-15
+#Contexte de l'exercice pratique
+#Cet exercice pratique intègre l'ensemble des compétences acquises au cours de la journée. Vous allez analyser la répartition spatiale des services de santé au Cameroun en combinant les données DHS, l'enquête ECAM 2022, les données Sentinel-2 et les statistiques spatiales.
+
+#Objectif de l'exercice pratique
+#Question de recherche : 'Existe-t-il des inégalités spatiales dans l'accès aux services
+#de santé au Cameroun, et si oui, où se situent les zones prioritaires d'intervention ?'
+
+#Indicateurs à analyser :
+#  1) Accès à l'eau potable (proxy santé environnementale) - données DHS
+#  2) Humidité de la végétation NDMI (contexte environnemental) - Sentinel-2 2026
+#     ATTENTION : indicateur PARTIEL. La tuile ne couvre que 11,5-14,9 E / 2,5-5,8 N,
+#     soit une fraction de l'Est et du Sud. Il ne peut pas servir de covariable
+#     nationale (voir 8.4). La couverture végétale (NDVI) n'est pas calculable ici.
+#  3) Densité des ménages (distribution spatiale) - KDE sur grappes DHS
+#  4) Inégalités spatiales - LISA et Gi* par district sanitaire
+```
+
+## SECTION 8 : PRATIQUE - RÉPARTITION SPATIALE
+
+```{r}
+#| label: chunk-16
+# DES ÉTABLISSEMENTS DE SANTÉ ET DONNÉES ECAM
+
+# ---- 8.1 Extraction des établissements de santé depuis DHS --
+
+# Les grappes DHS sont le proxy des communautés
+# Construire un score composite de santé communautaire
+resume_sante_ds <- dhs_ds_join %>%
+  st_drop_geometry() %>%
+  group_by(across(all_of(var_id_ds))) %>%
+  summarise(
+    score_sante = mean(c(
+      mean(eau_amelioree, na.rm=TRUE)/100,
+      mean(elect_access, na.rm=TRUE)/100
+    ), na.rm=TRUE) * 100
+  )
+
+# ---- 8.2 Intégration données ECAM 2022 ---------------------
+
+# Explorer la structure ECAM
+cat('Variables ECAM disponibles :\n')
+cat(paste(names(ecam)[1:30], collapse=', '), '\n')
+
+# Vérifier si une variable région est disponible
+# (adapter selon la codification ECAM 2022)
+if ('region' %in% tolower(names(ecam))) {
+  vars_region <- names(ecam)[tolower(names(ecam)) == 'region']
+  ecam_resume <- ecam %>%
+    group_by(across(all_of(vars_region))) %>%
+    summarise(
+      n_menages = n(),
+      .groups = 'drop'
+    )
+  print(ecam_resume)
+}
+
+# ---- 8.3 Carte composite : ECAM + districts sanitaires -----
+
+# Indicateurs de population (WorldPop)
+# Agréger pop_admin2 par grande région si possible
+if ('admin2name' %in% names(pop_admin2)) {
+  pop_resume <- pop_admin2 %>%
+    arrange(desc(T_TL)) %>%
+    slice_head(n = 20)
+  print(pop_resume[, c('admin2name','T_TL')])
+}
+
+```
+
+## 8.4 Le contexte environnemental — l'indice que ces bandes permettent
+
+La question de recherche demande une covariable environnementale par district
+sanitaire. Le réflexe est le **NDVI** (*Normalized Difference Vegetation Index*) :
+
+> **NDVI = (NIR − Rouge) / (NIR + Rouge)**, soit `(B08 − B04) / (B08 + B04)`
+
+Il repose sur un fait biologique : une feuille active **absorbe** le rouge pour la
+photosynthèse et **réfléchit** massivement le proche infrarouge. Plus l'écart est
+grand, plus le couvert est dense. **Ce document ne le calcule pas**, et la raison
+n'est pas un détail d'intendance.
+
+::: {.callout-important}
+## Pourquoi ce document ne calcule ni NDVI ni NDWI
+
+Le NDVI exige **B04** (rouge), le NDWI de McFeeters exige **B03** (vert). Ces deux
+bandes n'ont jamais été acquises : elles ne figurent pas dans l'export Copernicus
+d'origine et ne sont nulle part sur le poste. Ce dossier ne dispose que de `B08`,
+`B11` et de l'image `True_color`.
+
+La tentation est d'extraire le canal rouge de `True_color`. **C'est faux, et
+l'erreur mérite d'être vue.**
+
+| | `B08` | `True_color` |
+|---|---|---|
+| Nature | réflectance mesurée | composition visuelle |
+| Codage | entier 16 bits | entier 8 bits |
+| Plage | ≈ 0 à 10 000 | 0 à 255 |
+| Traitement | brut | étiré pour l'œil humain |
+
+Les deux ne sont **ni dans la même unité, ni sur la même échelle**. Dans la
+fraction, `b08` écrase le terme rouge : le résultat vaut presque 1 partout, et les
+seuils d'usage — « au-dessus de 0,6, forêt dense » — ne veulent plus rien dire.
+Le calcul ne lèverait **aucune erreur** : il produirait une carte plausible et
+fausse, ce qui est pire qu'un plantage. Et ici la carte fausse deviendrait une
+covariable dans un indice de Moran.
+
+**Règle générale : ne jamais combiner deux bandes qui n'ont pas subi le même
+traitement radiométrique.**
+
+`B08` et `B11` sont, elles, toutes deux des réflectances brutes issues de la même
+chaîne. Les combiner est légitime :
+
+> **NDMI = (B08 − B11) / (B08 + B11)**
+
+L'eau contenue dans les feuilles absorbe l'infrarouge moyen (B11) et laisse passer
+le proche infrarouge (B08). Le NDMI mesure donc **la teneur en eau *dans* la
+végétation**, et non sa densité. Ce n'est pas un substitut du NDVI : c'est une
+autre variable, qu'il faut nommer et interpréter comme telle.
+
+| Indice | Formule | Ce qu'il mesure | Calculable ici ? |
+|---|---|---|---|
+| **NDMI** | (B08 − B11)/(B08 + B11) | eau **dans** la végétation | **oui** |
+| NDVI | (B08 − B04)/(B08 + B04) | densité de végétation | non — B04 absente |
+| NDWI *(McFeeters)* | (B03 − B08)/(B03 + B08) | surfaces **en** eau | non — B03 absente |
+| NBR | (B08 − B12)/(B08 + B12) | zones brûlées | non — B12 absente |
+
+Le **J09**, journée télédétection, reprend ces indices avec un jeu de bandes
+complet. Ici l'indice n'est qu'un moyen : une covariable pour l'autocorrélation.
+:::
+
+```{r}
+#| label: chunk-16b
+# ---- 8.4a Aligner les grilles avant toute arithmétique ----------------------
+# Règle : deux rasters ne se combinent que s'ils partagent résolution ET emprise.
+# B11 est acquise à une résolution native plus grossière que B08 : sans
+# rééchantillonnage, l'opération échoue ou, pire, aligne des pixels qui ne
+# décrivent pas le même sol.
+cat('AVANT resample\n')
+cat('  B08 : dimensions', dim(b08)[1], 'x', dim(b08)[2],
+    '| résolution', res(b08), '\n')
+cat('  B11 : dimensions', dim(b11)[1], 'x', dim(b11)[2],
+    '| résolution', res(b11), '\n')
+
+b11_resample <- terra::resample(b11, b08, method = 'bilinear')
+
+cat('APRÈS resample (B11 porté sur la grille de B08)\n')
+cat('  B08          : dimensions', dim(b08)[1], 'x', dim(b08)[2],
+    '| résolution', res(b08), '\n')
+cat('  B11_resample : dimensions', dim(b11_resample)[1], 'x',
+    dim(b11_resample)[2], '| résolution', res(b11_resample), '\n')
+cat('  Grilles identiques :',
+    terra::compareGeom(b08, b11_resample, stopOnError = FALSE), '\n')
+
+# ---- 8.4b Calcul du NDMI, avec garde-fou nodata ----------------------------
+ndmi_brut <- (b08 - b11_resample) / (b08 + b11_resample)
+names(ndmi_brut) <- 'NDMI'
+cat('NDMI brut    — min :', round(minmax(ndmi_brut)[1], 3),
+    '| max :', round(minmax(ndmi_brut)[2], 3), '\n')
+
+# PIÈGE : là où les deux bandes valent 0 (bordure de tuile, pixel sans donnée),
+# la fraction dégénère en +/-1. Ce ne sont pas des mesures. Quelques pixels de
+# bord suffisent à étirer l'échelle de couleurs et à aplatir toute la carte.
+somme <- b08 + b11_resample
+cat('Pixels à somme nulle (nodata) :',
+    terra::global(somme == 0, 'sum', na.rm = TRUE)[[1]], '\n')
+
+ndmi <- terra::ifel(somme == 0, NA, ndmi_brut)   # on les écarte AVANT la division
+names(ndmi) <- 'NDMI'
+cat('NDMI nettoyé — min :', round(minmax(ndmi)[1], 3),
+    '| max :', round(minmax(ndmi)[2], 3), '\n')
+
+# ---- 8.4c Borner l'affichage sur les centiles 1 et 99 ----------------------
+# Une carte se lit sur la masse des valeurs, pas sur ses accidents.
+q <- terra::global(ndmi, fun = function(x)
+       stats::quantile(x, c(0.01, 0.5, 0.99), na.rm = TRUE))
+cat('Centiles 1 / 50 / 99 :', round(unlist(q), 3), '\n')
+bornes <- as.numeric(unlist(q))[c(1, 3)]
+
+plot(ndmi,
+     main  = 'NDMI - humidité de la végétation, Sentinel-2 (26 juin 2026)',
+     col   = colorRampPalette(c('#A0522D','#F5DEB3','#006994'))(256),
+     range = bornes)
+plot(st_geometry(ds_cmr), add = TRUE, border = 'grey40', lwd = 0.3)
+# Lecture :  > 0.3 végétation bien alimentée en eau · -0.3 à 0.3 hydratation
+# modérée · < -0.3 végétation sèche, sol nu, bâti.
+```
+
+L'emprise tracée ci-dessus le dit déjà : **la tuile ne recouvre pas le pays**.
+L'extraction zonale qui suit va donc rendre `NA` pour la plupart des districts.
+On la fait quand même — et on compte.
+
+```{r}
+#| label: chunk-16c
+# ---- 8.4d Extraction zonale par district sanitaire -------------------------
+# DS.geojson contient des géométries invalides : on les répare avant tout
+# découpage raster, sinon crop()/mask() échouent.
+ds_valide <- st_make_valid(ds_indicateurs)
+
+ndmi_crop <- crop(ndmi, vect(ds_valide))
+ndmi_mask <- mask(ndmi_crop, vect(ds_valide))
+
+ndmi_stats_ds <- extract(ndmi_mask,
+                         vect(ds_valide),
+                         fun = mean, na.rm = TRUE,
+                         bind = TRUE)
+ndmi_df <- as.data.frame(ndmi_stats_ds)
+
+ds_indicateurs$ndmi_moy <- ndmi_df$NDMI
+
+# ---- 8.4e COMBIEN de districts sont réellement renseignés ? ----------------
+n_total <- nrow(ds_indicateurs)
+n_ok    <- sum(!is.na(ds_indicateurs$ndmi_moy))
+n_na    <- n_total - n_ok
+cat('--- Couverture de la covariable NDMI ---\n')
+cat('Districts sanitaires        :', n_total, '\n')
+cat('Districts renseignés        :', n_ok,
+    ' (', round(100 * n_ok / n_total, 1), '%)\n', sep = '')
+cat('Districts sans donnée (NA)  :', n_na,
+    ' (', round(100 * n_na / n_total, 1), '%)\n', sep = '')
+cat('Emprise de la tuile         : ',
+    round(ext(ndmi)[1], 2), '-', round(ext(ndmi)[2], 2), ' E / ',
+    round(ext(ndmi)[3], 2), '-', round(ext(ndmi)[4], 2), ' N\n', sep = '')
+cat("=> ndmi_moy est une covariable REGIONALE, pas nationale.\n")
+
+# ---- 8.4f Carte : les districts non couverts restent GRIS ------------------
+# Règle : un polygone sans donnée n'est pas « à zéro », il est non mesuré.
+tm_shape(ds_indicateurs) +
+  tm_fill(fill = 'ndmi_moy',
+          fill.scale = tm_scale_intervals(
+            style    = 'jenks',
+            n        = 5,
+            values   = 'brewer.br_bg',   # ex-argument palette 'BrBG', inchangee
+            value.na = 'grey85',         # ex-colorNA : districts non mesures
+            label.na = 'Hors emprise Sentinel-2'),  # ex-textNA
+          fill.legend = tm_legend(title = 'NDMI moyen')) +
+  tm_borders(col = 'white', lwd = 0.2) +
+tm_title('Humidité de la végétation par district sanitaire\n(couverture partielle : Est et Sud uniquement)') +
+# MIGRATION TMAP 4 - A VERIFIER : legend.outside, nom d'option v3 conserve tel quel dans tm_layout().
+tm_layout(legend.outside = TRUE)
+```
+
+::: {.callout-warning}
+## Une covariable qui ne couvre pas le pays — et ce qu'on s'interdit d'en faire
+
+La tuile Sentinel-2 disponible s'étend sur **11,5–14,9° E / 2,5–5,8° N** : une
+fraction de l'Est et du Sud. Ni Douala, ni l'Adamaoua, ni le Grand Nord. Sur les
+200 districts sanitaires de `DS.geojson`, seule une minorité tombe dans l'emprise
+— le comptage ci-dessus donne le chiffre exact.
+
+C'est le motif pour lequel le **J05 a purement et simplement supprimé sa section
+Sentinel-2**. Ici on la garde, parce que le J07 a besoin de montrer *comment* une
+covariable raster rejoint un tableau de districts. Mais l'objet produit n'a pas le
+statut qu'il paraît avoir.
+
+**Décision retenue : `ndmi_moy` ne doit jamais entrer dans un Moran's I, un LISA,
+un Gi* ou une corrélation présentés à l'échelle nationale.** L'option retenue est
+l'**interdiction**, et non la « restriction déclarée aux districts couverts »,
+pour une raison de méthode : une matrice de poids spatiaux construite sur un
+sous-ensemble découpé par l'emprise d'une image amputerait la plupart des
+districts d'une partie de leurs voisins réels. Le Moran's I qui en sortirait
+mesurerait la forme de la tuile autant que la structure du phénomène. Un
+sous-échantillon défini par une contrainte d'acquisition n'est pas un domaine
+d'étude.
+
+Ce que `ndmi_moy` autorise : une **illustration locale** de la chaîne
+raster → statistique zonale → tableau, sur le sous-ensemble Est/Sud, à condition
+d'écrire le nombre de districts concernés sur chaque sortie.
+
+**Exercice (à faire maintenant, avant de continuer).**
+
+1. Cartographier `is.na(ds_indicateurs$ndmi_moy)` en deux couleurs : la carte des
+   trous est plus instructive que la carte de l'indice.
+2. Croiser cette carte avec `ds_indicateurs$n_grappes` : les districts couverts
+   par la tuile sont-ils aussi ceux qui ont des grappes DHS ? Les deux lacunes
+   se superposent-elles, ou s'ajoutent-elles ?
+3. Lancer `moran.test(ds_indicateurs$ndmi_moy, lw_queen, zero.policy = TRUE,
+   na.action = na.omit)` et lire le `n` du résultat. Comparer ce `n` aux 200
+   districts annoncés. Rédiger en deux phrases pourquoi ce I ne peut pas être
+   présenté comme « l'autocorrélation de l'humidité végétale au Cameroun ».
+4. En déduire la règle : dans une note méthodologique, quelle phrase faut-il
+   écrire à côté de tout indicateur dérivé d'une image satellite ?
+
+Un `NA` majoritaire qui traverse silencieusement un indice de Moran produit un
+résultat calculé sur une poignée d'unités et présenté comme national. C'est le
+même mécanisme que l'imputation par la moyenne pratiquée en 5.1 sur `tx_eau` :
+une valeur apparaît là où il n'y avait pas de mesure.
+:::
+
+## SECTION 9 : CARTE DE SYNTHÈSE INTERACTIVE
+
+```{r}
+#| label: chunk-17
+# ---- 9.1 Carte statique multi-indicateurs ------------------
+
+tmap_mode('plot')
+
+carte_synthese <- tm_shape(ds_indicateurs) +
+# MIGRATION TMAP 4 - A VERIFIER : value.na dans tm_scale_categorical() (ex-colorNA) ; l'argument est documente pour les echelles v4, mais son effet sur une echelle categorielle reste a controler visuellement.
+  tm_fill(fill = 'gi_class',
+          fill.scale = tm_scale_categorical(values = palette_gi,
+                                            value.na = 'grey90'),
+          fill.legend = tm_legend(title = 'Points chauds\n(Gi* Eau potable)')) +
+  tm_borders(col = 'white', lwd = 0.2) +
+tm_shape(pays_lim) +
+  tm_borders(col = 'black', lwd = 1.5) +
+tm_shape(dhs_points) +
+  tm_dots(fill = 'URBAN_RURA',
+          fill.scale = tm_scale_categorical(
+            values = c('R'='#1f78b4','U'='#e31a1c')),
+          size = 0.15, fill_alpha = 0.5,
+          fill.legend = tm_legend(title = 'Milieu DHS')) +
+tm_title('Analyse spatiale Cameroun\nPoints chauds eau + Grappes DHS') +
+# MIGRATION TMAP 4 - A VERIFIER : legend.outside, legend.outside.size et frame sont des noms d'options v3 conserves tels quels dans tm_layout().
+tm_layout(
+  legend.outside      = TRUE,
+  legend.outside.size = 0.2,
+  frame = TRUE
+) +
+# MIGRATION TMAP 4 - A VERIFIER : positions donnees en coordonnees relatives c(x, y) ; en v4 la forme documentee est tm_pos_in(), verifier que le vecteur numerique est encore accepte.
+tm_compass(type = '8star', position = c(0.02, 0.08), size = 2) +
+tm_scalebar(position = c(0.02, 0.02))
+
+print(carte_synthese)
+
+# Sauvegarder la carte
+tmap_save(carte_synthese, "outputs/carte_synthese_jour6.png", dpi=300)
+
+# ---- 9.2 Carte interactive Leaflet — NON EXECUTEE ----------
+#
+# Ce bloc est volontairement neutralise (equivalent d'un eval: false, obtenu
+# ici par mise en commentaire pour ne pas scinder le chunk). Motif : regle 6.6,
+# les widgets interactifs sont interdits dans un document distribue. Un
+# tmap_mode('view') embarque les geometries de ds_indicateurs (200 districts)
+# ET des 1 000+ grappes DHS dans le HTML : le fichier passe de quelques
+# centaines de kilooctets a plusieurs dizaines de megaoctets, et devient
+# indiffusable par cle USB comme par courriel.
+#
+# Le code ci-dessous est ecrit en syntaxe tmap 4, pour qui veut l'executer
+# a la main en salle, dans la console, sans rendre le document :
+#
+# tmap_mode('view')
+#
+# tm_shape(ds_indicateurs) +
+#   # ndmi_moy apparait en infobulle et vaudra NA hors de l'emprise Sentinel-2 :
+#   # c'est voulu, l'utilisateur doit voir ou la mesure n'existe pas.
+#   tm_fill(fill = 'gi_class',
+#           fill.scale = tm_scale_categorical(values = palette_gi),
+#           fill_alpha = 0.7,
+#           popup.vars = c('tx_eau','tx_electricite','ndmi_moy')) +
+#   tm_borders() +
+# tm_shape(dhs_points) +
+#   tm_dots(fill = 'URBAN_RURA',
+#           fill.scale = tm_scale_categorical(values = c('R'='blue','U'='red')),
+#           popup.vars = TRUE) +
+# tm_basemap(server = 'OpenStreetMap')
+#
+# tmap_mode('plot')   # revenir au mode statique
+#
+# MIGRATION TMAP 4 - A VERIFIER : popup.vars et tm_basemap(server = ) sont repris de la v3 ; leur nom exact en v4 n'a pas pu etre controle, ce bloc n'etant jamais execute au rendu.
+
+# ---- 9.3 Export complet des résultats ----------------------
+
+# Sauvegarder le shapefile enrichi
+st_write(ds_indicateurs,
+         "outputs/resultats_jour6_districts.gpkg",
+         delete_dsn = TRUE)
+
+# Tableau récapitulatif
+recap <- ds_indicateurs %>%
+  st_drop_geometry() %>%
+  select(where(is.numeric)) %>%
+  summarise(across(everything(), list(
+    moy = ~mean(.x, na.rm=TRUE),
+    med = ~median(.x, na.rm=TRUE)
+  )))
+
+write.csv(recap, "outputs/resume_indicateurs_jour6.csv", row.names=FALSE)
+cat("\n✅ Analyse du Jour 6 terminée. Fichiers sauvegardés.\n")
+
+#Formats d'export recommandés
+#PNG 300 dpi    : pour les rapports et présentations
+#SVG            : pour l'édition vectorielle (Inkscape, Illustrator)
+#PDF            : pour l'impression haute qualité
+#GeoPackage     : pour partager les données enrichies avec d'autres SIG
+#Commandes :
+#  tmap_save(carte, 'outputs/fichier.png', dpi=300, width=20, height=16, units='cm')
+  #tmap_save(carte, 'outputs/fichier.pdf')
+ # st_write(objet_sf, 'outputs/fichier.gpkg', delete_dsn=TRUE)
+ 
+#EXERCICES D'APPLICATION
+#Exercice 1 : Test de randomité spatiale (débutant)
+#En utilisant les grappes DHS urbaines uniquement :
+```
+
+## 1.	Créer un objet ppp pour les grappes urbaines avec st_union(ds_cmr) comme fenêtre
+
+## 2.	Effectuer le test quadrat avec nx=8, ny=8
+
+## 3.	Tracer et interpréter la fonction G
+
+## 4.	Conclure sur la nature du processus ponctuel (agrégé, aléatoire, régulier)
+
+```{r}
+#| label: chunk-18
+#Exercice 2 : Comparaison de KDE (intermédiaire)
+#Comparer la densité de grappes DHS entre régions du Cameroun :
+```
+
+## 5.	Extraire les grappes du Grand Nord (Adamaoua, Nord, Extrême-Nord)
+
+## 6.	Calculer la KDE avec 3 bandwidths différents (bw.scott, bw.diggle, valeur manuelle)
+
+## 7.	Produire une carte comparative 3x1 avec par(mfrow=c(1,3))
+
+## 8.	Densité KDE et NDMI — corréler ce qui est comparable
+
+Une corrélation entre densité KDE et `ndmi_moy` sur les 200 districts n'a **pas**
+de sens ici : `ndmi_moy` est absent hors de l'emprise Sentinel-2, et `cor()`
+écarterait silencieusement la majorité des districts. L'exercice porte donc sur la
+sélection, pas sur le coefficient.
+
+1. Restreindre explicitement le jeu aux districts renseignés :
+   `ds_couverts <- ds_indicateurs[!is.na(ds_indicateurs$ndmi_moy), ]`, et
+   afficher `nrow(ds_couverts)` — ce nombre devra figurer sur toute sortie.
+2. Extraire la densité KDE moyenne par district couvert (`extract()` sur
+   `kde_raster`), puis calculer `cor(..., method = 'spearman')`.
+3. Répondre en écrivant : de quelle population statistique ce coefficient est-il
+   la description ? Certainement pas des districts du Cameroun. Formuler la
+   phrase exacte qui devrait l'accompagner dans un rapport.
+4. Enfin, et c'est le vrai piège : le NDMI mesure l'**eau dans la végétation**,
+   pas la densité végétale. Une corrélation négative avec la densité de
+   peuplement ne signifie donc pas « les gens vivent là où il y a moins de
+   végétation ». Proposer deux interprétations concurrentes du signe obtenu, et
+   dire quelle donnée supplémentaire permettrait de les départager.
+
+```{r}
+#| label: chunk-19
+#Exercice 3 : Analyse LISA multi-indicateurs (avancé)
+#Reproduire l'analyse LISA pour deux indicateurs différents :
+```
+
+## 9.	Pourquoi l'autocorrélation spatiale du NDMI n'est pas calculable ici
+
+L'énoncé d'origine demandait le Moran's I du NDVI moyen par district. Il est
+remplacé par sa version démonstrative, plus utile : **produire le calcul, puis
+montrer pourquoi il ne doit pas être publié.**
+
+1. Lancer `moran.test(ds_indicateurs$ndmi_moy, lw_queen, zero.policy = TRUE,
+   na.action = na.omit)` et relever le `n` effectif dans la sortie.
+2. Recompter les voisins : combien de districts couverts ont, dans `nb_queen`,
+   au moins un voisin **hors emprise** ? Ces liens tombent, et la matrice de
+   poids n'est plus celle qu'on croit.
+3. Conclure : un I calculé sur un sous-ensemble découpé par l'emprise d'une image
+   mesure en partie la géométrie de la tuile. Écrire la mise en garde en une
+   phrase, comme elle figurerait dans une note méthodologique.
+4. Faire ensuite le calcul qui, lui, tient : `moran.test()` sur `tx_eau` et sur
+   `tx_electricite`, disponibles sur l'ensemble des districts. Comparer les
+   `n` des trois tests.
+
+## 10.	Calculer le Moran's I du taux d'électrification
+
+## 11.	Carte de synthèse 2x2 — trois indicateurs nationaux et une carte de lacunes
+
+Le quatrième cadre ne peut pas être une carte de NDVI (bande B04 absente), et pas
+davantage une carte de NDMI présentée sur le même pied que les trois autres : elle
+serait grise sur la majeure partie du pays alors que ses voisines sont pleines, et
+l'œil lirait cette différence comme un résultat.
+
+1. Cadres 1 à 3 : Gi* eau, Gi* électricité, LISA eau — tous trois sur les 200
+   districts.
+2. Cadre 4 : la **carte de couverture de la donnée satellitaire** —
+   `is.na(ds_indicateurs$ndmi_moy)` en deux couleurs, titrée « Emprise de la tuile
+   Sentinel-2 du 26/06/2026 », avec le nombre de districts renseignés en
+   sous-titre.
+3. Justifier ce choix en une phrase dans la légende de la planche : une carte de
+   synthèse doit rendre comparables des cadres qui le sont, et signaler ceux qui
+   ne le sont pas.
+4. Variante pour qui veut tout de même montrer le NDMI : produire une planche
+   séparée, cadrée sur `ext(ndmi)` et non sur le Cameroun entier, avec la mention
+   de l'emprise dans le titre.
+
+```{r}
+#| label: chunk-20
+#12.	Identifier les districts en situation de cumul de défaveurs (cold spot eau + cold spot électricité)
+```
+
+## 13.	Exporter ces districts prioritaires en GeoPackage pour un rapport
+
+```{r}
+#| label: chunk-21
+##Questions de réflexion pour les participants
+```
+
+## 1. Pourquoi les coordonnées DHS sont-elles délibérément décalées (déplacement aléatoire) ?
+
+```{r}
+#| label: chunk-22
+#   Quel impact cela a-t-il sur nos analyses spatiales ?
+```
+
+## 2. La valeur de Moran's I dépend du choix de la matrice de poids W.
+
+```{r}
+#| label: chunk-23
+#   Comment vérifier la robustesse de vos résultats ?
+```
+
+## 3. Quel est le danger de la 'gambler's fallacy' (erreur du joueur) dans l'interprétation
+
+```{r}
+#| label: chunk-24
+#   des points chauds ? Comment l'éviter dans vos rapports ?
+
+#4. Les données Sentinel-2 du 26 juin 2026 capturent un état instantané du territoire.
+#   Quelles précautions prendre pour des comparaisons temporelles ?
+```

@@ -1,0 +1,105 @@
+# ============================================================================
+# Configuration Quarto du site runtime WebR — Atelier IFORD × GDSG 2026
+#
+# Correction du 01/09/2026 — squelette du site.
+#   Le menu « Modules » et la liste `render:` decrivaient un atelier de
+#   10 jours avec l'ancienne nomenclature de dossiers
+#   (J01_intro_R_pensee_spatiale, J02_sf_CRS_vecteurs, ...). Ces dossiers
+#   n'existent plus : le materiel a ete reorganise en ONZE journees
+#   (J01_fondations ... J11_perenniser_transmettre). Les dix entrees du menu
+#   pointaient donc toutes vers des fichiers absents — le menu du site publie
+#   etait entierement mort.
+#   Les onze entrees ci-dessous pointent vers les dossiers reels, verifies sur
+#   le disque, avec les intitules et l'ordre de l'agenda du 23/07/2026.
+#   Les blocs `webr:`, `format:`, `filters:` et `resources:` n'ont pas ete
+#   touches : ils sont corrects.
+# ============================================================================
+
+project:
+  type: website
+  output-dir: _site
+  render:
+    - "INDEX.md"
+    - "README.md"
+    # Le motif reste valide apres la renumerotation : les onze dossiers
+    # commencent tous par « J » (J01_fondations ... J11_perenniser_transmettre),
+    # et chacun doit contenir un runtime.qmd. Ne pas remplacer par une liste
+    # explicite : un runtime ajoute plus tard serait alors oublie.
+    - "J*/runtime.qmd"
+  # Quarto strip parfois le prefixe _commons/ dans la resolution d'URL.
+  # On declare explicitement le dossier image en resources : il sera copie
+  # tel quel dans _site/_commons/img/ et accessible via /_commons/img/...
+  resources:
+    - "_commons/img/**"
+    # Datasets servis cote WebR. Le runtime les charge via
+    # download.file("/_commons/data/...") depuis le navigateur.
+    # Limiter aux fichiers vraiment utiles : la branche gh-pages est publique.
+    - "_commons/data/**"
+
+website:
+  title: "Runtime IFORD × GDSG 2026"
+  description: "Atelier R-spatial — code exécutable dans le navigateur (WebR)"
+  navbar:
+    background: "#0F4C81"
+    logo: /_commons/img/logo-iford.jpg
+    logo-href: INDEX.md
+    logo-alt: "IFORD"
+    left:
+      - href: INDEX.md
+        text: "Accueil"
+      - text: "Modules"
+        menu:
+          - href: J01_fondations/runtime.qmd
+            text: "J01 · Fondations R & RStudio"
+          - href: J02_penser_espace/runtime.qmd
+            text: "J02 · Penser l'espace"
+          - href: J03_univers_vectoriel/runtime.qmd
+            text: "J03 · L'univers vectoriel"
+          - href: J04_terre_en_pixels/runtime.qmd
+            text: "J04 · La Terre en pixels"
+          - href: J05_enquetes_carte/runtime.qmd
+            text: "J05 · Des enquêtes à la carte"
+          - href: J06_art_cartographie/runtime.qmd
+            text: "J06 · L'art de la cartographie"
+          - href: J07_statistiques_spatiales/runtime.qmd
+            text: "J07 · Statistiques spatiales"
+          - href: J08_population_haute_resolution/runtime.qmd
+            text: "J08 · Population en haute résolution"
+          - href: J09_teledetection/runtime.qmd
+            text: "J09 · Télédétection et inondations"
+          - href: J10_politiques_publiques/runtime.qmd
+            text: "J10 · Politiques publiques"
+          - href: J11_perenniser_transmettre/runtime.qmd
+            text: "J11 · Pérenniser et transmettre"
+
+format:
+  live-html:
+    toc: true
+    toc-depth: 2
+    toc-location: left
+    theme:
+      - cosmo
+      - _commons/styles/runtime_quartolive.scss
+    code-tools: true
+    code-link: true
+
+webr:
+  # Packages preinstalles globalement pour TOUS les runtime.qmd.
+  # On garde la liste minimale ; chaque runtime peut ajouter les siens
+  # via un bloc `webr.packages:` au niveau document.
+  # tmap est volontairement absent : pas garanti sur repo.r-wasm.org
+  # et trop de dependances pour un chargement navigateur fluide. Les
+  # cartes des runtimes utilisent ggplot2 + geom_sf, plus leger.
+  packages:
+    - tibble
+    - dplyr
+    - sf
+    - ggplot2
+  render-df: gt-interactive
+  cell-options:
+    autorun: false
+    fig-width: 7
+    fig-height: 5
+
+filters:
+  - live

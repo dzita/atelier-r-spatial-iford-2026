@@ -1,0 +1,480 @@
+---
+title: "J05 · Des enquêtes à la carte — runtime navigateur"
+subtitle: "Pondérer, agréger, cartographier — et savoir de quoi la couleur est faite · Atelier IFORD × GDSG 2026"
+# engine: knitr est OBLIGATOIRE. Sans lui, Quarto ne detecte aucun bloc R
+# et se rabat sur Jupyter ("No module named 'yaml'"), le rendu echoue.
+engine: knitr
+webr:
+  packages:
+    - sf
+    - dplyr
+    - tidyr
+    - ggplot2
+  # Chemins RELATIFS AU .qmd, donc prefixes ../
+  # Dans les blocs {webr} ci-dessous on lit les MEMES fichiers SANS le ../
+  # Tous produits par _commons/data/J05_extraits/00_extraire_J05.R
+  resources:
+    - ../_commons/data/J05_extraits/ecam5_taille_menages.csv
+    - ../_commons/data/J05_extraits/ecam5_pauvrete_region.csv
+    - ../_commons/data/J05_extraits/ecam5_pauvrete_region_milieu.csv
+    - ../_commons/data/J05_extraits/eds_grappes_eau.csv
+    - ../_commons/data/J05_extraits/cmr_regions_J05.geojson
+    - ../_commons/data/J05_extraits/districts_sanitaires_J05.geojson
+---
+
+::: {.callout-note}
+## Comment utiliser cette page
+
+Les cellules **Run code** (blocs bleus `{webr}`) s'exécutent **directement dans votre
+navigateur** : cliquez, modifiez, relancez. Rien n'est installé sur votre poste, rien n'est
+envoyé sur un serveur.
+
+Les blocs gris ordinaires sont en **lecture seule**. Ils montrent le code qui ne peut pas
+tourner dans un navigateur — lecture de fichiers Stata/SPSS (`haven`), estimation avec plan
+de sondage (`survey`), cartographie `tmap` — et qui s'exécute **sous RStudio desktop** avec
+`demo_formateur_J05.qmd` (ce même dossier).
+
+**Le partage des rôles de la journée.** Toute la pondération a été faite **en amont**, par le
+script `_commons/data/J05_extraits/00_extraire_J05.R`. Cette page ne repondère rien : elle
+**cartographie** des taux déjà pondérés, et fait travailler leur **lecture** — comparer des
+mailles, nommer les pièges, dire ce qui ne se lit pas.
+:::
+
+::: {.callout-important}
+## Avertissement sur les chiffres régionaux d'ECAM5 — à lire avant toute carte
+
+`ecam5.dta` est un **extrait de formation**, pas le fichier de production de l'INS. Le
+contrôle a été fait : le taux de pauvreté **national** calculé sur cet extrait colle à la
+publication de l'INS (38,6 % contre 37,7 %), mais **à l'intérieur des régions il ne colle
+pas** — l'Est ressort à 7,5 % là où l'INS publie 41,5 %.
+
+Conséquence, et c'est une règle de la journée, pas une précaution de style :
+
+- les taux régionaux affichés sur cette page servent **uniquement** à apprendre la chaîne
+  technique (pondérer → agréger → joindre → cartographier) ;
+- **il est interdit de les citer**, de les reprendre dans un rapport, ou de les commenter
+  comme s'ils décrivaient le Cameroun.
+
+On ne masque pas l'écart : on en fait l'objet d'un exercice. Une carte hérite de toutes les
+décisions prises en amont sans jamais les afficher — c'est pourquoi elles s'écrivent
+**sous** la carte.
+:::
+
+## 1. Ce que le navigateur sait faire, et ce qu'il ne sait pas
+
+WebR embarque une distribution R compilée pour le navigateur. `sf`, `dplyr`, `ggplot2`,
+`tidyr` y tournent. **`haven` et `survey` n'y sont pas**, et ne peuvent donc pas lire
+`ecam5.dta` ni construire un plan de sondage.
+
+Le code ci-dessous est celui qui a été **réellement exécuté en amont** pour produire les
+fichiers que cette page consomme. Il est ici pour être lu et copié vers RStudio, pas pour
+être exécuté.
+
+```r
+# --- Lecture seule : s'execute sous RStudio desktop, pas dans le navigateur.
+library(haven)    # lecture .dta (Stata) et .SAV (SPSS)
+library(survey)   # estimation avec plan de sondage
+library(dplyr)
+
+ecam5 <- read_dta("datasets/ecam5.dta")
+
+# coefextr est le COEFFICIENT D'EXTRAPOLATION : le nombre de personnes du
+# pays que represente chaque ligne du fichier. Sans lui, on ne decrit pas le
+# Cameroun, on decrit l'echantillon.
+plan <- svydesign(ids = ~1, weights = ~coefextr, data = ecam5)
+
+# Taux de pauvrete national, avec son intervalle de confiance.
+svymean(~nivie, plan, na.rm = TRUE)
+confint(svymean(~nivie, plan, na.rm = TRUE))
+
+# Le meme taux, region par region.
+svyby(~nivie, ~s0q1, plan, svymean, na.rm = TRUE)
+```
+
+Le script complet est dans `_commons/data/J05_extraits/00_extraire_J05.R` ; le déroulé
+pédagogique, avec les vérifications de clé et les diagnostics de valeurs manquantes, est
+dans `demo_formateur_J05.qmd`.
+
+## 2. Biais de taille — trois chiffres exacts pour une même question
+
+Avant toute carte, une leçon de lecture. « Quelle est la taille moyenne d'un ménage ? »
+admet **trois réponses justes**, selon ce dont on prend la moyenne.
+
+```{webr}
+#| autorun: true
+library(dplyr)
+library(ggplot2)
+
+# Fichier produit en amont ; on le lit SANS le prefixe ../
+taille <- read.csv("_commons/data/J05_extraits/ecam5_taille_menages.csv")
+taille
+```
+
+```{webr}
+ggplot(taille, aes(x = reorder(base, taille_moyenne), y = taille_moyenne)) +
+  geom_col(fill = "#0F4C81", width = 0.6) +
+  geom_text(aes(label = round(taille_moyenne, 2)), hjust = -0.15, size = 3.5) +
+  coord_flip() +
+  expand_limits(y = max(taille$taille_moyenne) * 1.15) +
+  labs(title = "Trois lectures de la même donnée ECAM5",
+       subtitle = "Taille moyenne d'un ménage selon la base de calcul",
+       x = NULL, y = "personnes par ménage",
+       caption = "Source : ECAM5 2021-2022 (extrait de formation) · IFORD × GDSG 2026") +
+  theme_minimal()
+```
+
+::: {.iford-callout}
+**Ce que la figure code.** Chaque barre est une moyenne de la **même** variable `tailm`
+(nombre de personnes du ménage), calculée sur une **base d'observation différente** :
+toutes les lignes du fichier (des *individus*), les seules lignes de chef de ménage (des
+*ménages*), et ces dernières sans les poids de sondage.
+
+**Ce qui se lit.** Les trois barres ne sont pas égales. Parcourir un fichier d'individus
+revient à compter chaque ménage **autant de fois qu'il compte de membres** : les grands
+ménages y pèsent mécaniquement plus. C'est le **biais de taille**. La barre « individus »
+est donc structurellement au-dessus de la barre « ménages ».
+
+**Ce qui ne se lit pas.** Aucune des trois n'est « la bonne ». Elles répondent à trois
+questions distinctes : *dans quel ménage vit une personne prise au hasard ?*, *combien de
+personnes compte un ménage pris au hasard ?*, *combien en compte un ménage de l'échantillon
+brut ?* La seule faute serait de ne pas dire laquelle on publie. Le même mécanisme frappe
+les taux de pauvreté par individu et par ménage — comparez-les dans le tableau de la
+section 3.
+:::
+
+## 3. Le tableau régional pondéré — et son écart à la référence publiée
+
+```{webr}
+#| autorun: true
+pauvrete <- read.csv("_commons/data/J05_extraits/ecam5_pauvrete_region.csv")
+
+pauvrete |>
+  select(region_adm, n_individus, n_menages,
+         tx_pauvrete_pond, tx_pauvrete_brut, tx_pauvrete_menage,
+         tx_ins_publie, ecart_ins) |>
+  mutate(across(where(is.numeric), \(x) round(x, 1))) |>
+  arrange(desc(tx_pauvrete_pond))
+```
+
+::: {.callout-warning}
+**Le geste qui manque presque toujours : confronter à une référence.**
+
+`tx_ins_publie` est le taux publié par l'INS ; `ecart_ins` la différence avec ce que
+l'extrait produit. Là où la colonne `ecart_ins` est grande, **le chiffre de l'extrait est
+faux** — pas « surprenant », faux. Sans ce contrôle, la carte aurait donné à un chiffre faux
+exactement la même autorité visuelle qu'à un chiffre juste.
+
+`tx_pauvrete_brut` est le même calcul **sans les poids**. L'écart entre les deux colonnes
+mesure exactement ce que la pondération apporte : sans elle, on décrit l'échantillon, pas
+le pays.
+:::
+
+## 4. La première carte — le tableau devient territoire
+
+```{webr}
+#| autorun: true
+library(sf)
+
+# read_sf lit un fichier SIG et renvoie un data.frame + une colonne geometry.
+regions <- read_sf("_commons/data/J05_extraits/cmr_regions_J05.geojson")
+
+c(entites = nrow(regions), epsg = st_crs(regions)$epsg)
+names(regions)
+```
+
+```{webr}
+ggplot(regions) +
+  geom_sf(aes(fill = tx_pauvrete_pond), color = "white", linewidth = 0.3) +
+  geom_sf_text(aes(label = NAME_1), size = 2.3, colour = "grey15") +
+  scale_fill_viridis_c(option = "B", direction = -1,
+                       name = "Taux de\npauvreté (%)",
+                       na.value = "grey85") +
+  labs(title = "Pauvreté monétaire par région — ECAM5",
+       subtitle = "CHIFFRES NON CITABLES : extrait de formation, non représentatif dans les régions",
+       caption = "Source : ECAM5 2021-2022 (extrait) · GADM 4.1 · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+::: {.iford-callout}
+**Ce que la figure code.** La couleur de chaque polygone encode `tx_pauvrete_pond` : la part
+de la population régionale dont le niveau de vie est sous le seuil de pauvreté monétaire,
+**pondérée** par `coefextr`. C'est une **choroplèthe** : une valeur par unité
+administrative, traduite en intensité de couleur. La palette est **séquentielle** (du clair
+au foncé, un seul sens de lecture), ce qui est le bon choix pour une grandeur qui va
+simplement de « bas » à « élevé » ; les polygones sans valeur resteraient **gris**, jamais
+« à zéro ».
+
+**Ce qui se lit — techniquement.** Les régions du Grand Nord et du Nord-Ouest se détachent
+comme un **bloc contigu**. C'est cela que la carte apporte et que le tableau ne contient
+pas : un tableau trié donne un classement, la carte montre que **les unités semblables se
+touchent**. Un bloc contigu ne s'explique pas par les caractéristiques propres de chaque
+région prise isolément, mais par ce qu'elles partagent *parce qu'elles sont voisines* —
+climat, enclavement, réseau routier, histoire du peuplement. On passe d'une liste d'unités
+indépendantes à un **système de voisinages**, et la ressemblance entre voisins devient
+elle-même l'objet à expliquer. C'est exactement le programme du **J07**.
+
+**Ce qui ne se lit pas.** Trois choses.
+1. **Les niveaux eux-mêmes ne sont pas exploitables** ici — voir l'avertissement en tête de
+   page. Ce que cette carte enseigne, c'est la *chaîne*, pas le *résultat*.
+2. **L'erreur écologique.** Colorier une région ne dit rien d'un habitant de cette région.
+   Une région à 60 % de pauvreté contient des ménages aisés ; une région à 20 % contient des
+   ménages très pauvres. Attribuer à un individu ce qui n'est vrai que de l'agrégat est la
+   faute permanente de la choroplèthe.
+3. **L'hétérogénéité interne**, écrasée par la moyenne — la section 5 la fait ressortir.
+:::
+
+## 5. Ce que la moyenne régionale cache : urbain contre rural
+
+```{webr}
+milieu <- read.csv("_commons/data/J05_extraits/ecam5_pauvrete_region_milieu.csv")
+
+ggplot(milieu, aes(x = reorder(region_adm, tx_pauvrete_pond),
+                   y = tx_pauvrete_pond, fill = milieu_lb)) +
+  geom_col(position = position_dodge(width = 0.75), width = 0.7) +
+  coord_flip() +
+  # Palette QUALITATIVE : deux modalites sans ordre naturel, deux teintes
+  # nettement distinctes, pas deux nuances d'un meme ton.
+  scale_fill_manual(values = c("Urbain" = "#0F4C81", "Rural" = "#C1662F"),
+                    name = "Milieu") +
+  labs(title = "La même région, deux mondes",
+       subtitle = "Taux de pauvreté pondéré par région et milieu de résidence (chiffres non citables)",
+       x = NULL, y = "taux de pauvreté (%)",
+       caption = "Source : ECAM5 2021-2022 (extrait) · IFORD × GDSG 2026") +
+  theme_minimal()
+```
+
+::: {.iford-callout}
+**Ce que la figure code.** Le même indicateur que la carte, décomposé selon `milieu`
+(1 = urbain, 2 = rural). Deux barres par région, palette **qualitative** : les deux
+modalités n'ont pas d'ordre, donc pas de dégradé.
+
+**Ce qui se lit.** L'écart entre les deux barres d'une même région est la mesure de
+l'hétérogénéité que la carte de la section 4 a écrasée en une seule couleur. Là où il est
+large, la valeur régionale unique est une **fiction utile** : elle n'est vraie ni pour la
+ville ni pour la campagne.
+
+**Ce qui ne se lit pas.** Le milieu n'est pas la seule ligne de fracture interne — le
+département, l'arrondissement, le quartier en portent d'autres. Et cette figure reste un
+graphique : elle dit *combien* les milieux diffèrent, jamais *où* dans la région. Il faut
+une maille plus fine pour cela : c'est l'objet de la section suivante.
+:::
+
+## 6. Des coordonnées d'enquête aux points — l'autre pont vers la carte
+
+```{webr}
+#| autorun: true
+grappes <- read.csv("_commons/data/J05_extraits/eds_grappes_eau.csv")
+cat("Grappes EDS :", nrow(grappes), "\n")
+
+# ORDRE c(longitude, latitude). L'inversion ne leve AUCUNE erreur : elle
+# place simplement les points ailleurs. Le seul garde-fou est de tracer la
+# couche immediatement apres l'avoir creee -- ce qu'on fait ci-dessous.
+pts <- st_as_sf(grappes[!is.na(grappes$lon), ],
+                coords = c("lon", "lat"), crs = 4326, remove = FALSE)
+
+st_bbox(pts)
+```
+
+```{webr}
+ggplot() +
+  geom_sf(data = regions, fill = "grey95", color = "white", linewidth = 0.3) +
+  geom_sf(data = pts, aes(size = n_menages, color = tx_eau_amelioree),
+          alpha = 0.75) +
+  scale_color_viridis_c(option = "D", name = "Source d'eau\naméliorée (%)") +
+  scale_size_continuous(range = c(0.6, 3), name = "Ménages\nenquêtés") +
+  labs(title = "430 grappes EDS-MICS 2018 sur les 10 régions",
+       subtitle = "Couleur = accès à une source améliorée (déf. JMP) ; taille = nombre de ménages enquêtés",
+       caption = "Source : EDS-MICS 2018 (DHS) · GADM 4.1 · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+::: {.iford-callout}
+**Ce que la figure code.** Chaque point est une **grappe** d'enquête (l'unité primaire de
+sondage), pas un ménage ni un village. La couleur encode la part pondérée des ménages de la
+grappe utilisant une **source améliorée au sens du JMP** (OMS/UNICEF) : réseau,
+borne-fontaine, forage, puits ou source protégée, eau de pluie, eau en bouteille. **Ce n'est
+pas « eau potable »** — la définition porte sur le *type d'ouvrage*, pas sur la qualité
+mesurée de l'eau ni sur la continuité du service. La taille encode l'effectif enquêté :
+elle dit la **précision locale**, pas l'importance du lieu.
+
+**Ce qui se lit.** Les points ne couvrent pas le territoire uniformément. C'est un
+enseignement à part entière : **les trous d'échantillonnage se voient sur une carte, jamais
+dans un tableau**. Un tableau régional de 10 lignes ne laisse pas soupçonner que des pans
+entiers du pays ne portent aucune observation.
+
+**Ce qui ne se lit pas.** Les positions ne sont **pas** exactement celles de l'enquête : le
+DHS déplace aléatoirement chaque grappe — 2 km en urbain, 5 km en rural, 10 km pour 1 % des
+grappes rurales — afin de protéger la confidentialité des ménages. Conséquence directe : un
+point peut tomber dans le mauvais district, voire hors du pays. À l'échelle régionale c'est
+sans effet ; à l'échelle d'une unité de quelques kilomètres, l'affectation devient
+incertaine. On ne supprime jamais ces grappes — elles portent de vrais ménages enquêtés —
+on les **recale** sur l'unité la plus proche et **on trace le recalage** (colonne dédiée
+dans le script d'extraction).
+:::
+
+## 7. Changer de maille : le MAUP, en deux cartes du même phénomène
+
+```{webr}
+#| autorun: true
+districts <- read_sf("_commons/data/J05_extraits/districts_sanitaires_J05.geojson")
+cat("Districts sanitaires :", nrow(districts),
+    "| renseignés :", sum(!is.na(districts$tx_eau_amelioree)),
+    "| fiables (>= 3 grappes) :", sum(districts$fiable), "\n")
+```
+
+```{webr}
+ggplot(districts) +
+  # Les districts sans grappe restent GRIS : ils ne sont pas "a zero",
+  # ils sont NON MESURES. na.value le dit explicitement.
+  geom_sf(aes(fill = tx_eau_amelioree), color = "white", linewidth = 0.15) +
+  # Les districts reposant sur moins de 3 grappes sont soulignes : le seuil
+  # est DECLARE dans le code, pas subi.
+  geom_sf(data = subset(districts, !fiable & !is.na(tx_eau_amelioree)),
+          fill = NA, color = "grey20", linewidth = 0.4, linetype = "dotted") +
+  scale_fill_viridis_c(option = "D", name = "Source d'eau\naméliorée (%)",
+                       na.value = "grey88") +
+  labs(title = "Accès à une source améliorée — 200 districts sanitaires",
+       subtitle = "Gris = aucune grappe enquêtée · pointillé = moins de 3 grappes",
+       caption = "Source : EDS-MICS 2018 · DHIS2 MINSANTE · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+```{webr}
+# Le MEME indicateur, la MEME donnee source, agrege a la maille REGIONALE.
+ggplot(regions) +
+  geom_sf(aes(fill = tx_eau_amelioree), color = "white", linewidth = 0.3) +
+  geom_sf_text(aes(label = NAME_1), size = 2.3, colour = "grey15") +
+  scale_fill_viridis_c(option = "D", name = "Source d'eau\naméliorée (%)",
+                       na.value = "grey88") +
+  labs(title = "Le même indicateur, agrégé aux 10 régions",
+       subtitle = "Même donnée, même pondération — autre maille, autre carte",
+       caption = "Source : EDS-MICS 2018 · GADM 4.1 · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+::: {.callout-important}
+## Le MAUP — *Modifiable Areal Unit Problem*
+
+**Ce que les deux figures codent.** Rigoureusement la même grandeur, calculée sur les mêmes
+430 grappes, avec la même pondération. **Seule la maille d'agrégation change** : 200
+districts sanitaires d'un côté, 10 régions administratives de l'autre.
+
+**Ce qui se lit.** Les deux cartes ne racontent pas la même chose. L'amplitude des valeurs
+se réduit en montant d'échelle — l'agrégation moyenne, donc lisse. Des contrastes locaux
+visibles au district disparaissent dans la région ; inversement, la carte régionale offre
+une lecture d'ensemble que les 200 polygones brouillent.
+
+**Ce qu'il faut en retenir.** **Aucune maille n'est neutre**, et il n'existe pas de maille
+« vraie ». Le MAUP a deux composantes : l'effet d'**échelle** (le résultat change avec la
+finesse du découpage) et l'effet de **zonage** (à finesse égale, un autre tracé donne un
+autre résultat). La règle pratique : **choisir la maille de la décision qu'on éclaire**. Une
+politique d'adduction d'eau se pilote par district sanitaire, pas par région — donc on
+cartographie par district, en assumant les trous. Un arbitrage budgétaire entre régions se
+lit à la région.
+
+**Ce qui ne se lit toujours pas.** Sur la carte des districts, les zones grises. 430
+grappes pour 200 districts, ce sont, en pratique, **de nombreux districts sans aucune
+observation**. Un polygone gris n'est pas « à zéro » : il est **non mesuré**. Et les
+districts en pointillé reposent sur moins de trois grappes : leur couleur est une estimation
+très instable, qu'un seul ménage supplémentaire ferait bouger.
+:::
+
+## 8. Superposer deux échelles — l'antidote à l'erreur écologique
+
+```{webr}
+ggplot() +
+  # Fond : la pauvrete regionale, le CONTEXTE.
+  geom_sf(data = regions, aes(fill = tx_pauvrete_pond),
+          color = "white", linewidth = 0.3, alpha = 0.85) +
+  scale_fill_viridis_c(option = "B", direction = -1,
+                       name = "Pauvreté\nrégionale (%)", na.value = "grey85") +
+  # Points : la mesure LOCALE, sur une autre enquete et une autre annee.
+  geom_sf(data = pts, aes(size = n_menages), shape = 21,
+          fill = "white", color = "grey20", stroke = 0.3, alpha = 0.8) +
+  scale_size_continuous(range = c(0.4, 2.6), name = "Ménages\nenquêtés") +
+  labs(title = "Deux échelles sur une même page",
+       subtitle = "Fond : pauvreté régionale (ECAM5, non citable) · Points : grappes EDS 2018",
+       caption = "Sources : ECAM5 2021-2022 (extrait) · EDS-MICS 2018 · IFORD × GDSG 2026") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+::: {.iford-callout}
+**Ce que la figure code.** Deux couches d'information à deux échelles : un fond agrégé
+(région) et des points d'observation (grappe). Le fond donne le contexte, les points
+montrent **où la mesure a effectivement eu lieu**.
+
+**En quoi le spatial apporte ici ce qu'aucun tableau ne contient.** La superposition rend
+visible l'**hétérogénéité interne** de chaque polygone du fond, et c'est la meilleure
+protection contre l'**erreur écologique** : on voit d'un coup d'œil qu'une région d'une seule
+couleur abrite des grappes très dissemblables, et que certaines parties de la région ne
+sont pas observées du tout. Un tableau à deux colonnes « région / taux » ne peut rien dire
+de cela.
+
+**Ce qui ne se lit pas — et c'est essentiel.** Les deux couches **ne se comparent pas
+directement**. ECAM5 (INS, 2021-2022) et l'EDS-MICS (DHS, 2018) n'ont ni le même échantillon,
+ni le même questionnaire, ni la même année ; les indicateurs eux-mêmes diffèrent (pauvreté
+monétaire d'un côté, accès à l'eau de l'autre). Cette figure met deux géographies en regard
+— elle **n'établit aucune relation** entre les deux grandeurs, et encore moins une causalité.
+Le seul niveau où l'on peut honnêtement les rapprocher est la région, et sous réserve de les
+ramener au même découpage.
+:::
+
+## 9. Ce qui reste sous RStudio
+
+Trois choses ne peuvent pas se faire dans un navigateur. Elles se trouvent dans
+`demo_formateur_J05.qmd`, exécutable avec R installé.
+
+```r
+# --- Lecture seule : RStudio desktop uniquement.
+
+# 1. La chaine complete a partir des binaires : 72 Mo de SPSS, plus de
+#    4 000 colonnes -- on ne demande QUE les variables utiles.
+library(haven); library(sf); library(dplyr)
+noms_sav <- names(read_sav("datasets/CMHR71FL.SAV", n_max = 0))
+vars     <- noms_sav[match(toupper(c("hv001","hv005","hv201")), toupper(noms_sav))]
+hr <- read_sav("datasets/CMHR71FL.SAV", col_select = all_of(na.omit(vars)))
+
+# 2. La jointure spatiale et le recalage des points orphelins.
+#    st_join(x, y) renvoie TOUJOURS la geometrie de x, enrichie des
+#    attributs de y : on part de ce qu'on veut garder.
+pts_ds <- st_join(pts, ds_sante, join = st_within)
+orphelins <- which(is.na(pts_ds$ds_nom))
+j <- st_nearest_feature(pts_ds[orphelins, ], ds_sante)   # on recale, on ne supprime pas
+
+# 3. La cartographie tmap, avec ses ornements de publication.
+library(tmap)
+tm_shape(ds_indicateurs) +
+  tm_polygons(fill = "tx_eau",
+              fill.scale = tm_scale_intervals(style = "quantile", n = 5),
+              fill.legend = tm_legend(title = "Eau améliorée (%)")) +
+  tm_compass() + tm_scalebar() +
+  tm_layout(title = "Accès à l'eau améliorée par district sanitaire")
+```
+
+## Checklist de fin de J05
+
+- [ ] Je sais dire **de quoi** je prends la moyenne (individus ou ménages) et pourquoi les
+      deux chiffres diffèrent — biais de taille.
+- [ ] Je pondère à **chaque étage** d'agrégation : du ménage à la grappe, de la grappe au
+      district. La moyenne d'une moyenne n'est pas la moyenne.
+- [ ] Je **confronte à une référence publiée** avant de cartographier, et je refuse de citer
+      ce qui ne passe pas le contrôle.
+- [ ] Je laisse **gris** ce qui n'est pas mesuré, et je **signale** ce qui repose sur trop peu
+      d'observations, avec un seuil déclaré dans le code.
+- [ ] Je sais nommer les trois pièges de la journée : **MAUP**, **erreur écologique**,
+      **biais de taille**.
+
+**Demain (J06)** : l'art de la carte — discrétisation, palettes, habillage. La même donnée,
+quatre découpages en classes, quatre messages différents.
+
+[← Retour à l'accueil](../INDEX.md)

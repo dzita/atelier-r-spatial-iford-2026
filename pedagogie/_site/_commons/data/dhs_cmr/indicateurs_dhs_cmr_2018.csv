@@ -1,0 +1,51 @@
+region,indicateur,indicateur_libelle,valeur,unite,enquete,annee
+adamawa,ED_LITR_M_LIT,% hommes 15-59 alphabetises,55.54,%,CM2018DHS,2018
+adamawa,ED_LITR_W_LIT,% femmes 15-49 alphabetisees,24.84,%,CM2018DHS,2018
+adamawa,HC_ELEC_H_ELC,% menages avec electricite,46.32,%,CM2018DHS,2018
+adamawa,HC_HHSZ_H_AVG,Taille moyenne menage,5.07,personnes,CM2018DHS,2018
+adamawa,WS_SRCE_H_IMP,% menages avec source d'eau amelioree (def JMP),59.61,%,CM2018DHS,2018
+centre,ED_LITR_M_LIT,% hommes 15-59 alphabetises,87.89,%,CM2018DHS,2018
+centre,ED_LITR_W_LIT,% femmes 15-49 alphabetisees,81.96,%,CM2018DHS,2018
+centre,HC_ELEC_H_ELC,% menages avec electricite,82.62,%,CM2018DHS,2018
+centre,HC_HHSZ_H_AVG,Taille moyenne menage,5.25,personnes,CM2018DHS,2018
+centre,WS_SRCE_H_IMP,% menages avec source d'eau amelioree (def JMP),73.84,%,CM2018DHS,2018
+east,ED_LITR_M_LIT,% hommes 15-59 alphabetises,66.67,%,CM2018DHS,2018
+east,ED_LITR_W_LIT,% femmes 15-49 alphabetisees,52.6,%,CM2018DHS,2018
+east,HC_ELEC_H_ELC,% menages avec electricite,44.19,%,CM2018DHS,2018
+east,HC_HHSZ_H_AVG,Taille moyenne menage,5.65,personnes,CM2018DHS,2018
+east,WS_SRCE_H_IMP,% menages avec source d'eau amelioree (def JMP),67.67,%,CM2018DHS,2018
+far-north,ED_LITR_M_LIT,% hommes 15-59 alphabetises,48.69,%,CM2018DHS,2018
+far-north,ED_LITR_W_LIT,% femmes 15-49 alphabetisees,22.47,%,CM2018DHS,2018
+far-north,HC_ELEC_H_ELC,% menages avec electricite,19.59,%,CM2018DHS,2018
+far-north,HC_HHSZ_H_AVG,Taille moyenne menage,5.49,personnes,CM2018DHS,2018
+far-north,WS_SRCE_H_IMP,% menages avec source d'eau amelioree (def JMP),74.76,%,CM2018DHS,2018
+littoral,ED_LITR_M_LIT,% hommes 15-59 alphabetises,79.69,%,CM2018DHS,2018
+littoral,ED_LITR_W_LIT,% femmes 15-49 alphabetisees,82.25,%,CM2018DHS,2018
+littoral,HC_ELEC_H_ELC,% menages avec electricite,94.92,%,CM2018DHS,2018
+littoral,HC_HHSZ_H_AVG,Taille moyenne menage,4.34,personnes,CM2018DHS,2018
+littoral,WS_SRCE_H_IMP,% menages avec source d'eau amelioree (def JMP),78.08,%,CM2018DHS,2018
+north,ED_LITR_M_LIT,% hommes 15-59 alphabetises,46.02,%,CM2018DHS,2018
+north,ED_LITR_W_LIT,% femmes 15-49 alphabetisees,22.26,%,CM2018DHS,2018
+north,HC_ELEC_H_ELC,% menages avec electricite,27.32,%,CM2018DHS,2018
+north,HC_HHSZ_H_AVG,Taille moyenne menage,6.31,personnes,CM2018DHS,2018
+north,WS_SRCE_H_IMP,% menages avec source d'eau amelioree (def JMP),40.81,%,CM2018DHS,2018
+north-west,ED_LITR_M_LIT,% hommes 15-59 alphabetises,63.65,%,CM2018DHS,2018
+north-west,ED_LITR_W_LIT,% femmes 15-49 alphabetisees,57.96,%,CM2018DHS,2018
+north-west,HC_ELEC_H_ELC,% menages avec electricite,58.81,%,CM2018DHS,2018
+north-west,HC_HHSZ_H_AVG,Taille moyenne menage,4.46,personnes,CM2018DHS,2018
+north-west,WS_SRCE_H_IMP,% menages avec source d'eau amelioree (def JMP),69.86,%,CM2018DHS,2018
+south,ED_LITR_M_LIT,% hommes 15-59 alphabetises,80.9,%,CM2018DHS,2018
+south,ED_LITR_W_LIT,% femmes 15-49 alphabetisees,75.4,%,CM2018DHS,2018
+south,HC_ELEC_H_ELC,% menages avec electricite,71.47,%,CM2018DHS,2018
+south,HC_HHSZ_H_AVG,Taille moyenne menage,6.04,personnes,CM2018DHS,2018
+south,WS_SRCE_H_IMP,% menages avec source d'eau amelioree (def JMP),80.19,%,CM2018DHS,2018
+south-west,ED_LITR_M_LIT,% hommes 15-59 alphabetises,68.01,%,CM2018DHS,2018
+south-west,ED_LITR_W_LIT,% femmes 15-49 alphabetisees,82.13,%,CM2018DHS,2018
+south-west,HC_ELEC_H_ELC,% menages avec electricite,98.05,%,CM2018DHS,2018
+south-west,HC_HHSZ_H_AVG,Taille moyenne menage,3.51,personnes,CM2018DHS,2018
+south-west,WS_SRCE_H_IMP,% menages avec source d'eau amelioree (def JMP),71.09,%,CM2018DHS,2018
+west,ED_LITR_M_LIT,% hommes 15-59 alphabetises,73.46,%,CM2018DHS,2018
+west,ED_LITR_W_LIT,% femmes 15-49 alphabetisees,75.99,%,CM2018DHS,2018
+west,HC_ELEC_H_ELC,% menages avec electricite,79.2,%,CM2018DHS,2018
+west,HC_HHSZ_H_AVG,Taille moyenne menage,5.6,personnes,CM2018DHS,2018
+west,WS_SRCE_H_IMP,% menages avec source d'eau amelioree (def JMP),67.89,%,CM2018DHS,2018

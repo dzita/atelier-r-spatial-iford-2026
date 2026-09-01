@@ -1,0 +1,929 @@
+---
+title: "J10 · Politiques publiques — runtime navigateur"
+subtitle: "Conflits ACLED, réanalyse climatique ERA5, estimation sur petits domaines · Atelier IFORD × GDSG 2026"
+# engine: knitr est OBLIGATOIRE : sans lui, Quarto se rabat sur Jupyter.
+engine: knitr
+webr:
+  packages:
+    - sf
+    - dplyr
+    - ggplot2
+    - tidyr
+  resources:
+    - ../_commons/data/J10_extraits/J10_acled_adm1.geojson
+    - ../_commons/data/J10_extraits/J10_acled_points.geojson
+    - ../_commons/data/J10_extraits/J10_acled_annuel_region.csv
+    - ../_commons/data/J10_extraits/J10_acled_types_annuel.csv
+    - ../_commons/data/J10_extraits/J10_era5_adm1.geojson
+    - ../_commons/data/J10_extraits/J10_era5_national_mensuel.csv
+    - ../_commons/data/J10_extraits/J10_era5_regional_mensuel.csv
+    - ../_commons/data/J10_extraits/J10_benin_communes_sae.geojson
+    - ../_commons/data/J10_extraits/J10_benin_sae_communes.csv
+    - ../_commons/data/J10_extraits/J10_benin_grille_prediction.csv
+---
+
+::: {.callout-note}
+## Comment utiliser cette page
+
+Les cellules bleues **`{webr}`** s'exécutent **dans votre navigateur**. Les blocs non
+bleus sont en **lecture seule** : ils montrent le code `terra`, `ncdf4`, `survey` et
+`sae`, qui ne peut pas tourner dans un navigateur. Vous l'exécuterez sous RStudio
+desktop avec `demo_formateur_J10.qmd` de ce même dossier.
+
+**Ce que le script d'extraction a fait à votre place.**
+`_commons/data/J10_extraits/00_extraire_J10.R` a nettoyé et géoréférencé l'export
+ACLED, ouvert le NetCDF ERA5 et **converti les Kelvin en Celsius**, extrait la série
+mensuelle nationale et régionale, puis — côté béninois — déclaré le plan de sondage,
+calculé les **estimations directes** commune par commune, ajusté le modèle de
+**Fay-Herriot** et prédit sur la grille de 3 km. Cette page ne fait que
+cartographier, tracer et interpréter ces résultats.
+:::
+
+::: {.callout-warning}
+## Cette journée change de pays en cours de route — et c'est assumé
+
+Les parties I et II portent sur le **Cameroun** (conflits ACLED, température ERA5).
+La partie III, l'estimation sur petits domaines, porte sur le **Bénin**.
+
+Ce n'est ni une erreur ni une facilité. L'extrait ECAM5 camerounais dont dispose
+l'atelier **n'est pas représentatif à l'intérieur des régions** : le taux de
+pauvreté y ressort à 7,5 % pour l'Est, contre 41,5 % publié par l'INS. Construire
+un exercice d'estimation sur petits domaines dessus produirait des estimations
+communales qu'il faudrait interdire de citer — et une carte fausse est plus
+dangereuse qu'un tableau faux, parce qu'elle est jolie et qu'elle circule.
+
+Le matériel béninois, lui, porte un vrai plan de sondage à deux degrés, des poids
+utilisables, et un jeu de covariables géospatiales cohérent. **Le prix à payer :
+aucun chiffre de la partie III ne dit quoi que ce soit du Cameroun.** À dire à voix
+haute en salle, deux fois plutôt qu'une.
+:::
+
+# Partie I — Conflits : lire ACLED sans lui faire dire plus
+
+Un événement ACLED est un fait **rapporté**, codé à partir d'au moins une source
+médiatique ou institutionnelle. Ce n'est ni un fait vérifié, ni un recensement
+exhaustif. **Une zone sans presse produit peu d'événements.**
+
+```{webr}
+#| autorun: true
+library(sf)
+library(dplyr)
+library(ggplot2)
+
+# Chemins SANS "../" : le "../" ne figure que dans webr.resources du YAML.
+acled_adm1 <- read_sf("_commons/data/J10_extraits/J10_acled_adm1.geojson")
+acled_pts  <- read_sf("_commons/data/J10_extraits/J10_acled_points.geojson")
+
+cat("Regions           :", nrow(acled_adm1), "\n")
+cat("Evenements retenus:", nrow(acled_pts), "\n")
+cat("Champ temporel    :", min(acled_adm1$annee_min), "-",
+    max(acled_adm1$annee_max), "\n")
+cat("Colonnes des points:\n"); print(setdiff(names(acled_pts), "geometry"))
+```
+
+## 1. La jointure qui échoue en silence — vérifiée ici même
+
+Le fichier ACLED nomme les régions en **français non accentué** (`admin1`) ; GADM
+les nomme en **anglais** (`NAME_1`). Le script d'extraction a rattaché chaque
+événement à sa région **par sa position** (`st_within`), jamais par son libellé.
+Les deux colonnes ont été conservées : vous pouvez donc mesurer, ici, ce
+qu'aurait donné la jointure par libellé.
+
+```{webr}
+tab <- acled_pts |> st_drop_geometry()
+
+# Ce qu'aurait donne une jointure attributaire naive : combien de libelles
+# ACLED existent tels quels dans la nomenclature GADM ?
+libelles_acled <- sort(unique(tab$admin1_acled))
+libelles_gadm  <- sort(unique(na.omit(acled_adm1$NAME_1)))
+
+cat("Libelles distincts cote ACLED :", length(libelles_acled), "\n")
+cat("Libelles distincts cote GADM  :", length(libelles_gadm), "\n")
+cat("Libelles identiques dans les deux nomenclatures :",
+    length(intersect(libelles_acled, libelles_gadm)), "\n\n")
+cat("Ceux qui s'apparient :\n")
+print(intersect(libelles_acled, libelles_gadm))
+cat("\nCeux qui NE s'apparient PAS (cote ACLED) :\n")
+print(setdiff(libelles_acled, libelles_gadm))
+
+# Et surtout : quelle PART DES EVENEMENTS serait devenue orpheline ?
+orphelins <- sum(!tab$admin1_acled %in% libelles_gadm)
+cat("\nEvenements orphelins d'une jointure par libelle :", orphelins,
+    "sur", nrow(tab), " (", round(100 * orphelins / nrow(tab), 1), "% )\n")
+```
+
+::: {.callout-important}
+## `replace_na(0)` : la même ligne de code, deux significations opposées
+
+Après la jointure **spatiale**, une région sans ligne est une région où **aucun
+événement n'a été rapporté** : le zéro est une **mesure**, et `replace_na(0)` est
+légitime.
+
+Après la jointure **par libellé** que le bloc ci-dessus vient de simuler, une
+région sans ligne est une région **non appariée** : le même `replace_na(0)`
+fabriquerait une région pacifiée qui n'existe pas, et la carte lui donnerait
+exactement la même autorité visuelle qu'à un chiffre juste.
+
+**La leçon n'est pas « ne jamais remplacer les `NA` par zéro ».** Elle est : avant
+d'écrire cette ligne, savoir **d'où viennent les `NA`**. Une position ne se traduit
+pas ; un libellé, si — et mal.
+:::
+
+## 2. Du point au polygone
+
+```{webr}
+ggplot() +
+  geom_sf(data = acled_adm1, fill = "grey95", colour = "white", linewidth = 0.3) +
+  geom_sf(data = acled_pts, aes(colour = event_type, size = fatalities),
+          alpha = 0.55) +
+  scale_size_continuous(range = c(0.4, 4), name = "Deces") +
+  scale_colour_brewer(palette = "Dark2", name = "Type d'evenement") +
+  labs(title = "Evenements ACLED geolocalises, Cameroun",
+       subtitle = "Un point = un evenement RAPPORTE ; la taille code les deces declares",
+       caption = "Source : ACLED. Les points a (0,0) et hors emprise ont ete retires et comptes en amont.") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank(), legend.position = "bottom")
+```
+
+::: {.callout-note}
+## Interprétation — la carte de points
+
+**Ce que la figure code.** La position d'un point est le lieu **déclaré** de
+l'événement, avec une précision variable (ACLED code cette précision dans
+`geo_precision`, souvent au chef-lieu). La couleur code un **type**, variable
+qualitative : la palette est donc qualitative, sans ordre. La taille code les décès
+déclarés — une aire, donc une grandeur que l'œil lit mal ; elle sert à repérer, pas
+à mesurer.
+
+**Ce que les choix techniques font.** La transparence (`alpha`) rend visible la
+superposition : là où les points s'empilent, la couleur se sature. Sans elle, un
+seul point masquerait cent événements au même endroit.
+
+**Ce qui se lit.** La géographie du signalement : où les événements sont rapportés,
+et de quel type.
+
+**Ce qui ne se lit pas.** L'intensité réelle. Trois biais se cumulent : la
+**couverture médiatique** (une zone sans presse produit peu de lignes), la
+**précision de localisation** (beaucoup d'événements sont ramenés au chef-lieu, ce
+qui concentre artificiellement les points), et le **codage** (un même affrontement
+sur trois jours peut donner une ou trois lignes selon les sources).
+:::
+
+```{webr}
+ggplot(acled_adm1) +
+  geom_sf(aes(fill = n_evenements), colour = "white", linewidth = 0.3) +
+  scale_fill_viridis_c(option = "B", na.value = "grey80",
+                       name = "Evenements\nrapportes") +
+  geom_sf_text(aes(label = NAME_1), size = 2, colour = "white",
+               fontface = "bold") +
+  labs(title = "Evenements ACLED agreges par region",
+       subtitle = "Rattachement par la POSITION (st_within), jamais par le libelle",
+       caption = "Un zero est ici une mesure : aucune region n'a ete perdue par la jointure") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+::: {.callout-note}
+## Interprétation — et ce que l'agrégation vient de détruire
+
+**Ce que la figure code.** Un **comptage** d'événements par région sur la période
+imprimée en section I. Grandeur extensive : elle dépend de la taille de la région
+et de la durée de la période.
+
+**Ce qui se lit.** La hiérarchie régionale du signalement.
+
+**Ce qui ne se lit pas — et c'est l'essentiel.** Comparez cette carte à la carte de
+points précédente. L'agrégation a détruit trois informations que le point portait :
+la **concentration interne** (un foyer localisé et une diffusion homogène donnent
+le même total régional), la **structure temporelle**, et la **proximité
+transfrontalière** — des événements groupés le long d'une frontière racontent autre
+chose qu'un total régional.
+
+C'est le **MAUP** à l'œuvre : le même jeu de points, agrégé à l'ADM2, donnerait une
+autre carte et un autre classement. Et c'est aussi le **risque d'erreur écologique** :
+un taux régional élevé ne dit rien du risque encouru par un individu donné de cette
+région.
+:::
+
+```{webr}
+annuel <- read.csv("_commons/data/J10_extraits/J10_acled_annuel_region.csv")
+types  <- read.csv("_commons/data/J10_extraits/J10_acled_types_annuel.csv")
+
+# Deux series, deux questions : le NOMBRE d'evenements et leur LETALITE.
+national <- annuel |>
+  group_by(annee) |>
+  summarise(evenements = sum(n_evenements), deces = sum(n_deces),
+            .groups = "drop") |>
+  mutate(deces_par_evenement = round(deces / evenements, 2))
+print(national)
+
+ggplot(types, aes(x = annee, y = n_evenements, fill = event_type)) +
+  geom_col() +
+  scale_fill_brewer(palette = "Set2", name = "Type") +
+  labs(title = "Evenements rapportes par an et par type",
+       subtitle = "Barres empilees : la hauteur totale est le nombre d'evenements de l'annee",
+       x = NULL, y = "Evenements rapportes") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+::: {.callout-note}
+## Interprétation — les barres empilées annuelles
+
+**Ce que la figure code.** La hauteur totale code le nombre d'événements rapportés
+dans l'année ; chaque segment code un type.
+
+**Ce que les choix techniques font.** L'empilement est légitime ici, contrairement au
+J08 : les segments sont des **parties disjointes d'un même total**, ils s'additionnent
+réellement. Son défaut connu : seul le segment du bas repose sur une ligne de base
+commune ; les autres « flottent », et comparer leur évolution d'une année à l'autre
+est difficile à l'œil. Pour comparer un type dans le temps, il faut le sortir de la
+pile.
+
+**Ce qui se lit.** Le volume annuel du signalement et sa composition.
+
+**Ce qui ne se lit pas.** Une évolution de la violence. Une hausse peut venir d'une
+dégradation réelle, d'une **amélioration de la couverture médiatique**, ou d'un
+changement de méthodologie de codage chez ACLED. Le nombre de décès par événement,
+imprimé dans le tableau, est un garde-fou utile : si les événements augmentent et
+que la létalité moyenne s'effondre, c'est le signalement qui a changé, pas
+nécessairement le terrain.
+:::
+
+# Partie II — Climat : ERA5, une réanalyse
+
+ERA5 n'est **ni une observation, ni une prévision** : c'est une **réanalyse**, la
+sortie d'un modèle atmosphérique contraint par les observations disponibles. Elle
+est complète et régulière là où le réseau de stations est clairsemé — au prix d'une
+valeur qui, dans les zones sans station, vient surtout du modèle.
+
+```{webr}
+era_nat <- read.csv("_commons/data/J10_extraits/J10_era5_national_mensuel.csv")
+era_nat$date <- as.Date(era_nat$date)
+
+cat("Mois disponibles :", nrow(era_nat), "\n")
+cat("Periode          :", format(min(era_nat$date)), "->",
+    format(max(era_nat$date)), "\n")
+cat("Temperature (C) — min :", round(min(era_nat$t2m_c, na.rm = TRUE), 1),
+    " max :", round(max(era_nat$t2m_c, na.rm = TRUE), 1),
+    " moyenne :", round(mean(era_nat$t2m_c, na.rm = TRUE), 1), "\n")
+
+# CONTROLE D'UNITE. Si ces valeurs tournaient autour de 298, la conversion
+# Kelvin -> Celsius aurait ete oubliee en amont. Autour de 25, elle a bien
+# ete faite. C'est le seul controle qui detecte cet oubli sur des NIVEAUX.
+```
+
+::: {.callout-important}
+## Kelvin : l'oubli qui devient indétectable
+
+Une couche ERA5 non convertie affiche une moyenne autour de **298** ; convertie,
+autour de **25**. Sur des **niveaux**, l'erreur saute aux yeux.
+
+Mais une **différence** de températures a exactement la même valeur dans les deux
+unités : `(T1 − 273,15) − (T2 − 273,15) = T1 − T2`. Sur un écart, une tendance, une
+anomalie ou une amplitude saisonnière, **l'oubli de conversion est parfaitement
+indétectable** — et il contamine silencieusement tout ce qu'on écrit à côté du
+chiffre (« +2 K » n'est pas « +2 °C » dans une phrase, même si c'est le même
+nombre).
+
+La parade est de convertir **une fois, tout de suite après la lecture**, et de
+l'écrire en clair dans le code. C'est ce que fait le script d'extraction.
+:::
+
+```{webr}
+ggplot(era_nat, aes(x = date, y = t2m_c)) +
+  geom_line(colour = "grey60", linewidth = 0.4) +
+  geom_point(size = 0.7, colour = "grey40") +
+  geom_smooth(method = "loess", span = 0.3, se = TRUE,
+              colour = "#B2182B", fill = "#FDDBC7") +
+  labs(title = "Temperature moyenne mensuelle a 2 m, Cameroun",
+       subtitle = "Moyenne nationale ponderee par la fraction de cellule couverte — ERA5",
+       x = NULL, y = "Temperature (degres Celsius)",
+       caption = "Reanalyse, pas une observation de station") +
+  theme_minimal()
+```
+
+::: {.callout-note}
+## Interprétation — la série mensuelle et son lissage
+
+**Ce que la figure code.** Chaque point est la moyenne spatiale, sur le territoire
+national, de la température à 2 m d'un mois donné. « Moyenne nationale » veut dire
+ici : moyenne des cellules de ~31 km, **pondérée par la fraction de chaque cellule
+réellement située dans le pays**.
+
+**Ce que les choix techniques font.** La courbe rouge est un lissage **LOESS** :
+une régression locale, ajustée sur une fenêtre glissante dont `span` fixe la
+largeur. Ce n'est **pas un modèle** de la température : c'est un guide visuel.
+Augmenter `span` produit une courbe plus plate, le diminuer la fait épouser la
+saisonnalité — essayez, c'est le meilleur moyen de comprendre qu'un lissage est un
+choix de l'analyste. La bande est un intervalle de confiance **sur le lissage
+lui-même**, pas sur la température : elle dit où passerait la courbe si on
+rééchantillonnait les mêmes points, rien de plus.
+
+**Ce qui se lit.** Le cycle saisonnier, et une éventuelle dérive du niveau moyen.
+
+**Ce qui ne se lit pas.** Un climat local. Une moyenne nationale mélange le Sud
+forestier et l'Extrême-Nord sahélien. Ne se lit pas non plus un extrême : une
+moyenne mensuelle a déjà écrasé les journées.
+:::
+
+```{webr}
+era_nat2 <- era_nat |>
+  mutate(mois_f = factor(mois, levels = 1:12,
+                         labels = c("J","F","M","A","M","J","J","A","S","O","N","D")))
+
+sais <- era_nat2 |>
+  group_by(mois, mois_f) |>
+  summarise(moyenne = mean(t2m_c, na.rm = TRUE),
+            mini = min(t2m_c, na.rm = TRUE),
+            maxi = max(t2m_c, na.rm = TRUE), .groups = "drop")
+
+ggplot(sais, aes(x = mois, y = moyenne)) +
+  geom_ribbon(aes(ymin = mini, ymax = maxi), fill = "#D1E5F0") +
+  geom_line(colour = "#2166AC", linewidth = 0.9) +
+  geom_point(colour = "#2166AC") +
+  scale_x_continuous(breaks = 1:12, labels = levels(era_nat2$mois_f)) +
+  labs(title = "Saisonnalite de la temperature nationale",
+       subtitle = "Trait : moyenne du mois sur toutes les annees. Ruban : minimum et maximum observes.",
+       x = NULL, y = "Temperature (degres Celsius)") +
+  theme_minimal()
+```
+
+::: {.callout-note}
+## Interprétation — le ruban min/max
+
+**Ce que la figure code.** Le trait code la moyenne pluriannuelle de chaque mois ; le
+ruban code l'**enveloppe des extrêmes observés** — le mois de mars le plus froid et
+le mois de mars le plus chaud de la période.
+
+**Ce que les choix techniques font.** Un ruban min/max n'est **pas** un intervalle de
+confiance : il ne dit rien sur l'incertitude d'estimation, il montre la
+**variabilité interannuelle réelle**. Sa largeur croît mécaniquement avec le nombre
+d'années disponibles — un extrême de plus l'élargit à jamais. C'est une différence
+qu'il faut expliciter en salle : beaucoup de lecteurs lisent tout ruban gris comme
+une incertitude.
+
+**Ce qui se lit.** L'amplitude saisonnière et les mois où la variabilité
+interannuelle est la plus forte.
+
+**Ce qui ne se lit pas.** Une tendance : l'année a disparu de ce graphique.
+:::
+
+```{webr}
+era_adm1 <- read_sf("_commons/data/J10_extraits/J10_era5_adm1.geojson")
+
+cat("Regions sans valeur ERA5 :", sum(is.na(era_adm1$t2m_moyen_c)), "\n")
+
+ggplot(era_adm1) +
+  geom_sf(aes(fill = t2m_moyen_c), colour = "white", linewidth = 0.3) +
+  scale_fill_viridis_c(option = "B", na.value = "grey80",
+                       name = "Temperature\nmoyenne (C)") +
+  geom_sf_text(aes(label = paste0(NAME_1, "\n", t2m_moyen_c)), size = 1.9,
+               colour = "white", fontface = "bold") +
+  labs(title = "Temperature moyenne pluriannuelle par region",
+       subtitle = "Extraction zonale ponderee par la fraction de cellule — ERA5",
+       caption = "Gris = region sans valeur. Resolution ERA5 ~0,25 degre, soit ~31 km de cote.") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+::: {.callout-warning}
+## Ce que la résolution d'ERA5 interdit de dire
+
+Une cellule ERA5 mesure environ **31 km de côté**, soit de l'ordre de **950 km²**.
+Le Cameroun entier tient en quelques centaines de cellules — le script d'extraction
+imprime le nombre exact.
+
+Conséquences directes, à énoncer avant toute lecture de cette carte :
+
+- **aucun îlot de chaleur urbain n'existe dans ce fichier.** Yaoundé et Douala
+  occupent une fraction de cellule ; leur signal thermique propre est moyenné avec
+  la campagne environnante ;
+- une **petite région** peut n'être couverte que par deux ou trois cellules : sa
+  « moyenne régionale » repose alors sur très peu de valeurs, et la pondération par
+  fraction de cellule y fait une vraie différence ;
+- comparer deux régions dont l'une est vaste et l'autre étroite compare deux
+  moyennes de qualités très différentes.
+
+C'est le même raisonnement qu'au J09 sur les emprises d'inondation : plus le
+polygone est petit devant la cellule, plus la règle d'extraction pèse.
+:::
+
+## Le code raster, en lecture seule
+
+```r
+# --- Ouvrir un NetCDF, sans se tromper d'unite -----------------------------
+library(terra)
+library(exactextractr)
+library(sf)
+
+# terra::rast() lit un NetCDF comme une PILE de couches : une couche = un mois.
+era <- rast("datasets/era5_t2m_mensuel_cameroun.nc")
+nlyr(era)          # nombre de mois
+res(era)           # ~0.25 degre
+time(era)          # les dates portees par le fichier — un NetCDF mal ecrit
+                   # peut n'en porter AUCUNE : on verifie avant de s'en servir
+
+# CONTROLE D'UNITE : l'ordre de grandeur trahit le Kelvin.
+global(era[[1]], "mean", na.rm = TRUE)
+
+# LA LIGNE LA PLUS FACILE A OUBLIER DE TOUTE LA JOURNEE :
+era_c <- era - 273.15
+```
+
+```r
+# --- Extraction zonale sur une PILE de couches -----------------------------
+cmr1 <- st_read("datasets/gadm41_CMR.gpkg", layer = "ADM_ADM_1")
+
+# Une ligne par region, une colonne par couche (donc par mois).
+reg <- exact_extract(era_c, st_transform(cmr1, crs(era_c)), "mean",
+                     progress = FALSE)
+
+# PIEGE. exact_extract nomme ses colonnes d'apres les couches, prefixees
+# "mean." : "mean.t2m_1", "mean.t2m_2"... Le suffixe n'est PAS forcement un
+# entier utilisable tel quel, et l'ordre ALPHABETIQUE des noms n'est PAS
+# l'ordre chronologique ("t2m_10" < "t2m_2" en tri texte).
+# On retrouve donc l'indice de chaque couche par match() sur names(era_c),
+# et la date par time(era_c)[idx]. On ne devine JAMAIS un indice a partir
+# d'un nom de colonne.
+idx <- match(sub("^mean\\.", "", names(reg)), names(era_c))
+sum(is.na(idx))    # doit valoir 0
+```
+
+# Partie III — Bénin : quand l'échantillon ne suffit plus
+
+::: {.callout-note}
+## Rappel : à partir d'ici, c'est le Bénin
+
+Les données sont l'EHCVM 2018 (ménages), les communes béninoises (`admin2`), et des
+covariables géospatiales extraites par cellule de 3 km. La variable d'intérêt,
+`insecure`, est une **déclaration de ménage** d'insécurité alimentaire — pas une
+mesure anthropométrique, pas un diagnostic.
+:::
+
+## 3. Le plan de sondage, et pourquoi un échantillon n'est pas la population
+
+```{webr}
+com <- read_sf("_commons/data/J10_extraits/J10_benin_communes_sae.geojson")
+
+cat("Communes du pays :", nrow(com), "\n\n")
+cat("Statut des communes :\n")
+print(table(com$statut))
+
+cat("\nTaille d'echantillon par commune (communes estimees) :\n")
+est <- com |> st_drop_geometry() |> filter(!is.na(insecure_fh))
+cat("  menages  — min :", min(est$n_menages),
+    " mediane :", median(est$n_menages),
+    " max :", max(est$n_menages), "\n")
+cat("  grappes  — min :", min(est$n_grappes),
+    " mediane :", median(est$n_grappes),
+    " max :", max(est$n_grappes), "\n")
+```
+
+::: {.callout-important}
+## Pourquoi une commune à une seule grappe est exclue — et pourquoi elle reste visible
+
+L'enquête est un sondage **à deux degrés** : on tire d'abord des **grappes** (des
+zones de dénombrement), puis des ménages à l'intérieur. La variance d'échantillonnage
+s'estime **entre grappes**, pas entre ménages : deux ménages de la même grappe se
+ressemblent plus que deux ménages tirés au hasard dans le pays.
+
+Une commune où **une seule grappe** a été enquêtée n'a donc **aucune variance
+estimable**. Son estimation directe existe, mais sans erreur-type — et le modèle de
+Fay-Herriot a précisément besoin de cette erreur-type comme entrée (`vardir`). Ces
+communes sont exclues du modèle, **avec un seuil déclaré dans le code**, et non
+supprimées du raisonnement : elles apparaissent en **gris** sur toutes les cartes qui
+suivent, et leur statut est nommé dans la légende.
+
+**Trois choses différentes, trois traitements différents** :
+
+| Ce qu'on voit | Ce que ça veut dire |
+|---|---|
+| une valeur | la commune a été enquêtée et estimée |
+| **gris « une seule grappe »** | enquêtée, mais variance non estimable |
+| **gris « non enquêtée »** | aucune donnée d'enquête dans cette commune |
+
+Peindre ces trois cas de la même couleur, ou les peindre à zéro, serait le pire des
+raccourcis : cela transformerait un trou d'échantillonnage en une absence
+d'insécurité alimentaire.
+:::
+
+## 4. Estimation directe contre Fay-Herriot
+
+```{webr}
+sae <- read.csv("_commons/data/J10_extraits/J10_benin_sae_communes.csv")
+sae_est <- sae |> filter(!is.na(insecure_fh))
+
+cat("Communes modelisees :", nrow(sae_est), "\n\n")
+cat("Gain de precision (RMSE direct - RMSE Fay-Herriot), en POINTS :\n")
+cat("  moyen  :", round(mean(sae_est$gain_rmse), 3), "\n")
+cat("  median :", round(median(sae_est$gain_rmse), 3), "\n")
+cat("  min    :", round(min(sae_est$gain_rmse), 3), "\n")
+cat("  max    :", round(max(sae_est$gain_rmse), 3), "\n")
+cat("Communes ou le gain est NEGATIF :", sum(sae_est$gain_rmse < 0),
+    "sur", nrow(sae_est), "\n")
+cat("Reduction relative moyenne du RMSE (%) :",
+    round(mean(sae_est$gain_pct), 1), "\n\n")
+cat("Deplacement de l'estimation (FH - direct), en points :\n")
+cat("  amplitude maximale :", round(max(abs(sae_est$deplacement)), 2), "\n")
+cat("  ecart-type         :", round(sd(sae_est$deplacement), 2), "\n")
+```
+
+```{webr}
+library(tidyr)
+
+# Mettre en regard les deux estimations et leurs intervalles, commune par
+# commune. On limite l'affichage aux 30 communes au plus petit echantillon :
+# c'est la que le modele est cense servir a quelque chose.
+petites <- sae_est |> arrange(n_menages) |> head(30)
+
+comp <- petites |>
+  select(admin2Pcod, n_menages, insecure_direct, rmse_direct,
+         insecure_fh, rmse_fh) |>
+  pivot_longer(cols = c(insecure_direct, insecure_fh),
+               names_to = "methode", values_to = "estimation") |>
+  mutate(rmse = ifelse(methode == "insecure_direct", rmse_direct, rmse_fh),
+         methode = recode(methode,
+                          insecure_direct = "Estimation directe",
+                          insecure_fh = "Fay-Herriot"))
+
+ggplot(comp, aes(x = estimation, y = reorder(admin2Pcod, -n_menages),
+                 colour = methode)) +
+  geom_errorbarh(aes(xmin = estimation - 1.96 * rmse,
+                     xmax = estimation + 1.96 * rmse),
+                 height = 0, linewidth = 0.6,
+                 position = position_dodge(width = 0.7)) +
+  geom_point(size = 1.6, position = position_dodge(width = 0.7)) +
+  scale_colour_manual(values = c("Estimation directe" = "#B2182B",
+                                 "Fay-Herriot" = "#2166AC"), name = NULL) +
+  labs(title = "Deux estimations et leurs intervalles, commune par commune",
+       subtitle = "Les 30 communes au plus petit echantillon, de la plus petite en bas",
+       x = "Insecurite alimentaire declaree (%)", y = NULL,
+       caption = "Barres : +/- 1,96 x RMSE. Benin, EHCVM 2018.") +
+  theme_minimal() +
+  theme(legend.position = "bottom",
+        axis.text.y = element_text(size = 6))
+```
+
+::: {.callout-note}
+## Interprétation — les deux estimations côte à côte
+
+**Ce que la figure code.** Le point code l'estimation, la barre horizontale code
+**± 1,96 × RMSE**. Deux définitions à ne pas confondre : pour l'estimation directe,
+le RMSE est l'**erreur-type d'échantillonnage** ; pour Fay-Herriot, c'est la racine
+de l'**erreur quadratique moyenne** de l'EBLUP, qui inclut à la fois l'erreur
+d'échantillonnage et l'erreur du modèle. Ce sont deux quantités de nature
+différente, mises dans la même unité — des points de pourcentage — pour être
+comparables.
+
+**Ce que les choix techniques font.** Le tri par taille d'échantillon décroissante
+est ce qui rend la figure lisible : le mécanisme du modèle se voit en descendant vers
+les petites communes. `position_dodge` sépare les deux méthodes pour la même commune.
+
+**Ce qui se lit.** Le **rétrécissement** des intervalles, et le **déplacement** de
+l'estimation vers ce que prédisent les covariables et la moyenne des autres communes.
+
+**Ce qui ne se lit pas.** Que Fay-Herriot serait « plus vrai ». Le modèle échange de
+la **variance** contre du **biais** : il rapproche les estimations extrêmes de la
+tendance générale. Si une commune est réellement atypique pour une raison que les
+covariables ignorent, le modèle l'aplatit — et l'intervalle plus étroit donnera à ce
+chiffre lissé une confiance qu'il ne mérite pas.
+:::
+
+## 5. Le vrai test du mécanisme
+
+```{webr}
+# LE TEST QUI DECIDE si le modele fonctionne : le gain doit etre MAXIMAL la
+# ou l'echantillon est le PLUS PETIT. C'est le mecanisme meme de la methode.
+# Le tableau par tiers fait foi : il ne depend d'aucun lissage.
+tiers <- sae_est |>
+  mutate(tiers = ntile(n_menages, 3),
+         tiers = factor(tiers, labels = c("1er tiers — plus petits echantillons",
+                                          "2e tiers", "3e tiers — plus grands"))) |>
+  group_by(tiers) |>
+  summarise(n_communes = n(),
+            menages_median = median(n_menages),
+            gain_rmse_moyen = round(mean(gain_rmse), 3),
+            gain_pct_moyen = round(mean(gain_pct), 1),
+            .groups = "drop")
+print(tiers)
+```
+
+```{webr}
+ggplot(sae_est, aes(x = n_menages, y = gain_rmse)) +
+  geom_point(alpha = 0.6, colour = "#2166AC") +
+  geom_smooth(method = "loess", se = TRUE, colour = "#B2182B",
+              fill = "#FDDBC7") +
+  geom_hline(yintercept = 0, linetype = 2, colour = "grey40") +
+  scale_x_log10() +
+  labs(title = "Gain de precision contre taille d'echantillon",
+       subtitle = "Echelle logarithmique en abscisse. La courbe doit DECROITRE.",
+       x = "Menages enquetes dans la commune (echelle log)",
+       y = "Gain de RMSE (points de pourcentage)",
+       caption = "Le tableau par tiers ci-dessus dit la meme chose sans dependre du lissage : c'est lui qui fait foi.") +
+  theme_minimal()
+```
+
+::: {.callout-note}
+## Interprétation — le gain contre la taille d'échantillon
+
+**Ce que la figure code.** En abscisse, le nombre de ménages enquêtés dans la
+commune, en **échelle logarithmique** : les tailles s'étalent sur plus d'un ordre de
+grandeur, et une échelle linéaire tasserait toutes les petites communes contre
+l'axe. En ordonnée, le gain de précision en points de pourcentage.
+
+**Ce que les choix techniques font.** Le LOESS est un guide visuel, pas un test. Sa
+forme dépend du paramètre de lissage et de quelques points extrêmes. C'est pourquoi
+le **tableau par tiers** est imprimé juste au-dessus : il dit la même chose sans
+dépendre d'aucun réglage, et **c'est lui qui fait foi**.
+
+**Ce qui se lit.** Si la relation décroît, le modèle fait ce qu'on attend de lui :
+emprunter de la force aux autres communes là où l'échantillon local est trop mince,
+et s'effacer là où l'estimation directe est déjà bonne.
+
+**Ce qui ne se lit pas.** La qualité des estimations elles-mêmes. Un gain de
+précision peut coexister avec un modèle mal spécifié : la précision se gagne alors
+sur un biais. La ligne horizontale à zéro sert à repérer les communes où
+Fay-Herriot est **moins** précis que l'estimation directe — s'il y en a, elles
+méritent d'être regardées une par une.
+:::
+
+## 6. Trois cartes à échelle commune
+
+```{webr}
+# ECHELLE COMMUNE aux deux cartes d'estimation : sans elle, deux palettes
+# calculees separement donneraient au meme niveau d'insecurite deux couleurs
+# differentes, et la comparaison visuelle — qui est TOUT l'objet de la
+# figure — serait fausse.
+bornes <- range(c(com$insecure_direct, com$insecure_fh), na.rm = TRUE)
+cat("Bornes communes de l'echelle (%) :", round(bornes, 1), "\n")
+
+cartes <- rbind(
+  com |> transmute(panneau = "Estimation directe", valeur = insecure_direct),
+  com |> transmute(panneau = "Fay-Herriot (EBLUP)", valeur = insecure_fh)
+)
+
+ggplot(cartes) +
+  geom_sf(aes(fill = valeur), colour = "white", linewidth = 0.1) +
+  facet_wrap(~ panneau) +
+  scale_fill_viridis_c(option = "B", limits = bornes, na.value = "grey80",
+                       name = "Insecurite\ndeclaree (%)") +
+  labs(title = "Insecurite alimentaire declaree par commune, Benin",
+       subtitle = "Meme echelle de couleur sur les deux panneaux",
+       caption = "GRIS = commune non estimee (non enquetee, ou une seule grappe). Ce n'est PAS un zero.") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+```{webr}
+ggplot(com) +
+  geom_sf(aes(fill = rmse_fh), colour = "white", linewidth = 0.1) +
+  scale_fill_viridis_c(option = "D", direction = -1, na.value = "grey80",
+                       name = "RMSE\n(points)") +
+  labs(title = "Ou l'estimation modelisee reste la moins precise",
+       subtitle = "Racine de l'erreur quadratique moyenne de l'EBLUP, par commune",
+       caption = "Gris = commune non estimee. La carte de precision doit TOUJOURS accompagner la carte d'estimation.") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+::: {.callout-note}
+## Interprétation — les trois cartes
+
+**Ce que les figures codent.** Les deux premières codent la **même grandeur** — un
+pourcentage de ménages déclarant une insécurité alimentaire — estimée de deux façons.
+La troisième code la **précision** de la seconde, en points de pourcentage.
+
+**Ce que les choix techniques font.** `limits = bornes` impose la même échelle aux
+deux premiers panneaux : c'est l'erreur la plus fréquente des cartes comparatives
+que d'oublier cette ligne. Sur la carte de précision, la palette est inversée pour
+que le foncé code le **moins précis** — un choix à annoncer, car l'intuition
+« foncé = beaucoup » ne dit pas si « beaucoup » est bon ou mauvais.
+
+**Ce qui se lit.** Le lissage : la carte Fay-Herriot est plus régulière, les
+extrêmes sont rentrés. Et la carte de précision dit **où** on a le droit de lire la
+première.
+
+**Ce qui ne se lit pas.** Une carte d'estimation seule ne se lit pas du tout. Publier
+la carte des valeurs sans la carte des RMSE, c'est donner la même autorité visuelle
+à une commune estimée sur quelques dizaines de ménages et à une commune estimée sur
+plusieurs centaines.
+
+**Et le gris.** Il apparaît sur les trois cartes, au même endroit, et il recouvre
+deux situations distinctes que le tableau de statuts de la section 3 sépare. Le
+laisser sans légende serait la faute la plus coûteuse de la journée.
+:::
+
+## Le code `survey` et `sae`, en lecture seule
+
+```r
+# --- Le plan de sondage, puis l'estimation directe -------------------------
+library(sae)        # AVANT dplyr : sae depend de MASS, qui definit select().
+library(survey)     # Charge apres dplyr, MASS::select() gagnerait et tout
+library(dplyr)      # appel a select() echouerait sur un message obscur.
+
+men <- readr::read_csv("datasets/ehcvm2018_benin_menages.csv")
+
+# DECLARATION DU PLAN DE SONDAGE.
+#   ids     = ~grappe   : unite primaire de tirage (sondage a deux degres)
+#   weights = ~hhweight : poids de sondage du menage
+# Aucune strate n'est declaree, faute d'identifiant de strate dans le
+# fichier : l'erreur-type obtenue est donc legerement CONSERVATRICE.
+design <- svydesign(ids = ~grappe, weights = ~hhweight, data = men)
+
+# LA COMPARAISON QUI JUSTIFIE TOUT LE MODULE.
+mean(men$insecure)              # decrit l'ECHANTILLON
+svymean(~insecure, design)      # decrit la POPULATION
+
+# svyby() applique svymean() SEPAREMENT a chaque commune, en respectant le
+# plan. group_by() |> summarise(mean()) ignorerait poids ET grappes et
+# fournirait une erreur-type sous-estimee, donc inutilisable comme entree
+# du modele.
+direct <- svyby(~insecure, ~admin2Pcod, design, svymean, na.rm = TRUE)
+```
+
+```r
+# --- Fay-Herriot -----------------------------------------------------------
+# Ce qui distingue un modele SAE d'une simple regression : vardir, la
+# variance d'echantillonnage CONNUE de chaque commune. Le modele s'ecrit
+#   theta_i = x_i' beta + u_i + e_i
+# ou u_i est un effet aleatoire de commune (ce que les covariables ignorent)
+# et e_i l'erreur d'echantillonnage, de variance CONNUE.
+# L'EBLUP est une moyenne ponderee entre l'estimation directe et la
+# prediction du modele : le poids donne au direct croit avec sa precision.
+fh <- mseFH(insecure_direct ~ lc_13_urbain_adm2 + lc_8_savane_boisee_adm2,
+            vardir = direct$var_direct, data = direct)
+
+fh$est$fit$estcoef      # coefficients
+fh$est$fit$refvar       # variance de l'effet aleatoire de commune
+sqrt(fh$mse)            # RMSE de l'EBLUP, en points de pourcentage
+```
+
+## 7. Précision n'est pas résolution
+
+```{webr}
+grille <- read.csv("_commons/data/J10_extraits/J10_benin_grille_prediction.csv")
+
+cat("Cellules de 3 km :", nrow(grille), "\n")
+cat("Cellules sans prediction (commune non modelisee) :",
+    sum(is.na(grille$pred_insecure)), "\n")
+# CONTROLE INDISPENSABLE : le modele est LINEAIRE et la variable est une
+# PROPORTION. Rien n'empeche une prediction de sortir de [0, 100]. On COMPTE,
+# on ne tronque pas en silence.
+cat("Cellules predites hors de [0, 100] :", sum(grille$hors_bornes,
+                                                na.rm = TRUE), "\n")
+cat("Prediction — min :", round(min(grille$pred_insecure, na.rm = TRUE), 1),
+    " max :", round(max(grille$pred_insecure, na.rm = TRUE), 1), "\n")
+
+# L'effet aleatoire u_hat est CONSTANT a l'interieur d'une commune.
+cat("\nValeurs distinctes de u_hat :", length(unique(na.omit(grille$u_hat))),
+    "pour", length(unique(grille$admin2Pcod)), "communes\n")
+```
+
+```{webr}
+ggplot(grille[!is.na(grille$pred_insecure), ]) +
+  geom_tile(aes(x = x, y = y, fill = pred_insecure)) +
+  coord_sf() +
+  scale_fill_viridis_c(option = "B", name = "Insecurite\npredite (%)") +
+  labs(title = "Prediction sur la grille de 3 km, Benin",
+       subtitle = "La carte la plus impressionnante de la journee, et la moins mesuree",
+       x = NULL, y = NULL,
+       caption = "Cellules sans prediction : non tracees. Elles appartiennent aux communes exclues du modele.") +
+  theme_minimal()
+```
+
+::: {.callout-warning}
+## L'avertissement qui doit toujours accompagner cette carte
+
+Cette carte est fine, lisse, et donne l'impression d'une connaissance à 3 km. Elle
+n'en est pas une. Trois faits, à énoncer chaque fois qu'on la montre :
+
+**1. Précision et résolution sont deux problèmes différents.** L'estimation sur
+petits domaines gagne de la **précision** — des intervalles plus étroits sur des
+domaines déjà définis. Elle ne crée **aucune résolution** : aucune information
+nouvelle n'est entrée dans le modèle entre la commune et la cellule.
+
+**2. L'effet aléatoire est constant dans la commune.** Le bloc précédent l'a vérifié
+en comptant les valeurs distinctes de `u_hat`. Toute la variation visible **à
+l'intérieur** d'une commune vient donc des **covariables**, et d'elles seules : cette
+carte montre la géographie de la part de sol urbain et de savane boisée, translatée
+et mise à l'échelle par deux coefficients. Ce n'est pas rien — mais ce n'est pas une
+mesure d'insécurité alimentaire à 3 km.
+
+**3. Le modèle est linéaire, la variable est une proportion.** Des cellules peuvent
+être prédites hors de `[0, 100]`. Le code les **compte** au lieu de les tronquer en
+silence : une valeur impossible est un diagnostic sur le modèle, pas un défaut
+d'affichage à corriger.
+
+Et, comme toujours : les cellules absentes de cette carte ne sont pas des zones sans
+insécurité alimentaire. Ce sont des zones **sans estimation**.
+:::
+
+::: {.callout-tip}
+## En quoi le spatial apporte ici ce que le tableau ne contient pas
+
+Le tableau des estimations communales existe : c'est
+`J10_benin_sae_communes.csv`. Il contient exactement les mêmes nombres que les
+cartes. Trois choses n'y sont pourtant pas.
+
+**Le voisinage comme objet.** Sur la carte, les communes à forte insécurité se
+touchent — ou ne se touchent pas. Un bloc contigu déplace la question : ce n'est
+plus « pourquoi cette commune ? » mais « qu'est-ce que ces communes partagent
+*parce qu'elles sont voisines* ? ». Le tableau, trié, traite les communes comme
+indépendantes ; il ne peut pas poser cette question.
+
+**L'écart entre deux cartes.** Comparer la carte directe et la carte Fay-Herriot fait
+apparaître **où** le modèle a corrigé, et donc où l'échantillon était le plus
+faible. C'est une information sur le **dispositif d'enquête**, pas sur l'insécurité
+alimentaire — et elle n'existe dans aucune des deux cartes prises isolément.
+
+**Le repérage de ce qui manque.** Les communes grises forment-elles un motif ? Si
+les trous d'échantillonnage sont concentrés dans une région, le plan de sondage a un
+biais géographique qu'aucun tri de tableau ne révélerait. C'est le plus solide des
+arguments pour cartographier une enquête.
+:::
+
+## Glossaire de la journée
+
+**ACLED.** Base d'événements de conflit **rapportés**, codés à partir de sources
+médiatiques et institutionnelles. Pas un recensement.
+
+**Réanalyse.** Sortie d'un modèle atmosphérique contraint par les observations
+disponibles. Complète et régulière, mais pas observée.
+
+**Kelvin.** Unité absolue de température. `T_C = T_K − 273,15`. La conversion est
+détectable sur un niveau, **indétectable sur une différence**.
+
+**LOESS.** Régression locale, guide visuel réglé par un paramètre de lissage. Pas un
+modèle.
+
+**Plan de sondage.** Ensemble des règles de tirage. Un sondage à deux degrés tire
+des grappes puis des ménages ; la variance s'estime **entre grappes**.
+
+**Estimation directe.** Estimation calculée uniquement sur les observations du
+domaine, en respectant le plan.
+
+**Petit domaine.** Domaine dont l'échantillon est trop petit pour une estimation
+directe précise.
+
+**Fay-Herriot.** Modèle au niveau du domaine qui combine l'estimation directe et une
+prédiction fondée sur des covariables, pondérées par leurs précisions respectives.
+Entrée indispensable : la **variance d'échantillonnage connue** de chaque domaine.
+
+**EBLUP.** *Empirical Best Linear Unbiased Predictor* — l'estimation produite par ce
+modèle.
+
+**RMSE.** Racine de l'erreur quadratique moyenne. Exprimée ici en **points de
+pourcentage**, donc comparable à une erreur-type.
+
+**Précision ≠ résolution.** Voir la section 7. C'est la confusion la plus coûteuse de
+la journée.
+
+## Fonctions clés
+
+| Fonction | Ce qu'elle fait | Où |
+|---|---|---|
+| `st_join(..., join = st_within)` | rattacher des points à des polygones **par la position** | navigateur (déjà fait en amont) |
+| `geom_sf()` + `facet_wrap()` + `limits =` | cartes comparatives à **échelle commune** | navigateur |
+| `geom_errorbarh()` | intervalles d'estimation, commune par commune | navigateur |
+| `ntile()` | découpage en tiers, pour un test qui ne dépend d'aucun lissage | navigateur |
+| `terra::rast()` sur `.nc` | lire un NetCDF comme une pile de couches | RStudio |
+| `terra::time()` | récupérer les dates portées par les couches | RStudio |
+| `exact_extract(pile, …)` | une colonne par couche, une ligne par polygone | RStudio |
+| `survey::svydesign()` | déclarer grappes et poids | RStudio |
+| `survey::svyby()` | estimation directe par domaine, dans le respect du plan | RStudio |
+| `sae::mseFH()` | ajuster Fay-Herriot et obtenir l'EQM de l'EBLUP | RStudio |
+
+## Exercices
+
+1. **Le zéro de la jointure.** Reprenez la section 1 et construisez la carte
+   choroplèthe qu'aurait donnée la jointure **par libellé**, en remplaçant les `NA`
+   par zéro. *Question de méthode : combien de régions deviennent « pacifiées » ?
+   Comment un lecteur les distinguerait-il des vraies régions sans événement ?*
+2. **Kelvin sur une différence.** Calculez l'écart de température entre le mois le
+   plus chaud et le mois le plus froid, une fois en Celsius, une fois en ajoutant
+   273,15 aux deux. *Question de méthode : quel contrôle, autre que l'ordre de
+   grandeur, aurait détecté l'oubli ?*
+3. **L'échelle commune.** Retracez les deux cartes de la section 6 **sans**
+   `limits = bornes`. *Question de méthode : la comparaison visuelle reste-t-elle
+   possible ? Qu'aurait conclu un lecteur pressé ?*
+4. **Le gris.** Comptez les communes grises et regardez leur répartition
+   géographique. *Question de méthode : forment-elles un motif ? Si oui, que
+   faudrait-il écrire sous la carte avant de la publier ?*
+5. **Précision et résolution.** Recalculez la carte de la section 7 en mettant
+   `u_hat` à zéro partout. *Question de méthode : de combien la carte change-t-elle,
+   et qu'est-ce que cela dit de la part du modèle dans ce qu'on voit ?*
+
+## Prolongements
+
+- **J11** — pérenniser : comment un enchaînement de cette longueur (nettoyage,
+  plan de sondage, modèle, prédiction) se documente et se rejoue à l'identique.
+- **J08 et J09** — les grilles de population et le bâti, qui fournissent une partie
+  des covariables géospatiales utilisées ici.
+
+[← Retour à l'accueil](../INDEX.md)

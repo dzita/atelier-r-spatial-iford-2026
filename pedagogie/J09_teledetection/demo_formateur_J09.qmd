@@ -1,0 +1,3375 @@
+---
+title: "J09 · Voir le territoire depuis l'espace : télédétection, bâti et inondations — démonstration formateur"
+subtitle: "Atelier IFORD × GDSG 2026 · Yaoundé · Référents : E. Darin, R. Dzita, M. Teda, J.S. Alogo — Support : R. Elandi"
+author: "Geospatial Data Science Group — IFORD"
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    toc-location: left
+    number-sections: false
+    code-tools: true
+    code-fold: false
+    df-print: paged
+    theme:
+      - cosmo
+      - ../_commons/styles/demo_report.scss
+execute:
+  eval: true       # exécute le code ET affiche les sorties
+  echo: true
+  error: true      # un chunk en erreur n'interrompt pas le rendu
+  warning: true    # PHASE DE TEST : avertissements visibles (repasser a false
+                   # pour la version distribuee aux participants si trop bavard)
+  message: true
+  fig-width: 8
+  fig-height: 5
+---
+
+::: {.callout-note}
+## Comment lire ce document
+
+Ce rapport est le **miroir exécuté** de `scripts/script_formateur_J09.R` : chaque section
+montre le code **et sa sortie**. Ce dossier est **autonome** : ouvrez-le directement dans
+RStudio (ou double-cliquez le `.qmd`). Les données sont dans le sous-dossier `datasets/`
+et les sorties vont dans `outputs/` — **tous les chemins sont relatifs à ce dossier**.
+
+1. Une fois : `source("install_packages_day.R")` (packages du jour).
+2. Vérifier que `datasets/` contient bien les fichiers listés dans `datasets/LISEZMOI.md`.
+3. Cliquer **Render**. Les imports protégés par `file.exists()` laissent le rendu aboutir
+   même si une donnée manque (la sortie concernée affiche alors un message).
+
+Le `.qmd` est la **source unique** de la journée : les trois scripts `.R` de `scripts/`
+en sont dérivés mécaniquement. Une correction se fait ici, jamais dans les scripts.
+:::
+
+::: {.callout-important}
+## La question de la journée
+
+**Que peut-on mesurer d'un territoire quand on ne peut pas y aller ?**
+
+Trois réponses, dans cet ordre, et elles ne se valent pas :
+
+1. On mesure un **rayonnement** — c'est la physique du capteur (modules 1 et 2).
+2. On mesure un **produit dérivé** que quelqu'un d'autre a fabriqué à partir de ce
+   rayonnement — GHS-BUILT, Open Buildings, Copernicus EMS (modules 3 à 9). C'est
+   confortable, et c'est là que se cachent les hypothèses qu'on n'a pas prises.
+3. On **croise** deux produits indépendants et on regarde où ils divergent. C'est
+   le module 7, et c'est le moment le plus important de la journée : deux méthodes
+   défendables donnent deux réponses différentes, et il faut savoir dire laquelle
+   répond à quelle question.
+:::
+
+## 0. Mise en place
+
+L'installation se fait une seule fois, via `install_packages_day.R`. Le bloc
+ci-dessous n'est là qu'à titre de référence — il n'est pas exécuté.
+
+```{r}
+#| label: chunk-ref-install
+#| eval: false
+# BLOC DE REFERENCE, NON EXECUTE.
+# L'installation reelle : source("install_packages_day.R")
+install.packages(c("sf", "dplyr", "ggplot2", "tidyr", "readr",
+                   "terra", "exactextractr", "tmap", "osmdata"))
+```
+
+```{r}
+#| label: setup
+#| include: false
+for (d in c("outputs"))
+  dir.create(d, recursive = TRUE, showWarnings = FALSE)
+```
+
+```{r}
+#| label: chunk-packages
+library(sf)            # donnees vectorielles (vu au J03)
+library(dplyr)         # verbes de manipulation de tableaux
+library(ggplot2)       # graphiques et cartes statiques
+library(tidyr)         # pivot_longer / pivot_wider
+library(readr)         # lecture et ecriture de CSV
+library(terra)         # LE package raster moderne (vu au J04)
+library(exactextractr) # statistiques zonales ponderees par fraction de cellule
+library(tmap)          # cartographie thematique -- API version 4
+library(osmdata)       # interrogation de l'API Overpass d'OpenStreetMap
+
+options(scipen = 999)              # pas de notation scientifique
+terra::terraOptions(progress = 0)  # pas de barre de progression dans le HTML
+
+cat("sf            :", as.character(packageVersion("sf")), "\n")
+cat("terra         :", as.character(packageVersion("terra")), "(1.7 minimum)\n")
+cat("tmap          :", as.character(packageVersion("tmap")), "(4.0 minimum)\n")
+cat("exactextractr :", as.character(packageVersion("exactextractr")), "\n")
+```
+
+### 0.1 Deux réglages qui décident de la justesse des chiffres
+
+```{r}
+#| label: chunk-reglages
+# --- 1. Moteur geometrique -------------------------------------------------
+# sf peut calculer sur la sphere (moteur s2, defaut) ou dans le plan (GEOS).
+# s2 REFUSE ce que GEOS accepte : sur des shapefiles operationnels produits en
+# urgence -- ce qui est exactement le cas des produits Copernicus EMS -- les
+# auto-intersections sont frequentes et s2 fait echouer st_intersection().
+# On bascule sur GEOS pour toute la journee, et on repare a la lecture.
+sf_use_s2(FALSE)
+cat("Moteur spherique s2 actif :", sf_use_s2(), "(FALSE = calcul planaire GEOS)\n")
+
+# --- 2. Le CRS dans lequel on MESURE ---------------------------------------
+# EPSG:4326 (WGS84) est en DEGRES. Une surface ou une longueur calculee dessus
+# n'a aucun sens metrique : un degre de longitude vaut 111 km a l'equateur et
+# 0 km au pole. Toute mesure de cette journee passe donc par une projection
+# metrique. Pour le Cameroun : UTM zone 33N, EPSG:32633.
+crs_mesure <- 32633
+cat("CRS de mesure retenu : EPSG:", crs_mesure, " (UTM 33N, unite = metre)\n", sep = "")
+
+# --- 3. Mode de rendu cartographique ---------------------------------------
+# tmap "plot" = image statique. Le mode "view" produit un widget interactif qui
+# embarque toutes les geometries DANS le fichier HTML : sur ce dossier, cela
+# ferait passer le rendu de quelques Mo a plusieurs dizaines de Mo. Voir la
+# section 6.6 des regles de l'atelier.
+tmap_mode("plot")
+```
+
+::: {.callout-warning}
+## Pourquoi `sf_use_s2(FALSE)` n'est pas un détail de confort
+
+Le moteur `s2` traite la Terre comme une sphère ; GEOS la traite comme un plan.
+Les deux sont défendables, mais ils n'acceptent pas les mêmes géométries. Un
+polygone dont le contour se recoupe (une « auto-intersection ») est refusé par
+`s2` avec un message d'erreur, alors que GEOS le traite silencieusement.
+
+Les produits de cartographie rapide — Copernicus EMS produit ses vecteurs en
+quelques heures après une catastrophe — sont précisément le type de données qui
+contient ces défauts. Le choix est donc : soit on désactive `s2` et on répare
+avec `st_make_valid()` à la lecture, soit `st_intersection()` s'arrête au milieu
+de la journée. On fait le premier, et on l'écrit.
+
+**Contrepartie à connaître** : avec `s2` désactivé, les calculs sur des
+coordonnées en degrés deviennent des calculs planaires sur des degrés — c'est-à-dire
+faux. C'est exactement pour cela que la règle « reprojeter avant toute mesure »
+devient obligatoire, et non plus seulement recommandée.
+:::
+
+::: {.callout-note}
+## Où ce document cherche-t-il ses fichiers ?
+
+Tous les chemins sont **relatifs à ce dossier** : `datasets/` pour les entrées,
+`outputs/` pour les sorties. Quarto s'y place automatiquement au rendu.
+
+Les fichiers sont **à plat** dans `datasets/` : pas de sous-dossier `GHS-BUILT/`,
+pas de `EMSR772_products/`, pas de dossier `Open Buildings` avec un espace dans
+son nom. C'est une contrainte de l'outil de distribution des données, qui repère
+les littéraux de la forme `datasets/nom_du_fichier` par expression régulière, à la racine du
+dossier du jour uniquement.
+
+Nul besoin de `setwd()`, et c'est même à proscrire : un chemin absolu du type
+`C:/Formation_GeoR/…` casse dès qu'on change de poste.
+:::
+
+```{r}
+#| label: chunk-inventaire
+# Inventaire de depart : on regarde ce qui est REELLEMENT dans datasets/
+# avant d'ecrire la moindre ligne d'analyse. Le fichier de donnees fait
+# autorite, jamais le code.
+fichiers_attendus <- c(
+  "gadm41_CMR.gpkg",
+  "cmr_pop_2024_CN_100m_R2025A_v1.tif",
+  "open_buildings_yagoua.gpkg",
+  "routes_aoi01_yagoua.gpkg",
+  "EMSR772_AOI01_areaOfInterestA.shp",
+  "EMSR772_AOI01_floodDepthA.shp",
+  "EMSR772_AOI02_areaOfInterestA.shp",
+  "EMSR772_AOI02_floodDepthA.shp",
+  "EMSR772_AOI03_areaOfInterestA.shp",
+  "EMSR772_AOI03_floodDepthA.shp"
+)
+
+etat <- data.frame(
+  fichier = fichiers_attendus,
+  present = file.exists(file.path("datasets", fichiers_attendus))
+)
+print(etat)
+
+# Les tuiles GHS-BUILT sont chargees par MOTIF (list.files ci-dessous) et non
+# par un litteral. outils/distribuer_donnees.R, qui detecte les donnees par une
+# regex sur les litteraux datasets/ entre guillemets, ne peut donc pas les voir.
+# Meme parade qu'au J08 :
+# on ecrit les noms complets en commentaire. Un commentaire n'affecte pas
+# l'execution, mais rend la copie automatique possible.
+# Les 15 archives REELLEMENT presentes dans le materiel source
+# (7 pour E2015, 8 pour E2025 -- E2015 R7_C19 n'existe pas, cf. callout) :
+#   "datasets/GHS_BUILT_S_E2015_GLOBE_R2023A_54009_100_V1_0_R7_C20.zip"
+#   "datasets/GHS_BUILT_S_E2015_GLOBE_R2023A_54009_100_V1_0_R8_C19.zip"
+#   "datasets/GHS_BUILT_S_E2015_GLOBE_R2023A_54009_100_V1_0_R8_C20.zip"
+#   "datasets/GHS_BUILT_S_E2015_GLOBE_R2023A_54009_100_V1_0_R8_C21.zip"
+#   "datasets/GHS_BUILT_S_E2015_GLOBE_R2023A_54009_100_V1_0_R9_C19.zip"
+#   "datasets/GHS_BUILT_S_E2015_GLOBE_R2023A_54009_100_V1_0_R9_C20.zip"
+#   "datasets/GHS_BUILT_S_E2015_GLOBE_R2023A_54009_100_V1_0_R9_C21.zip"
+#   "datasets/GHS_BUILT_S_E2025_GLOBE_R2023A_54009_100_V1_0_R7_C19.zip"
+#   "datasets/GHS_BUILT_S_E2025_GLOBE_R2023A_54009_100_V1_0_R7_C20.zip"
+#   "datasets/GHS_BUILT_S_E2025_GLOBE_R2023A_54009_100_V1_0_R8_C19.zip"
+#   "datasets/GHS_BUILT_S_E2025_GLOBE_R2023A_54009_100_V1_0_R8_C20.zip"
+#   "datasets/GHS_BUILT_S_E2025_GLOBE_R2023A_54009_100_V1_0_R8_C21.zip"
+#   "datasets/GHS_BUILT_S_E2025_GLOBE_R2023A_54009_100_V1_0_R9_C19.zip"
+#   "datasets/GHS_BUILT_S_E2025_GLOBE_R2023A_54009_100_V1_0_R9_C20.zip"
+#   "datasets/GHS_BUILT_S_E2025_GLOBE_R2023A_54009_100_V1_0_R9_C21.zip"
+cat("\nArchives GHS-BUILT trouvees dans datasets/ :\n")
+zip_2015 <- list.files("datasets", pattern = "^GHS_BUILT_S_E2015.*\\.zip$",
+                       full.names = TRUE)
+zip_2025 <- list.files("datasets", pattern = "^GHS_BUILT_S_E2025.*\\.zip$",
+                       full.names = TRUE)
+cat("  millesime 2015 :", length(zip_2015), "tuile(s)\n")
+cat("  millesime 2025 :", length(zip_2025), "tuile(s)\n")
+if (length(zip_2015) > 0) cat(paste0("    ", basename(zip_2015)), sep = "\n")
+if (length(zip_2025) > 0) cat(paste0("    ", basename(zip_2025)), sep = "\n")
+```
+
+::: {.callout-important}
+## Un piège de nommage à connaître avant la salle
+
+Le matériel source du jour cherchait les tuiles `GHS_BUILT_S_E2020` — un millésime
+qui **n'existe pas** dans les données livrées. Les archives disponibles sont
+**2015 et 2025**. Un `list.files()` sur un motif introuvable ne lève aucune erreur :
+il renvoie un vecteur de longueur zéro, et le `mosaic()` qui suit échoue quelques
+lignes plus loin avec un message qui ne parle pas du tout du vrai problème.
+
+C'est le mécanisme de la règle « ce qui échoue en silence est plus dangereux que
+ce qui plante » : le comptage `length(zip_2015)` ci-dessus vaut mieux qu'une
+relecture du motif. **Si l'un des deux comptages vaut 0, arrêtez-vous ici** et
+remplissez `datasets/` avant de continuer.
+:::
+
+# Module 1 · Ce qu'un satellite mesure réellement
+
+*Conservé de la version précédente de la journée, réécrit.* Sans ce module, la
+journée n'est plus une journée de télédétection : c'est une journée de statistiques
+zonales sur des produits fabriqués par d'autres.
+
+## 1.1 De la surface au fichier : la chaîne complète
+
+Un satellite d'observation de la Terre ne photographie pas. Il **mesure une
+quantité de rayonnement électromagnétique** qui arrive sur son capteur, dans un
+intervalle de longueurs d'onde donné, pendant un temps donné, pour une petite
+portion de surface donnée. Tout le reste est de la reconstruction.
+
+La chaîne, dans l'ordre :
+
+| Étape | Ce qui se passe | Où le doute s'introduit |
+|---|---|---|
+| Émission | le Soleil éclaire la surface | angle solaire variable selon l'heure et la saison |
+| Réflexion | la surface renvoie une part du rayonnement | c'est **la** grandeur d'intérêt : la réflectance |
+| Traversée | le rayonnement retraverse l'atmosphère | aérosols, vapeur d'eau, nuages : le signal est altéré |
+| Détection | le capteur intègre l'énergie reçue par bande | bruit du capteur, saturation sur les surfaces très claires |
+| Quantification | l'énergie devient un entier | 12 bits chez Sentinel-2 ; 8 bits sur une image de visualisation |
+| Correction | niveau L1C → L2A (correction atmosphérique) | un modèle, avec ses erreurs, pas une mesure |
+| Livraison | un fichier GeoTIFF par bande | rééchantillonnage possible au téléchargement |
+
+Les deux dernières lignes sont celles qu'on oublie, et ce sont celles qui décident
+si un indice spectral aura un sens.
+
+## 1.2 Les trois résolutions — et une quatrième dont personne ne parle
+
+::: {.callout-note}
+## Le vocabulaire, précisément
+
+**Résolution spatiale** — la taille au sol d'un pixel. À 10 m, un pixel couvre une
+maison ; à 250 m, un quartier ; à 1 km, une petite ville entière. Elle fixe ce
+qu'on pourra voir, et surtout ce qu'on ne verra **jamais**, quel que soit le
+traitement appliqué ensuite. Aucun algorithme ne récupère l'information qui n'a
+pas été acquise.
+
+**Résolution spectrale** — le nombre de bandes et leur largeur. Sentinel-2 a 13
+bandes ; un capteur hyperspectral en a plusieurs centaines. Plus les bandes sont
+fines et nombreuses, plus on distingue des matériaux qui « se ressemblent » à
+l'œil : un toit en tôle et un sol nu latéritique, par exemple.
+
+**Résolution temporelle** — le délai entre deux passages au-dessus du même point.
+Cinq jours pour la constellation Sentinel-2 (deux satellites), seize jours pour
+Landsat, une journée pour MODIS. C'est elle qui décide si l'on peut suivre une
+inondation — qui dure une semaine — ou seulement une déforestation — qui dure des
+années.
+
+**Résolution radiométrique** — le nombre de niveaux de gris distinguables. C'est
+la quatrième, celle qu'on oublie, et c'est elle qui piège cette journée. Une image
+codée sur 12 bits distingue 4 096 niveaux et porte une mesure de réflectance ; une
+image de visualisation sur 8 bits en distingue 256 et ne porte **plus aucune**
+mesure physique, seulement une apparence agréable à l'écran.
+:::
+
+## 1.3 Signatures spectrales : pourquoi ça marche
+
+Chaque type de surface renvoie le rayonnement différemment selon la longueur d'onde.
+C'est cette **signature spectrale** qui rend la télédétection possible : on ne
+reconnaît pas une forêt à sa forme, on la reconnaît à son profil de réflectance.
+
+Le graphique ci-dessous est un **schéma pédagogique**, construit sur des valeurs
+typiques saisies à la main : ce ne sont pas des mesures faites sur une image. Il
+sert à fixer le raisonnement, pas à produire un chiffre.
+
+```{r}
+#| label: chunk-signatures
+#| fig-height: 5
+# ATTENTION : valeurs typiques saisies a la main, a but d'illustration.
+# Ce n'est PAS une mesure faite sur une image satellite. Aucun chiffre issu
+# de ce tableau ne doit etre cite.
+signatures <- tibble::tribble(
+  ~surface,            ~bande,   ~longueur_onde_nm, ~reflectance,
+  "Vegetation dense",  "Bleu",    492,  0.03,
+  "Vegetation dense",  "Vert",    560,  0.07,
+  "Vegetation dense",  "Rouge",   665,  0.04,
+  "Vegetation dense",  "PIR",     833,  0.48,
+  "Vegetation dense",  "SWIR",   1610,  0.19,
+  "Sol nu",            "Bleu",    492,  0.11,
+  "Sol nu",            "Vert",    560,  0.16,
+  "Sol nu",            "Rouge",   665,  0.22,
+  "Sol nu",            "PIR",     833,  0.29,
+  "Sol nu",            "SWIR",   1610,  0.36,
+  "Bati dense",        "Bleu",    492,  0.14,
+  "Bati dense",        "Vert",    560,  0.17,
+  "Bati dense",        "Rouge",   665,  0.20,
+  "Bati dense",        "PIR",     833,  0.24,
+  "Bati dense",        "SWIR",   1610,  0.32,
+  "Eau libre",         "Bleu",    492,  0.06,
+  "Eau libre",         "Vert",    560,  0.05,
+  "Eau libre",         "Rouge",   665,  0.03,
+  "Eau libre",         "PIR",     833,  0.01,
+  "Eau libre",         "SWIR",   1610,  0.005
+)
+
+cat("Nombre de lignes du schema :", nrow(signatures), "\n")
+cat("Surfaces representees      :",
+    paste(unique(signatures$surface), collapse = ", "), "\n")
+
+ggplot(signatures,
+       aes(x = longueur_onde_nm, y = reflectance,
+           colour = surface, shape = surface)) +
+  geom_line(linewidth = 0.9) +
+  geom_point(size = 2.6) +
+  scale_x_continuous(breaks = c(492, 560, 665, 833, 1610),
+                     labels = c("Bleu\n492", "Vert\n560", "Rouge\n665",
+                                "PIR\n833", "SWIR\n1610")) +
+  scale_colour_manual(values = c("Vegetation dense" = "#1B7837",
+                                 "Sol nu"           = "#B35806",
+                                 "Bati dense"       = "#762A83",
+                                 "Eau libre"        = "#2166AC")) +
+  labs(
+    title = "Signatures spectrales typiques (schema pedagogique)",
+    subtitle = "Valeurs saisies a la main : illustration du raisonnement, pas une mesure",
+    x = "Longueur d'onde (nm) et bande Sentinel-2 correspondante",
+    y = "Reflectance (0-1)",
+    colour = NULL, shape = NULL
+  ) +
+  theme_minimal()
+```
+
+::: {.callout-tip}
+## Lecture de la figure — signatures spectrales
+
+**Ce que la figure code.** L'axe horizontal porte cinq longueurs d'onde, choisies
+parce qu'elles correspondent à cinq bandes de Sentinel-2. L'axe vertical porte la
+**réflectance** : la part du rayonnement incident renvoyée par la surface, entre 0
+et 1. Une couleur = un type de surface. Chaque point est une valeur typique
+saisie à la main, **pas une mesure**.
+
+**Ce que les choix techniques font.** Relier les points par une ligne suggère une
+continuité qui n'existe pas dans la donnée : un capteur multispectral ne mesure
+qu'aux cinq positions marquées, et il intègre sur une largeur de bande (de 15 à
+180 nm selon la bande). La ligne est une aide à la lecture, elle n'est pas le
+spectre continu de la surface. L'axe vertical commence à 0 et non à la valeur
+minimale : c'est délibéré, une réflectance de 0,01 et une de 0,05 ne sont pas
+« proches », elles sont dans un rapport de 1 à 5.
+
+**Ce qui se lit.** Trois écarts font tout le reste de la journée. La végétation
+s'effondre dans le Rouge (la chlorophylle absorbe) et explose dans le Proche
+Infrarouge (la structure cellulaire des feuilles diffuse) : c'est le NDVI. Le bâti
+et le sol nu montent dans le SWIR alors que la végétation y redescend : c'est le
+NDBI. L'eau s'effondre dans le PIR et plus encore dans le SWIR, alors qu'elle tient
+encore dans le Vert : c'est le MNDWI.
+
+**Ce qui ne se lit pas.** Le bâti dense et le sol nu ont des profils presque
+parallèles — c'est la limite de fond de la détection du bâti par indice spectral,
+et elle est physique, pas algorithmique. En zone sahélienne, en saison sèche, un
+sol nu latéritique et un quartier de tôles renvoient des signatures très proches ;
+c'est une raison majeure de préférer un produit dérivé validé (module 3) à un NDBI
+calculé soi-même. La figure ne dit rien non plus de la variabilité : une « forêt »
+n'a pas une signature, elle en a une distribution.
+:::
+
+## 1.4 Où trouver les images, gratuitement
+
+| Source | Ce qu'on y trouve | Résolution | Accès |
+|---|---|---|---|
+| Copernicus Data Space Ecosystem | Sentinel-1 (radar), Sentinel-2 (optique), Sentinel-3, Sentinel-5P | 10–60 m | compte gratuit, téléchargement ou API |
+| USGS EarthExplorer | Landsat 5/7/8/9, archive depuis 1972 | 30 m | compte gratuit |
+| NASA Earthdata | MODIS, VIIRS, SRTM, GPM | 250 m – 1 km | compte gratuit |
+| Copernicus EMS | cartes de crise vectorielles après catastrophe | vecteur | libre, sans compte |
+| GHSL (Commission européenne) | GHS-BUILT, GHS-POP, GHS-SMOD | 100 m, 1 km | libre, sans compte |
+| Google Open Buildings | empreintes de bâtiments (Afrique, Asie du Sud) | vecteur | libre, CC BY 4.0 |
+| Google Earth Engine | catalogue complet + calcul dans le nuage | variable | compte, quota |
+
+::: {.callout-note}
+## Deux familles à ne pas confondre
+
+Les lignes 1 à 3 livrent de la **donnée brute** : à vous de corriger, de composer,
+de calculer un indice, de valider. Vous portez toute la chaîne, et toute
+l'incertitude.
+
+Les lignes 4 à 6 livrent un **produit dérivé** : quelqu'un a déjà fait la chaîne,
+avec ses choix et ses seuils. C'est plus rapide, c'est souvent mieux fait — et
+c'est plus dangereux, parce que les hypothèses ne sont plus dans votre code. Elles
+sont dans une documentation que personne n'ouvre.
+
+Toute la suite de cette journée travaille sur des produits dérivés. Le travail
+consiste donc, à chaque étape, à **remettre l'hypothèse dans le texte** : ce que
+GHS-BUILT appelle « bâti », ce que Copernicus EMS appelle « classe de profondeur »,
+ce que Open Buildings appelle « confiance ».
+:::
+
+## 1.5 Ouvrir une image et la contrôler : le code de référence
+
+```{r}
+#| label: chunk-ref-metadonnees
+#| eval: false
+# BLOC DE REFERENCE, NON EXECUTE (voir l'encadre du module 2 pour la raison).
+# C'est le controle a faire sur TOUTE image, avant tout traitement.
+
+# Les chemins sont laisses sous forme de variables : ce bloc n'est pas execute
+# et ne doit PAS declarer de fichier a distribuer.
+chemin_rouge <- file.path("datasets", "bande_rouge_a_fournir.tif")
+chemin_pir   <- file.path("datasets", "bande_pir_a_fournir.tif")
+
+b04 <- terra::rast(chemin_rouge)   # Rouge
+b08 <- terra::rast(chemin_pir)     # Proche infrarouge
+
+# 1. Emprise, CRS, resolution REELS -- jamais ceux annonces par le fournisseur
+cat("Dimensions      :", dim(b04), "(lignes, colonnes, couches)\n")
+cat("Resolution      :", res(b04), "unites du CRS\n")
+cat("CRS             :", terra::crs(b04, describe = TRUE)$name, "\n")
+cat("Code EPSG       :", terra::crs(b04, describe = TRUE)$code, "\n")
+print(terra::ext(b04))
+
+# 2. La resolution est-elle en metres ou en degres ?
+#    En degres, 0.0013 deg ~ 150 m : ce n'est PAS du 10 m Sentinel-2.
+if (terra::is.lonlat(b04)) {
+  cat("ATTENTION : raster en coordonnees geographiques (degres).\n")
+  cat("  Taille approx. du pixel :", round(res(b04)[1] * 111320), "m a l'equateur\n")
+}
+
+# 3. Plage de valeurs : 0-255 = image de visualisation, PAS de la reflectance
+print(terra::minmax(b04))
+
+# 4. Les bandes sont-elles alignees entre elles ?
+cat("Geometries comparables :",
+    terra::compareGeom(b04, b08, stopOnError = FALSE), "\n")
+
+# 5. Nodata : combien de cellules vides, et ou ?
+cat("Cellules NA :", terra::global(is.na(b04), "sum")[1, 1],
+    "sur", terra::ncell(b04), "\n")
+```
+
+# Module 2 · Les indices de différence normalisée
+
+*Conservé de la version précédente de la journée, réécrit — et livré en exposé,
+pour une raison technique qu'il faut énoncer avant tout le reste.*
+
+::: {.callout-important}
+## Pourquoi ce module ne calcule pas de NDVI aujourd'hui
+
+La tuile Sentinel-2 du dépôt **ne permet pas** de construire un exercice honnête.
+Quatre défauts, vérifiés, dont chacun suffirait à lui seul :
+
+1. **Elle est absente du poste.** Elle n'a jamais été distribuée dans le magasin
+   central de l'atelier. Un exercice qui ne s'ouvre pas n'est pas un exercice.
+2. **Elle est partielle.** Elle couvre 11,5–14,9° E et 2,5–5,8° N : l'Est et le Sud
+   du Cameroun seulement. Yaoundé et Douala — les deux villes que la version
+   précédente de la journée prétendait comparer — n'y sont pas entièrement. Une
+   extraction zonale par région renverrait `NA` pour la grande majorité des unités.
+3. **Elle est en WGS84 à ~150 m**, et non en UTM à 10 m. Elle a été rééchantillonnée
+   au téléchargement. Annoncer « 10 m » sur cette image est faux d'un facteur 15.
+4. **Les bandes B03 (Vert) et B04 (Rouge) sont absentes** du magasin central. Or
+   B04 est au dénominateur du NDVI et B03 au numérateur du MNDWI. Sans elles, ces
+   deux indices ne sont **pas calculables**, quelle que soit l'astuce employée.
+
+S'y ajoute un cinquième défaut, plus insidieux : l'image « True color » disponible
+est codée sur **8 bits**. Elle ne porte aucune réflectance — c'est une image
+d'apparence, contrastée pour l'écran. Calculer un NDVI dessus produit des nombres,
+et ces nombres n'ont aucun sens physique. C'est précisément le genre d'erreur qui
+ne plante pas.
+
+**Décision, conforme au §3.7 des règles de l'atelier** : ce module est livré en
+exposé, avec du code de référence **non exécuté**. On ne prétend pas calculer un
+NDVI qu'on ne peut pas calculer. Le module 3 prend le relais avec un produit
+dérivé qui, lui, existe, couvre tout le pays et est documenté.
+:::
+
+## 2.1 La forme générale d'un indice normalisé
+
+Tous les indices de cette famille ont la même forme :
+
+**indice = (bande A − bande B) / (bande A + bande B)**
+
+Trois propriétés découlent de cette forme, et il faut les avoir en tête :
+
+- **Le résultat est borné entre −1 et +1.** Deux territoires deviennent comparables
+  même si l'un a été imagé sous un éclairement plus fort — la division au
+  dénominateur normalise en partie l'effet de l'illumination. C'est tout l'intérêt.
+- **Le rapport, pas la différence.** Un indice ne dit pas « il y a beaucoup de
+  végétation », il dit « le PIR domine largement le Rouge ». Une prairie sèche et
+  une forêt dense peuvent partager un NDVI moyen : l'indice mesure un contraste
+  spectral, pas une biomasse.
+- **Le dénominateur peut s'approcher de zéro.** Sur les bords de tuile, sur les
+  cellules nodata, sur l'ombre profonde, A + B tend vers 0 et l'indice dégénère
+  vers ±1. **Il faut masquer le nodata avant de calculer, jamais après.** Un
+  histogramme d'indice avec deux pics à −1 et +1 est presque toujours le symptôme
+  de ce défaut, pas une bimodalité du paysage.
+
+## 2.2 Les trois indices de la journée
+
+| Indice | Formule | Bandes Sentinel-2 | Ce qu'il détecte | Ce qu'il confond |
+|---|---|---|---|---|
+| **NDVI** | (PIR − Rouge) / (PIR + Rouge) | B08, B04 | végétation chlorophyllienne active | prairie sèche et sol nu clair ; nuage et eau (tous deux négatifs) |
+| **NDBI** | (SWIR − PIR) / (SWIR + PIR) | B11, B08 | surfaces imperméables, bâti | sol nu, sable, roche affleurante — le défaut de fond |
+| **MNDWI** | (Vert − SWIR) / (Vert + SWIR) | B03, B11 | eau libre en surface | ombre de relief, toits sombres ; ne voit pas l'eau sous canopée |
+
+::: {.callout-warning}
+## Ce que ces indices ne sont pas
+
+**Le NDVI n'est pas une mesure de biomasse ni de rendement.** C'est un contraste
+entre deux bandes. Il sature : au-delà d'un certain couvert, il ne monte plus,
+alors que la biomasse continue d'augmenter. Sur une forêt tropicale dense, le NDVI
+est plat et ne discrimine plus rien.
+
+**Le NDBI n'est pas une mesure de bâti.** En zone sahélienne, en saison sèche, un
+sol nu latéritique et un quartier de tôles ont des signatures voisines (voir le
+schéma du module 1). Un NDBI seuillé y produit des « villes » là où il n'y a que
+du sol nu. C'est la raison de fond pour laquelle le module 3 utilise GHS-BUILT :
+ce produit combine plusieurs sources et une chaîne de validation, ce qu'un seuil
+sur un indice ne fera jamais.
+
+**Le MNDWI ne voit que l'eau libre en surface.** Une zone inondée sous couvert
+végétal, ou une inondation qui a reflué au moment de l'acquisition, n'apparaît pas.
+C'est pour cela que le module 5 utilise des produits **radar** (Copernicus EMS
+s'appuie largement sur Sentinel-1) : le radar traverse les nuages et fonctionne de
+nuit, ce que l'optique ne fait pas — et une inondation arrive rarement par ciel
+dégagé.
+:::
+
+## 2.3 Un calcul d'indice, sur les valeurs du schéma
+
+Pour vérifier que la mécanique est comprise, on applique les trois formules aux
+valeurs saisies à la main du module 1. C'est de l'arithmétique sur un tableau,
+pas de la télédétection : aucun raster n'est ouvert.
+
+```{r}
+#| label: chunk-indices-schema
+# RAPPEL : ces reflectances sont des valeurs typiques saisies a la main.
+# L'exercice porte sur la FORMULE, pas sur un chiffre a citer.
+sig_large <- signatures %>%
+  select(surface, bande, reflectance) %>%
+  tidyr::pivot_wider(names_from = bande, values_from = reflectance)
+
+cat("Tableau large :", nrow(sig_large), "surfaces x",
+    ncol(sig_large) - 1, "bandes\n")
+
+indices_schema <- sig_large %>%
+  mutate(
+    NDVI  = (PIR  - Rouge) / (PIR  + Rouge),
+    NDBI  = (SWIR - PIR)   / (SWIR + PIR),
+    MNDWI = (Vert - SWIR)  / (Vert + SWIR)
+  ) %>%
+  select(surface, NDVI, NDBI, MNDWI) %>%
+  mutate(across(c(NDVI, NDBI, MNDWI), ~ round(.x, 3)))
+
+print(indices_schema)
+
+# Controle : aucun indice ne doit sortir de [-1, 1]. Si c'est le cas,
+# c'est que le denominateur est passe pres de zero.
+hors_bornes <- indices_schema %>%
+  tidyr::pivot_longer(-surface, names_to = "indice", values_to = "valeur") %>%
+  filter(abs(valeur) > 1)
+cat("Valeurs hors de [-1, 1] :", nrow(hors_bornes), "\n")
+```
+
+```{r}
+#| label: chunk-indices-barres
+#| fig-height: 4.5
+indices_long <- indices_schema %>%
+  tidyr::pivot_longer(-surface, names_to = "indice", values_to = "valeur")
+
+ggplot(indices_long, aes(x = surface, y = valeur, fill = indice)) +
+  geom_col(position = "dodge") +
+  geom_hline(yintercept = 0, colour = "grey30") +
+  scale_fill_manual(values = c(NDVI = "#1B7837", NDBI = "#762A83",
+                               MNDWI = "#2166AC")) +
+  coord_cartesian(ylim = c(-1, 1)) +
+  labs(
+    title = "Les trois indices appliques aux signatures schematiques",
+    subtitle = "Chaque indice est maximal pour la surface qu'il est cense detecter",
+    x = NULL, y = "Valeur de l'indice (borne a [-1, 1])", fill = NULL
+  ) +
+  theme_minimal()
+```
+
+::: {.callout-tip}
+## Lecture de la figure — les trois indices sur le schéma
+
+**Ce que la figure code.** Une barre = un indice calculé pour un type de surface.
+La hauteur est la valeur de l'indice, bornée par construction entre −1 et +1. La
+ligne horizontale à 0 est le point de bascule : au-dessus, la première bande de la
+formule domine ; en dessous, la seconde.
+
+**Ce que les choix techniques font.** L'axe vertical est fixé à `[-1, 1]` par
+`coord_cartesian()` et non laissé libre : c'est délibéré. Un axe ajusté aux données
+donnerait l'impression que les écarts sont énormes, alors qu'on veut montrer où
+chaque valeur se place dans **l'étendue possible** de l'indice. La palette est
+qualitative — trois indices sans ordre entre eux — et non séquentielle : utiliser
+un dégradé ici suggérerait une progression qui n'existe pas.
+
+**Ce qui se lit.** Chaque indice est bien maximal pour la surface qu'il vise :
+NDVI sur la végétation, NDBI sur le bâti et le sol nu, MNDWI sur l'eau. La
+mécanique fonctionne.
+
+**Ce qui ne se lit pas.** Le NDBI du sol nu est du même ordre que celui du bâti —
+la confusion annoncée est visible dans les chiffres, pas seulement dans le
+discours. Et surtout : ces valeurs sont **inventées**. Un pixel réel est un
+mélange de surfaces (« pixel mixte »), et à 150 m de résolution un pixel de
+banlieue contient des toits, des arbres, de la route et du sol nu à la fois. La
+valeur mesurée est une moyenne pondérée de tout cela — ce que le schéma ne montre
+jamais.
+:::
+
+## 2.4 Le code de référence, pour le jour où l'image existe
+
+```{r}
+#| label: chunk-ref-ndvi
+#| eval: false
+# BLOC DE REFERENCE, NON EXECUTE : les bandes B03 et B04 sont absentes du
+# magasin central, et la tuile disponible est en 8 bits, partielle et a 150 m.
+# Ce code est la trame a reprendre le jour ou une image exploitable est fournie.
+
+# Chemins construits par file.path() : ce bloc n'est pas execute et ne doit
+# PAS declarer de fichier a distribuer.
+b03 <- terra::rast(file.path("datasets", "bande_verte_a_fournir.tif"))   # Vert
+b04 <- terra::rast(file.path("datasets", "bande_rouge_a_fournir.tif"))   # Rouge
+b08 <- terra::rast(file.path("datasets", "bande_pir_a_fournir.tif"))     # PIR
+b11 <- terra::rast(file.path("datasets", "bande_swir_a_fournir.tif"))    # SWIR
+
+# --- 1. ALIGNER : le SWIR est natif a 20 m, le PIR a 10 m -------------------
+# Sans cette etape, l'operation b11 - b08 echoue ou, pire, s'aligne au hasard.
+if (!terra::compareGeom(b08, b11, stopOnError = FALSE)) {
+  b11 <- terra::resample(b11, b08, method = "bilinear")
+  cat("B11 reechantillonnee sur la grille de B08 :", res(b11), "\n")
+}
+
+# --- 2. MASQUER LE NODATA AVANT DE CALCULER ---------------------------------
+# C'est l'etape que tout le monde saute. Sur les bords de tuile, PIR + Rouge
+# tend vers 0 et l'indice degenere en +-1 : un histogramme avec deux pics aux
+# extremites est le symptome de ce defaut, pas une bimodalite du paysage.
+masque_valide <- !is.na(b04) & !is.na(b08) & (b04 + b08) > 0
+b04 <- terra::mask(b04, masque_valide, maskvalues = 0)
+b08 <- terra::mask(b08, masque_valide, maskvalues = 0)
+
+# --- 3. PASSER EN REFLECTANCE (0-1) ----------------------------------------
+# Sentinel-2 L2A est livre en entiers, reflectance x 10000. La division n'est
+# PAS optionnelle si l'on veut comparer a des seuils publies.
+b03_r <- b03 / 10000
+b04_r <- b04 / 10000
+b08_r <- b08 / 10000
+b11_r <- b11 / 10000
+
+# --- 4. CALCULER ------------------------------------------------------------
+ndvi  <- (b08_r - b04_r) / (b08_r + b04_r)
+ndbi  <- (b11_r - b08_r) / (b11_r + b08_r)
+mndwi <- (b03_r - b11_r) / (b03_r + b11_r)
+names(ndvi) <- "NDVI"; names(ndbi) <- "NDBI"; names(mndwi) <- "MNDWI"
+
+# --- 5. CONTROLER AVANT D'AFFICHER -----------------------------------------
+print(terra::global(ndvi, c("mean", "sd", "min", "max"), na.rm = TRUE))
+
+# --- 6. BORNER L'AFFICHAGE SUR LES CENTILES 1 ET 99 -------------------------
+# Sans cela, une poignee de pixels aberrants ecrase toute la palette et la
+# carte parait uniforme. On ne modifie pas la donnee, seulement l'echelle.
+bornes <- terra::global(ndvi, function(x) quantile(x, c(0.01, 0.99), na.rm = TRUE))
+terra::plot(ndvi, range = as.numeric(bornes[1, ]),
+            main = "NDVI (affichage borne aux centiles 1 et 99)")
+
+# --- 7. Ce qu'il ne faut PAS faire ------------------------------------------
+# ndvi_faux <- (image_true_color[[1]] - image_true_color[[2]]) / ...
+# Une image "True color" 8 bits est une image d'APPARENCE : ses canaux ont ete
+# etires et contrastes pour l'ecran. Le calcul produit des nombres ; ils ne
+# mesurent rien. Aucune erreur n'est levee. C'est tout le probleme.
+```
+
+::: {.callout-note}
+## En quoi le spatial est utile ici — et il l'est déjà
+
+Un tableau de réflectances moyennes par région dirait « la région du Centre a un
+NDVI moyen de 0,62 ». La carte du même indice montre autre chose : **où** la
+végétation cède, et que les zones de faible NDVI ne sont pas dispersées au hasard
+mais forment des taches contiguës le long des axes routiers et autour des villes.
+
+Un bloc contigu ne s'explique pas par les caractéristiques propres de chaque
+pixel : il s'explique par ce que les pixels partagent **parce qu'ils sont voisins**
+— une même pression foncière, un même bassin versant, une même route. Le passage
+d'une liste de valeurs à un système de voisinages fait de la ressemblance entre
+voisins l'objet à expliquer, et non un bruit à moyenner. C'est le fil rouge de
+toute la journée, et on va le retrouver au module 4 sur le bâti, puis au module 5
+sur les inondations.
+:::
+
+# Module 3 · Du pixel au produit : GHS-BUILT
+
+## 3.1 Ce qu'est GHS-BUILT — et ce qu'il n'est pas
+
+Le **Global Human Settlement Layer** (GHSL) est produit par le Centre commun de
+recherche de la Commission européenne. La couche **GHS-BUILT-S** donne, pour chaque
+cellule de 100 m sur 100 m, la **surface de bâti en mètres carrés** contenue dans
+cette cellule — une valeur continue entre 0 et 10 000, et non une classe.
+
+Il est fabriqué par apprentissage supervisé sur des images Landsat et Sentinel-2,
+avec les millésimes rétro-calculés jusqu'à 1975 et projetés jusqu'en 2030.
+
+::: {.callout-important}
+## « Surface bâtie » n'est pas « surface urbanisée »
+
+Ces deux expressions circulent comme des synonymes. Elles ne le sont pas, et
+confondre les deux est l'erreur d'interprétation la plus fréquente sur ce produit.
+
+**Ce que GHS-BUILT-S mesure** : l'emprise au sol des structures construites —
+toits, dalles, hangars. Rien d'autre.
+
+**Ce qu'il ne mesure pas** :
+
+- les **cours, jardins, rues et places** d'un quartier : un tissu urbain classique
+  ne dépasse guère 30 à 50 % de surface bâtie, le reste étant du vide desservi ;
+- la **hauteur** : une tour de vingt étages et un hangar de plain-pied de même
+  emprise comptent identiquement dans GHS-BUILT-S (c'est la couche GHS-BUILT-H,
+  distincte, qui porte la hauteur) ;
+- l'**usage** : une usine, un entrepôt, une école et un immeuble d'habitation sont
+  indiscernables ;
+- l'**occupation** : un bâtiment vide compte comme un bâtiment plein.
+
+Conséquence directe et à énoncer en salle : une part bâtie de 3 % dans un
+département **ne veut pas dire** que 3 % de sa population vit en ville. Elle veut
+dire que 3 % de sa superficie est couverte par des toits. C'est un indicateur de
+**pression physique sur le sol**, pas un indicateur d'urbanisation au sens
+démographique — ce dernier suppose une définition de la ville (seuil de population,
+seuil de densité, continuité du bâti) que GHS-BUILT ne porte pas.
+:::
+
+## 3.2 Trois fonctions, réutilisées toute la journée
+
+Ces trois fonctions viennent du script formateur source. Elles sont réécrites ici
+avec des chemins à plat et, surtout, avec l'**instrumentation** qui manquait : une
+opération raster qui échoue à moitié ne lève pas d'erreur, elle remplit de `NA`.
+
+```{r}
+#| label: chunk-fonctions-ghsl
+# --------------------------------------------------------------------------
+# charger_ghsl(annee) : mosaique les tuiles GHS-BUILT d'un millesime
+# --------------------------------------------------------------------------
+# Les tuiles sont livrees zippees, une par archive, dans la grille mondiale
+# GHSL (Mollweide, ESRI:54009 -- projection EQUIVALENTE, donc les surfaces y
+# sont justes). On decompresse dans un repertoire temporaire : on n'ecrit
+# jamais dans datasets/, qui est un dossier d'entrees.
+charger_ghsl <- function(annee) {
+
+  archives <- list.files(
+    "datasets",
+    pattern = paste0("^GHS_BUILT_S_E", annee, ".*\\.zip$"),
+    full.names = TRUE
+  )
+
+  cat("--- charger_ghsl(", annee, ") ---\n", sep = "")
+  cat("  archives trouvees :", length(archives), "\n")
+
+  if (length(archives) == 0) {
+    stop("Aucune archive GHS_BUILT_S_E", annee, " dans datasets/. ",
+         "Verifiez le millesime : les donnees livrees sont 2015 et 2025.")
+  }
+
+  # Codes de tuile (Rxx_Cyy), pour pouvoir comparer les millesimes entre eux
+  codes <- sub(".*_(R\\d+_C\\d+)\\.zip$", "\\1", basename(archives))
+  cat("  tuiles :", paste(sort(codes), collapse = ", "), "\n")
+
+  rasters <- lapply(archives, function(zip_path) {
+    tmp_dir <- tempfile("ghsl_")
+    dir.create(tmp_dir)
+    unzip(zip_path, exdir = tmp_dir)
+    tif_path <- list.files(tmp_dir, pattern = "\\.tif$",
+                           full.names = TRUE, recursive = TRUE)[1]
+    if (is.na(tif_path))
+      stop("Archive sans .tif : ", basename(zip_path))
+    terra::rast(tif_path)
+  })
+
+  mosaique <- if (length(rasters) == 1) rasters[[1]] else do.call(mosaic, rasters)
+
+  cat("  resolution :", paste(res(mosaique), collapse = " x "),
+      "(unite du CRS)\n")
+  cat("  CRS        :", terra::crs(mosaique, describe = TRUE)$name, "\n")
+  cat("  emprise    : "); print(terra::ext(mosaique))
+
+  attr(mosaique, "codes_tuiles") <- sort(codes)
+  mosaique
+}
+
+# --------------------------------------------------------------------------
+# preparer_raster(raster, pays) : decoupe le raster sur un contour
+# --------------------------------------------------------------------------
+# crop() reduit a l'emprise rectangulaire (rapide), mask() met a NA tout ce
+# qui est hors du polygone (precis). Faire crop AVANT mask : masquer d'abord
+# ferait travailler terra sur toute la mosaique mondiale.
+preparer_raster <- function(raster, pays, etiquette = "") {
+  pays_vect <- terra::vect(sf::st_transform(pays, terra::crs(raster)))
+  sortie <- terra::mask(terra::crop(raster, pays_vect), pays_vect)
+
+  n_total <- terra::ncell(sortie)
+  n_na    <- as.numeric(terra::global(is.na(sortie), "sum", na.rm = TRUE)[1, 1])
+  cat("--- preparer_raster(", etiquette, ") ---\n", sep = "")
+  cat("  cellules totales :", n_total, "\n")
+  cat("  cellules NA      :", n_na,
+      " (", round(100 * n_na / n_total, 1), "% -- hors frontiere)\n", sep = "")
+  cat("  somme du bati    :",
+      round(as.numeric(terra::global(sortie, "sum", na.rm = TRUE)[1, 1]) / 1e6, 1),
+      "km2\n")
+  sortie
+}
+
+# --------------------------------------------------------------------------
+# resumer_bati(...) : statistique zonale sur une couche de polygones
+# --------------------------------------------------------------------------
+# exact_extract() pondere chaque cellule par la FRACTION de sa surface couverte
+# par le polygone. Une cellule coupee en deux par une frontiere compte pour
+# moitie dans chaque region. terra::extract() par defaut compte la cellule
+# entiere du cote ou tombe son centre : sur 100 m, l'ecart est negligeable au
+# niveau national, mais il ne l'est plus sur un petit departement.
+resumer_bati <- function(polygones, raster, annee, id_col, nom_col,
+                         etiquette = "") {
+
+  # Extraction : dans le CRS DU RASTER, sinon exact_extract reprojette a la
+  # volee et on perd le controle de ce qui se passe.
+  pol_raster <- sf::st_transform(polygones, terra::crs(raster))
+  bati_km2   <- exactextractr::exact_extract(raster, pol_raster, "sum",
+                                             progress = FALSE) / 1e6
+
+  # Surface : dans le CRS DE MESURE (UTM 33N), pas en degres.
+  pol_mesure    <- sf::st_transform(polygones, crs_mesure)
+  surface_km2   <- as.numeric(sf::st_area(pol_mesure)) / 1e6
+
+  cat("--- resumer_bati(", etiquette, ", ", annee, ") ---\n", sep = "")
+  cat("  polygones            :", nrow(polygones), "\n")
+  cat("  CRS d'extraction     :", terra::crs(raster, describe = TRUE)$name, "\n")
+  cat("  CRS de mesure        : EPSG:", crs_mesure, "\n", sep = "")
+  cat("  bati total           :", round(sum(bati_km2, na.rm = TRUE), 1), "km2\n")
+  cat("  surface totale       :", round(sum(surface_km2), 0), "km2\n")
+  cat("  polygones sans bati  :", sum(bati_km2 == 0, na.rm = TRUE), "\n")
+  cat("  extractions NA       :", sum(is.na(bati_km2)), "\n")
+
+  pol_raster %>%
+    mutate(
+      annee          = annee,
+      surface_km2    = surface_km2,
+      bati_km2       = bati_km2,
+      part_batie_pct = 100 * bati_km2 / surface_km2
+    ) %>%
+    select(all_of(c(id_col, nom_col)), annee, surface_km2, bati_km2,
+           part_batie_pct)
+}
+```
+
+## 3.3 Les limites administratives, contrôlées avant usage
+
+```{r}
+#| label: chunk-lecture-gadm
+# Une lecture, une fois. On lit les trois niveaux ici et nulle part ailleurs
+# dans le document : un rechargement plus loin ecraserait la preparation.
+chemin_gadm <- "datasets/gadm41_CMR.gpkg"
+
+cat("Couches disponibles dans", chemin_gadm, ":\n")
+print(sf::st_layers(chemin_gadm))
+
+lire_gadm <- function(couche) {
+  x <- sf::st_read(chemin_gadm, layer = couche, quiet = TRUE)
+  n_invalides_avant <- sum(!sf::st_is_valid(x))
+  x <- sf::st_make_valid(x)
+  n_invalides_apres <- sum(!sf::st_is_valid(x))
+  cat("--- ", couche, " ---\n", sep = "")
+  cat("  entites            :", nrow(x), "\n")
+  cat("  colonnes           :", paste(names(x), collapse = ", "), "\n")
+  cat("  CRS                :", sf::st_crs(x)$input, "\n")
+  cat("  geometries invalides avant / apres st_make_valid() : ",
+      n_invalides_avant, " / ", n_invalides_apres, "\n", sep = "")
+  x
+}
+
+cmr0 <- lire_gadm("ADM_ADM_0")
+cmr1 <- lire_gadm("ADM_ADM_1")
+cmr2 <- lire_gadm("ADM_ADM_2")
+
+cat("\nEmprise du pays (degres) :\n")
+print(sf::st_bbox(cmr0))
+```
+
+```{r}
+#| label: chunk-controle-surface
+# CONTROLE DE VALIDITE : la superficie officielle du Cameroun est de
+# 475 442 km2. Un calcul qui s'en ecarte de plus de quelques pour cent
+# signale un probleme de projection -- et c'est la premiere chose a
+# verifier avant de publier le moindre pourcentage.
+surface_officielle_km2 <- 475442
+
+surf_4326 <- tryCatch(
+  as.numeric(sum(sf::st_area(cmr0))) / 1e6,
+  error = function(e) NA_real_
+)
+surf_utm  <- as.numeric(sum(sf::st_area(sf::st_transform(cmr0, crs_mesure)))) / 1e6
+surf_moll <- as.numeric(sum(sf::st_area(sf::st_transform(cmr0, "ESRI:54009")))) / 1e6
+
+comparaison_crs <- data.frame(
+  crs = c("EPSG:4326 (degres, s2 desactive)",
+          "EPSG:32633 (UTM 33N, conforme)",
+          "ESRI:54009 (Mollweide, equivalente)"),
+  surface_km2 = round(c(surf_4326, surf_utm, surf_moll), 0)
+) %>%
+  mutate(ecart_pct = round(100 * (surface_km2 - surface_officielle_km2) /
+                             surface_officielle_km2, 2))
+
+print(comparaison_crs)
+cat("\nReference officielle :", surface_officielle_km2, "km2\n")
+```
+
+::: {.callout-warning}
+## Le tableau qu'il faut lire ligne par ligne
+
+**Première ligne — EPSG:4326.** Le CRS est en degrés. Avec `s2` désactivé,
+`st_area()` calcule une aire planaire sur des degrés : le résultat est un nombre de
+« degrés carrés », que la division par 10⁶ transforme en absurdité. Ce n'est pas
+une approximation, c'est une grandeur qui n'existe pas. (Selon la version de `sf`,
+le calcul peut aussi échouer ou repasser en géodésique : la ligne est là pour être
+regardée, pas pour être utilisée.)
+
+**Deuxième ligne — EPSG:32633, UTM 33N.** C'est notre CRS de mesure. UTM est une
+projection **conforme** : elle conserve les angles, pas les surfaces. La zone 33N
+est calée sur 12–18° E ; le Cameroun s'étend de 8,5° à 16,2° E, donc son flanc
+occidental est à environ 4° du méridien central. La distorsion de surface y atteint
+quelques pour cent. C'est acceptable pour une mesure départementale, c'est visible
+sur le total national.
+
+**Troisième ligne — ESRI:54009, Mollweide.** C'est la projection de la grille GHSL.
+Elle est **équivalente** (equal-area) : les surfaces y sont justes partout, au prix
+d'une déformation des formes. Pour un total national, c'est la référence.
+
+**Ce qu'il faut retenir.** « Reprojeter avant de mesurer » ne suffit pas : il faut
+reprojeter **dans la bonne famille**. Conforme pour les angles et les formes locales,
+équivalente pour les surfaces, équidistante pour les distances depuis un point.
+Aucune projection ne fait les trois. Nous gardons UTM 33N comme CRS de mesure de
+la journée — c'est la convention de l'atelier et elle est cohérente d'un jour à
+l'autre — en sachant que sur les surfaces nationales, Mollweide serait plus juste
+d'environ un point de pourcentage.
+:::
+
+## 3.4 Mosaïquer les tuiles et découper sur le pays
+
+```{r}
+#| label: chunk-mosaique
+bati_2015 <- charger_ghsl(2015)
+bati_2025 <- charger_ghsl(2025)
+```
+
+```{r}
+#| label: chunk-controle-tuiles
+# CONTROLE CRITIQUE : les deux millesimes couvrent-ils la MEME emprise ?
+# Si une tuile manque d'un cote, la difference 2025-2015 melange une
+# croissance reelle et un trou de couverture. L'erreur ne leve rien : elle
+# produit un "gain" spectaculaire la ou le millesime ancien n'a pas de donnee.
+codes_2015 <- attr(bati_2015, "codes_tuiles")
+codes_2025 <- attr(bati_2025, "codes_tuiles")
+
+cat("Tuiles 2015 :", paste(codes_2015, collapse = ", "), "\n")
+cat("Tuiles 2025 :", paste(codes_2025, collapse = ", "), "\n")
+
+manquantes_2015 <- setdiff(codes_2025, codes_2015)
+manquantes_2025 <- setdiff(codes_2015, codes_2025)
+
+cat("\nPresentes en 2025 mais absentes en 2015 :",
+    if (length(manquantes_2015)) paste(manquantes_2015, collapse = ", ") else "aucune", "\n")
+cat("Presentes en 2015 mais absentes en 2025 :",
+    if (length(manquantes_2025)) paste(manquantes_2025, collapse = ", ") else "aucune", "\n")
+
+if (length(manquantes_2015) || length(manquantes_2025)) {
+  cat("\n*** ASYMETRIE DE COUVERTURE DETECTEE ***\n")
+  cat("Les deux millesimes ne portent pas sur la meme emprise.\n")
+  cat("La section 3.5 restreint les deux rasters a leur intersection ;\n")
+  cat("sans cela, tout gain calcule sur la zone non couverte serait faux.\n")
+}
+```
+
+::: {.callout-important}
+## L'asymétrie de couverture : le piège majeur du module
+
+Au moment d'écrire ce document, le lot de données livré comptait **8 tuiles pour
+2025 et 7 pour 2015** : la tuile `R7_C19` du millésime 2015 est absente. Le
+comptage ci-dessus le confirme ou l'infirme sur votre poste — il est là pour ça.
+
+Ce que cela ferait si on ne le voyait pas : sur la zone couverte par `R7_C19`
+(le nord-ouest de l'emprise), le raster 2015 vaut `NA`. `exact_extract(..., "sum")`
+traite les `NA` comme absents, donc renvoie un bâti 2015 sous-estimé — voire 0 —
+pour les unités concernées. Le « gain 2015 → 2025 » y devient égal à la totalité du
+bâti 2025, et la « croissance relative » explose ou devient infinie. Sur une carte,
+cette région ressortirait en rouge vif comme la plus dynamique du pays. Personne ne
+relirait le code.
+
+**Traitement adopté** : restreindre les deux millésimes à l'intersection de leurs
+emprises valides, et déclarer la zone perdue. Une unité sans donnée reste sans
+donnée — elle n'est pas à zéro.
+:::
+
+```{r}
+#| label: chunk-decoupe-pays
+bati_2015_cmr <- preparer_raster(bati_2015, cmr0, "GHS-BUILT 2015")
+bati_2025_cmr <- preparer_raster(bati_2025, cmr0, "GHS-BUILT 2025")
+```
+
+## 3.5 Aligner les deux millésimes sur une emprise commune
+
+```{r}
+#| label: chunk-alignement
+# --------------------------------------------------------------------------
+# aligner_millesimes() : ne comparer que ce qui est comparable
+# --------------------------------------------------------------------------
+# Ajout par rapport au script source, rendu necessaire par l'asymetrie de
+# tuiles. Deux etapes : (1) meme emprise rectangulaire, (2) meme masque de
+# cellules valides. Les tuiles GHSL partagent la meme grille (meme origine,
+# meme resolution) : un simple crop suffit a les aligner exactement.
+aligner_millesimes <- function(r_ancien, r_recent) {
+
+  emprise_commune <- terra::intersect(terra::ext(r_ancien), terra::ext(r_recent))
+  a <- terra::crop(r_ancien, emprise_commune)
+  b <- terra::crop(r_recent, emprise_commune)
+
+  cat("--- aligner_millesimes() ---\n")
+  cat("  geometries comparables apres crop :",
+      terra::compareGeom(a, b, stopOnError = FALSE), "\n")
+
+  valide <- !is.na(a) & !is.na(b)
+  n_valide <- as.numeric(terra::global(valide, "sum", na.rm = TRUE)[1, 1])
+  cat("  cellules valides dans LES DEUX millesimes :", n_valide,
+      "sur", terra::ncell(a), "\n")
+
+  a2 <- terra::mask(a, valide, maskvalues = 0)
+  b2 <- terra::mask(b, valide, maskvalues = 0)
+
+  cat("  bati 2015 avant / apres alignement :",
+      round(as.numeric(terra::global(a, "sum", na.rm = TRUE)[1, 1]) / 1e6, 1), "/",
+      round(as.numeric(terra::global(a2, "sum", na.rm = TRUE)[1, 1]) / 1e6, 1), "km2\n")
+  cat("  bati 2025 avant / apres alignement :",
+      round(as.numeric(terra::global(b, "sum", na.rm = TRUE)[1, 1]) / 1e6, 1), "/",
+      round(as.numeric(terra::global(b2, "sum", na.rm = TRUE)[1, 1]) / 1e6, 1), "km2\n")
+
+  list(ancien = a2, recent = b2)
+}
+
+paire <- aligner_millesimes(bati_2015_cmr, bati_2025_cmr)
+bati_2015_ok <- paire$ancien
+bati_2025_ok <- paire$recent
+```
+
+```{r}
+#| label: chunk-apercu-raster
+#| fig-height: 5.5
+# Apercu de controle. On BORNE l'affichage aux centiles 1 et 99 : sans cela,
+# une poignee de cellules de centre-ville a 10 000 m2 ecrase toute la palette
+# et le pays parait vide.
+bornes_affichage <- terra::global(
+  bati_2025_ok,
+  function(x) quantile(x, c(0.01, 0.99), na.rm = TRUE)
+)
+cat("Bornes d'affichage (centiles 1 et 99) :",
+    paste(round(as.numeric(bornes_affichage[1, ]), 1), collapse = " - "), "m2\n")
+
+terra::plot(
+  bati_2025_ok,
+  range = as.numeric(bornes_affichage[1, ]),
+  col = hcl.colors(50, "Inferno", rev = TRUE),
+  main = "GHS-BUILT-S 2025 : surface batie par cellule de 100 m",
+  plg = list(title = "m2 bati / cellule")
+)
+plot(sf::st_geometry(sf::st_transform(cmr1, terra::crs(bati_2025_ok))),
+     add = TRUE, border = "grey30", lwd = 0.5)
+```
+
+::: {.callout-tip}
+## Lecture de la figure — la mosaïque GHS-BUILT 2025
+
+**Ce que la figure code.** Chaque pixel de 100 m × 100 m est coloré selon le nombre
+de **mètres carrés de toit** qu'il contient, de 0 à 10 000. Ce n'est ni une densité
+de population, ni une classe d'occupation du sol : c'est une surface construite.
+
+**Ce que les choix techniques font.** L'affichage est **borné aux centiles 1 et 99**
+de la distribution : les valeurs extrêmes sont écrêtées visuellement, pas
+supprimées de la donnée. Sans ce bornage, les quelques cellules de centre-ville
+saturées à 10 000 m² absorberaient toute l'échelle et le reste du pays paraîtrait
+uniformément vide. La palette est **séquentielle** (du sombre au clair, luminosité
+monotone) : elle code un ordre, ce qui est correct pour une quantité positive. Une
+palette divergente serait ici un contresens — il n'y a pas de « point neutre » dans
+une surface bâtie.
+
+**Ce qui se lit.** Le bâti camerounais est extrêmement concentré : quelques taches
+vives (Douala, Yaoundé), un semis de bourgs le long des axes, et de vastes étendues
+à zéro. On voit aussi la structure du réseau — les alignements clairs suivent des
+routes, pas des reliefs.
+
+**Ce qui ne se lit pas.** La hauteur (un hangar et une tour se ressemblent), l'usage,
+l'occupation. Et surtout : **une cellule à 0 n'est pas une cellule sans humains**.
+L'habitat très dispersé, ou construit en matériaux légers sous couvert végétal,
+passe partiellement sous le radar du produit. Ce point conditionne toute
+l'interprétation du module 4.
+:::
+
+# Module 4 · Mesurer le bâti : national, régional, départemental
+
+## 4.1 Le niveau national
+
+```{r}
+#| label: chunk-national
+cmr0_raster <- sf::st_transform(cmr0, terra::crs(bati_2015_ok))
+surface_cmr0_km2 <- as.numeric(
+  sum(sf::st_area(sf::st_transform(cmr0, crs_mesure)))
+) / 1e6
+
+cat("Surface nationale retenue (UTM 33N) :", round(surface_cmr0_km2, 0), "km2\n")
+
+national_2015 <- tibble::tibble(
+  annee = 2015,
+  bati_km2 = exactextractr::exact_extract(bati_2015_ok, cmr0_raster, "sum",
+                                          progress = FALSE) / 1e6
+) %>%
+  mutate(part_batie_pct = 100 * bati_km2 / surface_cmr0_km2)
+
+national_2025 <- tibble::tibble(
+  annee = 2025,
+  bati_km2 = exactextractr::exact_extract(bati_2025_ok, cmr0_raster, "sum",
+                                          progress = FALSE) / 1e6
+) %>%
+  mutate(part_batie_pct = 100 * bati_km2 / surface_cmr0_km2)
+
+national <- bind_rows(national_2015, national_2025)
+print(national)
+
+changement_national <- national %>%
+  tidyr::pivot_wider(names_from = annee,
+                     values_from = c(bati_km2, part_batie_pct)) %>%
+  mutate(
+    gain_bati_km2        = bati_km2_2025 - bati_km2_2015,
+    croissance_pct       = 100 * gain_bati_km2 / bati_km2_2015,
+    delta_part_batie_pct = part_batie_pct_2025 - part_batie_pct_2015
+  )
+
+print(changement_national)
+
+cat("\nLecture : en dix ans, le bati national passe de ",
+    round(changement_national$bati_km2_2015, 0), " a ",
+    round(changement_national$bati_km2_2025, 0), " km2, soit ",
+    round(changement_national$croissance_pct, 1), " % de croissance relative.\n",
+    sep = "")
+```
+
+::: {.callout-note}
+## Deux chiffres, deux questions différentes
+
+Le **gain absolu** (`gain_bati_km2`) répond à : « où faut-il des routes, des écoles,
+de l'assainissement ? » C'est une quantité de mètres carrés nouveaux à desservir.
+
+La **croissance relative** (`croissance_pct`) répond à : « où le rythme est-il le
+plus rapide ? » C'est un rapport, et un rapport a un dénominateur.
+
+Ces deux indicateurs ne classent **pas** les territoires dans le même ordre, et
+c'est la raison pour laquelle les deux cartes de la section 4.3 doivent être lues
+ensemble. Un département qui passe de 1 à 2 km² de bâti affiche +100 % de
+croissance et un gain de 1 km². Douala, qui passe de 120 à 160 km², affiche +33 %
+et un gain de 40 km². Le premier gagne le classement du rythme, le second est celui
+qui pose un problème d'équipement. Publier la seule croissance relative, c'est
+mettre en tête de classement les unités les plus petites — mécaniquement.
+:::
+
+## 4.2 Le niveau régional (ADM1)
+
+```{r}
+#| label: chunk-regions
+regions_2015 <- resumer_bati(cmr1, bati_2015_ok, 2015, "GID_1", "NAME_1", "ADM1")
+regions_2025 <- resumer_bati(cmr1, bati_2025_ok, 2025, "GID_1", "NAME_1", "ADM1")
+
+# Seuil declare : en dessous de ce bati initial, la croissance relative n'a
+# pas de sens statistique (un denominateur minuscule fabrique des taux a
+# trois chiffres). Le seuil est ECRIT dans le code, pas subi.
+seuil_bati_min_km2 <- 1
+
+n_avant <- nrow(regions_2015)
+
+regions_chg <- regions_2015 %>%
+  sf::st_drop_geometry() %>%
+  select(GID_1, NAME_1,
+         bati_km2_2015 = bati_km2,
+         part_batie_pct_2015 = part_batie_pct) %>%
+  left_join(
+    regions_2025 %>%
+      sf::st_drop_geometry() %>%
+      select(GID_1,
+             bati_km2_2025 = bati_km2,
+             part_batie_pct_2025 = part_batie_pct),
+    by = "GID_1"
+  ) %>%
+  mutate(
+    gain_bati_km2 = bati_km2_2025 - bati_km2_2015,
+    croissance_pct = if_else(
+      bati_km2_2015 >= seuil_bati_min_km2,
+      100 * gain_bati_km2 / bati_km2_2015,
+      NA_real_
+    ),
+    delta_part_batie_pct    = part_batie_pct_2025 - part_batie_pct_2015,
+    part_nationale_2025_pct = 100 * bati_km2_2025 / sum(bati_km2_2025)
+  ) %>%
+  arrange(desc(gain_bati_km2))
+
+cat("--- Jointure 2015 <-> 2025 sur GID_1 ---\n")
+cat("  lignes avant :", n_avant, " | lignes apres :", nrow(regions_chg), "\n")
+cat("  NA sur bati_km2_2025 apres jointure :",
+    sum(is.na(regions_chg$bati_km2_2025)), "\n")
+cat("  regions sous le seuil de ", seuil_bati_min_km2,
+    " km2 de bati 2015 (croissance non calculee) : ",
+    sum(is.na(regions_chg$croissance_pct)), "\n", sep = "")
+cat("  somme des parts nationales :",
+    round(sum(regions_chg$part_nationale_2025_pct, na.rm = TRUE), 2),
+    "% (doit valoir 100)\n")
+
+print(regions_chg)
+```
+
+```{r}
+#| label: chunk-regions-rangs
+regions_resume <- regions_chg %>%
+  mutate(
+    rang_gain       = min_rank(desc(gain_bati_km2)),
+    rang_croissance = min_rank(desc(croissance_pct)),
+    rang_part_2025  = min_rank(desc(part_batie_pct_2025)),
+    ecart_de_rang   = abs(rang_gain - rang_croissance)
+  ) %>%
+  arrange(rang_gain)
+
+print(regions_resume %>%
+        select(NAME_1, bati_km2_2025, gain_bati_km2, croissance_pct,
+               rang_gain, rang_croissance, ecart_de_rang))
+
+cat("\nEcart de rang maximal entre gain absolu et croissance relative :",
+    max(regions_resume$ecart_de_rang, na.rm = TRUE), "places\n")
+cat("Correlation de Spearman entre les deux classements :",
+    round(cor(regions_resume$gain_bati_km2, regions_resume$croissance_pct,
+              method = "spearman", use = "complete.obs"), 3), "\n")
+```
+
+::: {.callout-note}
+## Pourquoi Spearman et pas Pearson
+
+Le coefficient de **Pearson** mesure une association **linéaire** entre deux
+grandeurs ; il est sensible aux valeurs extrêmes, et avec dix régions dont une
+(le Littoral) pèse démesurément, un seul point peut fixer le coefficient.
+
+Le coefficient de **Spearman** est le Pearson calculé sur les **rangs**. Il mesure
+si les deux classements vont dans le même sens, sans supposer de forme
+fonctionnelle et sans se laisser dominer par une valeur extrême. C'est exactement
+la question posée ici : « le classement par gain absolu et le classement par
+croissance relative sont-ils le même classement ? »
+
+Avec dix unités seulement, aucun des deux ne doit être présenté avec un test de
+significativité : la puissance est dérisoire. Le coefficient est ici un **résumé
+descriptif** de l'écart entre deux ordres, rien de plus.
+:::
+
+## 4.3 Les cartes régionales
+
+```{r}
+#| label: chunk-carte-part
+#| fig-height: 5.5
+carte_part_2025 <- ggplot(regions_2025) +
+  geom_sf(aes(fill = part_batie_pct), colour = "white", linewidth = 0.2) +
+  scale_fill_viridis_c(option = "magma", direction = -1,
+                       na.value = "grey85") +
+  labs(
+    title = "Part de surface batie GHS-BUILT en 2025",
+    subtitle = "Regions (ADM1) du Cameroun -- m2 de toit rapportes a la superficie",
+    fill = "% bati",
+    caption = "Source : GHSL GHS-BUILT-S R2023A, 100 m. Gris = donnee absente."
+  ) +
+  theme_minimal()
+
+print(carte_part_2025)
+
+ggsave("outputs/J09_part_batie_2025.png", carte_part_2025,
+       width = 8, height = 5.5, dpi = 180)
+```
+
+::: {.callout-tip}
+## Lecture de la carte — part bâtie 2025
+
+**Ce que la carte code.** La couleur d'une région = la somme des mètres carrés de
+toit qu'elle contient, divisée par sa superficie totale, en pourcentage. La
+définition exacte compte : « part bâtie » au sens GHS-BUILT, donc emprise au sol
+des constructions, et non « part urbanisée » au sens démographique.
+
+**Ce que les choix techniques font.** La palette `magma` inversée est
+**séquentielle** : une seule teinte, luminosité croissante, adaptée à une quantité
+qui n'a qu'un sens de lecture. Elle est perceptuellement uniforme — un écart de
+couleur égal correspond à un écart de valeur égal, ce que ne garantit pas un
+arc-en-ciel. L'échelle est **continue** : aucune discrétisation n'est imposée, donc
+aucune classe n'est fabriquée. Une discrétisation en quantiles donnerait cinq
+classes de deux régions chacune et suggérerait une hiérarchie régulière ; une
+discrétisation en intervalles égaux mettrait neuf régions dans la première classe
+et le Littoral seul dans la dernière. Les trois images racontent le **même tableau**
+autrement, et c'est un exercice à faire en salle. Le `na.value = "grey85"` est
+explicite : **une région sans donnée est grise, elle n'est pas à zéro**.
+
+**Ce qui se lit.** Le contraste est écrasant : le Littoral et le Centre concentrent
+l'essentiel de la part bâtie, l'Est et l'Adamaoua sont quasi vides. Aucune région
+n'atteint quelques pour cent — rappel utile que « bâti » est une notion très
+restrictive.
+
+**Ce qui ne se lit pas.** La carte est une **moyenne régionale**. Le Littoral doit
+sa valeur à Douala, sur une fraction minuscule de son territoire ; le reste de la
+région ressemble à l'Est. Attribuer à un habitant du Littoral la caractéristique
+moyenne de sa région est une **erreur écologique** — c'est le risque permanent de
+la choroplèthe, et c'est exactement pourquoi la section 4.5 descend à l'ADM2.
+:::
+
+```{r}
+#| label: chunk-carte-gain
+#| fig-height: 5.5
+# La colonne de geometrie est "collante" chez sf : select() la conserve sans
+# qu'on ait besoin de la nommer.
+regions_carto <- regions_2025 %>%
+  select(GID_1, NAME_1) %>%
+  left_join(regions_chg, by = c("GID_1", "NAME_1"))
+
+cat("Jointure carto : ", nrow(regions_2025), " -> ", nrow(regions_carto),
+    " lignes (doit etre identique)\n", sep = "")
+
+carte_gain <- ggplot(regions_carto) +
+  geom_sf(aes(fill = gain_bati_km2), colour = "white", linewidth = 0.2) +
+  scale_fill_gradient2(low = "#2166AC", mid = "white", high = "#B2182B",
+                       midpoint = 0, na.value = "grey85") +
+  labs(
+    title = "Gain de surface batie entre 2015 et 2025",
+    subtitle = "Difference en km2 -- combien de toits nouveaux a desservir",
+    fill = "Gain (km2)",
+    caption = "Palette divergente centree sur 0. Gris = donnee absente."
+  ) +
+  theme_minimal()
+
+print(carte_gain)
+
+ggsave("outputs/J09_gain_bati_2015_2025.png", carte_gain,
+       width = 8, height = 5.5, dpi = 180)
+```
+
+```{r}
+#| label: chunk-carte-croissance
+#| fig-height: 5.5
+carte_croissance <- ggplot(regions_carto) +
+  geom_sf(aes(fill = croissance_pct), colour = "white", linewidth = 0.2) +
+  scale_fill_viridis_c(option = "plasma", na.value = "grey85") +
+  labs(
+    title = "Croissance relative du bati 2015-2025",
+    subtitle = paste0("En % du bati de 2015. Gris : bati 2015 < ",
+                      seuil_bati_min_km2, " km2, taux non calcule"),
+    fill = "% croissance",
+    caption = "Source : GHSL GHS-BUILT-S R2023A."
+  ) +
+  theme_minimal()
+
+print(carte_croissance)
+
+ggsave("outputs/J09_croissance_bati_2015_2025.png", carte_croissance,
+       width = 8, height = 5.5, dpi = 180)
+```
+
+::: {.callout-tip}
+## Lecture des deux cartes — gain et croissance
+
+**Ce que les cartes codent.** La première code une **différence** en km² ; la
+seconde un **rapport** en pourcentage du point de départ. Même donnée source, deux
+transformations, deux messages.
+
+**Ce que les choix techniques font.** La carte de gain utilise une palette
+**divergente** centrée sur 0 (`scale_fill_gradient2` avec `midpoint = 0`) : le blanc
+marque l'absence de changement, le bleu une perte, le rouge un gain. C'est le choix
+correct quand la valeur zéro a un sens intrinsèque. La carte de croissance utilise
+une palette **séquentielle** : un taux de croissance sur cette période est positif
+partout, il n'y a pas de point neutre à marquer. Utiliser une divergente ici
+créerait un faux seuil au milieu de la plage. Sur la seconde carte, le gris n'est
+pas « pas de croissance » : c'est « taux non calculé parce que le dénominateur est
+sous le seuil déclaré de 1 km² ».
+
+**Ce qui se lit.** Les deux cartes ne se ressemblent pas. Le Littoral domine la
+carte des gains et disparaît de celle des taux ; des régions faiblement bâties
+ressortent sur les taux. **L'écart entre les deux cartes est plus informatif que
+chacune** : il localise les endroits où un rythme rapide porte sur de petits
+volumes, et ceux où un rythme modeste porte sur des volumes qui saturent déjà les
+réseaux.
+
+**Ce qui ne se lit pas.** Ni l'une ni l'autre ne dit **pourquoi**. Une croissance
+du bâti peut venir d'un exode rural, d'un retour de diaspora, d'un projet minier,
+d'un camp de déplacés — ou d'une amélioration de la détection entre deux versions
+de l'algorithme GHSL. Cette dernière hypothèse est rarement énoncée et elle est
+réelle : comparer deux millésimes d'un produit, c'est aussi comparer deux états de
+la méthode qui les a fabriqués.
+:::
+
+```{r}
+#| label: chunk-nuage-2015-2025
+#| fig-height: 5.5
+graphique_bati <- ggplot(regions_chg,
+                         aes(x = bati_km2_2015, y = bati_km2_2025,
+                             label = NAME_1)) +
+  geom_abline(slope = 1, intercept = 0, linetype = 2, colour = "grey40") +
+  geom_point(size = 2.8, colour = "#2C7FB8") +
+  geom_text(vjust = -0.7, size = 3) +
+  scale_x_log10() +
+  scale_y_log10() +
+  labs(
+    title = "Bati regional 2015 vs 2025 (echelles logarithmiques)",
+    subtitle = "La diagonale est la stabilite : tout point au-dessus a gagne du bati",
+    x = "Bati 2015 (km2, echelle log)",
+    y = "Bati 2025 (km2, echelle log)"
+  ) +
+  theme_minimal()
+
+print(graphique_bati)
+```
+
+::: {.callout-tip}
+## Lecture du nuage — 2015 contre 2025
+
+**Ce que la figure code.** Un point = une région. Abscisse : son bâti en 2015 ;
+ordonnée : son bâti en 2025. La diagonale en pointillés est la droite y = x, donc
+la stabilité parfaite. La distance verticale d'un point à cette droite est le gain.
+
+**Ce que les choix techniques font.** Les deux axes sont en **échelle
+logarithmique**. Sans cela, le Littoral et le Centre écraseraient les huit autres
+régions dans un coin illisible — c'est le cas chaque fois qu'une variable
+territoriale s'étale sur deux ordres de grandeur, ce qui est la règle pour tout ce
+qui touche à l'urbain. En échelle log, un **écart vertical constant à la diagonale
+représente une croissance relative constante**, pas un gain absolu constant :
+l'échelle log transforme la lecture du graphique en lecture de taux. C'est
+précisément pourquoi ce graphique complète les deux cartes plutôt que de les
+répéter.
+
+**Ce qui se lit.** Tous les points sont au-dessus de la diagonale : aucune région
+n'a perdu de bâti, ce qui est attendu — GHS-BUILT ne modélise pratiquement pas la
+démolition. L'alignement est serré, ce qui signifie que la hiérarchie régionale de
+2015 est encore celle de 2025 : dix ans n'ont rebattu aucune carte.
+
+**Ce qui ne se lit pas.** L'échelle log **compresse visuellement les grands écarts**.
+Deux points visuellement voisins en haut à droite peuvent différer de dizaines de
+km². Ne jamais lire un volume sur un axe log : le lire dans le tableau.
+:::
+
+## 4.4 Une typologie en quatre profils
+
+```{r}
+#| label: chunk-typologie
+# Deux medianes croisees : rythme (gain) x etat (part batie). Ce sont des
+# seuils RELATIFS a l'echantillon des dix regions -- par construction, chaque
+# moitie contient cinq regions. Ce n'est pas une classification absolue.
+med_gain <- median(regions_chg$gain_bati_km2, na.rm = TRUE)
+med_part <- median(regions_chg$part_batie_pct_2025, na.rm = TRUE)
+
+cat("Mediane du gain 2015-2025      :", round(med_gain, 2), "km2\n")
+cat("Mediane de la part batie 2025  :", round(med_part, 3), "%\n")
+
+regions_typo <- regions_chg %>%
+  mutate(
+    profil = case_when(
+      gain_bati_km2 >= med_gain & part_batie_pct_2025 >= med_part ~
+        "Croissance forte et tissu dense",
+      gain_bati_km2 >= med_gain ~ "Croissance forte",
+      part_batie_pct_2025 >= med_part ~ "Tissu dense",
+      TRUE ~ "Croissance moderee"
+    )
+  )
+
+cat("\nEffectifs par profil :\n")
+print(regions_typo %>% count(profil, name = "nb_regions"))
+
+print(regions_typo %>%
+        select(NAME_1, bati_km2_2025, gain_bati_km2, part_batie_pct_2025, profil) %>%
+        arrange(profil, desc(gain_bati_km2)))
+```
+
+```{r}
+#| label: chunk-carte-typo
+#| fig-height: 5.5
+regions_typo_carto <- regions_2025 %>%
+  select(GID_1, NAME_1) %>%
+  left_join(regions_typo %>% select(GID_1, profil), by = "GID_1")
+
+cat("Regions sans profil affecte :", sum(is.na(regions_typo_carto$profil)), "\n")
+
+carte_typo <- ggplot(regions_typo_carto) +
+  geom_sf(aes(fill = profil), colour = "white", linewidth = 0.2) +
+  scale_fill_manual(
+    values = c("Croissance forte et tissu dense" = "#B2182B",
+               "Croissance forte"                = "#FD8D3C",
+               "Tissu dense"                     = "#2C7FB8",
+               "Croissance moderee"              = "#FEE8C8"),
+    na.value = "grey85"
+  ) +
+  labs(
+    title = "Typologie pedagogique de la croissance batie",
+    subtitle = "Croisement de deux medianes : rythme (gain) x etat (part batie 2025)",
+    fill = "Profil",
+    caption = "Seuils RELATIFS aux dix regions. Changer d'echantillon change la typologie."
+  ) +
+  theme_minimal()
+
+print(carte_typo)
+
+ggsave("outputs/J09_typologie_bati.png", carte_typo,
+       width = 8, height = 5.5, dpi = 180)
+```
+
+::: {.callout-tip}
+## Lecture de la carte — typologie en quatre profils
+
+**Ce que la carte code.** Chaque région est classée dans une des quatre cases d'un
+tableau à double entrée : au-dessus ou en dessous de la médiane du gain, au-dessus
+ou en dessous de la médiane de la part bâtie 2025.
+
+**Ce que les choix techniques font.** La palette est **qualitative** : quatre
+couleurs sans ordre implicite, parce que les profils ne sont pas hiérarchisés — un
+« tissu dense » n'est pas « plus » qu'une « croissance forte », c'est autre chose.
+Les seuils sont les **médianes de l'échantillon des dix régions**. C'est un choix
+lourd de conséquences : par construction, cinq régions sont « au-dessus » et cinq
+« en dessous », quelle que soit la réalité. Si on refaisait la même typologie sur
+les 58 départements, ou sur le Cameroun plus le Tchad, **des régions changeraient
+de case sans que rien n'ait bougé sur le terrain**. La typologie décrit une position
+relative dans un ensemble, pas une propriété intrinsèque.
+
+**Ce qui se lit.** La combinaison « croissance forte et tissu déjà dense » isole les
+régions où la pression s'ajoute à une pression existante — celles où la planification
+est la plus urgente.
+
+**Ce qui ne se lit pas.** La distance au seuil. Une région juste au-dessus de la
+médiane et une région très au-dessus portent la même couleur. C'est le coût de
+toute discrétisation, et c'est ce qui rend une carte de classes plus fragile
+qu'une carte continue. L'exercice à faire en salle : remplacer les médianes par
+des quartiles, ou par des seuils absolus (par exemple 0,5 % de part bâtie), et
+regarder combien de régions changent de case.
+:::
+
+## 4.5 Descendre à l'ADM2 : le MAUP en action
+
+```{r}
+#| label: chunk-departements
+departements_2015 <- resumer_bati(cmr2, bati_2015_ok, 2015, "GID_2", "NAME_2", "ADM2")
+departements_2025 <- resumer_bati(cmr2, bati_2025_ok, 2025, "GID_2", "NAME_2", "ADM2")
+
+n_dept_avant <- nrow(departements_2015)
+
+departements_chg <- departements_2015 %>%
+  sf::st_drop_geometry() %>%
+  select(GID_2, NAME_2,
+         bati_km2_2015 = bati_km2,
+         part_batie_pct_2015 = part_batie_pct) %>%
+  left_join(
+    departements_2025 %>%
+      sf::st_drop_geometry() %>%
+      select(GID_2,
+             bati_km2_2025 = bati_km2,
+             part_batie_pct_2025 = part_batie_pct),
+    by = "GID_2"
+  ) %>%
+  mutate(
+    gain_bati_km2 = bati_km2_2025 - bati_km2_2015,
+    croissance_pct = if_else(
+      bati_km2_2015 >= seuil_bati_min_km2,
+      100 * gain_bati_km2 / bati_km2_2015,
+      NA_real_
+    )
+  ) %>%
+  arrange(desc(gain_bati_km2))
+
+cat("--- Jointure ADM2 ---\n")
+cat("  lignes avant :", n_dept_avant, " | apres :", nrow(departements_chg), "\n")
+cat("  NA sur bati 2025 :", sum(is.na(departements_chg$bati_km2_2025)), "\n")
+cat("  departements sous le seuil de ", seuil_bati_min_km2,
+    " km2 (croissance non calculee) : ",
+    sum(is.na(departements_chg$croissance_pct)), " sur ",
+    nrow(departements_chg), "\n", sep = "")
+
+cat("\nLes 10 departements au plus fort gain absolu :\n")
+print(departements_chg %>% slice_head(n = 10))
+
+cat("\nLes 10 departements a la plus forte croissance relative :\n")
+print(departements_chg %>%
+        filter(!is.na(croissance_pct)) %>%
+        arrange(desc(croissance_pct)) %>%
+        slice_head(n = 10))
+```
+
+```{r}
+#| label: chunk-maup
+# MAUP : le meme phenomene, agrege a deux mailles, donne deux resultats.
+# On compare la dispersion de la part batie selon la maille.
+dispersion <- bind_rows(
+  regions_chg %>%
+    summarise(maille = "ADM1 (10 regions)",
+              n = n(),
+              min_part = min(part_batie_pct_2025, na.rm = TRUE),
+              median_part = median(part_batie_pct_2025, na.rm = TRUE),
+              max_part = max(part_batie_pct_2025, na.rm = TRUE)),
+  departements_chg %>%
+    summarise(maille = "ADM2 (58 departements)",
+              n = n(),
+              min_part = min(part_batie_pct_2025, na.rm = TRUE),
+              median_part = median(part_batie_pct_2025, na.rm = TRUE),
+              max_part = max(part_batie_pct_2025, na.rm = TRUE))
+) %>%
+  mutate(across(where(is.numeric), ~ round(.x, 3)),
+         rapport_max_sur_median = round(max_part / median_part, 1))
+
+print(dispersion)
+
+cat("\nLa part batie NATIONALE est la meme dans les deux cas :",
+    round(changement_national$part_batie_pct_2025, 4), "%\n")
+cat("Mais l'ecart entre l'unite la plus batie et l'unite mediane passe d'un\n")
+cat("rapport de ", dispersion$rapport_max_sur_median[1], " a ADM1 a un rapport de ",
+    dispersion$rapport_max_sur_median[2], " a ADM2.\n", sep = "")
+```
+
+::: {.callout-important}
+## MAUP — le problème de l'unité spatiale modifiable
+
+Le **MAUP** (*Modifiable Areal Unit Problem*) énonce que les résultats d'une
+analyse spatiale dépendent de la maille d'agrégation choisie. Il a deux composantes,
+et le tableau ci-dessus montre la première :
+
+**L'effet d'échelle.** Le même bâti, agrégé sur 10 régions ou sur 58 départements,
+ne produit pas la même distribution. Le total national est identique — c'est une
+somme —, mais tout ce qui décrit la **variabilité** change : l'écart entre le
+maximum et la médiane, l'identité de l'unité la plus dense, le nombre d'unités
+« sans bâti détecté ». Plus la maille est fine, plus les extrêmes sont extrêmes,
+parce que l'agrégation grossière mélange dans une même unité un centre-ville et sa
+brousse environnante.
+
+**L'effet de zonage.** À nombre d'unités constant, redécouper les frontières change
+aussi les résultats. On ne peut pas le tester ici — GADM ne fournit qu'un découpage
+—, mais c'est le mécanisme du redécoupage électoral, et il suffit à rappeler
+qu'aucune maille n'est neutre.
+
+**La règle pratique.** Ne pas chercher la « bonne » maille : il n'y en a pas.
+Choisir la maille de la **décision** qu'on éclaire. Un arbitrage budgétaire entre
+régions se fait à l'ADM1 ; un plan d'assainissement se fait à l'ADM2 ou plus fin.
+Et dans les deux cas, **écrire la maille sous la carte** — le lecteur ne peut pas
+la deviner.
+
+**Erreur écologique.** Le corollaire : plus la maille est grossière, plus il est
+tentant — et faux — de transférer la valeur de l'agrégat aux individus qui le
+composent. Dire « le Littoral est bâti à X % » n'autorise pas à dire « un habitant
+du Littoral vit dans une zone bâtie à X % ». La quasi-totalité de la population du
+Littoral vit à Douala, où la part bâtie locale est d'un tout autre ordre.
+:::
+
+```{r}
+#| label: chunk-carte-dept
+#| fig-height: 6
+departements_carto <- departements_2025 %>%
+  select(GID_2, NAME_2) %>%
+  left_join(departements_chg %>% select(GID_2, gain_bati_km2, croissance_pct),
+            by = "GID_2")
+
+cat("Departements cartographies :", nrow(departements_carto),
+    "| sans gain calcule :", sum(is.na(departements_carto$gain_bati_km2)), "\n")
+
+carte_dept_gain <- ggplot(departements_carto) +
+  geom_sf(aes(fill = gain_bati_km2), colour = "white", linewidth = 0.12) +
+  scale_fill_gradient2(low = "#2166AC", mid = "white", high = "#B2182B",
+                       midpoint = 0, na.value = "grey85") +
+  labs(
+    title = "Gain de bati 2015-2025 au niveau departemental (ADM2)",
+    subtitle = "La meme donnee que la carte regionale, agregee autrement",
+    fill = "Gain (km2)",
+    caption = "58 departements. Gris = donnee absente, jamais zero."
+  ) +
+  theme_minimal()
+
+print(carte_dept_gain)
+
+ggsave("outputs/J09_gain_bati_adm2.png", carte_dept_gain,
+       width = 8, height = 6, dpi = 180)
+```
+
+::: {.callout-note}
+## En quoi le spatial est utile ici — ce que le tableau ne contient pas
+
+Le tableau `departements_chg` classe les 58 départements par gain. Il donne un
+palmarès. La carte donne trois choses de plus, qu'aucun tri ne produit :
+
+- **La contiguïté.** Les départements à fort gain ne sont pas dispersés : ils
+  forment des grappes autour de Douala, de Yaoundé, et le long de l'axe qui les
+  relie. Un bloc contigu ne s'explique pas par les caractéristiques propres de
+  chaque département, mais par ce qu'ils partagent *parce qu'ils sont voisins* —
+  un même marché du travail, une même infrastructure de transport. La ressemblance
+  entre voisins devient elle-même l'objet à expliquer.
+- **La forme des vides.** Les zones sans gain ne sont pas un bruit de fond : elles
+  dessinent l'Est forestier et le Nord sahélien, deux vides d'origines totalement
+  différentes. Un tableau les met côte à côte dans les dernières lignes du
+  classement, sans jamais le dire.
+- **L'écart entre deux mailles.** Superposer mentalement cette carte à celle de la
+  section 4.3 montre où l'agrégation régionale masquait une hétérogénéité interne
+  forte — et c'est là que l'erreur écologique guette.
+:::
+
+## 4.6 Exports du module
+
+```{r}
+#| label: chunk-exports-bati
+readr::write_csv(regions_chg, "outputs/J09_regions_bati_2015_2025.csv")
+readr::write_csv(regions_typo, "outputs/J09_regions_typologie_bati.csv")
+readr::write_csv(departements_chg, "outputs/J09_departements_bati_2015_2025.csv")
+
+sf::st_write(regions_carto, "outputs/J09_regions_bati_2015_2025.gpkg",
+             delete_dsn = TRUE, quiet = TRUE)
+sf::st_write(departements_carto, "outputs/J09_departements_bati_2015_2025.gpkg",
+             delete_dsn = TRUE, quiet = TRUE)
+
+cat("Fichiers ecrits dans outputs/ :\n")
+cat(paste0("  ", list.files("outputs", pattern = "^J09_")), sep = "\n")
+```
+
+# Module 5 · Cas réel : les inondations de Yagoua, 2024
+
+## 5.1 Copernicus EMS : la chaîne image → vecteur → produit
+
+Le **Copernicus Emergency Management Service** cartographie les zones touchées par
+une catastrophe à partir d'images satellite, en quelques heures à quelques jours
+après l'événement. Un État, une agence des Nations unies ou une ONG déclenche une
+« activation » ; le service commande des images, les analyse et publie des couches
+vectorielles librement réutilisables.
+
+L'activation **EMSR772** (référence GLIDE `FL-2024-000162-CMR`) porte sur les
+inondations de 2024 dans la région de **Yagoua**, à l'Extrême-Nord du Cameroun,
+dans la plaine du Logone.
+
+Elle couvre trois zones d'intérêt, très éloignées les unes des autres :
+
+| Zone | Localité | Statut dans cette journée |
+|---|---|---|
+| AOI01 | Yagoua | zone d'étude principale, modules 5 à 8 |
+| AOI02 | Makari | zone de généralisation, module 9 |
+| AOI03 | Waza | zone de généralisation, module 9 |
+
+Les produits livrés par zone :
+
+| Couche | Contenu | Unité d'observation |
+|---|---|---|
+| `areaOfInterestA` | périmètre cartographié par EMS | 1 polygone |
+| `floodDepthA` | polygones de **classe de profondeur** | 1 polygone = 1 zone d'une classe |
+| `observedEventA` | emprise globale de l'événement observé | polygones |
+| `imageFootprintA` | étendue de l'image satellite utilisée | polygones |
+
+::: {.callout-important}
+## Une dépendance à vérifier AVANT la salle
+
+Dans le matériel source, l'archive `EMSR772_AOI01_DEL_PRODUCT_v2.zip` **n'était pas
+décompressée**, et le fichier `EMSR772_AOI01_DEL_PRODUCT_floodDepthA_v2.shp` —
+lu à la **ligne 90** du script formateur d'origine — **n'existait nulle part sur
+disque**. Les zones AOI02 et AOI03 étaient, elles, déjà extraites.
+
+Autrement dit : le module central de la journée, celui qui porte le cas réel,
+dépendait d'un fichier absent. Le script n'aurait pas démarré.
+
+Ce document lit les shapefiles **déjà extraits et renommés à plat** dans
+`datasets/`. Tous les `unzip()` d'EMSR772 du script source ont été **supprimés** :
+un dossier de données est un dossier d'entrées, on n'y écrit pas pendant une
+séance. La contrepartie est que quelqu'un doit avoir extrait l'archive AOI01 en
+amont et vérifié que `floodDepthA` en sort bien. **C'est le point numéro 1 de
+`_A_FAIRE_J09.md`.**
+:::
+
+## 5.2 Lire les couches EMSR772, à plat
+
+```{r}
+#| label: chunk-lecture-emsr
+# Lecture unique, avec reparation immediate. Les produits de cartographie
+# rapide contiennent frequemment des auto-intersections : sans
+# st_make_valid(), le st_intersection() du module 8 echoue.
+lire_emsr <- function(chemin, etiquette) {
+  if (!file.exists(chemin)) {
+    cat("*** ABSENT :", chemin, "***\n")
+    return(NULL)
+  }
+  x <- sf::st_read(chemin, quiet = TRUE)
+  n_inv_avant <- sum(!sf::st_is_valid(x))
+  x <- sf::st_make_valid(x)
+  cat("--- ", etiquette, " ---\n", sep = "")
+  cat("  entites   :", nrow(x), "\n")
+  cat("  colonnes  :", paste(names(x), collapse = ", "), "\n")
+  cat("  CRS       :", sf::st_crs(x)$input, "\n")
+  cat("  geometries invalides avant / apres reparation : ",
+      n_inv_avant, " / ", sum(!sf::st_is_valid(x)), "\n", sep = "")
+  x
+}
+
+aoi01_complet <- lire_emsr("datasets/EMSR772_AOI01_areaOfInterestA.shp",
+                           "AOI01 -- zone d'interet (emprise officielle)")
+flood01_complet <- lire_emsr("datasets/EMSR772_AOI01_floodDepthA.shp",
+                             "AOI01 -- profondeurs d'inondation")
+```
+
+```{r}
+#| label: chunk-aoi-officielle
+# Superficie de l'AOI officielle, mesuree dans le CRS de mesure et non en
+# degres. C'est ce chiffre qui justifie la reduction de fenetre ci-dessous.
+if (!is.null(aoi01_complet)) {
+  surf_aoi_officielle <- as.numeric(
+    sum(sf::st_area(sf::st_transform(aoi01_complet, crs_mesure)))
+  ) / 1e6
+  cat("Surface de l'AOI01 officielle :", round(surf_aoi_officielle, 0), "km2\n")
+  cat("Emprise (degres) :\n")
+  print(sf::st_bbox(aoi01_complet))
+  if ("locality" %in% names(aoi01_complet))
+    cat("Localite declaree :", paste(aoi01_complet$locality, collapse = ", "), "\n")
+}
+```
+
+## 5.3 La fenêtre d'étude : une réduction assumée
+
+```{r}
+#| label: chunk-fenetre
+# ----------------------------------------------------------------------
+# CHOIX DE METHODE, A ENONCER EN SALLE
+# ----------------------------------------------------------------------
+# L'AOI01 officielle couvre ~6 870 km2 (plus de 100 km de large) et contient
+# plus de 400 000 batiments Open Buildings a confidence >= 0,7. Toutes les
+# operations de cette journee -- filtres spatiaux, intersections, jointures --
+# y deviendraient trop lentes pour une seance.
+#
+# On reduit donc a une fenetre ad hoc de 5 x 5 km, centree sur le secteur le
+# plus densement inonde, pres de Yagoua.
+#
+# CONSEQUENCE, a repeter : TOUS les chiffres des modules 5 a 8 (batiments,
+# population, routes) portent sur cette fenetre, PAS sur l'AOI01 officielle.
+# Ils ne doivent jamais etre cites comme un bilan de l'inondation de Yagoua.
+# ----------------------------------------------------------------------
+fenetre_zoom <- sf::st_bbox(
+  c(xmin = 15.31957, ymin = 10.22218, xmax = 15.36528, ymax = 10.26745),
+  crs = sf::st_crs(aoi01_complet)
+)
+
+aoi01 <- sf::st_intersection(aoi01_complet, sf::st_as_sfc(fenetre_zoom))
+aoi01 <- sf::st_make_valid(aoi01)
+flood01 <- sf::st_filter(flood01_complet, aoi01)
+
+surf_aoi01 <- as.numeric(
+  sum(sf::st_area(sf::st_transform(aoi01, crs_mesure)))
+) / 1e6
+
+cat("--- Reduction de fenetre ---\n")
+cat("  AOI01 : ", nrow(aoi01_complet), " -> ", nrow(aoi01), " polygone(s)\n", sep = "")
+cat("  flood : ", nrow(flood01_complet), " -> ", nrow(flood01),
+    " polygone(s)\n", sep = "")
+cat("  surface retenue :", round(surf_aoi01, 2), "km2 sur",
+    round(surf_aoi_officielle, 0), "km2 officiels, soit",
+    round(100 * surf_aoi01 / surf_aoi_officielle, 2), "%\n")
+cat("  CRS conserve :", sf::st_crs(aoi01)$input, "\n")
+```
+
+```{r}
+#| label: chunk-classes-profondeur
+# Structure de la table floodDepth : une ligne = un polygone d'une classe.
+colonnes_utiles <- intersect(c("obj_desc", "value", "det_method", "event_type"),
+                            names(flood01))
+cat("Colonnes descriptives presentes :", paste(colonnes_utiles, collapse = ", "), "\n\n")
+
+print(flood01 %>% sf::st_drop_geometry() %>% select(all_of(colonnes_utiles)))
+
+cat("\nClasses de profondeur presentes dans la fenetre :\n")
+print(table(flood01$value, useNA = "ifany"))
+
+# Surface inondee : mesuree en UTM 33N. En degres, ce chiffre serait faux.
+flood01_mesure <- sf::st_transform(flood01, crs_mesure)
+surface_par_classe <- flood01 %>%
+  sf::st_drop_geometry() %>%
+  mutate(surface_km2 = as.numeric(sf::st_area(flood01_mesure)) / 1e6) %>%
+  group_by(value) %>%
+  summarise(nb_polygones = n(),
+            surface_km2 = round(sum(surface_km2), 3),
+            .groups = "drop") %>%
+  arrange(value) %>%
+  mutate(part_de_la_fenetre_pct = round(100 * surface_km2 / surf_aoi01, 1))
+
+print(surface_par_classe)
+
+surface_inondee_km2 <- sum(surface_par_classe$surface_km2)
+cat("\nSurface inondee totale dans la fenetre :", round(surface_inondee_km2, 3),
+    "km2, soit", round(100 * surface_inondee_km2 / surf_aoi01, 1),
+    "% de la fenetre\n")
+```
+
+::: {.callout-important}
+## « Classe de profondeur » n'est pas une mesure in situ
+
+La colonne `value` de `floodDepthA` contient des tranches du type `"0.50 - 1.00"`,
+en mètres. Il est tentant de les lire comme des relevés de hauteur d'eau. Ce n'en
+sont pas.
+
+**Comment ces classes sont produites.** Un opérateur délimite l'étendue de l'eau
+sur une image — le plus souvent une image **radar** Sentinel-1, parce qu'elle
+traverse les nuages et fonctionne de nuit, et qu'une inondation arrive rarement par
+ciel dégagé. Puis la hauteur d'eau est **estimée** en croisant cette étendue avec un
+modèle numérique de terrain : là où le terrain est bas sous la surface de l'eau
+délimitée, l'eau est réputée plus profonde. La précision du résultat est donc celle
+du modèle de terrain — souvent quelques mètres en vertical, ce qui est du même ordre
+que les classes qu'on prétend distinguer.
+
+**Ce que cela implique.**
+
+- Les classes sont **ordonnées**, mais leurs bornes ne sont pas des mesures : la
+  frontière entre `"0.50 - 1.00"` et `"1.00 - 2.00"` est une estimation, pas un
+  relevé.
+- La donnée est **datée** : elle décrit l'étendue de l'eau au moment précis de
+  l'acquisition. Une crue monte et redescend ; une image prise trois jours plus tôt
+  ou plus tard donnerait une autre carte. Le produit n'est pas « l'inondation de
+  Yagoua 2024 », c'est « l'eau visible le jour de l'image ».
+- L'eau **sous couvert végétal ou sous les toits** est mal détectée. Un quartier
+  peut avoir les pieds dans l'eau sans figurer dans un polygone.
+
+Ces trois limites s'ajoutent — elles ne se compensent pas — et elles vont toutes
+dans le sens d'une **sous-estimation** de l'exposition.
+:::
+
+```{r}
+#| label: chunk-carte-flood
+#| fig-height: 6
+carte_flood <- ggplot() +
+  geom_sf(data = aoi01, fill = "grey95", colour = "steelblue", linewidth = 0.9) +
+  geom_sf(data = flood01, aes(fill = value), colour = NA, alpha = 0.85) +
+  scale_fill_brewer(palette = "YlOrRd", na.value = "grey70") +
+  labs(
+    title = "EMSR772 -- AOI01 (Yagoua) : classes de profondeur d'inondation",
+    subtitle = paste0("Fenetre d'etude de ", round(surf_aoi01, 1),
+                      " km2 -- PAS l'AOI01 officielle de ",
+                      round(surf_aoi_officielle, 0), " km2"),
+    fill = "Profondeur (m)",
+    caption = "Source : Copernicus EMS, activation EMSR772 (2024)."
+  ) +
+  theme_minimal()
+
+print(carte_flood)
+
+ggsave("outputs/J09_carte_flood_aoi01.png", carte_flood,
+       width = 8, height = 6, dpi = 180)
+```
+
+::: {.callout-tip}
+## Lecture de la carte — profondeurs d'inondation
+
+**Ce que la carte code.** Chaque polygone coloré est une zone qu'un opérateur
+Copernicus EMS a classée dans une tranche de profondeur estimée. Le contour bleu est
+la fenêtre d'étude, pas l'AOI officielle. Le fond gris clair est la partie de la
+fenêtre **non classée comme inondée** — ce qui ne veut pas dire « sèche », mais
+« pas détectée comme inondée sur l'image utilisée ».
+
+**Ce que les choix techniques font.** La palette `YlOrRd` est **séquentielle**, et
+appliquée à une variable **ordinale** : les classes ont un ordre naturel, la couleur
+doit le refléter. Attention toutefois : `value` est lue comme du **texte**, donc
+l'ordre alphabétique des chaînes coïncide ici avec l'ordre numérique par chance,
+pas par construction — vérifier ce point sur toute autre activation. Les polygones
+sont tracés sans bordure (`colour = NA`) : à cette échelle, des contours noirs
+rempliraient l'image de traits et masqueraient les petits polygones.
+
+**Ce qui se lit.** L'eau suit un réseau, pas une tache : elle épouse des chenaux,
+des dépressions, d'anciens bras. C'est la signature d'une inondation de plaine
+alluviale, très différente d'une inondation urbaine par ruissellement, qui remplirait
+des cuvettes fermées.
+
+**Ce qui ne se lit pas.** Ni la durée de la submersion — la carte est un instantané —
+ni la vitesse du courant, ni le nombre de personnes concernées. Et surtout, la
+**forme étroite et découpée** de ces polygones est le facteur qui va faire diverger
+les deux méthodes de comptage du module 7. Ce n'est pas un détail esthétique : c'est
+la cause du désaccord.
+:::
+
+# Module 6 · Compter les exposés : Google Open Buildings
+
+## 6.1 Ce qu'est Open Buildings
+
+**Open Buildings** est une base d'empreintes de bâtiments produite par Google
+Research à partir d'imagerie satellite à très haute résolution, couvrant l'Afrique
+et l'Asie du Sud. Elle est distribuée par tuile, en CSV compressé, sous licence
+CC BY 4.0. Colonnes principales :
+
+| Colonne | Contenu | Attention |
+|---|---|---|
+| `latitude`, `longitude` | position du **centroïde** du bâtiment | ce sont des points, pas des polygones |
+| `geometry` | empreinte polygonale au format WKT | c'est elle qui porte la forme |
+| `area_in_meters` | surface estimée au sol | estimée par le modèle, pas mesurée |
+| `confidence` | probabilité que l'objet soit un bâtiment (0 à 1) | **le paramètre le plus lourd de la journée** |
+| `full_plus_code` | code de localisation Google | identifiant, sans usage analytique ici |
+
+Les tuiles brutes pèsent plusieurs gigaoctets et couvrent une zone bien plus large
+que Yagoua. Le fichier livré, `open_buildings_yagoua.gpkg`, est déjà restreint à
+l'AOI01 officielle plus une marge de 5 km. Il a été produit une seule fois par
+`scripts/preparation/preparer_open_buildings_J09.R`, dont c'est la seule raison
+d'exister : **tracer la provenance**.
+
+```{r}
+#| label: chunk-lecture-ob
+chemin_ob <- "datasets/open_buildings_yagoua.gpkg"
+
+if (file.exists(chemin_ob)) {
+  cat("Couches du GeoPackage :\n")
+  print(sf::st_layers(chemin_ob))
+}
+
+batiments_source <- sf::st_read(chemin_ob, quiet = TRUE)
+
+cat("\n--- Open Buildings (zone de Yagoua, deja restreinte) ---\n")
+cat("  batiments      :", format(nrow(batiments_source), big.mark = " "), "\n")
+cat("  colonnes       :", paste(names(batiments_source), collapse = ", "), "\n")
+cat("  CRS            :", sf::st_crs(batiments_source)$input, "\n")
+cat("  type geometrie :",
+    paste(unique(as.character(sf::st_geometry_type(batiments_source))),
+          collapse = ", "), "\n")
+print(sf::st_bbox(batiments_source))
+
+# On ne suppose PAS que les colonnes existent : on verifie.
+colonnes_attendues <- c("latitude", "longitude", "area_in_meters", "confidence")
+for (col in colonnes_attendues) {
+  cat("  colonne", col, ":",
+      if (col %in% names(batiments_source)) "presente" else "*** ABSENTE ***", "\n")
+}
+
+print(head(sf::st_drop_geometry(batiments_source), 3))
+```
+
+## 6.2 Le seuil de confiance : un paramètre, pas une donnée
+
+```{r}
+#| label: chunk-confiance
+# Le seuil est declare ICI, une fois, en variable nommee. Il n'est jamais
+# ecrit en dur au milieu d'un filter().
+seuil_confiance <- 0.7
+
+if ("confidence" %in% names(batiments_source)) {
+
+  cat("Distribution du champ confidence :\n")
+  print(round(summary(batiments_source$confidence), 3))
+
+  repartition_conf <- batiments_source %>%
+    sf::st_drop_geometry() %>%
+    mutate(conf_classe = cut(confidence, c(0, 0.5, 0.7, 1),
+                             labels = c("<0.5", "0.5-0.7", ">=0.7"),
+                             include.lowest = TRUE)) %>%
+    count(conf_classe, name = "nb") %>%
+    mutate(pct = round(100 * nb / sum(nb), 1))
+
+  print(repartition_conf)
+
+  # Sensibilite du comptage au seuil : c'est CE tableau qui doit etre montre,
+  # pas le seul chiffre a 0,7.
+  sensibilite <- lapply(c(0.5, 0.6, 0.65, 0.7, 0.75, 0.8, 0.9), function(s) {
+    data.frame(seuil = s,
+               nb_batiments = sum(batiments_source$confidence >= s, na.rm = TRUE))
+  }) %>%
+    bind_rows() %>%
+    mutate(
+      ecart_vs_07_pct = round(
+        100 * (nb_batiments - nb_batiments[seuil == 0.7]) /
+          nb_batiments[seuil == 0.7], 1)
+    )
+
+  cat("\nSensibilite du comptage au seuil de confiance :\n")
+  print(sensibilite)
+
+} else {
+  cat("*** Colonne 'confidence' absente : le seuil ne peut pas etre applique.\n")
+  cat("*** Verifier le contenu de open_buildings_yagoua.gpkg (voir _A_FAIRE_J09.md).\n")
+}
+```
+
+::: {.callout-important}
+## Pourquoi 0,7 — et ce que ce chiffre décide
+
+`confidence` est la probabilité, estimée par le modèle de Google, que l'objet
+détecté soit réellement un bâtiment. Le seuil qu'on lui applique arbitre entre deux
+erreurs, et il n'existe pas de valeur « juste » dans l'absolu :
+
+- **Seuil bas** (0,5) : peu de bâtiments manqués (faux négatifs), mais des objets
+  qui n'en sont pas passent dans le compte (faux positifs) — rochers, tas de terre,
+  ombres portées, meules. En estimation de population, un faux positif ajoute cinq
+  habitants imaginaires.
+- **Seuil haut** (0,8 et plus) : le compte est plus sûr, mais les constructions
+  petites, en matériaux légers, ou partiellement masquées par des arbres
+  disparaissent. Or ce sont précisément les habitations les plus vulnérables, et
+  celles dont on cherche à mesurer l'exposition. Le biais n'est pas aléatoire : il
+  frappe systématiquement les plus pauvres.
+
+**0,7 est un compromis conventionnel**, aligné sur la pratique courante des analyses
+humanitaires sur Open Buildings. Ce n'est pas une propriété des données.
+
+**La règle de méthode.** Le seuil doit être (1) déclaré dans le code en variable
+nommée, (2) écrit dans le rapport, (3) accompagné d'un test de sensibilité comme
+celui du tableau ci-dessus. Un résultat qui bascule entre 0,65 et 0,75 n'est pas un
+résultat : c'est le seuil qu'on lit, pas le territoire. Pour une décision
+opérationnelle — répartir de l'aide, dimensionner un site d'accueil —, il vaut mieux
+publier une fourchette « 0,6 à 0,8 » qu'un chiffre unique faussement précis.
+:::
+
+```{r}
+#| label: chunk-filtrage-batiments
+# --- 1. Restreindre a la fenetre d'etude -----------------------------------
+if (sf::st_crs(batiments_source) != sf::st_crs(aoi01)) {
+  cat("Harmonisation des CRS avant filtre spatial :\n")
+  cat("  batiments :", sf::st_crs(batiments_source)$input, "\n")
+  cat("  aoi01     :", sf::st_crs(aoi01)$input, "\n")
+  batiments_source <- sf::st_transform(batiments_source, sf::st_crs(aoi01))
+} else {
+  cat("CRS deja identiques :", sf::st_crs(aoi01)$input, "\n")
+}
+
+n_avant_fenetre <- nrow(batiments_source)
+batiments_fenetre <- sf::st_filter(batiments_source, aoi01)
+cat("Batiments : ", format(n_avant_fenetre, big.mark = " "), " -> ",
+    format(nrow(batiments_fenetre), big.mark = " "),
+    " apres restriction a la fenetre\n", sep = "")
+
+# --- 2. Appliquer le seuil de confiance ------------------------------------
+if ("confidence" %in% names(batiments_fenetre)) {
+  batiments_ok <- batiments_fenetre %>% filter(confidence >= seuil_confiance)
+} else {
+  batiments_ok <- batiments_fenetre
+  cat("*** Seuil non applique (colonne absente) ***\n")
+}
+
+cat("Batiments a confidence >= ", seuil_confiance, " : ",
+    format(nrow(batiments_ok), big.mark = " "),
+    " (", round(100 * nrow(batiments_ok) / max(nrow(batiments_fenetre), 1), 1),
+    " % de la fenetre)\n", sep = "")
+
+# --- 3. Version ponctuelle, pour le comptage point-dans-polygone -----------
+# Open Buildings fournit le centroide en colonnes latitude/longitude. On le
+# reconstruit si ces colonnes existent, sinon on calcule le centroide de la
+# geometrie. L'ordre c(longitude, latitude) est IMPERATIF : inverser ne leve
+# aucune erreur, cela place simplement les points ailleurs.
+if (all(c("longitude", "latitude") %in% names(batiments_ok))) {
+  batiments_pts <- batiments_ok %>%
+    sf::st_drop_geometry() %>%
+    sf::st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
+  cat("Points reconstruits depuis les colonnes longitude / latitude.\n")
+} else {
+  batiments_pts <- sf::st_centroid(batiments_ok)
+  cat("Colonnes lon/lat absentes : centroides calcules par st_centroid().\n")
+}
+
+batiments_pts <- sf::st_transform(batiments_pts, sf::st_crs(aoi01))
+
+# CONTROLE : les points doivent tomber dans la fenetre. S'ils n'y sont pas,
+# c'est que longitude et latitude ont ete inversees.
+dans_fenetre <- lengths(sf::st_intersects(batiments_pts, aoi01)) > 0
+cat("Points tombant dans la fenetre :", sum(dans_fenetre), "sur",
+    nrow(batiments_pts), "\n")
+if (sum(dans_fenetre) < 0.9 * nrow(batiments_pts))
+  cat("*** ALERTE : verifier l'ordre c(longitude, latitude) ***\n")
+
+batiments_aoi01 <- batiments_pts[dans_fenetre, ]
+cat("Batiments retenus dans AOI01 (fenetre) :",
+    format(nrow(batiments_aoi01), big.mark = " "), "\n")
+```
+
+## 6.3 Bâtiments touchés et ventilation par classe
+
+```{r}
+#| label: chunk-batiments-inondes
+# st_filter() utilise par defaut le predicat st_intersects : un batiment est
+# "touche" si son POINT intersecte au moins un polygone de floodDepth.
+batiments_inondes <- sf::st_filter(batiments_aoi01, flood01)
+
+pct_bat_inondes <- 100 * nrow(batiments_inondes) / max(nrow(batiments_aoi01), 1)
+
+cat("Batiments dans la fenetre  :",
+    format(nrow(batiments_aoi01), big.mark = " "), "\n")
+cat("Batiments touches          :",
+    format(nrow(batiments_inondes), big.mark = " "), "\n")
+cat("Part touchee               :", round(pct_bat_inondes, 1), "%\n")
+```
+
+```{r}
+#| label: chunk-hypothese-population
+# ----------------------------------------------------------------------
+# HYPOTHESE EXPLICITE, a ecrire sous chaque chiffre qui en decoule
+# ----------------------------------------------------------------------
+# On convertit un nombre de batiments en un nombre de personnes en supposant
+# un taux d'occupation moyen. La valeur retenue -- 5 personnes par batiment --
+# correspond a un ordre de grandeur de milieu rural / semi-urbain au nord du
+# Cameroun. Ce n'est PAS une mesure : c'est un parametre.
+# ----------------------------------------------------------------------
+pers_par_batiment <- 5
+
+pop_aoi01    <- nrow(batiments_aoi01) * pers_par_batiment
+pop_inondee  <- nrow(batiments_inondes) * pers_par_batiment
+
+cat("Population estimee dans la fenetre :",
+    format(pop_aoi01, big.mark = " "), "personnes\n")
+cat("Population estimee touchee         :",
+    format(pop_inondee, big.mark = " "), "personnes\n")
+cat("  (hypothese :", pers_par_batiment, "personnes par batiment)\n")
+
+# Sensibilite a l'hypothese : le meme comptage sous trois taux d'occupation.
+sensibilite_pop <- data.frame(
+  pers_par_batiment = c(3, 4, 5, 6, 7)
+) %>%
+  mutate(
+    pop_fenetre = nrow(batiments_aoi01) * pers_par_batiment,
+    pop_touchee = nrow(batiments_inondes) * pers_par_batiment
+  )
+
+cat("\nSensibilite a l'hypothese d'occupation :\n")
+print(sensibilite_pop)
+```
+
+::: {.callout-warning}
+## L'hypothèse × 5 : ce qu'elle fait, et ce qu'elle ne fait pas
+
+**Ce qu'elle fait.** Elle transforme un objet physique compté par un algorithme
+(un toit) en une grandeur démographique (des personnes). C'est un changement de
+nature, pas un simple changement d'unité.
+
+**Trois raisons de s'en méfier.**
+
+1. **Tous les bâtiments ne sont pas habités.** Greniers, hangars, latrines,
+   enclos, bâtiments publics : dans un village sahélien, une concession compte
+   plusieurs constructions pour un seul ménage. Le facteur 5 appliqué à chaque
+   toit surestime alors la population.
+2. **La taille des ménages varie fortement.** Entre l'Extrême-Nord et Douala,
+   entre une concession polygame et un studio urbain, le rapport va du simple au
+   triple. Un facteur unique aplatit exactement la variation qu'on cherche à
+   décrire.
+3. **Le facteur est constant, donc l'erreur est proportionnelle.** C'est le point
+   crucial : puisque `pop = nb × 5`, la **part** de population touchée est
+   rigoureusement égale à la **part** de bâtiments touchés. Le facteur s'annule au
+   numérateur et au dénominateur. Il n'apporte donc **aucune information** au
+   pourcentage — il ne fait qu'habiller un comptage de bâtiments en langage
+   démographique, ce qui lui donne une autorité qu'il n'a pas.
+
+**Ce qu'il faut en faire.** Publier le nombre de bâtiments, qui est ce qu'on a
+mesuré. Publier la population comme un **ordre de grandeur assorti d'une fourchette**
+— le tableau de sensibilité ci-dessus donne cette fourchette. Et surtout, la
+confronter à une source indépendante : c'est tout l'objet du module 7.
+:::
+
+```{r}
+#| label: chunk-ventilation-profondeur
+# st_join() peut DUPLIQUER des lignes : un batiment situe a la limite de deux
+# polygones de profondeur sera apparie deux fois. On compte avant / apres.
+n_avant_join <- nrow(batiments_inondes)
+
+batiments_depth <- sf::st_join(batiments_inondes, flood01["value"])
+
+n_apres_join <- nrow(batiments_depth)
+cat("--- st_join(batiments, flood) ---\n")
+cat("  lignes avant :", n_avant_join, " | apres :", n_apres_join, "\n")
+cat("  duplications :", n_apres_join - n_avant_join, "\n")
+cat("  appariements sans classe (NA) :", sum(is.na(batiments_depth$value)), "\n")
+
+if (n_apres_join > n_avant_join) {
+  cat("  -> des batiments chevauchent deux polygones de profondeur.\n")
+  cat("  -> on ne garde qu'une ligne par batiment (la premiere classe).\n")
+  batiments_depth <- batiments_depth[!duplicated(sf::st_coordinates(batiments_depth)), ]
+  cat("  lignes apres deduplication :", nrow(batiments_depth), "\n")
+}
+
+ventilation <- batiments_depth %>%
+  sf::st_drop_geometry() %>%
+  count(value, name = "nb_batiments") %>%
+  arrange(value) %>%
+  mutate(
+    pop_estimee = nb_batiments * pers_par_batiment,
+    part_pct    = round(100 * nb_batiments / sum(nb_batiments), 1)
+  )
+
+cat("\nBatiments touches par classe de profondeur :\n")
+print(ventilation)
+
+bilan_aoi01 <- tibble::tibble(
+  zone                  = "AOI01 (fenetre 5x5 km)",
+  nb_batiments_aoi      = nrow(batiments_aoi01),
+  nb_batiments_inondes  = nrow(batiments_inondes),
+  pct_batiments_inondes = round(pct_bat_inondes, 1),
+  pop_estimee_aoi       = pop_aoi01,
+  pop_inondee           = pop_inondee
+)
+
+print(bilan_aoi01)
+```
+
+```{r}
+#| label: chunk-graphe-ventilation
+#| fig-height: 4.5
+if (nrow(ventilation) > 0) {
+  g_vent <- ggplot(ventilation, aes(x = value, y = nb_batiments, fill = value)) +
+    geom_col() +
+    geom_text(aes(label = nb_batiments), vjust = -0.4, size = 3.4) +
+    scale_fill_brewer(palette = "YlOrRd", guide = "none") +
+    labs(
+      title = "Batiments touches par classe de profondeur d'inondation",
+      subtitle = paste0("Fenetre de ", round(surf_aoi01, 1),
+                        " km2 pres de Yagoua -- seuil de confiance ",
+                        seuil_confiance),
+      x = "Classe de profondeur estimee (m)",
+      y = "Nombre de batiments"
+    ) +
+    theme_minimal()
+  print(g_vent)
+  ggsave("outputs/J09_batiments_par_profondeur.png", g_vent,
+         width = 8, height = 4.5, dpi = 180)
+}
+```
+
+::: {.callout-tip}
+## Lecture de la figure — ventilation par classe de profondeur
+
+**Ce que la figure code.** Une barre = une classe de profondeur estimée. Sa hauteur
+est le nombre de bâtiments dont le **centroïde** tombe dans un polygone de cette
+classe. Deux définitions à garder en tête : « bâtiment » signifie ici « objet
+détecté par Open Buildings avec une confiance ≥ 0,7 », et « classe de profondeur »
+signifie « estimation Copernicus EMS croisant l'étendue d'eau avec un modèle de
+terrain », pas un relevé de hauteur d'eau.
+
+**Ce que les choix techniques font.** Trois décisions techniques déterminent
+entièrement ces hauteurs de barres. **Le seuil de 0,7** fixe qui est un bâtiment :
+le tableau de sensibilité du module 6.2 montre de combien le total bouge quand on
+le déplace. **Le prédicat `st_intersects` sur des points** fixe qui est touché : un
+bâtiment dont le toit chevauche une zone inondée mais dont le centroïde est en
+dehors compte pour non touché. **La déduplication après `st_join()`** fixe la
+classe attribuée à un bâtiment à cheval sur deux polygones : on garde la première,
+ce qui est arbitraire.
+
+**Ce qui se lit.** La distribution est très déséquilibrée : la majorité des
+bâtiments touchés le sont par les classes les moins profondes. Cela oriente la
+réponse opérationnelle — beaucoup de dégâts matériels modérés plutôt qu'un petit
+nombre de submersions totales.
+
+**Ce qui ne se lit pas.** Le nombre de personnes (voir l'encadré sur l'hypothèse
+× 5). La durée de la submersion. La vulnérabilité du bâti — une case en banco et
+une maison en parpaings ne réagissent pas à la même hauteur d'eau, et Open
+Buildings ne dit rien du matériau. Et une classe absente du graphique ne signifie
+pas « aucun bâtiment à cette profondeur » : elle peut signifier « aucun polygone de
+cette classe dans la fenêtre retenue ».
+:::
+
+# Module 7 · Deux méthodes, deux réponses
+
+C'est le moment le plus important de la journée. On dispose maintenant d'une
+estimation de population fondée sur le comptage de bâtiments. On va la confronter
+à une source **indépendante** : la grille WorldPop 2024, construite à partir de
+données censitaires et de covariables satellitaires, à 100 m de résolution.
+
+L'enjeu n'est pas de désigner un gagnant. Il est de comprendre **pourquoi** deux
+méthodes défendables donnent des réponses différentes, et de savoir laquelle
+répond à quelle question.
+
+## 7.1 Ouvrir et contrôler la grille WorldPop
+
+```{r}
+#| label: chunk-worldpop
+chemin_worldpop <- "datasets/cmr_pop_2024_CN_100m_R2025A_v1.tif"
+
+worldpop <- terra::rast(chemin_worldpop)
+
+cat("--- Raster WorldPop 2024 (Cameroun, 100 m) ---\n")
+print(worldpop)
+cat("\nResolution :", paste(res(worldpop), collapse = " x "), "\n")
+cat("CRS        :", terra::crs(worldpop, describe = TRUE)$name,
+    "(EPSG:", terra::crs(worldpop, describe = TRUE)$code, ")\n")
+cat("Coordonnees geographiques (degres) :", terra::is.lonlat(worldpop), "\n")
+if (terra::is.lonlat(worldpop))
+  cat("  taille approx. du pixel :",
+      round(res(worldpop)[1] * 111320), "m a l'equateur\n")
+cat("Emprise :\n")
+print(terra::ext(worldpop))
+
+# La fenetre d'etude est-elle bien DANS l'emprise du raster ? Une extraction
+# hors emprise ne leve pas d'erreur : elle renvoie NA ou 0.
+bb_aoi <- sf::st_bbox(sf::st_transform(aoi01, terra::crs(worldpop)))
+e_wp   <- terra::ext(worldpop)
+couvre <- bb_aoi["xmin"] >= e_wp[1] && bb_aoi["xmax"] <= e_wp[2] &&
+          bb_aoi["ymin"] >= e_wp[3] && bb_aoi["ymax"] <= e_wp[4]
+cat("\nLa fenetre d'etude est contenue dans l'emprise WorldPop :", couvre, "\n")
+if (!couvre)
+  cat("*** ALERTE : extraction partiellement hors emprise, resultats non fiables ***\n")
+
+cat("Population nationale WorldPop 2024 (somme du raster) :",
+    format(round(as.numeric(terra::global(worldpop, "sum", na.rm = TRUE)[1, 1])),
+           big.mark = " "), "habitants\n")
+```
+
+## 7.2 L'extraction zonale, et ce que `exact_extract` fait exactement
+
+```{r}
+#| label: chunk-extraction-worldpop
+# Harmonisation des CRS AVANT extraction, et affichage de la decision.
+aoi01_wp <- sf::st_transform(aoi01, terra::crs(worldpop))
+cat("CRS aoi01 -> CRS worldpop :", sf::st_crs(aoi01)$input, "->",
+    sf::st_crs(aoi01_wp)$input, "\n")
+
+pop_aoi01_worldpop <- sum(
+  exactextractr::exact_extract(worldpop, aoi01_wp, "sum", progress = FALSE)
+)
+
+# Union des polygones d'inondation : sans elle, un habitant situe sous deux
+# polygones qui se recouvrent serait compte deux fois.
+flood01_union <- sf::st_union(flood01)
+flood01_union_sf <- sf::st_transform(sf::st_as_sf(flood01_union),
+                                     terra::crs(worldpop))
+
+cat("Polygones flood avant union :", nrow(flood01),
+    "| apres union :", length(flood01_union), "\n")
+
+pop_inondee_worldpop <- sum(
+  exactextractr::exact_extract(worldpop, flood01_union_sf, "sum",
+                               progress = FALSE)
+)
+
+cat("\nWorldPop -- population de la fenetre :",
+    format(round(pop_aoi01_worldpop), big.mark = " "), "\n")
+cat("WorldPop -- population en zone inondee :",
+    format(round(pop_inondee_worldpop), big.mark = " "), "\n")
+cat("WorldPop -- part de la population en zone inondee :",
+    round(100 * pop_inondee_worldpop / pop_aoi01_worldpop, 1), "%\n")
+```
+
+::: {.callout-note}
+## Ce que fait `exact_extract`, et pourquoi cela change le résultat
+
+Quand un polygone recouvre une grille, la question « quelle population contient-il ? »
+n'a pas de réponse évidente pour les cellules coupées par la frontière.
+
+**`terra::extract()` par défaut** applique la règle du centre : une cellule compte
+pour le polygone dans lequel tombe son centre, entièrement ou pas du tout.
+C'est rapide et c'est acceptable quand le polygone est grand devant la cellule.
+
+**`exactextractr::exact_extract()`** calcule, pour chaque cellule, la **fraction de
+sa surface** couverte par le polygone, et pondère la valeur par cette fraction. Une
+cellule couverte à 30 % contribue pour 30 % de ses habitants.
+
+**Quand l'écart devient décisif.** Il croît quand la taille des polygones se
+rapproche de celle des cellules, et quand les polygones sont **étroits et découpés** —
+exactement le cas des polygones `floodDepth`. Un couloir d'inondation de 60 m de
+large sur une grille de 100 m ne contient presque aucun centre de cellule : la règle
+du centre y renverrait une population proche de zéro, alors que la pondération par
+fraction renvoie environ 60 % de la population des cellules traversées.
+
+**La contrepartie, qu'il faut énoncer.** La pondération par fraction suppose que la
+population est **uniformément répartie à l'intérieur de chaque cellule de 100 m**.
+C'est faux à cette échelle : dans une cellule qui contient un hameau et un champ,
+tout le monde est du côté du hameau. `exact_extract` ne mesure donc pas la
+population du couloir inondé ; il mesure la population de la surface, sous
+l'hypothèse d'homogénéité intracellulaire. C'est mieux que la règle du centre, ce
+n'est pas la vérité.
+:::
+
+## 7.3 La confrontation
+
+```{r}
+#| label: chunk-comparaison
+# Troisieme methode, plus robuste que les deux premieres sur des polygones
+# etroits : ponderer par la SURFACE BATIE inondee plutot que compter des
+# centroides. On la calcule si les geometries sont polygonales.
+part_surface_batie_inondee <- NA_real_
+geom_types <- unique(as.character(sf::st_geometry_type(batiments_ok)))
+
+if (any(grepl("POLYGON", geom_types))) {
+  bat_mesure <- sf::st_transform(batiments_ok, crs_mesure)
+  bat_mesure$surface_m2 <- as.numeric(sf::st_area(bat_mesure))
+
+  flood_mesure <- sf::st_transform(sf::st_as_sf(flood01_union), crs_mesure)
+
+  inter_bati <- tryCatch(
+    sf::st_intersection(bat_mesure, flood_mesure),
+    error = function(e) { cat("st_intersection echouee :",
+                              conditionMessage(e), "\n"); NULL }
+  )
+
+  if (!is.null(inter_bati) && nrow(inter_bati) > 0) {
+    surf_batie_totale  <- sum(bat_mesure$surface_m2, na.rm = TRUE)
+    surf_batie_inondee <- sum(as.numeric(sf::st_area(inter_bati)), na.rm = TRUE)
+    part_surface_batie_inondee <- 100 * surf_batie_inondee / surf_batie_totale
+
+    cat("--- Troisieme methode : surface batie inondee ---\n")
+    cat("  surface batie totale  :", round(surf_batie_totale), "m2\n")
+    cat("  surface batie inondee :", round(surf_batie_inondee), "m2\n")
+    cat("  part de la surface batie inondee :",
+        round(part_surface_batie_inondee, 1), "%\n")
+    cat("  (a comparer aux", round(pct_bat_inondes, 1),
+        "% obtenus en comptant des centroides)\n")
+  }
+} else {
+  cat("Geometries non polygonales (", paste(geom_types, collapse = ", "),
+      ") : la troisieme methode n'est pas calculable.\n", sep = "")
+}
+```
+
+```{r}
+#| label: chunk-tableau-comparaison
+comparaison_pop <- tibble::tibble(
+  methode = c("Batiments x 5 personnes",
+              "WorldPop 2024 (raster 100 m)"),
+  pop_fenetre = round(c(pop_aoi01, pop_aoi01_worldpop)),
+  pop_zone_inondee = round(c(pop_inondee, pop_inondee_worldpop))
+) %>%
+  mutate(
+    part_inondee_pct = round(100 * pop_zone_inondee / pop_fenetre, 1)
+  )
+
+cat("=== Comparaison des deux methodes d'estimation (fenetre AOI01) ===\n")
+print(comparaison_pop)
+
+ecart_total <- 100 * (comparaison_pop$pop_fenetre[1] -
+                        comparaison_pop$pop_fenetre[2]) /
+  comparaison_pop$pop_fenetre[2]
+ecart_inonde <- 100 * (comparaison_pop$pop_zone_inondee[1] -
+                         comparaison_pop$pop_zone_inondee[2]) /
+  comparaison_pop$pop_zone_inondee[2]
+
+cat("\nEcart relatif sur la population TOTALE de la fenetre :",
+    round(ecart_total, 1), "%\n")
+cat("Ecart relatif sur la population EN ZONE INONDEE      :",
+    round(ecart_inonde, 1), "%\n")
+cat("\nRapport des deux ecarts :",
+    round(abs(ecart_inonde) / max(abs(ecart_total), 0.01), 1),
+    ": c'est ce rapport qui est le resultat du module.\n")
+
+readr::write_csv(comparaison_pop, "outputs/J09_comparaison_methodes_population.csv")
+```
+
+```{r}
+#| label: chunk-graphe-comparaison
+#| fig-height: 4.5
+comp_long <- comparaison_pop %>%
+  select(methode, pop_fenetre, pop_zone_inondee) %>%
+  tidyr::pivot_longer(-methode, names_to = "perimetre", values_to = "population") %>%
+  mutate(perimetre = recode(perimetre,
+                            pop_fenetre = "Fenetre entiere",
+                            pop_zone_inondee = "Zone inondee"))
+
+g_comp <- ggplot(comp_long, aes(x = perimetre, y = population, fill = methode)) +
+  geom_col(position = "dodge") +
+  geom_text(aes(label = format(population, big.mark = " ")),
+            position = position_dodge(width = 0.9), vjust = -0.4, size = 3.2) +
+  scale_fill_manual(values = c("Batiments x 5 personnes" = "#AEC6CF",
+                               "WorldPop 2024 (raster 100 m)" = "#C23B22")) +
+  labs(
+    title = "Deux methodes independantes, deux reponses",
+    subtitle = "Elles s'accordent sur la fenetre entiere et divergent sur la zone inondee",
+    x = NULL, y = "Personnes (estimation)", fill = NULL
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+print(g_comp)
+
+ggsave("outputs/J09_comparaison_methodes.png", g_comp,
+       width = 8, height = 4.5, dpi = 180)
+```
+
+::: {.callout-important}
+## Pourquoi les deux méthodes divergent en zone inondée
+
+C'est le raisonnement central de la journée. Il faut le dérouler lentement.
+
+**Sur la fenêtre entière, elles s'accordent** — même ordre de grandeur. C'est déjà
+une information : cela valide raisonnablement l'hypothèse de 5 personnes par
+bâtiment **sur cette zone précise**. Deux chaînes de production totalement
+indépendantes — l'une part de toits détectés par Google, l'autre de recensements
+désagrégés par WorldPop — convergent. C'est le meilleur argument dont on dispose
+pour utiliser le facteur 5 ici, et il ne se transporte pas ailleurs.
+
+**Sur la zone inondée, elles divergent nettement.** La cause n'est ni un bug ni une
+erreur de données : c'est une différence de **géométrie du comptage**.
+
+- La méthode « bâtiments » demande : *le centroïde de ce bâtiment tombe-t-il à
+  l'intérieur d'un polygone d'inondation ?* C'est une question **binaire, sur un
+  point**. Or les polygones `floodDepth` sont **étroits et découpés** — ils suivent
+  des chenaux et des dépressions, on l'a vu sur la carte du module 5. Beaucoup de
+  bâtiments les bordent sans que leur centre y tombe. Le comptage les rejette
+  intégralement : un bâtiment à moitié dans l'eau compte pour zéro.
+- La méthode « WorldPop » demande : *quelle fraction de surface de chaque cellule
+  de 100 m ce polygone recouvre-t-il ?* C'est une question **continue, sur une
+  surface**. La population de la cellule est répartie uniformément, donc un couloir
+  qui traverse une cellule peuplée en récupère une part proportionnelle, même s'il
+  ne contient aucune habitation.
+
+**Les deux ont un biais, et ils sont de sens opposés.**
+
+Le comptage de centroïdes **sous-estime** : il rejette tout bâtiment dont le centre
+manque le polygone de peu, alors qu'un bâtiment à cheval sur une zone inondée est
+sinistré.
+
+L'extraction pondérée **surestime** : elle suppose la population uniformément
+répartie dans chaque cellule de 100 m, alors qu'en réalité les habitants d'une
+cellule sont groupés là où il y a des maisons — c'est-à-dire, en plaine inondable,
+plutôt sur les points hauts. Le couloir d'eau récupère une part de population qui,
+sur le terrain, n'y habite pas.
+
+**Ce que le formateur doit faire dire à la salle.** Ni « la bonne réponse est
+WorldPop », ni « la bonne réponse est le comptage ». La bonne réponse est : *la
+question était mal posée*. « Combien de personnes sont touchées » suppose une
+définition de « touché » — l'eau dans la maison ? l'accès coupé ? le champ
+détruit ? — et chaque définition appelle une géométrie de calcul différente.
+
+**Ce qu'il faut faire à la place.** Une troisième méthode, calculée plus haut :
+**la part de surface bâtie inondée**. Elle intersecte les polygones de bâtiments
+avec les polygones d'inondation et mesure une surface — donc elle ne rejette pas
+les bâtiments à cheval, et elle ne suppose pas d'homogénéité intracellulaire. C'est
+l'estimateur le plus robuste des trois sur des polygones étroits. Et le bon rendu
+final n'est pas un chiffre : c'est une **fourchette entre les trois méthodes**,
+accompagnée de la phrase qui dit ce que chacune compte.
+:::
+
+```{r}
+#| label: chunk-carte-worldpop
+#| fig-height: 6
+# tmap en mode "plot" : image statique. Le mode "view" est en eval:false plus bas.
+worldpop_aoi01 <- terra::mask(
+  terra::crop(worldpop, terra::vect(aoi01_wp)),
+  terra::vect(aoi01_wp)
+)
+
+cat("Raster recadre sur la fenetre :", terra::ncell(worldpop_aoi01), "cellules\n")
+cat("Population de la fenetre (somme du raster recadre) :",
+    round(as.numeric(terra::global(worldpop_aoi01, "sum", na.rm = TRUE)[1, 1])),
+    "\n")
+
+carte_wp <- tm_shape(worldpop_aoi01) +
+  tm_raster(
+    col.scale = tm_scale_intervals(n = 6, style = "quantile",
+                                   values = "brewer.yl_or_rd"),
+    col.legend = tm_legend(title = "Population (hab / cellule 100 m)")
+  ) +
+  tm_shape(flood01) +
+  tm_borders(col = "black", lwd = 1.6) +
+  tm_shape(aoi01) +
+  tm_borders(col = "steelblue", lwd = 2.5) +
+  tm_title("AOI01 -- WorldPop 2024 et contours d'inondation")
+
+print(carte_wp)
+```
+
+::: {.callout-tip}
+## Lecture de la carte — WorldPop et contours d'inondation superposés
+
+**Ce que la carte code.** La couleur de fond est le nombre d'habitants estimé par
+cellule de 100 m selon WorldPop 2024. Les contours noirs sont les polygones
+d'inondation Copernicus EMS. Le contour bleu est la fenêtre d'étude.
+
+**Ce que les choix techniques font.** La discrétisation est en **quantiles**
+(`style = "quantile"`, 6 classes) : chaque classe contient à peu près le même
+nombre de cellules. Cela maximise le contraste visuel et révèle la structure fine —
+mais cela **fabrique du contraste là où il n'y en a peut-être pas** : si la
+population est presque uniforme, les quantiles produiront quand même six classes
+bien différenciées. Une discrétisation en intervalles égaux donnerait ici une image
+presque uniforme avec deux ou trois cellules vives. Les deux images sont exactes,
+et elles ne racontent pas la même histoire — c'est la démonstration la plus directe
+qu'une carte est un argument, pas un constat.
+
+**Ce qui se lit — et c'est le point.** Les cellules les plus peuplées forment un
+**alignement d'habitat** qui ne recoupe qu'en partie les polygones noirs. On voit à
+l'œil la cause du désaccord du module 7 : l'eau et les gens ne sont pas exactement
+au même endroit, et selon qu'on compte des points ou qu'on pondère des surfaces, on
+attrape une part différente de cet alignement.
+
+**Ce qui ne se lit pas.** WorldPop est un **modèle**, pas un recensement : les
+effectifs par cellule sont produits en désagrégeant un total administratif à l'aide
+de covariables (bâti, routes, lumières nocturnes). Une cellule à 40 habitants ne
+signifie pas que 40 personnes ont été comptées là. Corollaire important pour ce
+module : WorldPop utilise le bâti détecté comme covariable de désagrégation, donc
+les deux méthodes comparées ici ne sont **pas totalement indépendantes**. Leur
+accord sur la fenêtre entière est un peu moins probant qu'il n'y paraît. Il faut le
+dire.
+:::
+
+```{r}
+#| label: chunk-ref-tmap-view
+#| eval: false
+# BLOC DE REFERENCE, NON EXECUTE -- regle 6.6 de l'atelier.
+#
+# tmap_mode("view"), mapview et leaflet produisent des cartes interactives
+# tres agreables en seance. Mais ils EMBARQUENT TOUTES LES GEOMETRIES dans le
+# fichier HTML produit : avec quelques milliers de batiments et des polygones
+# d'inondation detailles, le rapport passe de quelques Mo a plusieurs dizaines
+# de Mo. Sur ce projet, un document est deja monte a 17 Mo pour cette raison,
+# et le pont de transfert expire au-dela de ~15 Mo.
+#
+# A utiliser en DEMONSTRATION LIVE dans RStudio, jamais dans un document rendu.
+
+tmap_mode("view")
+
+tm_shape(aoi01) +
+  tm_borders(col = "steelblue", lwd = 3) +
+  tm_shape(flood01) +
+  tm_polygons(
+    fill = "value",
+    fill.scale = tm_scale_categorical(values = "brewer.yl_or_rd"),
+    fill.legend = tm_legend(title = "Profondeur (m)"),
+    fill_alpha = 0.7
+  ) +
+  tm_shape(batiments_aoi01) +
+  tm_dots(fill = "white", size = 0.05) +
+  tm_title("EMSR772 -- AOI01 : Yagoua, profondeurs d'inondation 2024") +
+  tm_basemap(c("Esri.WorldImagery", "OpenStreetMap"))
+
+tmap_mode("plot")   # NE JAMAIS OUBLIER de revenir en mode statique
+```
+
+# Module 8 · Infrastructures : les routes coupées
+
+## 8.1 OpenStreetMap et l'API Overpass
+
+**OpenStreetMap** est une base géographique libre et collaborative. Chaque objet y
+est un nœud, une ligne (*way*) ou une relation, décrit par des **étiquettes** de la
+forme clé = valeur. La clé `highway` identifie les routes ; sa valeur donne le type
+(`motorway`, `primary`, `secondary`, `tertiary`, `residential`, `track`…).
+
+L'accès depuis R se fait par l'**API Overpass**, via le paquet `osmdata`.
+
+::: {.callout-warning}
+## Trois choses à savoir avant d'interroger Overpass en salle
+
+**C'est un service public gratuit à usage limité.** Il n'accepte que quelques
+requêtes simultanées et répond régulièrement `429` (trop de requêtes) ou `504`
+(délai dépassé). Vingt participants qui lancent la même requête au même moment
+la font échouer pour tout le monde. **Prévoir systématiquement un repli local.**
+
+**La couverture est très hétérogène.** Elle est excellente dans les zones
+cartographiées lors de réponses humanitaires — le Humanitarian OpenStreetMap Team
+a beaucoup travaillé sur l'Extrême-Nord camerounais — et lacunaire ailleurs.
+Cette hétérogénéité n'est pas aléatoire : elle corrèle avec l'histoire des crises.
+Comparer deux régions sur une densité de routes OSM peut donc comparer deux
+intensités de cartographie plutôt que deux réseaux réels. **Toujours contrôler
+visuellement avant d'analyser.**
+
+**La licence est l'ODbL.** Toute réutilisation doit citer OpenStreetMap et ses
+contributeurs.
+:::
+
+```{r}
+#| label: chunk-osm
+bbox01 <- sf::st_bbox(aoi01)
+
+cat("=== Requete OpenStreetMap (Overpass) ===\n")
+cat("Emprise interrogee :\n")
+print(bbox01)
+cat("Tag recherche : highway\n")
+
+# Repli local, prepare une fois par scripts/preparation/preparer_routes_osm_J09.R
+fichier_osm_local <- "datasets/routes_aoi01_yagoua.gpkg"
+cat("Copie locale de secours :", fichier_osm_local,
+    "-- presente :", file.exists(fichier_osm_local), "\n")
+
+# On borne la tentative a 30 secondes. Sans setTimeLimit(), osmdata reessaie
+# en interne avec des pauses qui peuvent durer plusieurs minutes : la seance
+# s'arrete pendant que R attend en silence.
+routes_osm <- tryCatch(
+  {
+    setTimeLimit(elapsed = 30, transient = TRUE)
+    requete_osm <- opq(bbox = bbox01) %>% add_osm_feature(key = "highway")
+    osm_data <- osmdata_sf(requete_osm)
+    cat("Reponse Overpass recue.\n")
+    osm_data$osm_lines
+  },
+  error = function(e) {
+    cat("Requete Overpass indisponible (", conditionMessage(e), ").\n", sep = "")
+    cat("Bascule sur la copie locale :", fichier_osm_local, "\n")
+    if (file.exists(fichier_osm_local)) {
+      sf::st_read(fichier_osm_local, quiet = TRUE)
+    } else {
+      cat("*** Copie locale absente : le module 8 ne peut pas s'executer. ***\n")
+      NULL
+    }
+  },
+  finally = setTimeLimit(elapsed = Inf, transient = FALSE)
+)
+
+if (!is.null(routes_osm)) {
+  cat("\n--- Routes recuperees ---\n")
+  cat("  segments  :", nrow(routes_osm), "\n")
+  cat("  CRS       :", sf::st_crs(routes_osm)$input, "\n")
+  cat("  colonnes  :", length(names(routes_osm)), "au total\n")
+  cat("  repartition par type :\n")
+  print(table(routes_osm$highway, useNA = "ifany"))
+}
+```
+
+```{r}
+#| label: chunk-routes-longueur
+if (!is.null(routes_osm)) {
+
+  # Harmonisation des CRS avant tout croisement, et on l'affiche.
+  if (sf::st_crs(routes_osm) != sf::st_crs(aoi01)) {
+    cat("Harmonisation : routes", sf::st_crs(routes_osm)$input,
+        "-> aoi01", sf::st_crs(aoi01)$input, "\n")
+    routes_osm <- sf::st_transform(routes_osm, sf::st_crs(aoi01))
+  } else {
+    cat("CRS deja identiques :", sf::st_crs(aoi01)$input, "\n")
+  }
+
+  routes_aoi01 <- sf::st_filter(routes_osm, aoi01)
+  cat("Segments dans la fenetre :", nrow(routes_aoi01), "\n")
+
+  # LONGUEUR : mesuree en UTM 33N. En degres, ce chiffre n'aurait pas de sens.
+  routes_aoi01 <- sf::st_transform(routes_aoi01, crs_mesure) %>%
+    mutate(longueur_km = as.numeric(sf::st_length(.)) / 1000)
+
+  longueur_totale <- sum(routes_aoi01$longueur_km, na.rm = TRUE)
+  cat("Longueur totale du reseau dans la fenetre :",
+      round(longueur_totale, 2), "km\n")
+  cat("Densite routiere :", round(longueur_totale / surf_aoi01, 2), "km/km2\n")
+}
+```
+
+```{r}
+#| label: chunk-routes-inondees
+if (!is.null(routes_osm) && exists("routes_aoi01")) {
+
+  flood_union_mesure <- sf::st_transform(sf::st_as_sf(flood01_union), crs_mesure)
+
+  n_avant_inter <- nrow(routes_aoi01)
+
+  routes_inondees <- tryCatch(
+    sf::st_intersection(routes_aoi01, flood_union_mesure) %>%
+      sf::st_collection_extract("LINESTRING") %>%
+      mutate(longueur_km = as.numeric(sf::st_length(.)) / 1000),
+    error = function(e) {
+      cat("st_intersection echouee :", conditionMessage(e), "\n")
+      NULL
+    }
+  )
+
+  cat("--- st_intersection(routes, inondation) ---\n")
+  cat("  segments entrants :", n_avant_inter, "\n")
+  cat("  segments sortants :",
+      if (is.null(routes_inondees)) 0 else nrow(routes_inondees), "\n")
+  cat("  (le nombre peut AUGMENTER : une route traversant deux polygones\n")
+  cat("   est decoupee en plusieurs troncons)\n")
+
+  if (!is.null(routes_inondees) && nrow(routes_inondees) > 0) {
+
+    longueur_inondee <- sum(routes_inondees$longueur_km, na.rm = TRUE)
+    pct_routes <- 100 * longueur_inondee / longueur_totale
+
+    cat("\nLongueur de route inondee :", round(longueur_inondee, 2), "km\n")
+    cat("Part du reseau inondee    :", round(pct_routes, 1), "%\n")
+
+    detail_routes <- routes_inondees %>%
+      sf::st_drop_geometry() %>%
+      group_by(highway) %>%
+      summarise(nb_troncons = n(),
+                longueur_km = round(sum(longueur_km), 3),
+                .groups = "drop") %>%
+      arrange(desc(longueur_km))
+
+    cat("\nLongueur inondee par type de route :\n")
+    print(detail_routes)
+
+    readr::write_csv(detail_routes,
+                     "outputs/J09_routes_inondees_osm_aoi01.csv")
+  }
+}
+```
+
+::: {.callout-note}
+## Pourquoi `st_intersection` et pas `st_filter`
+
+`st_filter()` sélectionne les objets **entiers** qui touchent la zone : une route de
+8 km qui traverse 200 m d'inondation serait comptée pour 8 km. C'est ce qu'on
+voulait pour les bâtiments — un bâtiment est atteint ou ne l'est pas —, et c'est
+faux pour une ligne.
+
+`st_intersection()` **découpe** géométriquement chaque route sur la frontière des
+polygones d'inondation. La longueur obtenue est bien la portion submergée. C'est
+pour cela que le nombre de segments peut augmenter : une route qui traverse trois
+poches d'eau ressort en trois tronçons.
+
+`st_collection_extract("LINESTRING")` est indispensable derrière : quand une route
+ne touche un polygone qu'en un point (elle le longe ou l'effleure), `st_intersection`
+renvoie une `GEOMETRYCOLLECTION` mêlant points et lignes. `st_length()` sur une
+collection échoue ou renvoie des valeurs incohérentes. On ne garde que les lignes.
+:::
+
+```{r}
+#| label: chunk-carte-routes
+#| fig-height: 6
+if (!is.null(routes_osm) && exists("routes_inondees") &&
+    !is.null(routes_inondees) && nrow(routes_inondees) > 0) {
+
+  carte_routes <- ggplot() +
+    geom_sf(data = sf::st_transform(aoi01, crs_mesure),
+            fill = "grey96", colour = "steelblue", linewidth = 0.9) +
+    geom_sf(data = sf::st_transform(flood01, crs_mesure),
+            aes(fill = value), colour = NA, alpha = 0.6) +
+    geom_sf(data = routes_aoi01, colour = "grey25", linewidth = 0.4) +
+    geom_sf(data = routes_inondees, colour = "#C23B22", linewidth = 1.1) +
+    scale_fill_brewer(palette = "YlOrRd", na.value = "grey80") +
+    labs(
+      title = "Reseau routier OpenStreetMap et troncons inondes",
+      subtitle = paste0("Fenetre AOI01 -- ", round(longueur_inondee, 2), " km sur ",
+                        round(longueur_totale, 2), " km, soit ",
+                        round(pct_routes, 1), " % du reseau"),
+      fill = "Profondeur (m)",
+      caption = "Routes : OpenStreetMap (ODbL). Inondation : Copernicus EMS EMSR772."
+    ) +
+    theme_minimal()
+
+  print(carte_routes)
+
+  ggsave("outputs/J09_routes_inondees.png", carte_routes,
+         width = 8, height = 6, dpi = 180)
+}
+```
+
+::: {.callout-tip}
+## Lecture de la carte — routes et tronçons inondés
+
+**Ce que la carte code.** Les lignes grises sont le réseau routier tel qu'OSM le
+décrit dans la fenêtre ; les lignes rouges sont les portions dont la géométrie
+intersecte un polygone d'inondation. Le fond coloré rappelle les classes de
+profondeur.
+
+**Ce que les choix techniques font.** Les rouges sont tracés **plus épais** que les
+gris : une différence d'épaisseur, et pas seulement de couleur, reste lisible en
+noir et blanc et pour un lecteur daltonien. Le découpage vient de
+`st_intersection()`, donc un tronçon rouge s'arrête exactement au bord du polygone
+d'inondation — la précision apparente de cette limite est celle du produit EMS, pas
+celle du terrain. Toutes les longueurs sont mesurées en **UTM 33N** : en degrés,
+elles n'auraient aucun sens.
+
+**Ce qui se lit.** Les coupures ne sont pas réparties au hasard le long du réseau :
+elles se concentrent là où une route franchit une dépression. Une seule coupure au
+bon endroit isole tout un secteur — c'est l'information opérationnelle, et elle est
+**topologique**, pas métrique.
+
+**Ce qui ne se lit pas — et c'est majeur.** La carte dit quelle **longueur** est
+sous l'eau ; elle ne dit pas quelle **connectivité** est perdue. Ce sont deux
+questions différentes : 0,5 km coupé sur un axe unique isole un village, tandis que
+3 km coupés sur un maillage dense ne coupent rien du tout. Répondre à la question de
+la connectivité demande une analyse de graphe (composantes connexes du réseau après
+retrait des tronçons inondés), qui déborde cette journée mais qui est le bon
+prolongement. Deuxième limite : une route absente d'OSM est absente de la carte, et
+elle n'apparaîtra jamais comme coupée. Le non-cartographié est invisible, pas nul.
+:::
+
+# Module 9 · Généraliser : une fonction, trois zones
+
+## 9.1 Le principe DRY
+
+Le module 5 à 8 a traité AOI01 étape par étape. Refaire la même chose pour AOI02 et
+AOI03 en copiant-collant le code serait la garantie d'un bug : une correction
+appliquée à un endroit et pas aux deux autres.
+
+Le principe **DRY** (*Don't Repeat Yourself*) dit : une seule définition, plusieurs
+applications. On encapsule la chaîne dans une fonction, et on l'applique.
+
+La fonction ci-dessous diffère de celle du script source sur un point : elle prend
+des **chemins explicites** plutôt qu'un répertoire à explorer avec `list.files()`.
+Les shapefiles sont livrés à plat dans `datasets/`, donc un `list.files()` sur un
+motif `floodDepthA` renverrait les trois zones mêlées, et l'indice `[1]` en
+choisirait une au hasard de l'ordre alphabétique. C'est un piège classique des
+chemins à plat.
+
+```{r}
+#| label: chunk-fonction-analyser
+analyser_inondation <- function(chemin_aoi, chemin_flood, batiments_sf,
+                                zone_id, pers_par_bat = 5) {
+
+  cat("\n=== analyser_inondation(", zone_id, ") ===\n", sep = "")
+
+  if (!file.exists(chemin_aoi) || !file.exists(chemin_flood)) {
+    cat("  *** fichier(s) absent(s), zone ignoree ***\n")
+    return(tibble::tibble(
+      zone = zone_id, nb_batiments_aoi = NA_integer_,
+      nb_batiments_inondes = NA_integer_, pct_batiments_inondes = NA_real_,
+      pop_estimee_aoi = NA_real_, pop_inondee = NA_real_,
+      couverture_batiments = "fichiers absents"
+    ))
+  }
+
+  aoi   <- sf::st_make_valid(sf::st_read(chemin_aoi, quiet = TRUE))
+  flood <- sf::st_make_valid(sf::st_read(chemin_flood, quiet = TRUE))
+
+  cat("  AOI   :", nrow(aoi), "polygone(s), CRS", sf::st_crs(aoi)$input, "\n")
+  cat("  flood :", nrow(flood), "polygone(s)\n")
+
+  surf_aoi <- as.numeric(sum(sf::st_area(sf::st_transform(aoi, crs_mesure)))) / 1e6
+  cat("  surface AOI :", round(surf_aoi, 0), "km2 (mesuree en UTM 33N)\n")
+
+  if (sf::st_crs(batiments_sf) != sf::st_crs(aoi)) {
+    cat("  harmonisation CRS batiments ->", sf::st_crs(aoi)$input, "\n")
+    batiments_sf <- sf::st_transform(batiments_sf, sf::st_crs(aoi))
+  }
+
+  bat_aoi     <- sf::st_filter(batiments_sf, aoi)
+  bat_inondes <- sf::st_filter(bat_aoi, flood)
+
+  cat("  batiments dans l'AOI :", nrow(bat_aoi), "\n")
+  cat("  batiments inondes    :", nrow(bat_inondes), "\n")
+
+  # GARDE-FOU : sans batiment dans la zone, le pourcentage serait 0/0 = NaN.
+  # Une unite sans observation N'EST PAS une unite a zero. On le declare.
+  couverture <- if (nrow(bat_aoi) == 0) {
+    cat("  *** AUCUN batiment : la couche Open Buildings ne couvre pas cette zone ***\n")
+    "non couverte par la couche batiments"
+  } else if (nrow(bat_aoi) < 50) {
+    cat("  *** couverture tres faible (", nrow(bat_aoi),
+        " batiments) : resultat non interpretable ***\n", sep = "")
+    "couverture insuffisante (< 50 batiments)"
+  } else {
+    "couverte"
+  }
+
+  tibble::tibble(
+    zone                  = zone_id,
+    nb_batiments_aoi      = nrow(bat_aoi),
+    nb_batiments_inondes  = nrow(bat_inondes),
+    pct_batiments_inondes = if (nrow(bat_aoi) > 0)
+      round(100 * nrow(bat_inondes) / nrow(bat_aoi), 1) else NA_real_,
+    pop_estimee_aoi       = if (nrow(bat_aoi) > 0)
+      nrow(bat_aoi) * pers_par_bat else NA_real_,
+    pop_inondee           = if (nrow(bat_aoi) > 0)
+      nrow(bat_inondes) * pers_par_bat else NA_real_,
+    couverture_batiments  = couverture
+  )
+}
+```
+
+## 9.2 Application aux trois zones
+
+```{r}
+#| label: chunk-application-aoi
+# AUCUN unzip() ici : les shapefiles EMSR772 sont livres deja extraits et
+# renommes a plat dans datasets/. Le script source decompressait les archives
+# AOI02 et AOI03 DANS le dossier de donnees a chaque execution -- un dossier
+# d'entrees n'est pas un dossier de travail.
+
+bilan_aoi01_fonction <- bilan_aoi01 %>%
+  mutate(couverture_batiments = "couverte (fenetre reduite 5x5 km)")
+
+bilan_aoi02 <- analyser_inondation(
+  "datasets/EMSR772_AOI02_areaOfInterestA.shp",
+  "datasets/EMSR772_AOI02_floodDepthA.shp",
+  batiments_pts, "AOI02 (Makari)"
+)
+
+bilan_aoi03 <- analyser_inondation(
+  "datasets/EMSR772_AOI03_areaOfInterestA.shp",
+  "datasets/EMSR772_AOI03_floodDepthA.shp",
+  batiments_pts, "AOI03 (Waza)"
+)
+
+bilan_total <- bind_rows(bilan_aoi01_fonction, bilan_aoi02, bilan_aoi03)
+
+cat("\n=== Bilan des trois zones EMSR772 ===\n")
+print(bilan_total)
+
+readr::write_csv(bilan_total, "outputs/J09_bilan_trois_zones.csv")
+```
+
+::: {.callout-important}
+## Le piège de ce module : une fonction juste sur des données qui ne suivent pas
+
+`analyser_inondation()` est correcte. Elle fait exactement ce qu'on lui demande sur
+les trois zones. Et pourtant, deux des trois lignes du tableau ne veulent rien dire.
+
+**La raison.** La couche `open_buildings_yagoua.gpkg` a été préparée — voir
+`scripts/preparation/preparer_open_buildings_J09.R` — en ne retenant que les
+bâtiments situés dans **AOI01 plus une marge de 5 km**. Or les trois zones de
+l'activation EMSR772 sont très éloignées : AOI01 est à Yagoua, AOI02 à Makari,
+AOI03 à Waza, jusqu'à environ 300 km de distance. La couche de bâtiments **ne
+couvre tout simplement pas** AOI02 ni AOI03.
+
+**Ce qui se serait passé sans garde-fou.** `nrow(bat_aoi)` vaut 0, donc
+`100 * 0 / 0` renvoie `NaN`, et `0 * 5` renvoie une population de 0. Le tableau
+final aurait affiché « 0 bâtiment touché, 0 personne » pour Makari et Waza — deux
+zones réellement inondées en 2024. Aucune erreur n'aurait été levée. Un lecteur
+pressé aurait conclu que ces zones sont épargnées.
+
+**C'est le mécanisme de l'absence silencieuse**, sous sa forme la plus dangereuse :
+un zéro qui ressemble à une mesure. La colonne `couverture_batiments` existe
+précisément pour que ce zéro ne puisse pas être lu comme une information.
+
+**La règle générale.** Une unité sans observation reste **sans donnée** : grise sur
+une carte, `NA` dans un tableau, jamais zéro. Le seuil en dessous duquel on refuse
+d'interpréter — ici 50 bâtiments — est **déclaré dans le code**, pas subi.
+
+**Ce qu'il faudrait faire pour vraiment traiter AOI02 et AOI03** : retourner aux
+tuiles Open Buildings d'origine et refaire l'étape de préparation sur les trois
+emprises. Ces tuiles ne sont pas livrées avec la journée — c'est une limite assumée
+du matériel, pas un oubli.
+:::
+
+```{r}
+#| label: chunk-graphes-bilan
+#| fig-height: 4.5
+# On ne trace QUE les zones effectivement couvertes. Tracer une barre a zero
+# pour une zone non couverte reviendrait a affirmer qu'elle n'a pas ete
+# touchee -- exactement ce qu'on veut eviter.
+bilan_tracable <- bilan_total %>%
+  filter(couverture_batiments %in%
+           c("couverte", "couverte (fenetre reduite 5x5 km)"))
+
+cat("Zones tracables :", nrow(bilan_tracable), "sur", nrow(bilan_total), "\n")
+cat("Zones ecartees  :",
+    paste(bilan_total$zone[!bilan_total$zone %in% bilan_tracable$zone],
+          collapse = ", "), "\n")
+
+if (nrow(bilan_tracable) > 0) {
+  g_bilan <- bilan_tracable %>%
+    select(zone, nb_batiments_aoi, nb_batiments_inondes) %>%
+    tidyr::pivot_longer(-zone, names_to = "categorie", values_to = "nb") %>%
+    mutate(categorie = recode(categorie,
+                              nb_batiments_aoi = "Total dans la zone",
+                              nb_batiments_inondes = "Touches par l'inondation")) %>%
+    ggplot(aes(x = zone, y = nb, fill = categorie)) +
+    geom_col(position = "dodge") +
+    scale_fill_manual(values = c("Total dans la zone" = "#AEC6CF",
+                                 "Touches par l'inondation" = "#C23B22")) +
+    labs(
+      title = "Batiments exposes aux inondations -- EMSR772, Yagoua 2024",
+      subtitle = "Seules les zones couvertes par la couche Open Buildings sont tracees",
+      x = NULL, y = "Nombre de batiments", fill = NULL
+    ) +
+    theme_minimal() +
+    theme(legend.position = "bottom")
+
+  print(g_bilan)
+  ggsave("outputs/J09_bilan_zones.png", g_bilan, width = 8, height = 4.5, dpi = 180)
+}
+```
+
+::: {.callout-tip}
+## Lecture de la figure — bilan par zone
+
+**Ce que la figure code.** Deux barres par zone : le nombre total de bâtiments
+détectés (confiance ≥ 0,7) et le nombre dont le centroïde tombe dans un polygone
+d'inondation.
+
+**Ce que les choix techniques font.** Les zones non couvertes par la couche de
+bâtiments sont **absentes du graphique**, et le `cat()` juste au-dessus les nomme.
+C'est une décision de méthode : les afficher à zéro aurait produit une affirmation
+fausse. Les barres sont côte à côte (`position = "dodge"`) et non empilées : empiler
+« touchés » sur « total » compterait deux fois les mêmes bâtiments, une erreur
+fréquente quand une catégorie est un sous-ensemble de l'autre.
+
+**Ce qui se lit.** L'ordre de grandeur de l'exposition sur la fenêtre étudiée.
+
+**Ce qui ne se lit pas.** Toute comparaison entre zones, puisqu'une seule est
+documentée. Et le total lui-même n'est pas un bilan de l'inondation de Yagoua : il
+porte sur une fenêtre de quelques kilomètres carrés, choisie pour la fluidité des
+traitements, dans une AOI officielle de plusieurs milliers de kilomètres carrés.
+:::
+
+# Fin de journée
+
+## Glossaire, par domaine
+
+### Télédétection et capteurs
+
+| Terme | Définition |
+|---|---|
+| **Réflectance** | part du rayonnement incident renvoyée par une surface, entre 0 et 1. C'est la grandeur physique mesurée ; les valeurs d'un fichier Sentinel-2 L2A sont des entiers = réflectance × 10 000. |
+| **Bande spectrale** | intervalle de longueurs d'onde dans lequel le capteur intègre l'énergie reçue. Sentinel-2 en a 13. |
+| **Résolution spatiale** | taille au sol d'un pixel. Fixe ce qui est observable et ce qui ne le sera jamais. |
+| **Résolution spectrale** | nombre et finesse des bandes. Décide de la capacité à distinguer deux matériaux voisins. |
+| **Résolution temporelle** | délai de revisite. 5 jours pour Sentinel-2, 16 pour Landsat, 1 pour MODIS. |
+| **Résolution radiométrique** | nombre de niveaux distinguables. 12 bits = mesure ; 8 bits = image d'apparence, sans valeur physique. |
+| **Niveau L1C / L2A** | L1C = réflectance au sommet de l'atmosphère ; L2A = réflectance de surface après correction atmosphérique — un modèle, pas une mesure. |
+| **Optique / radar** | l'optique mesure la lumière solaire réfléchie (inutilisable de nuit ou sous nuage) ; le radar émet son propre signal et traverse les nuages. Une inondation se cartographie au radar. |
+| **Indice de différence normalisée** | (A − B) / (A + B). Borné à [−1, 1], partiellement insensible à l'éclairement. NDVI, NDBI, MNDWI. |
+| **Pixel mixte** | pixel contenant plusieurs types de surface. Sa valeur est une moyenne, elle ne correspond à aucune surface réelle. |
+| **Nodata** | absence de mesure. Doit être masquée **avant** tout calcul d'indice, sinon le dénominateur dégénère. |
+
+### Produits dérivés utilisés aujourd'hui
+
+| Terme | Définition |
+|---|---|
+| **GHS-BUILT-S** | surface bâtie en m² par cellule de 100 m (GHSL, Commission européenne). Ni hauteur, ni usage, ni occupation. |
+| **Grille Mollweide (ESRI:54009)** | projection **équivalente** utilisée par GHSL : les surfaces y sont justes, les formes déformées. |
+| **WorldPop** | grille de population à 100 m produite par désagrégation d'un total administratif à l'aide de covariables. Un modèle, pas un recensement. |
+| **Open Buildings** | empreintes de bâtiments détectées par apprentissage (Google Research), avec un champ `confidence` entre 0 et 1. |
+| **Copernicus EMS** | service de cartographie rapide post-catastrophe. Produits vectoriels : `areaOfInterest`, `floodDepth`, `observedEvent`, `imageFootprint`. |
+| **`floodDepth`** | classe de profondeur **estimée** en croisant l'étendue d'eau observée et un modèle numérique de terrain. Pas un relevé. |
+| **OpenStreetMap / Overpass** | base géographique collaborative ; API publique d'interrogation, à usage limité. Couverture hétérogène. |
+
+### Vocabulaire spatial et cartographique
+
+| Terme | Définition |
+|---|---|
+| **CRS** | système de coordonnées de référence. EPSG:4326 en degrés ; EPSG:32633 (UTM 33N) en mètres. |
+| **Projection conforme / équivalente** | conforme = conserve les angles (UTM) ; équivalente = conserve les surfaces (Mollweide). Aucune ne fait les deux. |
+| **`sf_use_s2()`** | bascule entre le moteur sphérique s2 et le moteur planaire GEOS. |
+| **`st_make_valid()`** | répare les géométries invalides (auto-intersections notamment). |
+| **`crop` / `mask`** | `crop` réduit à l'emprise rectangulaire ; `mask` met à NA hors du polygone. Toujours `crop` avant `mask`. |
+| **Mosaïque** | assemblage de tuiles adjacentes en un raster unique. |
+| **Statistique zonale** | agrégation des cellules d'un raster à l'intérieur de polygones. |
+| **Pondération par fraction de cellule** | ce que fait `exact_extract` : une cellule couverte à 30 % compte pour 30 %. |
+| **Prédicat spatial** | relation testée par une jointure : `st_intersects`, `st_within`, `st_contains`… Le prédicat change le résultat. |
+| **Discrétisation** | découpage d'une variable continue en classes : quantiles (contraste maximal), intervalles égaux (fidèle aux valeurs), Jenks (minimise la variance intra-classe). Trois images du même tableau. |
+| **Palette séquentielle / divergente / qualitative** | ordre simple / point neutre significatif / catégories sans ordre. |
+| **Choroplèthe** | carte où la couleur d'une unité code une valeur agrégée sur cette unité. |
+
+### Statistique spatiale et pièges de raisonnement
+
+| Terme | Définition |
+|---|---|
+| **MAUP** | les résultats dépendent de la maille d'agrégation (effet d'échelle) et du tracé des frontières (effet de zonage). Aucune maille n'est neutre. |
+| **Erreur écologique** | attribuer à un individu ce qui n'est vrai que de l'agrégat. Risque permanent de la choroplèthe. |
+| **Gain absolu / croissance relative** | une différence / un rapport. Ils ne classent pas les territoires dans le même ordre. |
+| **Spearman / Pearson** | corrélation sur les rangs / corrélation linéaire. Spearman résiste aux valeurs extrêmes. |
+| **Sensibilité au seuil** | variation d'un résultat quand on déplace un paramètre (confiance 0,7, occupation × 5). Un résultat qui bascule n'est pas un résultat. |
+| **Fourchette plutôt que point** | quand plusieurs méthodes défendables divergent, le rendu honnête est l'intervalle qu'elles délimitent, pas la moyenne. |
+
+## Récapitulatif des fonctions clés
+
+| Fonction | Paquet | Ce qu'elle fait | Le piège associé |
+|---|---|---|---|
+| `sf_use_s2(FALSE)` | sf | passe au moteur planaire GEOS | rend obligatoire la reprojection avant mesure |
+| `st_read()` | sf | lit une couche vectorielle | toujours enchaîner `st_make_valid()` |
+| `st_layers()` | sf | liste les couches d'un GeoPackage | un `.gpkg` en contient souvent plusieurs |
+| `st_make_valid()` | sf | répare les géométries | à faire **à la lecture**, pas au moment de l'erreur |
+| `st_transform()` | sf | change de CRS | mesurer sans transformer donne des degrés carrés |
+| `st_area()` / `st_length()` | sf | surface / longueur | n'ont de sens que dans un CRS métrique |
+| `st_filter()` | sf | garde les objets qui touchent une zone | garde l'objet **entier** : faux pour des lignes |
+| `st_intersection()` | sf | découpe géométriquement | peut renvoyer une GEOMETRYCOLLECTION |
+| `st_collection_extract()` | sf | extrait un type de géométrie | indispensable après `st_intersection` sur des lignes |
+| `st_join()` | sf | jointure spatiale attributaire | **duplique** les lignes en cas de recouvrement : compter avant/après |
+| `st_union()` | sf | fusionne des polygones | évite le double comptage des zones qui se recouvrent |
+| `st_centroid()` | sf | centre d'une géométrie | peut tomber **hors** d'un polygone concave |
+| `rast()` | terra | ouvre un raster | vérifier emprise, CRS, résolution **réels** |
+| `mosaic()` | terra | assemble des tuiles | vérifier que les millésimes ont les mêmes tuiles |
+| `crop()` / `mask()` | terra | réduit / met à NA | `crop` d'abord, `mask` ensuite |
+| `global()` | terra | statistique sur tout le raster | `na.rm = TRUE` change le résultat, pas seulement l'affichage |
+| `compareGeom()` | terra | les grilles sont-elles alignées ? | à appeler avant toute opération entre deux rasters |
+| `exact_extract()` | exactextractr | statistique zonale pondérée | suppose l'homogénéité **dans** chaque cellule |
+| `opq()` / `osmdata_sf()` | osmdata | interroge Overpass | prévoir `tryCatch` + repli local et `setTimeLimit` |
+| `tmap_mode()` | tmap | statique / interactif | `"view"` embarque les géométries : jamais dans un rendu |
+
+## Exercices — chacun porte un piège nommé
+
+**Exercice 1 — le piège du millésime absent.**
+Modifiez `charger_ghsl()` pour charger le millésime 2020. Que se passe-t-il ?
+Repérez l'endroit exact où l'erreur apparaît, et comparez-le à l'endroit où le
+problème est réellement né. *Question de méthode : quel contrôle aurait signalé le
+problème à sa source plutôt que dix lignes plus loin ?*
+
+**Exercice 2 — le piège de la maille (MAUP).**
+Refaites la typologie en quatre profils du module 4.4 sur les 58 départements au
+lieu des 10 régions. Combien de départements du Littoral se retrouvent dans un
+profil différent de celui de leur région ? *Question de méthode : laquelle des deux
+typologies est « la bonne » ? Justifiez par la décision qu'on cherche à éclairer.*
+
+**Exercice 3 — le piège de la discrétisation.**
+Reproduisez la carte de la part bâtie 2025 en trois versions : quantiles, intervalles
+égaux, Jenks (`classInt::classIntervals`). Quelle version donne l'impression d'un
+pays homogène ? laquelle d'un pays coupé en deux ? *Question de méthode : les trois
+images sont exactes et racontent trois histoires. Que doit-on écrire sous une carte
+pour que le lecteur puisse s'en défendre ?*
+
+**Exercice 4 — le piège du seuil.**
+Refaites tout le module 6 avec un seuil de confiance de 0,5 puis de 0,9. De combien
+varie la part de bâtiments touchés ? *Question de méthode : à partir de quelle
+amplitude de variation faut-il renoncer à publier un chiffre unique ?*
+
+**Exercice 5 — le piège du prédicat spatial.**
+Le module 6 compte un bâtiment comme touché si son **centroïde** intersecte un
+polygone d'inondation. Recomptez en utilisant les **empreintes polygonales**
+(`st_intersects` sur les polygones, sans passer par les centroïdes). Combien de
+bâtiments changent de statut ? *Question de méthode : lequel des deux comptages
+répond à la question « combien de familles ont de l'eau chez elles » ?*
+
+**Exercice 6 — le piège des deux méthodes.**
+Calculez la part de population touchée par les trois méthodes : centroïdes × 5,
+`exact_extract` sur WorldPop, surface bâtie inondée. Écrivez trois phrases, une par
+méthode, précisant **ce qui est compté**. *Question de méthode : quelle fourchette
+publieriez-vous dans un rapport destiné à dimensionner une distribution de vivres ?*
+
+**Exercice 7 — le piège du zéro qui n'en est pas un.**
+Retirez le garde-fou de `analyser_inondation()` et relancez sur AOI02. Qu'affiche le
+tableau ? Que conclurait un lecteur qui ne connaît pas la provenance de la couche de
+bâtiments ? *Question de méthode : quelle colonne minimale doit accompagner tout
+tableau de résultats territoriaux ?*
+
+**Exercice 8 — le piège de la longueur contre la connectivité.**
+Le module 8 mesure une longueur de route inondée. Proposez, sans l'implémenter, un
+indicateur qui mesurerait la **perte d'accessibilité** plutôt que la longueur.
+*Question de méthode : pourquoi 0,5 km coupé peut-il être plus grave que 3 km ?*
+
+## Prolongements
+
+**Vers le J10 — les données spatiales au service des politiques publiques.**
+Cette journée a produit des indicateurs d'exposition ; le J10 les met en face de
+décisions. On y retrouvera `exact_extract()` sur des rasters climatiques ERA5, la
+jointure spatiale de points d'événements (ACLED) vers des polygones administratifs —
+avec le même piège de MAUP —, et l'estimation en petits domaines, qui répond
+précisément à la question laissée ouverte ici : que faire quand l'unité territoriale
+repose sur trop peu d'observations ?
+
+**Vers le J11 — restitution et communication.**
+Les cartes de cette journée sont des cartes de travail. Le J11 traite de leur mise en
+forme pour un public non technique : hiérarchie visuelle, choix de la maille en
+fonction du message, et surtout la mention obligatoire des hypothèses sous la carte —
+le seuil de 0,7, l'hypothèse × 5, la fenêtre de 5 × 5 km, la définition GHS-BUILT de
+« bâti ». Une carte publiée sans ces mentions transporte l'autorité visuelle du
+produit sans son incertitude.
+
+**Au-delà de l'atelier.**
+
+- **Séries temporelles GHS-BUILT.** Le produit existe pour 1975, 1990, 2000, 2015,
+  2020, 2025, 2030. Une trajectoire à six points en dit plus que deux dates, et
+  permet de distinguer une croissance continue d'un décrochage.
+- **Analyse de graphe sur le réseau routier.** Composantes connexes avant et après
+  retrait des tronçons inondés : c'est l'exercice 8, et c'est le vrai indicateur
+  opérationnel.
+- **Radar Sentinel-1 en accès direct.** Refaire soi-même la délimitation d'une
+  inondation, plutôt que de consommer le produit EMS. C'est la seule façon de
+  comprendre ce que le produit contient.
+- **Calibrer l'hypothèse d'occupation.** Le facteur 5 peut être remplacé par une
+  taille moyenne de ménage issue du RGPH ou de l'EDS, ventilée par région. C'est un
+  travail de démographe, et c'est là que cette journée rejoint le cœur du métier
+  des participants.
+
+## Récapitulatif des chiffres à ne pas citer hors contexte
+
+| Chiffre | Portée réelle | Pourquoi il ne se cite pas seul |
+|---|---|---|
+| Bâtiments et population de la fenêtre AOI01 | fenêtre ad hoc de ~5 × 5 km | l'AOI01 officielle fait plusieurs milliers de km² |
+| Population estimée (× 5) | hypothèse d'occupation non calibrée | varie du simple au double selon le facteur retenu |
+| Part de bâtiments touchés | seuil de confiance 0,7, prédicat sur centroïdes | change avec le seuil et avec le prédicat |
+| Longueur de route inondée | dépend de la complétude d'OSM sur la zone | une route non cartographiée n'est jamais « coupée » |
+| Gain de bâti 2015-2025 | dépend de la symétrie de couverture des tuiles | une tuile manquante fabrique un gain fictif |
+| Croissance relative par unité | seuil de 1 km² de bâti initial déclaré | sous ce seuil, le taux est un artefact du dénominateur |
+| AOI02 et AOI03 | non couvertes par la couche de bâtiments | leurs zéros ne sont pas des mesures |
+
+```{r}
+#| label: chunk-fin
+cat("=== Fin de la journee J09 ===\n")
+cat("Fichiers produits dans outputs/ :\n")
+sorties <- list.files("outputs", pattern = "^J09_")
+if (length(sorties)) cat(paste0("  ", sorties), sep = "\n") else
+  cat("  (aucun -- verifier que les donnees sont bien dans datasets/)\n")
+cat("\nRappel : tous les chiffres du cas Yagoua portent sur une fenetre de ~5 x 5 km,\n")
+cat("sous l'hypothese de", pers_par_batiment, "personnes par batiment et un seuil de\n")
+cat("confiance de", seuil_confiance, ". Ils ne constituent pas un bilan de l'inondation.\n")
+```
+
+
+

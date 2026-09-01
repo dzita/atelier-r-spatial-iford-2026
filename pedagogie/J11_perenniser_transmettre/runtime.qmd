@@ -1,0 +1,701 @@
+---
+title: "J11 · Pérenniser et transmettre — runtime navigateur"
+subtitle: "Projets, chemins relatifs, fonctions, documentation et métadonnées · Atelier IFORD × GDSG 2026"
+# engine: knitr est OBLIGATOIRE : sans lui, Quarto se rabat sur Jupyter.
+engine: knitr
+webr:
+  packages:
+    - sf
+    - dplyr
+    - ggplot2
+    - tidyr
+    - purrr
+    - stringr
+  resources:
+    - ../_commons/data/J11_extraits/J11_ecam5_regions.csv
+    - ../_commons/data/J11_extraits/J11_biais_taille.csv
+    - ../_commons/data/J11_extraits/J11_correspondance_regions.csv
+    - ../_commons/data/J11_extraits/J11_adm1_cmr.geojson
+---
+
+::: {.callout-note}
+## Comment utiliser cette page
+
+Les cellules bleues **`{webr}`** s'exécutent **dans votre navigateur** : cliquez sur
+*Run code*, modifiez, relancez.
+
+C'est la journée où WebR est le plus à sa place : la reproductibilité est une
+affaire de **structure de code**, pas de puissance de calcul. **Presque tout ce que
+vous lisez ici est réellement exécutable.** Les seuls blocs en lecture seule sont
+ceux qui touchent au système de fichiers de votre poste, à Git, ou à un moteur de
+rendu — `quarto render`, `renv`, `haven` sur un `.dta`.
+
+**La seule donnée lourde de cette page a été traitée en amont.** L'enquête ECAM5 est
+un fichier Stata : `haven` n'existe pas en WebR, et un fichier d'enquête complet n'a
+rien à faire dans un navigateur. Le script
+`_commons/data/J11_extraits/00_extraire_J11.R` en a tiré **un agrégat régional aux
+colonnes fixes**, le fond de carte simplifié, et la table de correspondance qui
+sert d'exemple. Ce script est lui-même un cas d'école de tout ce que la journée
+enseigne : en-tête qui dit à quoi il sert et quand le relancer, colonnes de sortie
+déclarées comme un contrat, compteurs imprimés à chaque étape.
+:::
+
+## 1. Les cinq questions auxquelles un travail reproductible répond
+
+Reproductible ne veut pas dire « bien rangé ». Cela veut dire qu'une autre personne
+— ou vous, dans six mois — peut répondre à ces cinq questions **sans vous
+demander** :
+
+| Question | Ce qui y répond |
+|---|---|
+| D'où viennent les données ? | un script de téléchargement ou d'extraction, avec sa source et sa date |
+| Qu'est-ce qui a été fait, dans quel ordre ? | un document unique qui contient le code, pas un enchaînement de manipulations |
+| Avec quelles versions ? | `sessionInfo()`, un fichier de verrouillage de versions |
+| Que signifie chaque colonne ? | un dictionnaire de données, versionné avec le code |
+| Qu'est-ce qui a été décidé, et pourquoi ? | les décisions écrites **dans** le document, pas dans un courriel |
+
+```{webr}
+#| autorun: true
+# Ou sommes-nous ? Un document Quarto s'execute TOUJOURS dans le dossier de
+# son propre fichier. C'est ce qui rend les chemins relatifs fiables.
+cat("Repertoire de travail :", getwd(), "\n\n")
+
+# La structure d'un dossier-jour de cet atelier, telle que la journee la
+# preconise. On la decrit comme une DONNEE, ce qui permet de la verifier.
+structure_type <- data.frame(
+  chemin = c("JXX_nom_de_la_journee/",
+             "  demo_formateur_JXX.qmd",
+             "  runtime.qmd",
+             "  README.md",
+             "  install_packages_day.R",
+             "  datasets/",
+             "    LISEZMOI.md",
+             "  outputs/",
+             "  scripts/"),
+  role = c("le dossier de la journee, autonome",
+           "la SOURCE UNIQUE : code + prose + decisions",
+           "la version navigateur (cette page)",
+           "la question de la journee, la progression, les pieges",
+           "les packages REELLEMENT charges, et rien de plus",
+           "les ENTREES, a plat, jamais ecrites par le code",
+           "l'inventaire verifie : unite d'observation, cle, pieges",
+           "les SORTIES, toutes prefixees JXX_",
+           "les scripts derives du .qmd, jamais ecrits a la main")
+)
+print(structure_type, right = FALSE)
+```
+
+::: {.callout-important}
+## Les quatre règles de structure qui font tout le reste
+
+**1. Une journée est un dossier autonome.** Données dans `datasets/`, sorties dans
+`outputs/`, chemins relatifs, packages du jour. Un participant doit pouvoir ouvrir
+le dossier et travailler sans rien savoir du reste du dépôt.
+
+**2. Le `.qmd` est la source unique.** Les scripts `.R` en sont dérivés
+mécaniquement. Ne jamais corriger un script à la main : corriger le `.qmd`,
+régénérer. Sinon, deux vérités coexistent et l'une des deux est fausse.
+
+**3. Une sortie n'écrit jamais dans `datasets/`.** Le dossier d'entrées doit rester
+le reflet exact de ce qu'on a reçu. Un `unzip()` qui décompresse dans `datasets/`
+casse cette propriété au premier lancement.
+
+**4. Pas de `setwd()` en dur.** Un chemin absolu — `C:/Users/moi/...` — ne marche que
+sur votre machine, et échoue silencieusement ailleurs si le dossier existe avec un
+autre contenu. Quarto se place dans le dossier du `.qmd` ; `Rscript`, non : les
+scripts dérivés commencent donc par un bloc qui s'y replace.
+:::
+
+## 2. Chemins : construire, jamais coller
+
+```{webr}
+# MAUVAIS — un separateur code en dur, un chemin absolu, une machine unique.
+mauvais <- "C:/Users/formateur/atelier/J11/datasets/ecam5.dta"
+
+# BON — file.path() choisit le separateur du systeme, et le chemin est
+# RELATIF au dossier de la journee.
+bon <- file.path("datasets", "ecam5.dta")
+
+cat("Chemin code en dur :", mauvais, "\n")
+cat("Chemin construit   :", bon, "\n\n")
+
+# Le reflexe qui evite la moitie des incidents en salle : VERIFIER
+# l'existence avant de lire. Un chemin faux ne se voit pas dans un rendu
+# Quarto avec error: true — il produit une sortie vide au milieu d'une page
+# qui a l'air complete.
+verifier <- function(chemins) {
+  data.frame(chemin = chemins,
+             existe = file.exists(chemins),
+             taille_ko = ifelse(file.exists(chemins),
+                                round(file.size(chemins) / 1024), NA))
+}
+verifier(c("_commons/data/J11_extraits/J11_ecam5_regions.csv",
+           "_commons/data/J11_extraits/J11_adm1_cmr.geojson",
+           "datasets/un_fichier_qui_n_existe_pas.csv"))
+```
+
+::: {.callout-tip}
+## Pourquoi cette page lit `_commons/data/...` et pas `../_commons/data/...`
+
+Regardez l'en-tête YAML de ce document : la liste `webr.resources` déclare
+`../_commons/data/J11_extraits/...`, **avec** le `../`. Les blocs `{webr}` lisent
+`_commons/data/J11_extraits/...`, **sans**.
+
+Ce n'est pas une incohérence, ce sont deux systèmes de fichiers différents. Le
+`resources:` est résolu par **Quarto**, au moment du rendu, relativement au `.qmd`
+— d'où le `../` qui remonte d'un dossier. Les fichiers sont ensuite copiés dans la
+**machine virtuelle du navigateur**, à la racine de son système de fichiers virtuel.
+C'est là que `read.csv()` va les chercher, et cette racine n'a pas de dossier parent.
+
+**C'est le piège le plus fréquent des runtimes WebR.** Quand un bloc renvoie
+« cannot open file », c'est presque toujours un `../` de trop, ou un fichier oublié
+dans `resources:`.
+:::
+
+## 3. Lire une fois, dans une fonction
+
+```{webr}
+library(dplyr)
+
+# UNE LECTURE, UNE FOIS. Le defaut le plus courant d'un long document :
+# le meme fichier relu plus loin, ce qui ECRASE la preparation faite en
+# amont sans lever la moindre erreur. La parade est d'enfermer la lecture
+# dans une fonction, et de n'appeler que cette fonction.
+lire_extrait <- function(nom) {
+  chemin <- file.path("_commons", "data", "J11_extraits", nom)
+  if (!file.exists(chemin)) stop("Fichier introuvable : ", chemin)
+  d <- read.csv(chemin, stringsAsFactors = FALSE)
+  # INSTRUMENTATION systematique : ce qui echoue en silence est plus
+  # dangereux que ce qui plante.
+  cat("Lu :", nom, "—", nrow(d), "lignes,", ncol(d), "colonnes\n")
+  d
+}
+
+regions <- lire_extrait("J11_ecam5_regions.csv")
+biais   <- lire_extrait("J11_biais_taille.csv")
+corresp <- lire_extrait("J11_correspondance_regions.csv")
+
+names(regions)
+```
+
+```{webr}
+# Le contre-exemple documente de la journee : la MEME grandeur, calculee sur
+# deux unites de parcours differentes.
+print(biais, right = FALSE)
+```
+
+::: {.callout-important}
+## Biais de taille — et pourquoi il n'y a pas de « bonne » réponse
+
+Les deux chiffres ci-dessus sont **tous les deux exacts**. Ils répondent à deux
+questions différentes :
+
+- parcourir des **lignes d'individus** revient à tirer une personne au hasard et à
+  regarder la taille de son ménage. Un ménage de dix personnes fournit dix lignes,
+  un ménage d'une personne en fournit une : les grands ménages sont mécaniquement
+  surreprésentés ;
+- parcourir des **lignes de ménages** revient à tirer un ménage au hasard. Chaque
+  ménage compte pour un.
+
+Le même mécanisme se retrouve partout : un taux de pauvreté « par individu » et
+« par ménage » ne sont pas le même indicateur ; une taille moyenne de classe
+calculée sur les élèves et sur les classes non plus.
+
+**La règle : dire de quoi on prend la moyenne, dans la légende, à côté du chiffre.**
+Pas dans un commentaire du code — dans ce que le lecteur lit.
+:::
+
+## 4. Une jointure documentée, décidée et vérifiée
+
+```{webr}
+library(sf)
+adm1 <- read_sf("_commons/data/J11_extraits/J11_adm1_cmr.geojson")
+cat("Regions de la carte :", nrow(adm1), "\n")
+cat("Regions d'enquete   :", nrow(regions), "\n\n")
+
+# NE JAMAIS JOINDRE SUR UN LIBELLE ACCENTUE. Selon la locale de la machine,
+# "Extreme-Nord" ecrit dans un .qmd ne s'apparie pas toujours au niveau de
+# facteur lu depuis un fichier. On passe par une CLE TECHNIQUE, et on garde
+# le libelle d'origine POUR L'AFFICHAGE seulement.
+print(corresp, right = FALSE)
+
+cat("\nRepartition des methodes d'appariement :\n")
+print(table(corresp$methode))
+```
+
+::: {.callout-important}
+## Ce que la normalisation résout — et ce qu'elle ne résout pas
+
+Retirer les accents, passer en minuscules, supprimer la ponctuation et les mots de
+liaison : cela répare les différences **d'écriture**. Les mots de liaison comptent —
+sans eux, des dizaines d'unités administratives dont le nom contient « de », « du »
+ou « et » sont perdues.
+
+Mais aucun traitement de chaîne ne devine qu'une enquête a **douze régions
+d'enquête** là où la carte en a **dix**, parce que deux grandes villes y sont
+traitées comme des régions à part. C'est une **décision de méthode**, pas un
+problème d'encodage. Elle doit donc être :
+
+1. **écrite à la main**, ligne à ligne, dans une table qu'un lecteur humain peut
+   vérifier ;
+2. **justifiée** — la colonne `justification` de la table ci-dessus ;
+3. **contrôlée** — deux vérifications, à ne jamais omettre : chaque libellé cible
+   existe-t-il vraiment dans la couche géographique ? et reste-t-il des libellés
+   source non appariés ?
+
+Le bloc suivant fait ces deux contrôles.
+:::
+
+```{webr}
+# CONTROLE 1 : chaque cible de la table existe-t-elle dans la carte ?
+cibles <- na.omit(corresp$NAME_1)
+cat("Cibles absentes de la carte :",
+    paste(setdiff(cibles, adm1$NAME_1), collapse = ", "), "\n")
+
+# CONTROLE 2 : reste-t-il des libelles source non apparies ?
+cat("Libelles source non apparies :",
+    sum(corresp$methode == "NON APPARIEE"), "\n\n")
+
+# La jointure elle-meme. ON PART DE LA COUCHE GEOGRAPHIQUE : l'inverse
+# (tableau |> left_join(couche)) perdrait la classe sf et la geometrie.
+carte <- adm1 |>
+  left_join(
+    regions |>
+      left_join(corresp |> select(libelle_source, NAME_1),
+                by = c("region" = "libelle_source")) |>
+      filter(!is.na(NAME_1)) |>
+      group_by(NAME_1) |>
+      # Deux regions d'enquete peuvent tomber dans la MEME region
+      # administrative : on additionne les effectifs et on pondere les
+      # moyennes. UNE MOYENNE DE MOYENNES N'EST PAS LA MOYENNE.
+      # Attention a l'ordre : summarise() evalue ses arguments l'un apres
+      # l'autre, et une colonne redefinie masque l'originale pour les
+      # arguments suivants. On calcule donc la moyenne ponderee AVANT de
+      # redefinir poids_total.
+      summarise(taille_moyenne_ponderee =
+                  round(sum(taille_moyenne_ponderee * poids_total) /
+                          sum(poids_total), 2),
+                n_menages   = sum(n_menages),
+                poids_total = sum(poids_total),
+                .groups = "drop"),
+    by = "NAME_1")
+
+# INSTRUMENTATION OBLIGATOIRE APRES JOINTURE : une jointure ratee ne leve
+# pas d'erreur, elle remplit de NA.
+cat("Regions de la carte sans donnee d'enquete :",
+    sum(is.na(carte$n_menages)), "sur", nrow(carte), "\n")
+carte |> st_drop_geometry() |> arrange(desc(n_menages))
+```
+
+```{webr}
+library(ggplot2)
+ggplot(carte) +
+  geom_sf(aes(fill = taille_moyenne_ponderee), colour = "white",
+          linewidth = 0.3) +
+  # REGLE : un polygone sans donnee reste GRIS. Il n'est pas a zero.
+  scale_fill_viridis_c(option = "D", na.value = "grey80",
+                       name = "Taille moyenne\ndes menages") +
+  geom_sf_text(aes(label = NAME_1), size = 2, colour = "white",
+               fontface = "bold") +
+  labs(title = "Taille moyenne des menages, par region",
+       subtitle = "Moyenne PONDEREE par le poids de sondage, calculee sur les MENAGES",
+       caption = "Gris = region sans observation d'enquete. Source : ECAM5, agregat regional.") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+::: {.callout-note}
+## Interprétation — la carte des tailles de ménage
+
+**Ce que la figure code.** La couleur code une moyenne **pondérée par le poids de
+sondage**, calculée sur les **ménages** et non sur les individus (voir section 3).
+Grandeur intensive.
+
+**Ce que les choix techniques font.** `na.value = "grey80"` est la ligne la plus
+importante de ce bloc : sans elle, `ggplot2` peint bien en gris, mais rien dans la
+légende ne dit ce que le gris signifie. La légende de la figure le nomme.
+
+**Ce qui se lit.** Le contraste régional de taille des ménages, tel que l'enquête le
+restitue.
+
+**Ce qui ne se lit pas.** L'incertitude d'échantillonnage : cette carte n'a pas de
+carte de précision associée, et à ce titre elle est incomplète — c'est exactement la
+critique que la J10 adresse à toute carte d'estimation publiée seule. Ne se lit pas
+non plus la représentativité **à l'intérieur** des régions : un extrait de formation
+n'est pas toujours représentatif au niveau infrarégional, et ce défaut est invisible
+sur la carte.
+
+**Le gris est une catégorie à part entière.** Une région grise n'a pas des ménages de
+taille nulle : elle n'a **aucune observation**.
+:::
+
+## 5. Le principe DRY — écrire la fonction, pas trois fois le code
+
+```{webr}
+library(purrr)
+
+# Ecrire trois fois la meme sequence, c'est trois occasions de se tromper.
+# On l'enferme une fois pour toutes, et on la DOCUMENTE : ce que la fonction
+# attend, ce qu'elle renvoie, ce qu'elle refuse.
+resumer_region <- function(d, nom_region) {
+  # d : le tableau regional. nom_region : une valeur de d$region.
+  # Renvoie un data.frame d'une ligne. Erreur explicite si la region
+  # n'existe pas — jamais un NA silencieux.
+  if (!nom_region %in% d$region)
+    stop("Region absente du tableau : ", nom_region)
+  x <- d[d$region == nom_region, ]
+  data.frame(
+    region                  = nom_region,
+    menages_enquetes        = x$n_menages,
+    taille_moyenne_brute    = x$taille_moyenne_brute,
+    taille_moyenne_ponderee = x$taille_moyenne_ponderee,
+    ecart_ponderation       = round(x$taille_moyenne_ponderee -
+                                      x$taille_moyenne_brute, 2)
+  )
+}
+
+# map_dfr applique la fonction a chaque element et empile les resultats.
+# Le meme code traite une region ou cinquante : c'est tout l'interet.
+bilan <- map_dfr(regions$region, ~ resumer_region(regions, .x))
+bilan |> arrange(desc(abs(ecart_ponderation)))
+```
+
+```{webr}
+# Et le controle d'erreur, qui doit ETRE TESTE et non suppose.
+resultat <- tryCatch(
+  resumer_region(regions, "Region qui n'existe pas"),
+  error = function(e) paste("Erreur interceptee :", conditionMessage(e))
+)
+print(resultat)
+```
+
+::: {.callout-tip}
+## Trois propriétés d'une fonction qu'on peut transmettre
+
+**Elle refuse bruyamment.** Une fonction qui renvoie `NA` sur une entrée invalide
+propage l'erreur dans tout ce qui suit. Une fonction qui s'arrête avec un message
+nommant l'entrée fautive fait gagner une demi-journée.
+
+**Elle ne dépend d'aucune variable globale.** Tout ce dont elle a besoin passe par
+ses arguments. `resumer_region(regions, "…")` prend `regions` explicitement, au lieu
+d'aller le chercher dans l'environnement — sinon la fonction cesse de marcher dès
+qu'on renomme une variable ailleurs dans le document.
+
+**Elle a un contrat écrit.** Ce qu'elle attend, ce qu'elle renvoie, ce qu'elle
+refuse. Trois lignes de commentaire en tête suffisent, et elles valent mieux qu'un
+nom de fonction très long.
+:::
+
+## 6. Documenter les données : le dictionnaire est du code
+
+```{webr}
+# Un dictionnaire de donnees n'est pas une annexe : c'est un OBJET, versionne
+# avec le code, et verifiable contre le fichier reel.
+dictionnaire <- data.frame(
+  variable = names(regions),
+  type = vapply(regions, function(x) class(x)[1], character(1)),
+  na = vapply(regions, function(x) sum(is.na(x)), integer(1)),
+  description = c(
+    "Libelle de la region d'enquete, tel qu'ecrit dans le fichier source",
+    "Nombre de menages enquetes dans la region",
+    "Somme des poids de sondage des menages de la region",
+    "Taille moyenne des menages, NON ponderee (decrit l'echantillon)",
+    "Taille moyenne des menages, PONDEREE (decrit la population)",
+    "Part de menages en milieu urbain, ponderee (NA si le fichier source ne porte pas de variable de milieu)",
+    "Cle technique de jointure : sans accents, minuscules, sans ponctuation"
+  )[seq_along(names(regions))],
+  row.names = NULL
+)
+print(dictionnaire, right = FALSE)
+
+# LE CONTROLE QUI REND LE DICTIONNAIRE UTILE : est-il a jour ?
+cat("\nVariables du fichier absentes du dictionnaire :",
+    paste(setdiff(names(regions), dictionnaire$variable), collapse = ", "), "\n")
+cat("Variables du dictionnaire absentes du fichier :",
+    paste(setdiff(dictionnaire$variable, names(regions)), collapse = ", "), "\n")
+```
+
+```{webr}
+# Les metadonnees FAIR, ecrites comme des donnees. Findable, Accessible,
+# Interoperable, Reusable : les quatre principes se traduisent en champs
+# concrets, pas en intentions.
+metadonnees <- data.frame(
+  champ = c("titre", "producteur", "source_primaire", "millesime",
+            "unite_observation", "couverture_geographique", "cle_de_jointure",
+            "systeme_de_coordonnees", "licence", "script_producteur",
+            "date_extraction", "limites_connues"),
+  valeur = c(
+    "Agregat regional ECAM5 pour le runtime WebR J11",
+    "Atelier IFORD x GDSG 2026",
+    "ECAM5 — enquete camerounaise aupres des menages",
+    "a completer depuis la documentation de l'enquete",
+    "la region d'enquete",
+    "Cameroun",
+    "cle_region (libelle normalise) ; NAME_1 apres table de correspondance",
+    "EPSG:4326 pour la couche, sans objet pour le tableau",
+    "usage de formation",
+    "_commons/data/J11_extraits/00_extraire_J11.R",
+    as.character(Sys.Date()),
+    "extrait de formation : representativite non garantie a l'interieur des regions"
+  )
+)
+print(metadonnees, right = FALSE)
+
+# On peut ecrire dans le systeme de fichiers VIRTUEL du navigateur : rien
+# n'est envoye nulle part, et le fichier disparait au rechargement de la page.
+write.csv(metadonnees, "metadonnees_J11.csv", row.names = FALSE)
+cat("\nRelu depuis le fichier ecrit :\n")
+head(read.csv("metadonnees_J11.csv"), 3)
+```
+
+::: {.callout-note}
+## Les quatre principes FAIR, traduits en actes
+
+**Findable** — le jeu de données a un nom stable, un producteur, un millésime, et il
+est décrit ailleurs que dans la tête de celui qui l'a fabriqué. Un fichier nommé
+`final_v2_corrige_OK.csv` n'est pas *findable*.
+
+**Accessible** — on sait **où** il est et **comment** on l'obtient. Dans cet atelier :
+un script d'extraction nommé, exécutable, dont l'en-tête dit quand le relancer.
+
+**Interoperable** — formats ouverts (CSV, GeoJSON), encodage déclaré, CRS déclaré,
+noms de colonnes stables. Un fichier Excel où les nombres sont stockés en texte n'est
+pas *interoperable* : il oblige chaque réutilisateur à redécouvrir le piège.
+
+**Reusable** — licence explicite, et surtout **limites connues écrites**. Le champ
+`limites_connues` ci-dessus est le plus important de la table : il empêche un
+réutilisateur de bonne foi de citer un chiffre hors de son domaine de validité.
+:::
+
+## 7. Ce qui ne peut pas tourner dans un navigateur
+
+Les blocs suivants sont en **lecture seule** : ils touchent au système de fichiers de
+votre poste, à Git, ou à un moteur de rendu. Ils s'exécutent sous RStudio desktop.
+
+```r
+# --- L'en-tete d'un rapport reproductible ---------------------------------
+# Un seul document source, plusieurs formats de sortie. La prose, le code et
+# les decisions vivent au meme endroit : c'est cela, la reproductibilite.
+#
+# ---
+# title: "Conditions de vie des menages — synthese regionale"
+# author: "Institut national de la statistique"
+# date: today
+# lang: fr
+# format:
+#   html:
+#     toc: true
+#     embed-resources: true   # document autonome, lisible hors ligne
+#   docx:
+#     toc: true
+#     reference-doc: modele_institution.docx
+# execute:
+#   echo: true       # le code est VISIBLE : c'est le point
+#   warning: true    # pendant la phase de test
+#   error: true      # un chunk fautif n'interrompt pas le rendu
+# ---
+#
+# Reglages a connaitre :
+#   - embed-resources: true rend le HTML autonome. Sans lui, le document
+#     depend d'un dossier _files : deplace seul, il perd ses images.
+#   - Quarto charge MathJax depuis un CDN : une formule $$...$$ reste en
+#     brut en salle sans connexion. Preferer du texte formate.
+#   - error: true pendant le test, mais relire le HTML : un chunk en erreur
+#     produit une page qui a l'air complete.
+```
+
+```r
+# --- Un rapport parametre --------------------------------------------------
+# On declare des parametres dans l'en-tete YAML :
+#
+# ---
+# params:
+#   region_cible: "Centre"
+#   annee: 2022
+# ---
+#
+# Ils sont accessibles dans le code par params$region_cible.
+# Puis on compile une fois par region, depuis la console :
+
+for (r in regions$region) {
+  quarto::quarto_render(
+    input = "rapport_regional.qmd",
+    execute_params = list(region_cible = r),
+    output_file = paste0("outputs/rapport_", r, ".docx")
+  )
+}
+
+# La regle DRY appliquee a un livrable : un modele, N rapports. Le jour ou
+# une definition change, on la corrige a UN seul endroit.
+```
+
+```r
+# --- Fixer les versions ----------------------------------------------------
+# sessionInfo() dit ce qui a servi AUJOURD'HUI. C'est le minimum, et il
+# tient dans une ligne — mais il ne REJOUE rien.
+sessionInfo()
+
+# renv enregistre les versions exactes dans un fichier de verrouillage,
+# versionne avec le code, et sait les restaurer.
+# install.packages("renv")
+renv::init()      # cree renv.lock a partir des packages reellement charges
+renv::snapshot()  # met a jour renv.lock apres un ajout
+renv::restore()   # rejoue l'environnement sur une autre machine
+
+# Sans cela, "le code marchait l'annee derniere" est une phrase vraie et
+# inutile : un package mis a jour a change un comportement par defaut, et
+# rien dans le depot ne dit lequel.
+```
+
+```r
+# --- Le travail versionne --------------------------------------------------
+# Git repond a la question "qu'est-ce qui a change, quand, et pourquoi".
+#
+#   git switch -c correction-J11        # une branche AVANT de modifier
+#   git add pedagogie/J11_perenniser_transmettre
+#   git commit -m "J11 : runtime WebR + script d'extraction"
+#
+# Trois regles qui suffisent en pratique :
+#   1. un commit par unite de travail (ici : une journee), avec un message
+#      qui dit POURQUOI, pas seulement QUOI ;
+#   2. les fichiers de donnees volumineux restent HORS du depot
+#      (.gitignore) : ils se re-telechargent, ils ne se versionnent pas ;
+#   3. les SORTIES ne se versionnent pas non plus — elles se regenerent.
+#      Ce qui se versionne, c'est ce qui les produit.
+```
+
+```r
+# --- Et l'extraction, cote poste ------------------------------------------
+# Le fichier ECAM5 est un .dta : haven le lit, WebR ne le peut pas.
+library(haven)
+
+# ON NE LIT JAMAIS UN FICHIER D'ENQUETE EN ENTIER. n_max = 0 donne les noms
+# de colonnes sans charger une seule ligne ; col_select ne charge que ce
+# qu'on utilise. Un fichier d'enquete complet peut depasser 4 000 colonnes,
+# et str() ou summary() dessus rendent le HTML illisible.
+noms <- names(read_dta("datasets/ecam5.dta", n_max = 0))
+ecam <- read_dta("datasets/ecam5.dta",
+                 col_select = all_of(intersect(c("s0q1", "coefextr", "tailm",
+                                                 "s01q3"), noms)))
+
+# Les libelles Stata deviennent des facteurs lisibles.
+ecam <- dplyr::mutate(ecam, dplyr::across(
+  dplyr::where(\(x) inherits(x, "haven_labelled")), haven::as_factor))
+
+# Le script complet, avec ses controles et ses compteurs, est dans
+# _commons/data/J11_extraits/00_extraire_J11.R.
+```
+
+## 8. La session, ici et maintenant
+
+```{webr}
+# sessionInfo() marche aussi dans le navigateur : c'est le meme R.
+si <- sessionInfo()
+cat("Version de R      :", si$R.version$version.string, "\n")
+cat("Plateforme        :", si$R.version$platform, "\n")
+cat("Packages charges  :", paste(sort(names(si$otherPkgs)), collapse = ", "),
+    "\n\n")
+
+# Et les versions, une par ligne : c'est ce qu'il faut coller dans une
+# annexe de rapport.
+data.frame(
+  package = names(si$otherPkgs),
+  version = vapply(si$otherPkgs, function(p) p$Version, character(1)),
+  row.names = NULL
+) |> dplyr::arrange(package)
+```
+
+::: {.callout-tip}
+## Ce que cette page démontre, au fond
+
+Vous venez de lire un tableau d'enquête, de le joindre à une couche géographique par
+une table de correspondance justifiée, de tracer une carte, d'écrire un dictionnaire
+de données, de produire des métadonnées et de relire un fichier écrit — **sans rien
+installer**, dans un navigateur, sur une machine dont vous ne savez rien.
+
+C'est l'argument de pérennisation de la formation : le matériel reste consultable et
+exécutable après la fin de l'atelier, y compris par des collègues qui n'ont pas
+assisté à la semaine et qui n'ont pas R sur leur poste. Ce qui a rendu cela possible
+n'est pas WebR — c'est la discipline des sept sections précédentes : **des chemins
+relatifs, des fonctions, un contrat de colonnes, et le calcul lourd déplacé en
+amont, une fois, dans un script qui dit ce qu'il fait**.
+:::
+
+## Checklist de fin de formation
+
+- [ ] Mon dossier de travail a une structure fixe : `datasets/`, `outputs/`,
+      `scripts/`, un document source, un `README`.
+- [ ] Aucun chemin absolu, aucun `setwd()` dans mon code.
+- [ ] Chaque fichier de données a une ligne dans un `LISEZMOI` : source, unité
+      d'observation, clé, pièges connus.
+- [ ] Chaque jointure est suivie d'un compteur de `NA`.
+- [ ] Chaque carte dit ce que le gris signifie.
+- [ ] Chaque chiffre publié voyage avec sa définition et ses limites.
+- [ ] Les versions sont enregistrées (`sessionInfo()` au minimum, `renv` de
+      préférence).
+- [ ] Les sorties se régénèrent : je peux effacer `outputs/` sans rien perdre.
+- [ ] Un collègue peut ouvrir mon dossier et le faire tourner sans me demander.
+
+## Glossaire
+
+**Reproductible.** Le même code, sur les mêmes données, redonne le même résultat.
+Distinct de **réplicable** : une autre équipe, d'autres données, la même conclusion.
+
+**Source unique.** Un seul fichier fait autorité ; tout le reste en dérive.
+
+**Chemin relatif.** Chemin exprimé depuis le dossier du projet, donc valable sur
+toute machine.
+
+**DRY.** *Don't Repeat Yourself* — toute logique répétée trois fois devient une
+fonction.
+
+**Fichier de verrouillage.** Fichier qui enregistre les versions exactes des
+packages (`renv.lock`), versionné avec le code.
+
+**Dictionnaire de données.** Table qui décrit chaque variable : type, unité,
+modalités, valeurs manquantes et leur nature.
+
+**FAIR.** *Findable, Accessible, Interoperable, Reusable.*
+
+**Biais de taille.** Voir section 3.
+
+## Fonctions clés
+
+| Fonction | Ce qu'elle fait | Où |
+|---|---|---|
+| `file.path()` | construit un chemin, sans séparateur codé en dur | navigateur |
+| `file.exists()` / `file.size()` | vérifier avant de lire | navigateur |
+| `stop()` dans une fonction | refuser bruyamment plutôt que renvoyer `NA` | navigateur |
+| `tryCatch()` | intercepter une erreur et la rendre lisible | navigateur |
+| `purrr::map_dfr()` | appliquer une fonction et empiler les résultats | navigateur |
+| `sessionInfo()` | ce qui a servi aujourd'hui | navigateur |
+| `quarto::quarto_render(execute_params = …)` | rapports paramétrés | RStudio |
+| `renv::init()` / `snapshot()` / `restore()` | fixer et rejouer les versions | RStudio |
+| `haven::read_dta(col_select = …)` | lire un `.dta` sans tout charger | RStudio |
+
+## Exercices
+
+1. **Le `../` de trop.** Modifiez un chemin d'un bloc `{webr}` pour y ajouter
+   `../`, relancez. *Question de méthode : le message d'erreur vous dit-il ce qui
+   ne va pas ? Que faudrait-il ajouter au code pour qu'il le dise ?*
+2. **Une jointure sans table de correspondance.** Joignez `regions` à `adm1`
+   directement sur `region == NAME_1`, sans passer par `corresp`.
+   *Question de méthode : combien de régions perdez-vous, et l'auriez-vous vu si
+   vous n'aviez tracé que la carte ?*
+3. **Dictionnaire périmé.** Ajoutez une colonne à `regions` puis relancez les
+   contrôles de la section 6. *Question de méthode : à quel moment du cycle de
+   travail ce contrôle doit-il tourner pour être utile ?*
+4. **Votre propre structure.** Écrivez le `data.frame` de la section 1 pour un
+   projet réel de votre service. *Question de méthode : lesquelles des cinq
+   questions du tableau d'ouverture ce projet sait-il déjà documenter ?*
+
+## Prolongements
+
+- Reprendre les runtimes **J08**, **J09** et **J10** : chacun est écrit contre le
+  contrat de colonnes d'un script d'extraction, et c'est exactement le motif de
+  cette journée appliqué à des données lourdes.
+- Le dépôt du matériel de l'atelier, avec ses scripts d'extraction, ses `LISEZMOI`
+  et ses règles écrites, est lui-même l'exemple à reprendre.
+
+[← Retour à l'accueil](../INDEX.md)

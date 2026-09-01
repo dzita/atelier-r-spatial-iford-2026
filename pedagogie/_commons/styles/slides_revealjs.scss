@@ -1,0 +1,110 @@
+/*-- scss:defaults --*/
+
+// Couleurs IFORD
+$iford-primary:   #0F4C81;
+$iford-secondary: #C9A227;
+$iford-accent:    #A8201A;
+$iford-light:     #F4F4F4;
+$iford-dark:      #1A1A1A;
+
+// Typo
+$font-family-sans-serif: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+$font-family-monospace:  "JetBrains Mono", "Fira Code", Consolas, monospace;
+
+// reveal.js defaults override
+$body-bg:               #FFFFFF;
+$body-color:            $iford-dark;
+$presentation-heading-color: $iford-primary;
+$presentation-heading-font:  $font-family-sans-serif;
+$presentation-heading-font-weight: 700;
+$link-color:             $iford-primary;
+$link-color-hover:       $iford-accent;
+$selection-bg:           rgba($iford-secondary, 0.4);
+
+$presentation-font-size-root:  32px;
+$presentation-h1-font-size:    2.2em;
+$presentation-h2-font-size:    1.6em;
+$presentation-h3-font-size:    1.2em;
+
+/*-- scss:rules --*/
+
+.reveal {
+  font-family: $font-family-sans-serif;
+
+  h1, h2, h3, h4 {
+    letter-spacing: -0.02em;
+  }
+
+  .slide-number,
+  .footer {
+    color: rgba($iford-dark, 0.55);
+    font-size: 0.55em;
+  }
+
+  // Slide de titre
+  section.title-slide {
+    background: linear-gradient(135deg, $iford-primary 0%, darken($iford-primary, 10%) 100%);
+    color: #FFFFFF;
+
+    h1.title { color: #FFFFFF; }
+    h2.subtitle { color: rgba(255,255,255, 0.85); font-weight: 300; }
+    .quarto-title-author, .quarto-title-affiliation, .date {
+      color: rgba(255,255,255, 0.75);
+    }
+  }
+
+  // Callout types
+  .callout {
+    border-radius: 6px;
+    margin: 0.8em 0;
+  }
+
+  // Codeblocks
+  pre code {
+    font-family: $font-family-monospace;
+    font-size: 0.78em;
+    line-height: 1.45;
+  }
+
+  // Tables
+  table {
+    margin: 0.5em auto;
+    font-size: 0.85em;
+    th { background: $iford-primary; color: #fff; }
+    tr:nth-child(even) { background: rgba($iford-secondary, 0.05); }
+  }
+
+  // Cite & emphasis
+  em { color: $iford-secondary; }
+  strong { color: $iford-primary; }
+
+  // Custom layout helpers
+  .takeaway {
+    background: $iford-light;
+    border-left: 5px solid $iford-primary;
+    padding: 0.6em 1em;
+    margin: 0.8em 0;
+    font-size: 0.9em;
+  }
+  .warning-box {
+    background: rgba($iford-accent, 0.1);
+    border-left: 5px solid $iford-accent;
+    padding: 0.6em 1em;
+    margin: 0.8em 0;
+    font-size: 0.9em;
+  }
+  .small {
+    font-size: 0.7em;
+  }
+  .columns-wrap {
+    display: flex;
+    gap: 1.2em;
+  }
+}
+
+/* Section divider */
+.reveal section[data-state="section-break"] {
+  background: $iford-primary;
+  color: #fff;
+  h1, h2, h3 { color: $iford-secondary; }
+}

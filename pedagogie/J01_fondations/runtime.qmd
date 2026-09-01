@@ -1,0 +1,350 @@
+---
+title: "J01 · Fondations R & RStudio — runtime navigateur"
+subtitle: "Exercices exécutables sans installation (WebR) · Atelier IFORD × GDSG 2026"
+# Ce document ne contient que des blocs {webr}, executes dans le navigateur,
+# et quelques blocs `r` en lecture seule pour ce qui ne tourne pas en WASM.
+# Sans engine: knitr, Quarto ne detecte aucun bloc R et se rabat sur Jupyter
+# (erreur "No module named 'yaml'" / "Jupyter is not available").
+engine: knitr
+webr:
+  packages:
+    - tibble
+    - dplyr
+    - ggplot2
+  resources:
+    # Chemins relatifs au .qmd (donc ../) ; dans un bloc {webr} le meme
+    # fichier se lit SANS le ../.
+    - ../_commons/data/dhs_cmr/dhs_cmr_2018_menages_extrait.csv
+---
+
+::: {.callout-note}
+## Comment utiliser cette page
+
+Chaque bloc bleu s'exécute **directement dans votre navigateur** (WebR) : cliquez sur
+*Run code*, modifiez librement, rien n'est installé sur votre poste.
+
+**Exécutez les blocs dans l'ordre** : les objets créés dans un bloc servent aux suivants.
+
+Les blocs **non bleus** sont en **lecture seule** : ils montrent le code qui ne tourne
+pas dans un navigateur — l'import des fichiers EDS `.SAV` avec `haven`. Ce code
+s'exécute sous **RStudio desktop**, à partir de `demo_formateur_J01.qmd` et de
+`script_formateur_J01.R` (ce même dossier).
+:::
+
+## 1. De STATA / SPSS à R : le tableau de correspondance
+
+Vous savez déjà faire tout cela ; seule la syntaxe change.
+
+| L'intention | STATA | SPSS | R |
+|---|---|---|---|
+| Créer une variable | `generate x = 2+3` | `COMPUTE x = 2+3.` | `x <- 2 + 3` |
+| Garder des lignes | `keep if age > 15` | `SELECT IF (age>15).` | `filter(d, age > 15)` |
+| Garder des colonnes | `keep age sexe` | `/KEEP age sexe` | `select(d, age, sexe)` |
+| Décrire un fichier | `describe` | `CODEBOOK` | `str(d)` |
+| Résumer | `summarize` | `DESCRIPTIVES` | `summary(d)` |
+| Tri à plat | `tabulate v` | `FREQUENCIES v.` | `table(d$v)` |
+| Trier | `gsort -pop` | `SORT CASES BY pop (D).` | `arrange(d, desc(pop))` |
+
+::: {.iford-callout}
+**La différence de fond n'est pas la syntaxe.** En STATA et en SPSS, **un** fichier de
+données est actif à la fois, et les commandes s'y appliquent implicitement. En R,
+plusieurs objets coexistent en mémoire et **chaque fonction dit sur quoi elle
+travaille**. C'est ce qui rendra possible, dès le J03, de tenir simultanément une
+table d'enquête, une couche de districts et un fond de carte — et de les faire
+dialoguer.
+:::
+
+## 2. R comme calculatrice — et le symbole `<-`
+
+```{webr}
+#| autorun: true
+x <- 2 + 3          # assignation (equivalent generate / COMPUTE)
+x                   # afficher l'objet = taper son nom
+x * 10
+
+# Le signe = fonctionne aussi la plupart du temps, mais <- reste la
+# convention R : il se lit "recoit", et il ne se confond jamais avec le
+# passage d'un argument a une fonction (ou = a un tout autre sens).
+```
+
+## 3. Les vecteurs : la brique de base
+
+```{webr}
+# Population 2019 (millions) de 5 regions du Cameroun
+pop <- c(4.16, 3.11, 2.51, 4.05, 2.87)
+regions <- c("Centre", "Littoral", "Nord", "Extreme-Nord", "Ouest")
+names(pop) <- regions
+
+pop                    # vecteur nomme
+pop["Centre"]          # indexation par nom
+pop[pop > 3]           # filtre logique (equivalent keep if / select if)
+mean(pop); sum(pop)    # statistiques de base
+```
+
+```{webr}
+# --- Les quatre types que vous croiserez tous les jours ---------------------
+# R vectorise : une operation s'applique aux 5 valeurs d'un coup, sans boucle.
+num <- c(4.16, 3.11, 2.51)          # double   : une mesure
+ent <- c(10L, 58L, 200L)            # integer  : un effectif
+txt <- c("Centre", "Littoral")      # character: un libelle
+log <- c(TRUE, FALSE, TRUE)         # logical  : une condition
+
+sapply(list(num, ent, txt, log), class)
+
+# Le FACTEUR : une variable categorielle, avec ses modalites declarees.
+# C'est l'equivalent R d'une variable a value labels en SPSS/STATA.
+milieu <- factor(c("urbain", "rural", "rural", "urbain", "rural"),
+                 levels = c("urbain", "rural"))
+levels(milieu)
+table(milieu)          # tri a plat (equivalent tabulate)
+```
+
+::: {.takeaway}
+**Pourquoi le facteur compte.** Un `character` est du texte libre : R n'a aucune idée
+des modalités possibles, et une modalité jamais observée disparaît des tableaux. Un
+`factor` porte la **liste déclarée** de ses modalités : un `table()` affichera un zéro
+là où il n'y a personne, au lieu de faire disparaître la ligne. Sur une région non
+enquêtée, la différence est celle entre « zéro observation » et « n'existe pas ».
+:::
+
+## 4. Le data.frame : votre fichier de données
+
+```{webr}
+library(tibble)
+donnees <- tibble(
+  region     = c("Centre", "Littoral", "Nord", "Extreme-Nord", "Ouest"),
+  pop_2019   = c(4.16, 3.11, 2.51, 4.05, 2.87),
+  urbain_pct = c(72, 89, 28, 21, 34)
+)
+
+donnees
+str(donnees)           # equivalent describe (STATA) / codebook
+summary(donnees)       # equivalent summarize
+donnees$pop_2019       # une colonne = $
+```
+
+## 5. Premiers verbes dplyr (aperçu du J04)
+
+```{webr}
+library(dplyr)
+donnees |>
+  filter(pop_2019 > 3) |>                      # keep if
+  mutate(densite_relative = pop_2019 / sum(pop_2019)) |>  # generate
+  arrange(desc(pop_2019))                      # gsort -pop_2019
+```
+
+## 6. Packages : `install.packages()` vs `library()` et `package::fonction()`
+
+```{webr}
+# Un package s'installe UNE fois, se charge a CHAQUE session :
+# install.packages("dplyr")   # (deja fait ici)
+# library(dplyr)
+
+# Quand deux packages ont une fonction du meme nom, le dernier charge MASQUE
+# l'autre -- R le signale par "The following objects are masked...".
+# On leve l'ambiguite en prefixant explicitement :
+dplyr::filter(donnees, urbain_pct > 50)   # filter() de dplyr, explicitement
+# stats::filter() existe aussi, et fait tout autre chose (filtrage de serie
+# temporelle) -- d'ou l'interet du prefixe package::
+```
+
+## 7. Valeurs manquantes
+
+```{webr}
+mesures <- c(12, NA, 8, 15, NA)
+is.na(mesures)              # reperage (equivalent misstable)
+sum(is.na(mesures))         # combien de NA ?
+mean(mesures)               # NA se propage...
+mean(mesures, na.rm = TRUE) # ...sauf si on l'exclut explicitement
+```
+
+::: {.iford-callout}
+**`na.rm = TRUE` n'est pas un correctif, c'est une décision.** Il répond
+« calcule sur ce que j'ai », ce qui suppose que les absences ne sont pas systématiques.
+Si les valeurs manquent précisément là où le phénomène est fort — un service de santé
+qui ne remonte pas ses chiffres parce qu'il est débordé —, la moyenne obtenue est
+biaisée, sans le moindre avertissement. Avant d'écrire `na.rm = TRUE`, il faut savoir
+**pourquoi** la donnée manque. Le J03 et le J05 y reviennent longuement.
+:::
+
+## 8. Les premiers réflexes après un import — sur de vraies données
+
+On charge un extrait réel de l'**EDS-MICS Cameroun 2018** (fichier ménages), préparé
+pour le navigateur par `_commons/data/dhs_cmr/00_extraire_dhs_pour_webr.R`.
+
+```{webr}
+menages <- read.csv("_commons/data/dhs_cmr/dhs_cmr_2018_menages_extrait.csv",
+                    stringsAsFactors = TRUE)
+
+# --- Les quatre gestes a faire sur TOUT nouveau fichier ---------------------
+dim(menages)                 # 1. combien de lignes, combien de colonnes ?
+names(menages)               # 2. quelles colonnes EXISTENT reellement ?
+head(menages, 3)             # 3. a quoi ressemble une ligne ?
+str(menages[, 1:8])          # 4. de quel type est chaque colonne ?
+
+# ATTENTION : sur un fichier EDS COMPLET (plus de 4 000 colonnes), str() et
+# summary() produisent des sorties illisibles et un rendu interminable. On
+# explore toujours un SOUS-ENSEMBLE de variables -- exactement comme on
+# ecrirait "describe var1 var2" plutot que "describe" en STATA.
+```
+
+```{webr}
+# --- Tri a plat et comptage de manquants -----------------------------------
+table(menages$milieu)                    # equivalent tabulate
+table(menages$milieu, menages$quintile)  # tableau croise
+
+# Combien de NA par colonne ? Le reflexe qui evite les mauvaises surprises.
+na_par_colonne <- colSums(is.na(menages))
+na_par_colonne[na_par_colonne > 0]
+
+# Combien de modalites la variable region porte-t-elle, et lesquelles ?
+# On les IMPRIME plutot que de les supposer : les regions d'ENQUETE du DHS
+# ne coincident pas forcement avec les regions ADMINISTRATIVES de la carte.
+nlevels(menages$region)
+levels(menages$region)
+
+# Unite d'observation : UNE LIGNE = UN MENAGE (pas une personne).
+# La cle est le couple (cluster_id, menage_id) : verifions qu'elle est unique.
+cat("Lignes :", nrow(menages),
+    "| couples (cluster, menage) distincts :",
+    nrow(unique(menages[, c("cluster_id", "menage_id")])), "\n")
+```
+
+::: {.takeaway}
+**Dire de quoi on prend la moyenne.** Ce fichier décrit des **ménages**. La taille
+moyenne calculée ici est donc la taille moyenne *d'un ménage*. Si l'on parcourait à la
+place un fichier de **personnes**, on obtiendrait un nombre nettement plus grand : un
+ménage de dix personnes y apparaît dix fois, un ménage d'une personne une seule fois.
+C'est le **biais de taille** — les deux chiffres sont exacts, ils répondent à deux
+questions différentes.
+
+**Le poids de sondage.** La colonne `poids_menage` (`HV005` au DHS, à diviser par 10⁶)
+existe précisément parce que l'échantillon n'est pas la population. Une moyenne non
+pondérée décrit l'échantillon, pas le Cameroun. Le J05 en fera la démonstration
+chiffrée.
+:::
+
+## 9. Un premier graphique — et ce qu'il ne dit pas
+
+```{webr}
+library(ggplot2)
+
+# Taille moyenne des menages par region, NON PONDEREE (voir l'encadre).
+par_region <- menages |>
+  group_by(region) |>
+  summarise(taille_moy = mean(taille_menage, na.rm = TRUE),
+            n_menages  = n(),
+            .groups = "drop") |>
+  arrange(desc(taille_moy))
+
+par_region
+
+ggplot(par_region, aes(x = reorder(region, taille_moy), y = taille_moy)) +
+  geom_col(fill = "#0F4C81") +
+  geom_text(aes(label = round(taille_moy, 1)), hjust = -0.2, size = 3.2) +
+  coord_flip() +
+  labs(title = "Taille moyenne des ménages par région d'enquête",
+       subtitle = "EDS-MICS Cameroun 2018 — moyenne NON pondérée, unité = le ménage",
+       x = NULL, y = "Personnes par ménage",
+       caption = "Source : EDS-MICS 2018 (DHS Program) · IFORD × GDSG 2026") +
+  theme_minimal()
+```
+
+::: {.takeaway}
+**Ce que la figure code.** Une barre par région d'enquête ; sa longueur code le nombre
+moyen de personnes par ménage. L'ordre des barres est celui de la valeur, pas
+l'ordre alphabétique — un classement se lit d'un coup d'œil quand il est trié.
+
+**Ce que les choix techniques font.** La moyenne est **non pondérée** : elle décrit
+l'échantillon interrogé, pas la population du Cameroun. Par ailleurs, la variable
+`region` est une région **d'enquête**, dont le découpage ne coïncide pas
+nécessairement avec les 10 régions **administratives** de la carte — le `levels()` du
+bloc précédent l'affiche. Réconcilier les deux découpages avant de cartographier est
+une **décision de méthode**, pas un problème de code ; elle doit être écrite, pas
+devinée.
+
+**Ce qui se lit.** Un classement des régions d'enquête, et l'ordre de grandeur des
+écarts entre elles.
+
+**Ce qui ne se lit pas.** (1) L'incertitude d'échantillonnage : aucune barre n'a
+d'intervalle de confiance. (2) L'hétérogénéité **à l'intérieur** d'une région : une
+moyenne de 6 peut recouvrir des ménages de 1 et de 15. (3) **Où** sont ces régions,
+et si les régions à grands ménages se touchent — un tableau trié donne un classement,
+il ne donne pas de voisinage. C'est exactement ce que la carte ajoutera à partir du
+J02.
+:::
+
+## 10. Ce qui ne tourne pas dans le navigateur
+
+Le paquet `haven` (import SPSS et Stata) n'est pas disponible sur `repo.r-wasm.org`.
+Le bloc ci-dessous est en **lecture seule** : exécutez-le sous RStudio desktop, à
+partir de `demo_formateur_J01.qmd` (section 5) ou de `script_formateur_J01.R`.
+
+```r
+library(haven); library(dplyr)
+
+# --- PIEGE DE NOMMAGE, a connaitre des le premier jour ----------------------
+# DHS nomme ses variables en MINUSCULES dans les fichiers Stata (.dta) mais
+# en MAJUSCULES dans les fichiers SPSS (.sav). Un test "hv001" %in% names(d)
+# echoue donc SILENCIEUSEMENT sur un .sav. On resout les noms sans tenir
+# compte de la casse :
+noms <- names(read_sav("datasets/CMHR71FL.SAV", n_max = 0))
+voulues <- c("hv001", "hv005", "hv009", "hv024", "hv025", "hv206", "hv270")
+vars <- noms[match(toupper(voulues), toupper(noms))]
+
+# col_select est indispensable : CMHR71FL.SAV pese 72 Mo et compte plus de
+# 4 000 colonnes. Ne JAMAIS le lire en entier, ni lui appliquer str().
+menages <- read_sav("datasets/CMHR71FL.SAV",
+                    col_select = all_of(na.omit(vars)))
+
+# haven conserve les libelles SPSS ; as_factor() les rend lisibles.
+menages <- menages |>
+  mutate(across(where(haven::is.labelled), haven::as_factor))
+
+dim(menages)
+table(menages$HV025)          # milieu de residence
+colSums(is.na(menages))       # manquants par variable
+
+# Le fichier femmes suit exactement le meme geste :
+femmes <- read_sav("datasets/CMIR71FL.SAV",
+                   col_select = all_of(c("V012", "V024", "V025", "V106", "V201")))
+dim(femmes)
+```
+
+## 11. Récapitulatif des fonctions du jour
+
+| Fonction | Ce qu'elle fait |
+|---|---|
+| `<-` | assigner une valeur à un objet |
+| `c()` | construire un vecteur |
+| `factor()` / `levels()` | déclarer une variable catégorielle et ses modalités |
+| `tibble()` / `data.frame()` | construire un tableau |
+| `dim()` / `names()` / `head()` | les trois premiers gestes après un import |
+| `str()` / `summary()` | structure et résumé — **sur un sous-ensemble de colonnes** |
+| `table()` | tri à plat et tableau croisé |
+| `is.na()` / `colSums(is.na())` | repérer et compter les manquants |
+| `filter()` / `select()` / `mutate()` / `arrange()` | les quatre verbes de base de dplyr |
+| `group_by()` + `summarise()` | agréger |
+| `package::fonction()` | lever une ambiguïté de nom |
+| `read_sav()` (RStudio) | importer un fichier SPSS, avec `col_select` |
+
+## 12. Checklist de fin de J01
+
+- [ ] R et RStudio installés, script `.R` créé et exécuté (`Ctrl+Entrée`)
+- [ ] `tidyverse`, `haven`, `readxl`, `labelled` installés et chargés
+- [ ] EDS 2018 importée sous RStudio (`script_formateur_J01.R`, section 5) —
+      fichiers `datasets/CMHR71FL.SAV` (ménages) et `datasets/CMIR71FL.SAV` (femmes)
+- [ ] `str()`, `summary()`, `table()`, `colSums(is.na())` exécutés sur un
+      **sous-ensemble** de variables (un fichier EDS en compte plusieurs milliers)
+- [ ] Vous savez dire, pour votre fichier : quelle est l'**unité d'observation**,
+      quelle est la **clé**, et où est le **poids de sondage**
+
+::: {.iford-callout}
+**Demain (J02) — pourquoi l'espace.** Le classement de la section 9 répond à
+« quelles régions ont les plus grands ménages ». Il ne répond pas à « les régions à
+grands ménages se touchent-elles ? ». Si oui, l'explication n'est pas dans les
+caractéristiques propres de chaque région, mais dans ce qu'elles partagent **parce
+qu'elles sont voisines**. Aucun tri de tableau ne fait apparaître cela ; une carte, si.
+:::
+
+[← Retour à l'accueil](../INDEX.md)

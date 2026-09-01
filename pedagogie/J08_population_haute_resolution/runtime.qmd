@@ -1,0 +1,738 @@
+---
+title: "J08 · Population en haute résolution — runtime navigateur"
+subtitle: "Grilles WorldPop et GHS-POP, effectifs administratifs, densité et MAUP · Atelier IFORD × GDSG 2026"
+# engine: knitr est OBLIGATOIRE. Sans lui, Quarto ne detecte aucun bloc R,
+# se rabat sur Jupyter et le rendu echoue ("Jupyter is not available").
+engine: knitr
+webr:
+  packages:
+    - sf
+    - dplyr
+    - ggplot2
+    - tidyr
+  resources:
+    - ../_commons/data/J08_extraits/J08_adm1_population.geojson
+    - ../_commons/data/J08_extraits/J08_adm2_population.geojson
+    - ../_commons/data/J08_extraits/J08_adm1_indicateurs.csv
+    - ../_commons/data/J08_extraits/J08_pyramide_adm1.csv
+    - ../_commons/data/J08_extraits/J08_totaux_nationaux.csv
+---
+
+::: {.callout-note}
+## Comment utiliser cette page
+
+Chaque cellule bleue **`{webr}`** s'exécute **directement dans votre navigateur** :
+cliquez sur *Run code*, modifiez le code, relancez. Rien n'est installé sur votre
+poste, rien n'est envoyé sur un serveur.
+
+Les blocs **non bleus** sont en **lecture seule**. Ils montrent le code `terra` et
+`exactextractr` qui produit les grilles de population : ces paquets compilent GDAL
+en WebAssembly et **ne tournent pas dans un navigateur**. Vous les exécuterez sous
+RStudio desktop, avec `demo_formateur_J08.qmd` de ce même dossier.
+
+**D'où viennent les chiffres de cette page.** Le calcul raster — les sommes zonales
+`exact_extract()` sur WorldPop 2015/2025/2030 et sur la mosaïque GHS-POP — a été
+fait **une fois pour toutes** par le script
+`_commons/data/J08_extraits/00_extraire_J08.R`. Cette page ne travaille que sur son
+résultat : dix polygones et quelques tableaux. C'est la stratégie de toute la
+semaine — *le raster en amont, le vecteur dans le navigateur*.
+
+**Aucun chiffre n'est écrit dans la prose de cette page.** Le code découvre et
+imprime ; le texte dit ce que vous allez lire, jamais ce qu'il a lu.
+:::
+
+## 1. Trois sources, trois définitions de « la population »
+
+La journée met face à face trois estimations de la population camerounaise en 2025.
+Elles ne mesurent pas la même chose :
+
+| Source | Ce que c'est | Unité d'observation |
+|---|---|---|
+| **WorldPop constrained R2025A** | un modèle qui **redistribue** un total administratif sur une grille de 100 m, à l'aide du bâti détecté par satellite | la **cellule** |
+| **GHS-POP R2023A** | un autre modèle de redistribution, produit par le Centre commun de recherche de la Commission européenne, en projection **équivalente** | la **cellule** |
+| **COD-PS** | une **projection démographique** à partir d'un recensement antérieur, ventilée par région et par tranche d'âge | la **région administrative** |
+
+Aucune des trois n'est un dénombrement. Les deux premières ne connaissent ni l'âge
+ni le sexe ; la troisième ne connaît aucune position à l'intérieur de la région.
+
+```{webr}
+#| autorun: true
+library(sf)
+library(dplyr)
+library(ggplot2)
+
+# Les fichiers ont ete pre-charges dans la machine virtuelle WebR au demarrage
+# de la page (declares dans webr.resources du YAML). ATTENTION : dans le YAML
+# le chemin porte "../", ici il ne le porte PAS.
+adm1 <- read_sf("_commons/data/J08_extraits/J08_adm1_population.geojson")
+adm2 <- read_sf("_commons/data/J08_extraits/J08_adm2_population.geojson")
+totaux <- read.csv("_commons/data/J08_extraits/J08_totaux_nationaux.csv")
+
+# INSTRUMENTATION. On ne suppose rien : on regarde ce que le fichier contient.
+cat("Regions ADM1      :", nrow(adm1), "\n")
+cat("Departements ADM2 :", nrow(adm2), "\n")
+cat("CRS EPSG          :", st_crs(adm1)$epsg, "\n")
+cat("Colonnes ADM1     :\n")
+print(setdiff(names(adm1), "geometry"))
+```
+
+```{webr}
+# Les trois totaux nationaux, cote a cote. Ils ne s'accordent pas : c'est le
+# point de depart de la journee, pas un defaut a corriger.
+totaux |>
+  mutate(population = format(round(population), big.mark = " ")) |>
+  arrange(annee, source)
+```
+
+::: {.callout-important}
+## Trois totaux, et ce qu'il faut en faire
+
+**Ce que le tableau code.** Une population estimée, par source et par année, avec
+son **statut** : « modèle de redistribution » n'est pas « projection
+démographique », et « projection du modèle » (le millésime 2030) n'est pas une
+observation.
+
+**Ce qui se lit.** L'ordre de grandeur commun, et l'écart entre les trois. Comparez
+les deux grilles entre elles, puis chacune au chiffre administratif.
+
+**Ce qui ne se lit pas.** Laquelle est « la bonne ». Aucune n'a été validée contre
+un dénombrement récent. La règle de travail est simple : **l'écart voyage avec le
+chiffre**. On ne cite jamais une population de grille sans dire de quelle grille
+elle vient et de combien elle s'écarte des deux autres.
+:::
+
+## 2. Le choroplèthe de la population régionale
+
+```{webr}
+ggplot(adm1) +
+  # Choroplethe : la couleur du polygone code une VALEUR numerique.
+  geom_sf(aes(fill = pop_worldpop_2025), colour = "white", linewidth = 0.3) +
+  # na.value : une region sans mesure reste GRISE. Elle n'est pas a zero.
+  scale_fill_viridis_c(option = "G", name = "Population\nWorldPop 2025",
+                       na.value = "grey80") +
+  geom_sf_text(aes(label = NAME_1), size = 2.2, colour = "white",
+               fontface = "bold") +
+  labs(title = "Population regionale estimee, Cameroun 2025",
+       subtitle = "Somme des cellules WorldPop 100 m, ponderee par fraction de cellule",
+       caption = "Gris = region sans mesure. Source : WorldPop R2025A, GADM 4.1") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+::: {.callout-note}
+## Interprétation — le choroplèthe de population
+
+**Ce que la figure code.** La couleur code un **effectif**, c'est-à-dire une
+grandeur **extensive** : elle s'additionne, et elle dépend de la taille du
+polygone. Une grande région faiblement peuplée peut afficher la même couleur
+qu'une petite région dense.
+
+**Ce que les choix techniques font.** La palette *viridis* est **séquentielle** :
+elle ordonne du clair au foncé, ce qui convient à une quantité qui va de peu à
+beaucoup. Elle reste lisible en noir et blanc et pour les daltoniens. Une palette
+**divergente** (deux couleurs opposées autour d'un point neutre) serait ici un
+contresens : il n'y a pas de « zéro naturel » au milieu d'une population.
+
+**Ce qui se lit.** La hiérarchie des poids démographiques régionaux.
+
+**Ce qui ne se lit pas.** La **densité** — voir la section 5. Ne se lit pas non
+plus la répartition interne : une région est peinte d'une seule couleur alors que
+la grille sous-jacente est à 100 m. Toute l'information fine que WorldPop apporte
+a été détruite par l'agrégation. C'est le prix, assumé, de la lisibilité.
+:::
+
+## 3. Ce que la grille ne sait pas : l'âge et le sexe
+
+Une grille de population ne porte **aucune structure démographique**. Seul le
+tableau administratif COD-PS ventile par tranche quinquennale et par sexe. C'est
+exactement la complémentarité que la journée met en scène : la grille donne le
+*où*, le tableau donne le *qui*.
+
+```{webr}
+indic <- read.csv("_commons/data/J08_extraits/J08_adm1_indicateurs.csv")
+
+# CONTROLE DE PLAUSIBILITE avant tout usage : un ratio femmes/hommes hors de
+# [0,85 ; 1,15] sur une region entiere signale une erreur de colonne, pas une
+# singularite demographique.
+cat("Ratio F/H — min :", min(indic$ratio_fh), " max :", max(indic$ratio_fh), "\n")
+cat("Part des moins de 15 ans (%) — min :", min(indic$part_moins_15_pct),
+    " max :", max(indic$part_moins_15_pct), "\n")
+
+indic |> arrange(desc(part_moins_15_pct))
+```
+
+```{webr}
+adm1 |>
+  left_join(indic |> select(NAME_1, part_moins_15_pct, ratio_fh),
+            by = "NAME_1") |>
+  ggplot() +
+  geom_sf(aes(fill = part_moins_15_pct), colour = "white", linewidth = 0.3) +
+  scale_fill_viridis_c(option = "B", name = "Moins de\n15 ans (%)",
+                       na.value = "grey80") +
+  labs(title = "Part des moins de 15 ans par region",
+       subtitle = "Source : COD-PS 2025 — une projection, pas un denombrement",
+       caption = "Gris = region sans effectif officiel apparie") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+::: {.callout-note}
+## Interprétation — la part des moins de 15 ans
+
+**Ce que la figure code.** Un **rapport**, donc une grandeur **intensive** : elle
+ne s'additionne pas, et elle ne dépend pas de la taille de la région. Définition
+exacte : effectif des tranches 0-4, 5-9 et 10-14 divisé par l'effectif total de la
+région, en pourcentage.
+
+**Ce que les choix techniques font.** La palette est continue et séquentielle. Aucune
+discrétisation n'est appliquée : chaque valeur a sa propre nuance. Une
+discrétisation en quantiles rendrait les écarts plus contrastés — mais elle
+imposerait par construction le même nombre de régions dans chaque classe, ce qui
+est un choix de mise en scène, pas une propriété des données.
+
+**Ce qui se lit.** Le contraste de structure par âge entre les régions.
+
+**Ce qui ne se lit pas.** La cause. Une part de jeunes élevée peut venir d'une
+fécondité forte, d'une émigration des adultes, ou des deux. Ne se lit pas non plus
+l'**incertitude** : le COD-PS est une projection, et une projection vieillit.
+:::
+
+```{webr}
+library(tidyr)
+pyr <- read.csv("_commons/data/J08_extraits/J08_pyramide_adm1.csv")
+
+# On ne choisit pas les deux regions a la main : on prend celle qui a la plus
+# forte part de jeunes et celle qui a la plus faible. Le code reste juste quel
+# que soit le millesime du fichier.
+deux <- indic |> arrange(desc(part_moins_15_pct)) |>
+  slice(c(1, n())) |> pull(NAME_1)
+cat("Regions comparees :", paste(deux, collapse = " et "), "\n")
+
+pyr_deux <- pyr |>
+  filter(NAME_1 %in% deux) |>
+  group_by(NAME_1) |>
+  mutate(part = 100 * effectif / sum(effectif)) |>
+  ungroup() |>
+  # La pyramide se lit de bas en haut : on impose l'ordre demographique,
+  # PAS l'ordre alphabetique ("80Plus" se classerait avant "05_09").
+  mutate(tranche_age = reorder(tranche_age, ordre_tranche),
+         part_signee = ifelse(sexe == "Hommes", -part, part))
+
+ggplot(pyr_deux, aes(x = part_signee, y = tranche_age, fill = sexe)) +
+  geom_col() +
+  facet_wrap(~ NAME_1) +
+  scale_x_continuous(labels = function(x) abs(x)) +
+  scale_fill_manual(values = c(Femmes = "#B2182B", Hommes = "#2166AC")) +
+  labs(title = "Pyramides des ages comparees",
+       subtitle = "En part de la population regionale, pour neutraliser la taille",
+       x = "Part de la population regionale (%)", y = NULL, fill = NULL) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+::: {.callout-note}
+## Interprétation — deux pyramides
+
+**Ce que la figure code.** La longueur de chaque barre code la **part** de la
+tranche dans la population **de sa propre région**, pas un effectif. C'est ce qui
+rend les deux pyramides comparables malgré des tailles de population très
+différentes. Les hommes sont portés à gauche par une valeur négative — un artifice
+de tracé ; l'axe réaffiche les valeurs absolues.
+
+**Ce que les choix techniques font.** Le `facet_wrap` place les deux régions côte à
+côte **sur la même échelle** : c'est indispensable, deux graphiques aux axes
+calculés séparément se ressembleraient toujours. La palette est **qualitative** :
+deux couleurs sans ordre, parce que « femmes » et « hommes » ne se classent pas.
+
+**Ce qui se lit.** La forme de la structure par âge : base large et flancs qui
+s'effondrent vite, ou profil plus resserré.
+
+**Ce qui ne se lit pas.** Le nombre de personnes. Deux pyramides identiques en
+forme peuvent représenter des effectifs dans un rapport de un à dix. Ne se lisent
+pas non plus les migrations, qui creusent les tranches d'âge actif sans qu'on
+puisse les distinguer d'un déficit de naissances passé.
+:::
+
+## 4. La chaîne raster — code de référence, non exécuté ici
+
+Les quatre blocs qui suivent sont **en lecture seule**. Ils reproduisent la chaîne
+qui a produit toutes les colonnes que vous venez de manipuler. Ils s'exécutent sous
+**RStudio desktop** : ouvrez `demo_formateur_J08.qmd`, ou lancez le script
+`_commons/data/J08_extraits/00_extraire_J08.R`.
+
+Pourquoi ils ne peuvent pas tourner ici : `terra` embarque GDAL, PROJ et GEOS
+compilés en WebAssembly (une quinzaine de mégaoctets), et `exactextractr` compile
+du C++ contre GEOS. Ni l'un ni l'autre n'est distribué pour WebR.
+
+```r
+# --- 1. Ouvrir une grille WorldPop -----------------------------------------
+library(terra)
+library(sf)
+library(exactextractr)
+
+# rast() n'ouvre pas le fichier en memoire : il pose un pointeur sur disque.
+pop_2025 <- rast("datasets/cmr_pop_2025_CN_100m_R2025A_v1.tif")
+
+# INSTRUMENTATION OBLIGATOIRE apres toute lecture de raster : on verifie
+# l'emprise, le CRS et la resolution REELS, jamais ceux annonces par le nom
+# du fichier. « 100 m » n'apparait nulle part dans le fichier : le raster est
+# en EPSG:4326, donc sa resolution est en DEGRES (environ 0,00083 deg, soit
+# ~92,7 m a l'equateur). Une cellule n'a donc pas la meme surface au nord et
+# au sud du pays.
+c(resolution = res(pop_2025)[1],
+  cellules   = ncell(pop_2025),
+  bandes     = nlyr(pop_2025),
+  EPSG       = crs(pop_2025, describe = TRUE)$code)
+ext(pop_2025)
+```
+
+```r
+# --- 2. Decouper sur le pays, puis totaliser -------------------------------
+cmr0 <- st_read("datasets/gadm41_CMR.gpkg", layer = "ADM_ADM_0")
+
+# crop() reduit a l'emprise RECTANGULAIRE, mask() met NA hors du polygone.
+# Les deux sont necessaires : crop seul laisserait les coins du rectangle,
+# donc des morceaux du Nigeria et du Tchad.
+pop_cmr <- mask(crop(pop_2025, vect(cmr0)), vect(cmr0))
+
+# global() = statistique sur TOUTES les cellules valides.
+global(pop_cmr, "sum", na.rm = TRUE)
+```
+
+```r
+# --- 3. L'extraction zonale, c'est-a-dire le pont raster -> vecteur --------
+cmr1 <- st_read("datasets/gadm41_CMR.gpkg", layer = "ADM_ADM_1")
+
+# exact_extract() attend le vecteur DANS le CRS du raster, et pondere chaque
+# cellule par la FRACTION de sa surface contenue dans le polygone.
+# Trois strategies existent :
+#   - par centroide (terra::extract par defaut) : la cellule va entierement a
+#     la region qui contient son centre. Simple, rapide, BIAISE sur les
+#     polygones etroits et allonges ;
+#   - tout ou rien par intersection : double-compte ;
+#   - ponderation par fraction (exact_extract) : une cellule de 12 habitants
+#     coupee a 30 / 70 contribue pour 3,6 et 8,4.
+# Sur des regions vastes et compactes les trois se valent. L'ecart devient
+# decisif sur les petits polygones — c'est tout l'enjeu de la journee J09.
+pop_par_region <- exact_extract(pop_cmr, st_transform(cmr1, crs(pop_cmr)),
+                                "sum", progress = FALSE)
+
+# CONTROLE : la somme des dix regions doit retomber sur le total national.
+sum(pop_par_region) - global(pop_cmr, "sum", na.rm = TRUE)$sum
+```
+
+```r
+# --- 4. GHS-POP : mosaiquer sept tuiles, et compter les sentinelles --------
+# Les tuiles sont livrees zippees, dans la grille mondiale GHSL en Mollweide
+# (ESRI:54009), une projection EQUIVALENTE : les surfaces y sont justes et la
+# resolution est en METRES, contrairement a WorldPop.
+tuiles <- list.files("datasets", pattern = "^GHS_POP_E2025.*\\.zip$",
+                     full.names = TRUE)
+tmp <- tempdir()                       # une sortie n'ecrit JAMAIS dans datasets/
+for (z in tuiles) unzip(z, exdir = tmp)
+mos <- mosaic(sprc(lapply(list.files(tmp, "\\.tif$", full.names = TRUE), rast)))
+
+# SENTINELLES : des valeurs negatives marquent le nodata. Elles traversent
+# sum() sans un mot. On les COMPTE avant de les recoder.
+global(mos < 0, "sum", na.rm = TRUE)
+mos[mos < 0] <- NA
+
+# Et le point de methode : on extrait DANS LE CRS NATIF. Reprojeter un raster
+# d'EFFECTIFS ne conserve pas la somme — le reechantillonnage redistribue les
+# valeurs sur une grille de geometrie differente. Le script d'extraction
+# calcule les deux versions pour mesurer ce cout au lieu de le taire.
+exact_extract(mos, st_transform(cmr1, crs(mos)), "sum", progress = FALSE)
+```
+
+## 5. Densité : mesurer une surface exige de reprojeter
+
+```{webr}
+# La superficie a ete mesuree en amont, en UTM 33N (EPSG:32633), un CRS
+# METRIQUE. En EPSG:4326 (degres), st_area() renverrait des degres carres :
+# une grandeur sans signification physique, qui varie avec la latitude.
+cat("Superficie totale calculee (km2) :", round(sum(adm1$superficie_km2)), "\n")
+cat("Superficie officielle du Cameroun :", 475442, "km2\n")
+cat("Ecart relatif (%) :",
+    round(100 * (sum(adm1$superficie_km2) - 475442) / 475442, 2), "\n\n")
+
+# LA MOYENNE DES DENSITES N'EST PAS LA DENSITE. Le rapport des sommes et la
+# moyenne des rapports sont deux grandeurs differentes.
+cat("Densite nationale (somme pop / somme surface) :",
+    round(sum(adm1$pop_worldpop_2025) / sum(adm1$superficie_km2), 1), "\n")
+cat("Moyenne des densites regionales               :",
+    round(mean(adm1$densite_wp_2025), 1), "\n")
+```
+
+```{webr}
+# Les densites s'etalent sur plusieurs ordres de grandeur : une echelle
+# lineaire ecraserait toutes les regions rurales dans la meme nuance. On
+# calcule explicitement le logarithme decimal plutot que de le confier a une
+# transformation d'echelle, pour que la legende dise ce qu'elle montre.
+adm1_d <- adm1 |> mutate(log10_densite = log10(pmax(densite_wp_2025, 1)))
+
+ggplot(adm1_d) +
+  geom_sf(aes(fill = log10_densite), colour = "white", linewidth = 0.3) +
+  scale_fill_viridis_c(option = "C", na.value = "grey80",
+                       name = "log10 de la\ndensite (hab/km2)") +
+  geom_sf_text(aes(label = paste0(NAME_1, "\n", round(densite_wp_2025))),
+               size = 2, colour = "white", fontface = "bold") +
+  labs(title = "Densite de population par region, Cameroun 2025",
+       subtitle = "Echelle logarithmique : un pas de couleur = un facteur 10",
+       caption = "Etiquette : densite en hab/km2. Gris = region sans mesure.") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+::: {.callout-note}
+## Interprétation — la carte de densité en échelle logarithmique
+
+**Ce que la figure code.** La couleur code le **logarithme décimal** de la densité,
+définie comme population WorldPop 2025 divisée par la superficie mesurée en UTM
+33N. La densité est une grandeur **intensive** : elle ne s'additionne pas.
+
+**Ce que les choix techniques font.** L'échelle logarithmique change ce que
+raconte la même donnée : un pas de couleur constant y représente un **facteur
+multiplicatif** constant, non un écart constant. C'est ce qui permet de voir la
+structure des régions rurales sans que les régions urbaines écrasent la palette.
+Le prix : un lecteur non prévenu lira des écarts bien plus petits qu'ils ne sont.
+C'est pourquoi l'étiquette porte la densité brute, et le sous-titre l'avertissement.
+
+**Ce qui se lit.** L'opposition entre les régions denses et les régions étendues à
+faible peuplement.
+
+**Ce qui ne se lit pas.** La densité *vécue*. La densité régionale est une moyenne
+sur des centaines de milliers d'hectares dont la plupart sont inhabités : personne
+ne vit à cette densité-là. C'est précisément ce que la section suivante attaque.
+:::
+
+## 6. Le MAUP : la même population, deux mailles, deux cartes
+
+```{webr}
+# Meme grandeur, meme donnee source (WorldPop 2025), deux mailles :
+# 10 regions ADM1 contre 58 departements ADM2.
+resume <- function(d, maille) {
+  data.frame(
+    maille      = maille,
+    n_unites    = nrow(d),
+    pop_totale  = round(sum(d$pop_worldpop_2025, na.rm = TRUE)),
+    densite_min = round(min(d$densite_wp_2025, na.rm = TRUE), 1),
+    densite_med = round(median(d$densite_wp_2025, na.rm = TRUE), 1),
+    densite_max = round(max(d$densite_wp_2025, na.rm = TRUE), 1),
+    rapport_max_min = round(max(d$densite_wp_2025, na.rm = TRUE) /
+                            max(min(d$densite_wp_2025, na.rm = TRUE), 0.01), 1)
+  )
+}
+rbind(resume(adm1, "ADM1 (regions)"), resume(adm2, "ADM2 (departements)"))
+```
+
+```{webr}
+# On empile les deux mailles dans un seul tableau pour les tracer cote a cote
+# SUR LA MEME ECHELLE. Deux palettes calculees separement donneraient au meme
+# niveau de densite deux couleurs differentes : la comparaison visuelle, qui
+# est tout l'objet de la figure, serait fausse.
+deux_mailles <- rbind(
+  adm1 |> transmute(maille = "ADM1 — 10 regions",
+                    densite = densite_wp_2025),
+  adm2 |> transmute(maille = "ADM2 — 58 departements",
+                    densite = densite_wp_2025)
+) |>
+  mutate(log10_densite = log10(pmax(densite, 1)))
+
+ggplot(deux_mailles) +
+  geom_sf(aes(fill = log10_densite), colour = "white", linewidth = 0.15) +
+  facet_wrap(~ maille) +
+  scale_fill_viridis_c(option = "C", na.value = "grey80",
+                       name = "log10 de la\ndensite") +
+  labs(title = "La meme population, deux mailles d'agregation",
+       subtitle = "Echelle de couleur COMMUNE aux deux cartes",
+       caption = "Gris = unite sans mesure. Source : WorldPop R2025A, GADM 4.1") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+::: {.callout-important}
+## MAUP — *Modifiable Areal Unit Problem*
+
+Les deux cartes ci-dessus reposent sur **exactement la même donnée source** : la
+même grille WorldPop 2025, sommée. Elles ne racontent pas la même chose. Le tableau
+juste avant le chiffre : l'amplitude des densités, du minimum au maximum, change
+avec la maille.
+
+Le MAUP a deux composantes, à distinguer :
+
+- **l'effet d'échelle** — plus la maille est fine, plus la variabilité apparaît.
+  Agréger, c'est moyenner, et moyenner, c'est effacer ;
+- **l'effet de découpage** — à nombre d'unités égal, un autre tracé des frontières
+  donnerait encore d'autres valeurs.
+
+**Aucune maille n'est neutre, et aucune n'est « la bonne ».** La règle
+opérationnelle : choisir la maille de la **décision** que l'on éclaire. Une
+dotation budgétaire régionale se raisonne à l'ADM1 ; l'implantation d'un centre de
+santé, à l'ADM2 ou plus fin. Publier une carte sans dire à quelle maille elle est
+agrégée, c'est publier un résultat sans son unité.
+:::
+
+::: {.callout-warning}
+## Erreur écologique
+
+Sur la carte ADM1, une région foncée se lit facilement « les gens y vivent
+densément ». C'est faux : **la densité régionale ne s'applique à personne**. Elle
+est le rapport de deux totaux. Attribuer à un individu — ou à un village — la
+valeur de l'agrégat qui le contient, c'est l'**erreur écologique**, et c'est le
+risque permanent de toute choroplèthe.
+
+La carte ADM2 le rend visible : en passant à 58 unités, on voit apparaître des
+départements très denses à l'intérieur de régions qui paraissaient moyennes. La
+même opération répétée à l'ADM3, puis à la cellule de 100 m, continuerait à ouvrir
+la boîte. **La grille de population est le bout de cette chaîne** : c'est
+précisément parce qu'elle ne dépend d'aucun découpage administratif qu'elle protège
+du MAUP.
+:::
+
+::: {.callout-tip}
+## En quoi le spatial apporte ici ce que le tableau ne contient pas
+
+Un tableau des densités par région donne un **classement**. Il ne donne pas trois
+choses que les cartes ci-dessus donnent gratuitement.
+
+**La contiguïté.** Les unités semblables se touchent. Un bloc contigu de
+départements denses ne s'explique pas par les caractéristiques propres de chacun,
+mais par ce qu'ils partagent *parce qu'ils sont voisins* — un axe routier, un
+fleuve, une agglomération qui déborde de sa frontière administrative. Le tableau
+trié ne peut pas produire cette information : il traite les unités comme
+indépendantes.
+
+**La superposition d'échelles.** Poser la carte ADM2 à côté de la carte ADM1 rend
+visible l'hétérogénéité interne des régions. C'est la protection la plus concrète
+contre l'erreur écologique : on voit ce que la moyenne régionale avait écrasé.
+
+**Le repérage de ce qui manque.** Une unité en gris se voit immédiatement sur une
+carte. Dans un tableau, une ligne à `NA` se lit rarement — et se confond avec un
+zéro dès qu'on trie sur la colonne.
+:::
+
+## 7. Confronter WorldPop au chiffre administratif
+
+```{webr}
+# L'ecart, region par region. C'est la qu'est l'information : un ecart
+# national proche de zero peut cacher des ecarts regionaux opposes qui se
+# compensent.
+adm1 |>
+  st_drop_geometry() |>
+  select(NAME_1, pop_worldpop_2025, pop_officielle_2025, ecart_wp_off_pct) |>
+  arrange(desc(abs(ecart_wp_off_pct)))
+```
+
+```{webr}
+ggplot(adm1) +
+  geom_sf(aes(fill = ecart_wp_off_pct), colour = "white", linewidth = 0.3) +
+  # Palette DIVERGENTE : ici un zero naturel existe (l'accord parfait entre
+  # les deux sources), et le signe de l'ecart est ce qu'on veut lire.
+  scale_fill_gradient2(low = "#2166AC", mid = "white", high = "#B2182B",
+                       midpoint = 0, na.value = "grey80",
+                       name = "Ecart (%)") +
+  geom_sf_text(aes(label = NAME_1), size = 2, colour = "grey20") +
+  labs(title = "Ecart entre WorldPop 2025 et le chiffre administratif COD-PS",
+       subtitle = "Rouge = WorldPop au-dessus du chiffre officiel ; bleu = en dessous",
+       caption = "Gris = region sans chiffre officiel apparie — ce n'est PAS un ecart nul") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+::: {.callout-note}
+## Interprétation — la carte des écarts
+
+**Ce que la figure code.** L'écart relatif entre deux estimations de la même
+grandeur, `100 × (WorldPop − COD-PS) / COD-PS`. Ce n'est **pas** une erreur : aucune
+des deux sources n'est la vérité.
+
+**Ce que les choix techniques font.** La palette est **divergente** et centrée sur
+zéro : c'est le seul cas où deux couleurs opposées sont justifiées, quand le signe
+de la valeur a un sens. `midpoint = 0` force le blanc sur l'accord parfait ; sans
+cette précision, le blanc tomberait au milieu de l'intervalle observé, et une carte
+où tous les écarts seraient positifs afficherait quand même du bleu.
+
+**Ce qui se lit.** La géographie du désaccord entre modèle et projection
+administrative. Un écart n'est jamais aléatoire : cherchez s'il forme un bloc.
+
+**Ce qui ne se lit pas.** Qui a tort. Trois explications coexistent et cette carte
+ne les départage pas : le modèle WorldPop peut mal détecter le bâti dans certains
+paysages ; la projection COD-PS peut vieillir plus vite là où les migrations sont
+fortes ; et les deux peuvent utiliser des découpages légèrement différents.
+
+**Le gris est une quatrième catégorie.** Une région grise n'a **pas** un écart nul :
+elle n'a pas de chiffre officiel apparié. La confondre avec le blanc reviendrait à
+transformer une absence de mesure en un accord parfait.
+:::
+
+## 8. Trois sources côte à côte
+
+```{webr}
+comp <- adm1 |>
+  st_drop_geometry() |>
+  select(NAME_1, pop_worldpop_2025, pop_ghspop_2025, pop_officielle_2025) |>
+  pivot_longer(-NAME_1, names_to = "source", values_to = "population") |>
+  mutate(source = recode(source,
+    pop_worldpop_2025   = "WorldPop constrained",
+    pop_ghspop_2025     = "GHS-POP R2023A",
+    pop_officielle_2025 = "COD-PS officiel"))
+
+# Combien de valeurs manquantes, et dans quelle source ? Une barre absente
+# n'est pas une population nulle.
+comp |> group_by(source) |>
+  summarise(regions = n(), sans_valeur = sum(is.na(population)))
+```
+
+```{webr}
+ggplot(comp, aes(x = population, y = reorder(NAME_1, population, na.rm = TRUE),
+                 fill = source)) +
+  geom_col(position = "dodge") +
+  scale_fill_brewer(palette = "Dark2", na.value = "grey80") +
+  labs(title = "Trois estimations de la population regionale, Cameroun 2025",
+       subtitle = "Deux grilles modelisees et un chiffre administratif projete",
+       x = "Population estimee", y = NULL, fill = "Source",
+       caption = "Une barre absente signale une valeur manquante, pas un zero") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+::: {.callout-note}
+## Interprétation — trois sources
+
+**Ce que la figure code.** Trois barres par région, une par source. Les deux
+premières sont des **agrégations de modèles de redistribution** calés sur des
+totaux nationaux ; la troisième est une **projection démographique** ventilée
+administrativement.
+
+**Ce que les choix techniques font.** `position = "dodge"` juxtapose les barres au
+lieu de les empiler : c'est obligatoire ici, empiler additionnerait trois
+estimations de la **même** population, ce qui n'a aucun sens. Les barres partent de
+zéro et l'axe n'est pas tronqué — sur un diagramme en barres, la longueur *est* la
+quantité. La palette est **qualitative** : les trois sources ne se classent pas.
+
+**Ce qui se lit.** Où les trois sources s'accordent, et où elles divergent. Le
+résultat utile n'est pas « laquelle est la bonne » mais « **où** le désaccord est
+grand » : ce sont les régions où toute décision fondée sur un seul chiffre est
+fragile.
+
+**Ce qui ne se lit pas.** L'incertitude propre à chaque source. Aucune des trois ne
+publie d'intervalle de confiance par région. L'écart entre elles est le seul
+indicateur d'incertitude dont on dispose — et il **sous-estime** l'incertitude
+réelle, puisque les deux grilles partagent une partie de leurs entrées.
+:::
+
+## 9. Le coût de la reprojection, mesuré
+
+```{webr}
+# GHS-POP est natif en Mollweide (ESRI:54009), WorldPop en EPSG:4326. Les
+# comparer exige de mettre les deux dans le meme referentiel. Le script
+# d'extraction a calcule GHS-POP DEUX FOIS : une fois par extraction dans son
+# CRS natif (la mesure juste), une fois apres reprojection du raster en 4326.
+# Reprojeter un raster d'EFFECTIFS ne conserve pas la somme.
+adm1 |>
+  st_drop_geometry() |>
+  filter(!is.na(pop_ghspop_2025), !is.na(pop_ghspop_2025_reproj)) |>
+  summarise(
+    total_natif    = sum(pop_ghspop_2025),
+    total_reprojet = sum(pop_ghspop_2025_reproj),
+    ecart_absolu   = sum(pop_ghspop_2025_reproj) - sum(pop_ghspop_2025),
+    ecart_pct      = round(100 * (sum(pop_ghspop_2025_reproj) -
+                                  sum(pop_ghspop_2025)) /
+                             sum(pop_ghspop_2025), 3)
+  )
+```
+
+::: {.callout-important}
+## Ce que cet écart enseigne
+
+Si le tableau ci-dessus est vide, c'est que le script d'extraction n'a pas pu
+mener la reprojection à son terme — le dire, ne pas l'inventer.
+
+S'il est rempli, l'écart n'est **pas** un bug : le rééchantillonnage redistribue les
+valeurs sur une grille dont les cellules n'ont ni la même forme ni la même surface.
+Une grandeur **extensive** (un effectif) ne survit pas à cette opération ; une
+grandeur **intensive** (une densité, une température) la traverse beaucoup mieux.
+
+La règle qui en découle : **agréger d'abord dans le CRS natif du raster, reprojeter
+ensuite le résultat vectoriel.** Jamais l'inverse.
+:::
+
+## Glossaire de la journée
+
+**Grille de population.** Raster dont chaque cellule porte un effectif estimé
+d'habitants. Grandeur **extensive** : elle s'additionne.
+
+**Constrained.** Variante WorldPop qui n'attribue aucune population aux cellules
+sans bâti détecté. Une zone vide ne prouve pas l'absence d'habitants, seulement
+l'absence de bâti **détecté**.
+
+**Extraction zonale.** Opération qui résume les cellules d'un raster à l'intérieur
+de chaque polygone. Pont raster → vecteur.
+
+**Pondération par fraction de cellule.** Stratégie d'extraction zonale qui attribue
+chaque cellule au prorata de la fraction de sa surface contenue dans le polygone.
+Décisive sur les petits polygones et les formes allongées.
+
+**Projection équivalente.** Projection qui conserve les surfaces (Mollweide,
+ESRI:54009). Par opposition à une projection conforme, qui conserve les angles.
+
+**Grandeur extensive / intensive.** Une population s'additionne (extensive) ; une
+densité ou un ratio ne s'additionne pas (intensive). La confusion est la source la
+plus fréquente d'erreurs de carte.
+
+**MAUP.** Les résultats dépendent de la maille d'agrégation. Aucune maille n'est
+neutre.
+
+**Erreur écologique.** Attribuer à un individu ce qui n'est vrai que de l'agrégat.
+
+**Biais de taille.** Parcourir des lignes d'individus surreprésente les grands
+ménages. Il ne joue pas sur les grilles, mais il jouera au J10 sur l'enquête.
+
+## Fonctions clés
+
+| Fonction | Ce qu'elle fait | Où |
+|---|---|---|
+| `read_sf()` | lit un fichier SIG et renvoie un `data.frame` + géométrie | navigateur |
+| `st_drop_geometry()` | retire la géométrie pour obtenir un tableau pur | navigateur |
+| `geom_sf(aes(fill = …))` | trace une choroplèthe | navigateur |
+| `scale_fill_viridis_c(na.value = …)` | palette séquentielle + **couleur du manquant** | navigateur |
+| `scale_fill_gradient2(midpoint = 0)` | palette divergente centrée | navigateur |
+| `facet_wrap()` | plusieurs cartes **à échelle commune** | navigateur |
+| `terra::rast()` | ouvre un raster sans le charger en mémoire | RStudio |
+| `terra::crop()` / `mask()` | découpe rectangulaire puis masque polygonal | RStudio |
+| `terra::global()` | statistique sur toutes les cellules valides | RStudio |
+| `exactextractr::exact_extract()` | statistique zonale pondérée par fraction | RStudio |
+
+## Exercices
+
+1. **Le piège de la clé.** Le fichier COD-PS porte `ADM1_EN` *et* `ADM1_FR` ;
+   GADM n'a que `NAME_1`. Refaites la jointure de la section 3 sur la mauvaise
+   colonne et tracez la carte obtenue. Combien de régions passent au gris ?
+   *Question de méthode : pourquoi cette erreur ne lève-t-elle aucun message ?*
+2. **MAUP, troisième maille.** Le script d'extraction produit ADM1 et ADM2.
+   Modifiez-le pour ajouter ADM3, puis reprenez la section 6. Le rapport
+   max/min des densités continue-t-il de croître ?
+   *Question de méthode : y a-t-il une maille à laquelle il s'arrête de croître ?*
+3. **Extensive contre intensive.** Cartographiez `pop_worldpop_2025` puis
+   `densite_wp_2025` avec exactement la même palette. Deux régions changent-elles
+   de rang ? *Question de méthode : laquelle des deux cartes répond à la question
+   « où faut-il construire une école » ?*
+4. **Le gris.** Forcez artificiellement `pop_officielle_2025` à `NA` pour une
+   région et retracez la carte des écarts de la section 7.
+   *Question de méthode : un lecteur pressé distinguera-t-il le gris du blanc ?
+   Que faudrait-il ajouter à la légende ?*
+
+## Prolongements
+
+- **J09** — la même mécanique d'extraction zonale, mais sur des polygones
+  **étroits** : les emprises d'inondation. C'est là que le choix entre centroïde et
+  pondération par fraction cesse d'être un détail.
+- **J10** — l'estimation sur petits domaines : quand la maille de décision est plus
+  fine que ce que l'échantillon permet d'estimer.
+
+[← Retour à l'accueil](../INDEX.md)
