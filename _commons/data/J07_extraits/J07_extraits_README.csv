@@ -1,0 +1,7 @@
+fichier,entites,unite,calcul,taille_ko
+ds_autocorrelation.geojson,200,district sanitaire,spdep : localmoran + localG,469
+moran_global.csv,3,test,spdep : moran.test + moran.mc (999 permutations),1
+voisinage_liens.csv,1860,arete de voisinage,spdep : poly2nb (queen) et knearneigh (k=4),168
+fonctions_ponctuelles.csv,636,point de courbe,"spatstat : Gest, Kest, Lest + enveloppes (39 sim.)",56
+kde_grappes_grille.csv,56430,cellule de grille,"spatstat : density.ppp, 3 bandwidths x 3 sous-populations",4872
+quadrat_test.csv,44,cellule de quadrat,spatstat : quadrat.test 8x8,4

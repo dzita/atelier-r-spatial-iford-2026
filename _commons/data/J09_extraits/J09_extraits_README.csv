@@ -1,0 +1,10 @@
+fichier,unite_observation,produit_par,consomme_par
+J09_adm1_bati.geojson,region ADM1,pedagogie/_commons/data/J09_extraits/00_extraire_J09.R,pedagogie/J09_teledetection/runtime.qmd
+J09_adm2_bati.geojson,departement ADM2,pedagogie/_commons/data/J09_extraits/00_extraire_J09.R,pedagogie/J09_teledetection/runtime.qmd
+J09_fenetre_yagoua.geojson,la fenetre d'etude,pedagogie/_commons/data/J09_extraits/00_extraire_J09.R,pedagogie/J09_teledetection/runtime.qmd
+J09_flood_yagoua.geojson,polygone d'une classe de profondeur,pedagogie/_commons/data/J09_extraits/00_extraire_J09.R,pedagogie/J09_teledetection/runtime.qmd
+J09_batiments_yagoua.geojson,centroide de batiment,pedagogie/_commons/data/J09_extraits/00_extraire_J09.R,pedagogie/J09_teledetection/runtime.qmd
+J09_routes_yagoua.geojson,troncon de voie OSM,pedagogie/_commons/data/J09_extraits/00_extraire_J09.R,pedagogie/J09_teledetection/runtime.qmd
+J09_pop_grille_yagoua.csv,cellule WorldPop 100 m,pedagogie/_commons/data/J09_extraits/00_extraire_J09.R,pedagogie/J09_teledetection/runtime.qmd
+J09_comparaison_methodes.csv,methode d'estimation,pedagogie/_commons/data/J09_extraits/00_extraire_J09.R,pedagogie/J09_teledetection/runtime.qmd
+J09_zones_bilan.csv,zone AOI,pedagogie/_commons/data/J09_extraits/00_extraire_J09.R,pedagogie/J09_teledetection/runtime.qmd

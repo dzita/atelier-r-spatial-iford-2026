@@ -1,0 +1,13 @@
+region_adm,cle_adm,n_individus,n_menages,tx_pauvrete_pond,tx_pauvrete_brut,taille_moy_menage,tx_pauvrete_menage,tx_ins_publie,ecart_ins,avertissement
+extrême-nord,extremenord,1587,279,75.52090450995446,74.22810333963453,7.795848747042795,64.47835120976536,69.2,6.3,extrait de formation - NON representatif a l'interieur des regions - ne pas citer
+nord,nord,1136,215,63.68887377684117,64.61267605633803,6.305147455820132,58.912037125005135,61.1,2.6,extrait de formation - NON representatif a l'interieur des regions - ne pas citer
+centre,centre,524,114,57.95930616963664,57.25190839694656,6.713827939454201,20.500022324432425,NA,NA,extrait de formation - NON representatif a l'interieur des regions - ne pas citer
+nord-ouest,nordouest,532,115,55.523074187477306,65.41353383458647,6.203334157569002,47.97781961146553,66.8,-11.3,extrait de formation - NON representatif a l'interieur des regions - ne pas citer
+adamaoua,adamaoua,801,145,51.805032720717996,51.186017478152316,7.242136272321664,39.80854055224786,45.1,6.7,extrait de formation - NON representatif a l'interieur des regions - ne pas citer
+sud-ouest,sudouest,494,134,28.915496828107845,31.781376518218625,4.998580117582361,21.499850538096393,NA,NA,extrait de formation - NON representatif a l'interieur des regions - ne pas citer
+ouest,ouest,743,172,28.84033759802696,31.62853297442799,5.931046523858345,21.678747724636786,NA,NA,extrait de formation - NON representatif a l'interieur des regions - ne pas citer
+littoral,littoral,596,148,20.683886131243014,25.838926174496645,5.935980452323539,8.865073524112255,NA,NA,extrait de formation - NON representatif a l'interieur des regions - ne pas citer
+sud,sud,486,139,18.733958594585662,23.456790123456788,5.181319361192075,12.012605288281135,NA,NA,extrait de formation - NON representatif a l'interieur des regions - ne pas citer
+Littoral,littoral,918,221,10.45482649547798,10.675381263616558,5.599455565608046,8.865073524112255,NA,NA,extrait de formation - NON representatif a l'interieur des regions - ne pas citer
+Centre,centre,946,224,8.685850808377078,8.879492600422834,5.59009140003004,20.500022324432425,NA,NA,extrait de formation - NON representatif a l'interieur des regions - ne pas citer
+est,est,709,159,7.496895227914394,7.475317348377997,6.876253792144045,5.034848068998568,41.5,-34,extrait de formation - NON representatif a l'interieur des regions - ne pas citer

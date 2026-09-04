@@ -1,0 +1,37 @@
+annee,event_type,n_evenements,n_deces
+2020,Battles,435,939
+2020,Explosions/Remote violence,43,62
+2020,Protests,132,2
+2020,Riots,60,36
+2020,Strategic developments,216,1
+2020,Violence against civilians,645,722
+2021,Battles,531,942
+2021,Explosions/Remote violence,69,75
+2021,Protests,81,0
+2021,Riots,81,31
+2021,Strategic developments,229,5
+2021,Violence against civilians,507,518
+2022,Battles,659,882
+2022,Explosions/Remote violence,52,38
+2022,Protests,80,5
+2022,Riots,90,47
+2022,Strategic developments,492,3
+2022,Violence against civilians,816,660
+2023,Battles,1033,1116
+2023,Explosions/Remote violence,74,78
+2023,Protests,64,0
+2023,Riots,119,71
+2023,Strategic developments,969,5
+2023,Violence against civilians,1522,914
+2024,Battles,1022,1536
+2024,Explosions/Remote violence,99,97
+2024,Protests,56,4
+2024,Riots,123,51
+2024,Strategic developments,1416,3
+2024,Violence against civilians,1915,766
+2025,Battles,909,1163
+2025,Explosions/Remote violence,61,74
+2025,Protests,98,15
+2025,Riots,223,94
+2025,Strategic developments,1634,4
+2025,Violence against civilians,2432,620

@@ -1,0 +1,1720 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>J02 · Penser l’espace — runtime navigateur – Runtime IFORD × GDSG 2026</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-cbfcc28fdddbba26d4008a6ad21285bb.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-ba4b3e9e4b2a78949e1cf3c0f076353c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/live-runtime/live-runtime.js" type="module"></script>
+<link href="../site_libs/quarto-contrib/live-runtime/live-runtime.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script type="module" src="../site_libs/quarto-ojs/quarto-ojs-runtime.js"></script>
+<link href="../site_libs/quarto-ojs/quarto-ojs.css" rel="stylesheet">
+
+
+</head>
+
+<body class="floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="INDEX.md" class="navbar-brand navbar-brand-logo">
+    <img src="../_commons/img/logo-iford.jpg" alt="IFORD" class="navbar-logo light-content">
+    <img src="../_commons/img/logo-iford.jpg" alt="IFORD" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="INDEX.md">
+    <span class="navbar-title">Runtime IFORD × GDSG 2026</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../INDEX.html"> 
+<span class="menu-text">Accueil</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-modules" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Modules</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-modules">    
+        <li>
+    <a class="dropdown-item" href="../J01_fondations/runtime.html">
+ <span class="dropdown-text">J01 · Fondations R &amp; RStudio</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J02_penser_espace/runtime.html">
+ <span class="dropdown-text">J02 · Penser l’espace</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J03_univers_vectoriel/runtime.html">
+ <span class="dropdown-text">J03 · L’univers vectoriel</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J04_terre_en_pixels/runtime.html">
+ <span class="dropdown-text">J04 · La Terre en pixels</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J05_enquetes_carte/runtime.html">
+ <span class="dropdown-text">J05 · Des enquêtes à la carte</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J06_art_cartographie/runtime.html">
+ <span class="dropdown-text">J06 · L’art de la cartographie</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J07_statistiques_spatiales/runtime.html">
+ <span class="dropdown-text">J07 · Statistiques spatiales</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J08_population_haute_resolution/runtime.html">
+ <span class="dropdown-text">J08 · Population en haute résolution</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J09_teledetection/runtime.html">
+ <span class="dropdown-text">J09 · Télédétection et inondations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J10_politiques_publiques/runtime.html">
+ <span class="dropdown-text">J10 · Politiques publiques</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J11_perenniser_transmettre/runtime.html">
+ <span class="dropdown-text">J11 · Pérenniser et transmettre</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul class="collapse">
+  <li><a href="#r-comme-calculatrice" id="toc-r-comme-calculatrice" class="nav-link active" data-scroll-target="#r-comme-calculatrice">1. R comme calculatrice</a></li>
+  <li><a href="#vecteurs-et-opérations-vectorielles" id="toc-vecteurs-et-opérations-vectorielles" class="nav-link" data-scroll-target="#vecteurs-et-opérations-vectorielles">2. Vecteurs et opérations vectorielles</a></li>
+  <li><a href="#tibble-la-table-de-données-moderne" id="toc-tibble-la-table-de-données-moderne" class="nav-link" data-scroll-target="#tibble-la-table-de-données-moderne">3. Tibble : la table de données moderne</a></li>
+  <li><a href="#les-verbes-dplyr-en-pratique-démographique" id="toc-les-verbes-dplyr-en-pratique-démographique" class="nav-link" data-scroll-target="#les-verbes-dplyr-en-pratique-démographique">4. Les verbes dplyr en pratique démographique</a></li>
+  <li><a href="#indicateurs-dhs-cameroun-2018-vraies-données" id="toc-indicateurs-dhs-cameroun-2018-vraies-données" class="nav-link" data-scroll-target="#indicateurs-dhs-cameroun-2018-vraies-données">5. Indicateurs DHS Cameroun 2018 (vraies données)</a></li>
+  <li><a href="#vecteur-et-raster-les-deux-familles-du-géospatial" id="toc-vecteur-et-raster-les-deux-familles-du-géospatial" class="nav-link" data-scroll-target="#vecteur-et-raster-les-deux-familles-du-géospatial">6. Vecteur et raster : les deux familles du géospatial</a></li>
+  <li><a href="#première-carte-vraies-limites-gadm-cameroun" id="toc-première-carte-vraies-limites-gadm-cameroun" class="nav-link" data-scroll-target="#première-carte-vraies-limites-gadm-cameroun">7. Première carte — vraies limites GADM Cameroun</a></li>
+  <li><a href="#mesurer-superficie-centroïdes-densité" id="toc-mesurer-superficie-centroïdes-densité" class="nav-link" data-scroll-target="#mesurer-superficie-centroïdes-densité">8. Mesurer : superficie, centroïdes, densité</a></li>
+  <li><a href="#changer-de-maille-les-58-départements" id="toc-changer-de-maille-les-58-départements" class="nav-link" data-scroll-target="#changer-de-maille-les-58-départements">9. Changer de maille : les 58 départements</a></li>
+  <li><a href="#points-et-distance-la-démonstration-du-crs" id="toc-points-et-distance-la-démonstration-du-crs" class="nav-link" data-scroll-target="#points-et-distance-la-démonstration-du-crs">10. Points et distance : la démonstration du CRS</a></li>
+  <li><a href="#ce-qui-ne-tourne-pas-dans-le-navigateur" id="toc-ce-qui-ne-tourne-pas-dans-le-navigateur" class="nav-link" data-scroll-target="#ce-qui-ne-tourne-pas-dans-le-navigateur">11. Ce qui ne tourne pas dans le navigateur</a></li>
+  <li><a href="#vocabulaire-de-la-journée" id="toc-vocabulaire-de-la-journée" class="nav-link" data-scroll-target="#vocabulaire-de-la-journée">12. Vocabulaire de la journée</a></li>
+  <li><a href="#pour-aller-plus-loin" id="toc-pour-aller-plus-loin" class="nav-link" data-scroll-target="#pour-aller-plus-loin">13. Pour aller plus loin</a></li>
+  </ul>
+</nav>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">J02 · Penser l’espace — runtime navigateur</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<p class="subtitle lead">Des données tabulaires aux données géographiques — code R exécutable dans le navigateur (WebR)</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="iford-callout">
+<p><strong>Mode d’emploi.</strong> Cliquez <strong>Run code</strong> dans chaque cellule pour exécuter. Modifiez le code librement, recliquez pour relancer. Rien n’est envoyé sur un serveur — tout tourne dans votre navigateur.</p>
+<p><strong>Exécutez les blocs dans l’ordre</strong> : les objets créés dans un bloc servent aux suivants.</p>
+<p>Les blocs <strong>non bleus</strong> sont en <strong>lecture seule</strong>. Ils montrent le code qui ne peut pas tourner en WASM — <code>terra</code> pour le raster, <code>tmap</code> pour la cartographie thématique publiable, <code>readr</code> sur les fichiers du dossier-jour. Exécutez-les sous RStudio desktop à partir de <strong><code>demo_formateur_J02.qmd</code></strong> (ce même dossier).</p>
+</div>
+<section id="r-comme-calculatrice" class="level2">
+<h2 class="anchored" data-anchor-id="r-comme-calculatrice">1. R comme calculatrice</h2>
+<div class="cell" data-autorun="true">
+<div>
+<div id="webr-1" class="exercise-cell">
+
+</div>
+<script type="webr-1-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBVbiAqdmVjdGV1ciogZXN0IHVuZSBzw6lxdWVuY2Ugb3Jkb25uw6llIGRlIHZhbGV1cnMgZGUgbcOqbWUgdHlwZS5cbiMgT24gbGUgY3LDqWUgYXZlYyBjKCkgKD0gXCJjb21iaW5lXCIpLiBJY2kgdW4gdmVjdGV1ciBkZSBjaGHDrm5lcyBkZSBjYXJhY3TDqHJlcy5cbnJlZ2lvbnMgPC0gYyhcIkFkYW1hb3VhXCIsIFwiQ2VudHJlXCIsIFwiRXN0XCIsIFwiRXh0csOqbWUtTm9yZFwiLCBcIkxpdHRvcmFsXCIsXG4gICAgICAgICAgICAgXCJOb3JkXCIsIFwiTm9yZC1PdWVzdFwiLCBcIk91ZXN0XCIsIFwiU3VkXCIsIFwiU3VkLU91ZXN0XCIpXG4jIFZlY3RldXIgbnVtw6lyaXF1ZSBwYXJhbGzDqGxlIDogMSB2YWxldXIgcGFyIHLDqWdpb24sIGRhbnMgbGUgTcOKTUUgb3JkcmUuXG5wb3BfZXN0IDwtIGMoMTM0MDAwMCwgNDQwMDAwMCwgODcwMDAwLCA0MjAwMDAwLCAzNDAwMDAwLFxuICAgICAgICAgICAgIDI3MDAwMDAsIDIwMDAwMDAsIDIwMDAwMDAsIDgwMDAwMCwgMTcwMDAwMClcblxubGVuZ3RoKHJlZ2lvbnMpICAgIyBub21icmUgZCfDqWzDqW1lbnRzXG5zdW0ocG9wX2VzdCkgICAgICAjIHNvbW1lIHRvdGFsZSAocG9wdWxhdGlvbiBkdSBDYW1lcm91bilcbm1lYW4ocG9wX2VzdCkgICAgICMgbW95ZW5uZSBhcml0aG3DqXRpcXVlIHBhciByw6lnaW9uIn0=
+</script>
+</div>
+</div>
+<p><strong>À essayer :</strong> changez les valeurs de <code>pop_est</code>, ou ajoutez une 11ᵉ région imaginaire — puis relancez.</p>
+</section>
+<section id="vecteurs-et-opérations-vectorielles" class="level2">
+<h2 class="anchored" data-anchor-id="vecteurs-et-opérations-vectorielles">2. Vecteurs et opérations vectorielles</h2>
+<div class="cell">
+<div>
+<div id="webr-2" class="exercise-cell">
+
+</div>
+<script type="webr-2-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBSIHZlY3RvcmlzZSA6IG9uIGRpdmlzZSBsZXMgMTAgdmFsZXVycyBkJ3VuIGNvdXAsIHBhcyBiZXNvaW4gZGUgYm91Y2xlLlxucG9wX21pbGxpb25zIDwtIHBvcF9lc3QgLyAxZTZcbnJvdW5kKHBvcF9taWxsaW9ucywgMikgICAjIGFycm9uZGkgw6AgMiBkw6ljaW1hbGVzXG5cbiMgSW5kZXhhdGlvbiBib29sw6llbm5lIDogb24gZ2FyZGUgbGVzIG5vbXMgbMOgIG/DuSBsYSBjb25kaXRpb24gZXN0IHZyYWllLlxucmVnaW9uc1twb3BfZXN0ID4gM2U2XSJ9
+</script>
+</div>
+</div>
+</section>
+<section id="tibble-la-table-de-données-moderne" class="level2">
+<h2 class="anchored" data-anchor-id="tibble-la-table-de-données-moderne">3. Tibble : la table de données moderne</h2>
+<div class="cell">
+<div>
+<div id="webr-3" class="exercise-cell">
+
+</div>
+<script type="webr-3-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoibGlicmFyeSh0aWJibGUpICAgIyB0aWJibGUgPSB0YWJsZWF1IG1vZGVybmUsIGFmZmljaGFnZSBwbHVzIGxpc2libGVcbmxpYnJhcnkoZHBseXIpICAgICMgdmVyYmVzIGRlIG1hbmlwdWxhdGlvbiA6IGZpbHRlciwgbXV0YXRlLCBzZWxlY3QuLi5cblxuIyBPbiBjcsOpZSB1biB0aWJibGUgOiB1biB0YWJsZWF1IG/DuSBjaGFxdWUgY29sb25uZSBlc3QgdW4gdmVjdGV1ciBkZSBtw6ptZSBsb25ndWV1ci5cbnRibF9jbXIgPC0gdGliYmxlKFxuICByZWdpb24gICA9IHJlZ2lvbnMsXG4gIHBvcF8yMDE5ID0gcG9wX2VzdCxcbiAgY2FwaXRhbGUgPSBjKFwiTmdhb3VuZMOpcsOpXCIsIFwiWWFvdW5kw6lcIiwgXCJCZXJ0b3VhXCIsIFwiTWFyb3VhXCIsIFwiRG91YWxhXCIsXG4gICAgICAgICAgICAgICBcIkdhcm91YVwiLCBcIkJhbWVuZGFcIiwgXCJCYWZvdXNzYW1cIiwgXCJFYm9sb3dhXCIsIFwiQnVlYVwiKVxuKVxuXG50YmxfY21yICAgIyBhZmZpY2hlciBsZSB0YWJsZWF1In0=
+</script>
+</div>
+</div>
+</section>
+<section id="les-verbes-dplyr-en-pratique-démographique" class="level2">
+<h2 class="anchored" data-anchor-id="les-verbes-dplyr-en-pratique-démographique">4. Les verbes dplyr en pratique démographique</h2>
+<div class="cell">
+<div>
+<div id="webr-4" class="exercise-cell">
+
+</div>
+<script type="webr-4-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBMZSBwaXBlIHw+IHNlIGxpdCBcInB1aXNcIi4gT24gZW5jaGHDrm5lIGxlcyB2ZXJiZXMgZHBseXIgZGUgaGF1dCBlbiBiYXMuXG50YmxfY21yIHw+XG4gIG11dGF0ZSggICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICMgbXV0YXRlID0gYWpvdXRlciAvIG1vZGlmaWVyIHVuZSBjb2xvbm5lXG4gICAgcG9wX21pbGxpb25zID0gcG9wXzIwMTkgLyAxZTYsXG4gICAgY2xhc3NlID0gY2FzZV93aGVuKCAgICAgICAgICAgICAgICAgICMgY2FzZV93aGVuID0gSUYgLyBFTFNFIElGIC8gRUxTRSBsaXNpYmxlXG4gICAgICBwb3BfMjAxOSA8IDFlNiB+IFwiTW9pbnMgZGUgMU1cIixcbiAgICAgIHBvcF8yMDE5IDwgM2U2IH4gXCIxIMOgIDNNXCIsXG4gICAgICBUUlVFICAgICAgICAgICB+IFwiUGx1cyBkZSAzTVwiICAgICAgIyBUUlVFID0gY2xhdXNlIHBhciBkw6lmYXV0XG4gICAgKVxuICApIHw+XG4gIGFycmFuZ2UoZGVzYyhwb3BfMjAxOSkpICAgICAgICAgICAgICAgICMgdHJpIGTDqWNyb2lzc2FudCBwYXIgcG9wdWxhdGlvbiJ9
+</script>
+</div>
+</div>
+<div class="cell">
+<div>
+<div id="webr-5" class="exercise-cell">
+
+</div>
+<script type="webr-5-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBmaWx0ZXIgPSBnYXJkZXIgY2VydGFpbmVzIExJR05FUyAoc2Vsb24gdW5lIGNvbmRpdGlvbikuXG4jIHNlbGVjdCA9IGdhcmRlciBjZXJ0YWluZXMgQ09MT05ORVMgKHBhciBsZXVyIG5vbSkuXG50YmxfY21yIHw+XG4gIGZpbHRlcihwb3BfMjAxOSA+IDNlNikgfD5cbiAgc2VsZWN0KHJlZ2lvbiwgY2FwaXRhbGUsIHBvcF8yMDE5KSJ9
+</script>
+</div>
+</div>
+</section>
+<section id="indicateurs-dhs-cameroun-2018-vraies-données" class="level2">
+<h2 class="anchored" data-anchor-id="indicateurs-dhs-cameroun-2018-vraies-données">5. Indicateurs DHS Cameroun 2018 (vraies données)</h2>
+<p>On charge directement le CSV agrégé par région issu de l’API DHS StatCompiler (<code>rdhs::dhs_data</code>). Le fichier a été pré-chargé dans la VM WebR au démarrage de la page (déclaré dans <code>webr.resources</code> du YAML) — pas de téléchargement runtime, ça marche en ligne <strong>et</strong> hors-ligne en preview locale.</p>
+<div class="cell">
+<div>
+<div id="webr-6" class="exercise-cell">
+
+</div>
+<script type="webr-6-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoibGlicmFyeSh0aWR5cikgICAjIHBpdm90X3dpZGVyIC8gcGl2b3RfbG9uZ2VyIHBvdXIgcsOpb3JnYW5pc2VyIHVuIHRhYmxlYXVcblxuIyBMZWN0dXJlIGR1IENTViBwcsOpLWNoYXJnw6kgZGFucyBsZSBydW50aW1lIFdlYlIgKHBhcyBkZSByw6lzZWF1IGljaSkuXG5kaHMgPC0gcmVhZC5jc3YoXCJfY29tbW9ucy9kYXRhL2Roc19jbXIvaW5kaWNhdGV1cnNfZGhzX2Ntcl8yMDE4LmNzdlwiKVxuXG4jIExlIENTViBlc3QgZW4gZm9ybWF0IExPTkcgKDEgbGlnbmUgPSAxIGluZGljYXRldXIgZCcxIHLDqWdpb24pLlxuIyBwaXZvdF93aWRlciB0cmFuc2Zvcm1lIGVuIGZvcm1hdCBMQVJHRSAoMSBsaWduZSA9IDEgcsOpZ2lvbiwgMSBjb2wgcGFyIGluZGljYXRldXIpLlxuZGhzX3dpZGUgPC0gZGhzIHw+XG4gIHNlbGVjdChyZWdpb24sIGluZGljYXRldXIsIHZhbGV1cikgfD5cbiAgcGl2b3Rfd2lkZXIobmFtZXNfZnJvbSA9IGluZGljYXRldXIsIHZhbHVlc19mcm9tID0gdmFsZXVyKSB8PlxuICByZW5hbWUodHhfZWF1X2FtZWxpb3JlID0gV1NfU1JDRV9IX0lNUCwgICAjIG9uIHJlbm9tbWUgbGVzIGNvZGVzIERIU1xuICAgICAgICAgdHhfZWxlY3RyaWNpdGUgID0gSENfRUxFQ19IX0VMQywgICAjIGVuIG5vbXMgcGFybGFudHMgZW4gZnJhbsOnYWlzXG4gICAgICAgICB0eF9hbHBoYV9mZW1tZXMgPSBFRF9MSVRSX1dfTElULFxuICAgICAgICAgdHhfYWxwaGFfaG9tbWVzID0gRURfTElUUl9NX0xJVCxcbiAgICAgICAgIHRhaWxsZV9tZW5hZ2UgICA9IEhDX0hIU1pfSF9BVkcpXG5kaHNfd2lkZSJ9
+</script>
+</div>
+</div>
+<div class="cell">
+<div>
+<div id="webr-7" class="exercise-cell">
+
+</div>
+<script type="webr-7-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBPbiBjcsOpZSB1biBpbmRpY2F0ZXVyIGTDqXJpdsOpICjDqWNhcnQgSC1GKSBwdWlzIG9uIGNsYXNzZSBwYXIgw6lsZWN0cmlmaWNhdGlvbi5cbmRoc193aWRlIHw+XG4gIG11dGF0ZShlY2FydF9hbHBoYV9oZiA9IHJvdW5kKHR4X2FscGhhX2hvbW1lcyAtIHR4X2FscGhhX2ZlbW1lcywgMSkpIHw+XG4gIGFycmFuZ2UoZGVzYyh0eF9lbGVjdHJpY2l0ZSkpIHw+XG4gIHNlbGVjdChyZWdpb24sIHR4X2FscGhhX2ZlbW1lcywgdHhfZWxlY3RyaWNpdGUsXG4gICAgICAgICB0YWlsbGVfbWVuYWdlLCBlY2FydF9hbHBoYV9oZikifQ==
+</script>
+</div>
+</div>
+<div class="takeaway">
+<p><strong>À retenir.</strong> <code>filter</code> filtre les lignes, <code>select</code> choisit les colonnes, <code>mutate</code> crée une variable, <code>group_by + summarise</code> agrège, <code>pivot_wider</code> réorganise. Cinq verbes pour 80 % de l’analyse de données. Les valeurs ci-dessus sont <strong>les vraies estimations DHS 2018</strong>, déjà pondérées par le plan de sondage.</p>
+<p><strong>Attention au vocabulaire.</strong> « Source d’eau améliorée » au sens du JMP n’est pas « eau potable » : la définition porte sur le <strong>type d’ouvrage</strong> (robinet, forage, puits protégé), pas sur la qualité bactériologique de l’eau. Un indicateur ne vaut que ce que vaut sa définition, et c’est elle qu’il faut citer sous la carte.</p>
+<p><strong>Ce qu’un tableau ne dit pas.</strong> Ces lignes classent les régions ; elles ne disent pas <strong>où</strong> elles sont, ni lesquelles se touchent. Deux régions voisines mal électrifiées posent une question — un réseau qui s’arrête quelque part — qu’aucun tri ne fait apparaître. C’est le sujet des sections suivantes.</p>
+</div>
+</section>
+<section id="vecteur-et-raster-les-deux-familles-du-géospatial" class="level2">
+<h2 class="anchored" data-anchor-id="vecteur-et-raster-les-deux-familles-du-géospatial">6. Vecteur et raster : les deux familles du géospatial</h2>
+<p>Avant la première carte, un partage du monde en deux.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Vecteur</strong></th>
+<th><strong>Raster</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Ce que ça décrit</td>
+<td>des <strong>entités discrètes</strong></td>
+<td>un <strong>phénomène continu</strong></td>
+</tr>
+<tr class="even">
+<td>La forme</td>
+<td>points, lignes, polygones</td>
+<td>une grille de pixels</td>
+</tr>
+<tr class="odd">
+<td>Exemples</td>
+<td>départements, routes, grappes d’enquête</td>
+<td>altitude, pluviométrie, densité, indice de végétation</td>
+</tr>
+<tr class="even">
+<td>L’unité</td>
+<td>l’entité, avec ses attributs</td>
+<td>le pixel, avec une valeur</td>
+</tr>
+<tr class="odd">
+<td>En R</td>
+<td><code>sf</code></td>
+<td><code>terra</code></td>
+</tr>
+</tbody>
+</table>
+<p>Ce runtime est <strong>entièrement vectoriel</strong> : <code>sf</code> est disponible en WebR, <code>terra</code> ne l’est pas. Le raster est traité au J04, et son code figure ici en lecture seule (section 10).</p>
+<div class="iford-callout">
+<p><strong>La règle d’or des SIG.</strong> Un <strong>CRS</strong> (<em>Coordinate Reference System</em>, système de référence des coordonnées) dit ce que mesurent les nombres d’une géométrie. Deux familles :</p>
+<ul>
+<li><strong>géographique</strong> (EPSG:4326, WGS 84) : des <strong>degrés</strong>. C’est ce que donne un GPS. Rien de mesurable en l’état — un degré de longitude ne vaut pas la même longueur au sol selon la latitude.</li>
+<li><strong>projeté</strong> (EPSG:32632, UTM zone 32N) : des <strong>mètres</strong>. Mesurable, mais exact seulement autour de son méridien central.</li>
+</ul>
+<p>On <strong>stocke</strong> en 4326, on <strong>mesure</strong> après reprojection. Et on n’effectue jamais une opération entre deux couches de CRS différents sans les avoir harmonisées — <code>sf</code> ne prévient pas toujours.</p>
+</div>
+</section>
+<section id="première-carte-vraies-limites-gadm-cameroun" class="level2">
+<h2 class="anchored" data-anchor-id="première-carte-vraies-limites-gadm-cameroun">7. Première carte — vraies limites GADM Cameroun</h2>
+<p>Le fichier GADM v4.1 du Cameroun (10 régions, ~190 Ko) est pré-chargé dans la VM WebR au démarrage de la page. On l’ouvre directement avec <code>sf::read_sf()</code> — pas de réseau au runtime, ça marche aussi quand vous n’avez pas internet.</p>
+<div class="cell" data-autorun="true">
+<div>
+<div id="webr-8" class="exercise-cell">
+
+</div>
+<script type="webr-8-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoibGlicmFyeShzZikgICAgICAgICMgc2YgPSBcInNpbXBsZSBmZWF0dXJlc1wiIDogb2JqZXRzIHNwYXRpYXV4IHZlY3RvcmllbHNcbmxpYnJhcnkoZ2dwbG90MikgICAjIGdyYW1tYWlyZSBncmFwaGlxdWUgZGUgcsOpZsOpcmVuY2UgZW4gUlxubGlicmFyeShkcGx5cilcblxuIyByZWFkX3NmKCkgbGl0IHVuIGZpY2hpZXIgU0lHIChpY2kgR2VvSlNPTikgZXQgcmVudm9pZSB1biBvYmpldCBzZiA9XG4jIHVuIGRhdGEuZnJhbWUgKyB1bmUgY29sb25uZSBcImdlb21ldHJ5XCIgYXR0YWNow6llIMOgIGNoYXF1ZSBsaWduZS5cbmFkbTAgPC0gcmVhZF9zZihcIl9jb21tb25zL2RhdGEvZ2FkbTQxX0NNUl8wLmpzb25cIikgICAjIHNpbGhvdWV0dGUgZHUgcGF5c1xuYWRtMSA8LSByZWFkX3NmKFwiX2NvbW1vbnMvZGF0YS9nYWRtNDFfQ01SXzEuanNvblwiKSAgICMgMTAgcsOpZ2lvbnNcbmFkbTIgPC0gcmVhZF9zZihcIl9jb21tb25zL2RhdGEvZ2FkbTQxX0NNUl8yLmpzb25cIikgICAjIDU4IGTDqXBhcnRlbWVudHNcblxuIyBVbiBjb21wdGV1ciBhcHJlcyBjaGFxdWUgbGVjdHVyZSA6IG9uIG5lIHN1cHBvc2UgamFtYWlzIHVuIGVmZmVjdGlmLlxuY2F0KFwiQURNMCA6XCIsIG5yb3coYWRtMCksIFwifCBBRE0xIDpcIiwgbnJvdyhhZG0xKSwgXCJ8IEFETTIgOlwiLCBucm93KGFkbTIpLCBcIlxcblwiKVxuY2F0KFwiRVBTRyA6XCIsIHN0X2NycyhhZG0xKSRlcHNnLCBcIig0MzI2ID0gV0dTIDg0LCBkZXMgZGVncsOpcylcXG5cIilcbmhlYWQoYWRtMSROQU1FXzEpICAgICAgICMgcXVlbHF1ZXMgbm9tcyBkZSByw6lnaW9uc1xuXG4jIExlcyBnw6lvbcOpdHJpZXMgc29udC1lbGxlcyBzYWluZXMgPyBVbiBwb2x5Z29uZSBhdXRvLWludGVyc2VjdMOpIG5lIHNlIHZvaXRcbiMgUEFTIMOgIGwnYWZmaWNoYWdlIDogaWwgbmUgc2UgbWFuaWZlc3RlIHF1J2F1IHByZW1pZXIgY2FsY3VsIGfDqW9tw6l0cmlxdWUuXG5jYXQoXCJHw6lvbcOpdHJpZXMgdmFsaWRlcyA6XCIsIHN1bShzdF9pc192YWxpZChhZG0xKSksIFwic3VyXCIsIG5yb3coYWRtMSksIFwiXFxuXCIpIn0=
+</script>
+</div>
+</div>
+<p>Et maintenant la vraie carte des 10 régions du Cameroun, avec les contours administratifs officiels :</p>
+<div class="cell">
+<div>
+<div id="webr-9" class="exercise-cell">
+
+</div>
+<script type="webr-9-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiZ2dwbG90KGFkbTEpICtcbiAgIyBnZW9tX3NmIGRlc3NpbmUgbGEgZ8Opb23DqXRyaWUgOyBmaWxsID0gTkFNRV8xIGF0dHJpYnVlIDEgY291bGV1ciBwYXIgcsOpZ2lvbi5cbiAgZ2VvbV9zZihhZXMoZmlsbCA9IE5BTUVfMSksIGNvbG9yID0gXCJ3aGl0ZVwiLCBsaW5ld2lkdGggPSAwLjMsIHNob3cubGVnZW5kID0gRkFMU0UpICtcbiAgIyBnZW9tX3NmX2xhYmVsIHBvc2UgdW5lIMOpdGlxdWV0dGUgYXUgY2VudHJvw69kZSBkZSBjaGFxdWUgcG9seWdvbmUuXG4gIGdlb21fc2ZfbGFiZWwoYWVzKGxhYmVsID0gTkFNRV8xKSxcbiAgICAgICAgICAgICAgICBzaXplID0gMi40LCBjb2xvdXIgPSBcImJsYWNrXCIsXG4gICAgICAgICAgICAgICAgZmlsbCA9IHNjYWxlczo6YWxwaGEoXCJ3aGl0ZVwiLCAwLjc1KSwgbGFiZWwuc2l6ZSA9IDAsXG4gICAgICAgICAgICAgICAgZm9udGZhY2UgPSBcImJvbGRcIiwgbGFiZWwucGFkZGluZyA9IHVuaXQoMC4xLCBcImxpbmVzXCIpKSArXG4gICMgUGFsZXR0ZSB2aXJpZGlzIGRpc2Nyw6h0ZSA6IGRhbHRvbmllbi1mcmllbmRseSwgbGlzaWJsZSBlbiBOJkIuXG4gIHNjYWxlX2ZpbGxfdmlyaWRpc19kKG9wdGlvbiA9IFwiR1wiKSArXG4gIGxhYnModGl0bGUgPSBcIkxlcyAxMCByw6lnaW9ucyBkdSBDYW1lcm91blwiLFxuICAgICAgIHN1YnRpdGxlID0gXCJMaW1pdGVzIGFkbWluaXN0cmF0aXZlcyBBRE0xIOKAlCBHQURNIHY0LjFcIixcbiAgICAgICBjYXB0aW9uID0gXCJTb3VyY2UgOiBHQURNIHY0LjEgwrcgQXRlbGllciBJRk9SRCDDlyBHRFNHIDIwMjZcIikgK1xuICB0aGVtZV9taW5pbWFsKCkgICAjIHJldGlyZSBsZXMgYXhlcy9ncmlsbGUgcGFyYXNpdGVzIn0=
+</script>
+</div>
+</div>
+<div class="takeaway">
+<p><strong>Ce que la figure code.</strong> Rien de statistique. La couleur est <strong>qualitative</strong> : elle sert uniquement à distinguer dix polygones voisins, et il serait faux d’y lire un ordre. Une palette qualitative répond à « lesquels sont différents » ; une palette séquentielle (section 8) répond à « lesquels sont plus grands ».</p>
+<p><strong>Ce qui se lit.</strong> La géographie du découpage : trois régions du Nord très étendues, un Ouest densément découpé, un littoral étroit.</p>
+<p><strong>Ce qui ne se lit pas.</strong> La superficie apparente <strong>n’est pas</strong> la superficie réelle : elle dépend de la projection d’affichage. Pour comparer des surfaces, il faut les calculer — c’est l’objet de la section suivante.</p>
+</div>
+</section>
+<section id="mesurer-superficie-centroïdes-densité" class="level2">
+<h2 class="anchored" data-anchor-id="mesurer-superficie-centroïdes-densité">8. Mesurer : superficie, centroïdes, densité</h2>
+<div class="cell">
+<div>
+<div id="webr-10" class="exercise-cell">
+
+</div>
+<script type="webr-10-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBVbmUgcHJvamVjdGlvbiAoQ1JTKSBcInBsYW5lXCIgZW4gbcOodHJlcyBlc3QgTsOJQ0VTU0FJUkUgcG91ciBtZXN1cmVyIHN1cmZhY2VzXG4jIGV0IGRpc3RhbmNlcy4gRVBTRzozMjYzMiA9IFVUTSB6b25lIDMyTiwgYWRhcHTDqSDDoCBsJ291ZXN0IGR1IENhbWVyb3VuLlxuYWRtMV91dG0gPC0gc3RfdHJhbnNmb3JtKGFkbTEsIDMyNjMyKVxuXG4jIHN0X2FyZWEgcmVudm9pZSB1bmUgc3VyZmFjZSBlbiBtwrIgKHVuaXTDqSBkdSBDUlMpIDsgb24gY29udmVydGl0IGVuIGttwrIuXG5hZG0xX3V0bSRzdXBlcmZpY2llX2ttMiA8LSBhcy5udW1lcmljKHN0X2FyZWEoYWRtMV91dG0pKSAvIDFlNlxuXG4jIENvbnRyw7RsZSBkZSBjb2jDqXJlbmNlIDogdG90YWwgYXR0ZW5kdSB+NDc1IDQ0MiBrbcKyIChzdXBlcmZpY2llIG9mZmljaWVsbGUpLlxuIyBDb21wYXJlciB1biByw6lzdWx0YXQgw6AgdW4gY2hpZmZyZSBwdWJsacOpIHbDqXJpZmllIGQndW4gY291cCBsYSBwcm9qZWN0aW9uLFxuIyBsYSB2YWxpZGl0w6kgZGVzIGfDqW9tw6l0cmllcyBldCBsYSBsZWN0dXJlIGR1IGZpY2hpZXIuXG5jYXQoXCJTdXBlcmZpY2llIHRvdGFsZSBjYWxjdWzDqWUgOlwiLCByb3VuZChzdW0oYWRtMV91dG0kc3VwZXJmaWNpZV9rbTIpKSwgXCJrbcKyXFxuXCIpXG5jYXQoXCJSw6lmw6lyZW5jZSBvZmZpY2llbGxlICAgICAgIDogNDc1IDQ0MiBrbcKyXFxuXCIpXG5cbiMgTGUgQ0VOVFJPw49ERSA6IGxlIFwiY2VudHJlIGRlIGdyYXZpdMOpXCIgZCd1biBwb2x5Z29uZS4gVXRpbGUgcG91ciBwb3NlciB1bmVcbiMgw6l0aXF1ZXR0ZSBvdSB1biBzeW1ib2xlIHByb3BvcnRpb25uZWwuIEF0dGVudGlvbiA6IHBvdXIgdW4gcG9seWdvbmUgZW5cbiMgY3JvaXNzYW50LCBsZSBjZW50cm/Dr2RlIHBldXQgdG9tYmVyIEhPUlMgZHUgcG9seWdvbmUuXG5jZW50cmVzIDwtIHN0X2NlbnRyb2lkKGFkbTFfdXRtKVxuaGVhZChzdF9jb29yZGluYXRlcyhjZW50cmVzKSwgMykifQ==
+</script>
+</div>
+</div>
+<div class="cell">
+<div>
+<div id="webr-11" class="exercise-cell">
+
+</div>
+<script type="webr-11-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBPbiBiw6J0aXQgdW5lIHRhYmxlIHBvcHVsYXRpb24gbWluaW1hbGUgKGNsw6kgPSBub20gZGUgcsOpZ2lvbikuXG5wb3BfdGJsIDwtIHRpYmJsZTo6dGliYmxlKE5BTUVfMSA9IHJlZ2lvbnMsIHBvcF8yMDE5ID0gcG9wX2VzdClcblxuIyBsZWZ0X2pvaW4gPSBqb2ludHVyZSBTUUwgXCLDoCBnYXVjaGVcIiA6IG9uIGdhcmRlIHRvdXRlcyBsZXMgcsOpZ2lvbnMgZGUgYWRtMV91dG1cbiMgZXQgb24gYXR0YWNoZSBsYSBwb3B1bGF0aW9uIGNvcnJlc3BvbmRhbnRlIHZpYSBsYSBjbMOpIGNvbW11bmUgTkFNRV8xLlxuYWRtMV9wb3AgPC0gYWRtMV91dG0gfD5cbiAgbGVmdF9qb2luKHBvcF90YmwsIGJ5ID0gXCJOQU1FXzFcIikgfD5cbiAgbXV0YXRlKGRlbnNpdGUgPSBwb3BfMjAxOSAvIHN1cGVyZmljaWVfa20yLCAgICAgICAjIGRlbnNpdMOpID0gaGFiIC8ga23CslxuICAgICAgICAgIyDDiWNoZWxsZSByYWNpbmUgY2FycsOpZSBjYWxjdWzDqWUgRU4gQU1PTlQgcGx1dMO0dCBxdWUgdmlhXG4gICAgICAgICAjIHNjYWxlX2ZpbGxfKih0cmFucyA9ICksIGTDqXByw6ljacOpIHNlbG9uIGxlcyB2ZXJzaW9ucyBkZSBnZ3Bsb3QyLlxuICAgICAgICAgZGVuc2l0ZV9zcXJ0ID0gc3FydChkZW5zaXRlKSlcblxuIyBsZWZ0X2pvaW4gbmUgcHLDqXZpZW50IEpBTUFJUyBkJ3VuIG5vbi1hcHBhcmllbWVudCA6IGlsIHJlbXBsaXQgYXZlYyBOQS5cbiMgQ29tcHRlciBsZXMgTkEgYXByw6hzIGNoYXF1ZSBqb2ludHVyZSBlc3QgbGUgcsOpZmxleGUgcXVpIHNhdXZlIHVuZSBhbmFseXNlLlxuY2F0KFwiUsOpZ2lvbnMgc2FucyBwb3B1bGF0aW9uIGFwcsOocyBqb2ludHVyZSA6XCIsIHN1bShpcy5uYShhZG0xX3BvcCRwb3BfMjAxOSkpLFxuICAgIFwic3VyXCIsIG5yb3coYWRtMV9wb3ApLCBcIlxcblwiKVxuXG4jIHN0X2Ryb3BfZ2VvbWV0cnkgOiBvbiByZXRpcmUgbGEgY29sb25uZSBnw6lvbcOpdHJpZSBwb3VyIGF2b2lyIHVuIHRhYmxlYXUgcHVyLlxuYWRtMV9wb3AgfD5cbiAgc3RfZHJvcF9nZW9tZXRyeSgpIHw+XG4gIHNlbGVjdChOQU1FXzEsIHBvcF8yMDE5LCBzdXBlcmZpY2llX2ttMiwgZGVuc2l0ZSkgfD5cbiAgbXV0YXRlKHN1cGVyZmljaWVfa20yID0gcm91bmQoc3VwZXJmaWNpZV9rbTIpLCBkZW5zaXRlID0gcm91bmQoZGVuc2l0ZSwgMSkpIHw+XG4gIGFycmFuZ2UoZGVzYyhkZW5zaXRlKSkifQ==
+</script>
+</div>
+</div>
+<div class="cell">
+<div>
+<div id="webr-12" class="exercise-cell">
+
+</div>
+<script type="webr-12-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiZ2dwbG90KGFkbTFfcG9wKSArXG4gICMgQ2FydGUgY2hvcm9wbMOodGhlIDogbGEgY291bGV1ciBkdSBwb2x5Z29uZSBlbmNvZGUgbGEgVkFMRVVSIChpY2kgZGVuc2l0w6kpLlxuICBnZW9tX3NmKGFlcyhmaWxsID0gZGVuc2l0ZV9zcXJ0KSwgY29sb3IgPSBcIndoaXRlXCIsIGxpbmV3aWR0aCA9IDAuMykgK1xuICBnZW9tX3NmX2xhYmVsKGFlcyhsYWJlbCA9IE5BTUVfMSksXG4gICAgICAgICAgICAgICAgc2l6ZSA9IDIuMiwgY29sb3VyID0gXCJibGFja1wiLFxuICAgICAgICAgICAgICAgIGZpbGwgPSBzY2FsZXM6OmFscGhhKFwid2hpdGVcIiwgMC43NSksIGxhYmVsLnNpemUgPSAwLFxuICAgICAgICAgICAgICAgIGZvbnRmYWNlID0gXCJib2xkXCIsIGxhYmVsLnBhZGRpbmcgPSB1bml0KDAuMDgsIFwibGluZXNcIikpICtcbiAgIyBQYWxldHRlIGNvbnRpbnVlIDsgw6ljaGVsbGUgcmFjaW5lIGNhcnLDqWUgcG91ciBhcGxhdGlyIGxlcyDDqWNhcnRzIGV4dHLDqm1lc1xuICAjIChMaXR0b3JhbCBldCBDZW50cmUgw6ljcmFzZW50IHNpbm9uIHRvdXRlcyBsZXMgYXV0cmVzIHLDqWdpb25zKS5cbiAgIyBuYS52YWx1ZSA6IHVuZSByw6lnaW9uIHNhbnMgZG9ubsOpZSByZXN0ZSBHUklTRSwgZWxsZSBuJ2VzdCBwYXMgXCLDoCB6w6lyb1wiLlxuICBzY2FsZV9maWxsX3ZpcmlkaXNfYyhvcHRpb24gPSBcIkJcIiwgbmFtZSA9IFwiRGVuc2l0w6lcXG4o4oiaIGhhYi9rbcKyKVwiLFxuICAgICAgICAgICAgICAgICAgICAgICBuYS52YWx1ZSA9IFwiZ3JleTg1XCIpICtcbiAgbGFicyh0aXRsZSA9IFwiRGVuc2l0w6kgZGUgcG9wdWxhdGlvbiBwYXIgcsOpZ2lvbiDigJQgQ2FtZXJvdW4gKGVzdGltLiAyMDE5KVwiLFxuICAgICAgIHN1YnRpdGxlID0gXCJDaG9yb3Bsw6h0aGUg4oCUIMOpY2hlbGxlIHJhY2luZSBjYXJyw6llIHBvdXIgdmlzaWJpbGl0w6lcIixcbiAgICAgICBjYXB0aW9uID0gXCJTb3VyY2UgOiBCVUNSRVAgKGVzdGltLiksIEdBRE0gdjQuMSDCtyBJRk9SRCDDlyBHRFNHIDIwMjZcIikgK1xuICB0aGVtZV9taW5pbWFsKCkifQ==
+</script>
+</div>
+</div>
+<div class="takeaway">
+<p><strong>Ce que la figure code.</strong> La couleur d’une région code sa densité = population estimée ÷ superficie calculée en UTM 32N.</p>
+<p><strong>Ce que les choix techniques font.</strong> <em>Choroplèthe</em> : une carte où la couleur d’une unité administrative code une valeur. <em>Échelle racine carrée</em> : sans elle, deux régions écrasent les huit autres et la carte devient uniformément sombre — la transformation ne change pas les données, elle change ce que l’œil distingue, et doit donc être annoncée dans la légende, comme ici.</p>
+<p><strong>Ce qui se lit.</strong> Un gradient : le Littoral et l’Ouest se détachent nettement du Nord et de l’Est.</p>
+<p><strong>Ce qui ne se lit pas.</strong> (1) Les chiffres de population utilisés ici sont des <strong>estimations d’illustration</strong>, pas des données de recensement — la carte ne doit pas être citée. (2) La densité est une <strong>moyenne</strong> : elle écrase entièrement l’hétérogénéité interne, une région où tout le monde vit dans une seule ville prend la même couleur qu’une région uniformément peuplée. (3) Attribuer à un habitant ce qui n’est vrai que de la région serait une <strong>erreur écologique</strong>.</p>
+</div>
+</section>
+<section id="changer-de-maille-les-58-départements" class="level2">
+<h2 class="anchored" data-anchor-id="changer-de-maille-les-58-départements">9. Changer de maille : les 58 départements</h2>
+<div class="iford-callout">
+<p><strong>Le MAUP</strong> (<em>Modifiable Areal Unit Problem</em>) : les résultats dépendent de la maille d’agrégation, et <strong>aucune maille n’est neutre</strong>. La même donnée agrégée en 10 régions ou en 58 départements ne raconte pas la même histoire. La règle : choisir la maille de la <strong>décision</strong> qu’on éclaire, pas celle qui donne la plus jolie carte.</p>
+</div>
+<div class="cell">
+<div>
+<div id="webr-13" class="exercise-cell">
+
+</div>
+<script type="webr-13-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBMZSBtw6ptZSBnZXN0ZSwgdW5lIG1haWxsZSBwbHVzIGZpbmUuIExlcyBjb2xvbm5lcyBHQURNIEFETTIgOiBOQU1FXzEgcG9ydGVcbiMgbGEgcsOpZ2lvbiBkJ2FwcGFydGVuYW5jZSwgTkFNRV8yIGxlIGTDqXBhcnRlbWVudC5cbmFkbTJfdXRtIDwtIHN0X3RyYW5zZm9ybShhZG0yLCAzMjYzMilcbmFkbTJfdXRtJHN1cGVyZmljaWVfa20yIDwtIGFzLm51bWVyaWMoc3RfYXJlYShhZG0yX3V0bSkpIC8gMWU2XG5cbmNhdChcIkTDqXBhcnRlbWVudHMgOlwiLCBucm93KGFkbTJfdXRtKSwgXCJcXG5cIilcbmNhdChcIlN1cGVyZmljaWUgdG90YWxlIEFETTIgOlwiLCByb3VuZChzdW0oYWRtMl91dG0kc3VwZXJmaWNpZV9rbTIpKSwgXCJrbcKyXCIsXG4gICAgXCLigJQgw6AgY29tcGFyZXIgYXUgdG90YWwgQURNMSBjaS1kZXNzdXNcXG5cIilcblxuIyBDb21iaWVuIGRlIGTDqXBhcnRlbWVudHMgcGFyIHLDqWdpb24gP1xuYWRtMl91dG0gfD4gc3RfZHJvcF9nZW9tZXRyeSgpIHw+IGNvdW50KE5BTUVfMSwgbmFtZSA9IFwibmJfZGVwYXJ0ZW1lbnRzXCIpIn0=
+</script>
+</div>
+</div>
+<div class="cell">
+<div>
+<div id="webr-14" class="exercise-cell">
+
+</div>
+<script type="webr-14-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiZ2dwbG90KCkgK1xuICBnZW9tX3NmKGRhdGEgPSBhZG0yX3V0bSwgYWVzKGZpbGwgPSBzdXBlcmZpY2llX2ttMiksXG4gICAgICAgICAgY29sb3IgPSBcIndoaXRlXCIsIGxpbmV3aWR0aCA9IDAuMTUpICtcbiAgIyBMZXMgbGltaXRlcyBkZSByw6lnaW9uIHN1cGVycG9zw6llcywgcG91ciBzaXR1ZXIgbGUgZMOpY291cGFnZSBmaW4uXG4gIGdlb21fc2YoZGF0YSA9IHN0X3RyYW5zZm9ybShhZG0xLCAzMjYzMiksIGZpbGwgPSBOQSxcbiAgICAgICAgICBjb2xvciA9IFwiZ3JleTIwXCIsIGxpbmV3aWR0aCA9IDAuNSkgK1xuICBzY2FsZV9maWxsX3ZpcmlkaXNfYyhvcHRpb24gPSBcIkRcIiwgbmFtZSA9IFwiU3VwZXJmaWNpZVxcbihrbcKyKVwiLFxuICAgICAgICAgICAgICAgICAgICAgICBuYS52YWx1ZSA9IFwiZ3JleTg1XCIpICtcbiAgbGFicyh0aXRsZSA9IFwiTGVzIDU4IGTDqXBhcnRlbWVudHMgZHUgQ2FtZXJvdW5cIixcbiAgICAgICBzdWJ0aXRsZSA9IFwiTWFpbGxlIGZpbmUgKEFETTIpIDsgZW4gdHJhaXQgw6lwYWlzLCBsZXMgMTAgcsOpZ2lvbnMgKEFETTEpXCIsXG4gICAgICAgY2FwdGlvbiA9IFwiU291cmNlIDogR0FETSB2NC4xIMK3IElGT1JEIMOXIEdEU0cgMjAyNlwiKSArXG4gIHRoZW1lX21pbmltYWwoKSArXG4gIHRoZW1lKGF4aXMudGV4dCA9IGVsZW1lbnRfYmxhbmsoKSwgYXhpcy50aWNrcyA9IGVsZW1lbnRfYmxhbmsoKSxcbiAgICAgICAgcGFuZWwuZ3JpZCA9IGVsZW1lbnRfYmxhbmsoKSkifQ==
+</script>
+</div>
+</div>
+<div class="takeaway">
+<p><strong>Ce que la figure code.</strong> La couleur code une superficie en km², donc une propriété purement géométrique — pas un phénomène social.</p>
+<p><strong>En quoi le changement de maille est utile.</strong> Mettez cette carte à côté de celle de la section 8 : les régions du Nord, uniformes en ADM1, se révèlent composées de départements très inégaux. Une moyenne régionale calculée sur des départements de tailles aussi différentes pèse implicitement chaque département de la même façon — ce qui est rarement ce qu’on veut.</p>
+<p><strong>Ce qui ne se lit pas.</strong> Rien sur la population. Un grand département peut être quasiment vide ; c’est précisément pourquoi on rapporte les effectifs à la surface avant de comparer.</p>
+<p><strong>Un piège de lecture des données, à connaître.</strong> Dans ce fichier GeoJSON, les noms de départements composés ont perdu leurs espaces : on y lit <code>MefouetAfamba</code>, <code>NyongetSo'o</code>, <code>ValléeduNtem</code>. Cela n’a aucune conséquence sur la géométrie, mais rend toute jointure sur le libellé impossible sans normalisation préalable. Le J03 en fait un exercice complet.</p>
+</div>
+</section>
+<section id="points-et-distance-la-démonstration-du-crs" class="level2">
+<h2 class="anchored" data-anchor-id="points-et-distance-la-démonstration-du-crs">10. Points et distance : la démonstration du CRS</h2>
+<div class="cell">
+<div>
+<div id="webr-15" class="exercise-cell">
+
+</div>
+<script type="webr-15-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBzdF9wb2ludChjKGxvbiwgbGF0KSkgY3LDqWUgMSBwb2ludCA7IHN0X3NmYyBsJ2VudmVsb3BwZSBkYW5zIHVuZSBcInNpbXBsZVxuIyBmZWF0dXJlIGNvbGxlY3Rpb25cIiDDqXRpcXVldMOpZSBwYXIgdW4gQ1JTLiA0MzI2ID0gV0dTIDg0IChkZWdyw6lzIEdQUykuXG4jIE9SRFJFIDogYyhsb25naXR1ZGUsIGxhdGl0dWRlKS4gTCdpbnZlcnNpb24gbmUgbMOodmUgQVVDVU5FIGVycmV1ci5cbnlhb3VuZGUgPC0gc3Rfc2ZjKHN0X3BvaW50KGMoMTEuNTAyMSwgMy44NDgwKSksIGNycyA9IDQzMjYpXG5kb3VhbGEgIDwtIHN0X3NmYyhzdF9wb2ludChjKDkuNzY3OSwgIDQuMDUxMSkpLCBjcnMgPSA0MzI2KVxuXG4jIHN0X2Rpc3RhbmNlIGTDqXRlY3RlIHF1ZSBsZSBDUlMgZXN0IGfDqW9ncmFwaGlxdWUgZXQgY2FsY3VsZSBsYSBkaXN0YW5jZVxuIyBnw6lvZMOpc2lxdWUgc3VyIGwnZWxsaXBzb8OvZGUgKGVuIG3DqHRyZXMpLlxuZGlzdF9tIDwtIHN0X2Rpc3RhbmNlKHlhb3VuZGUsIGRvdWFsYSlcbmRpc3RfbVxuXG4jIENvbXBhcmFpc29uIGF2ZWMgdW4gY2FsY3VsIFwibmHDr2ZcIiB0eXBlIFB5dGhhZ29yZSBzdXIgbGVzIGRlZ3LDqXMuXG4jIEMnRVNUIEZBVVggOiB1biBkZWdyw6kgZGUgbG9uZ2l0dWRlIG5lIG1lc3VyZSBwYXMgbGEgbcOqbWUgY2hvc2UgcXUndW4gZGVncsOpXG4jIGRlIGxhdGl0dWRlIChldCDDp2EgZMOpcGVuZCBlbiBwbHVzIGRlIGxhIGxhdGl0dWRlKS5cbmNhdChcIkRpc3RhbmNlIG5hw692ZSAoZGVncsOpcyAtIHNhbnMgZGltZW5zaW9uKTpcIixcbiAgICByb3VuZChzcXJ0KCgxMS41MDIxLTkuNzY3OSleMiArICgzLjg0ODAtNC4wNTExKV4yKSwgNCksIFwiXFxuXCIpXG5jYXQoXCJEaXN0YW5jZSBjb3JyZWN0ZSAoa20pOlwiLCByb3VuZChhcy5udW1lcmljKGRpc3RfbSkgLyAxMDAwLCAxKSwgXCJrbVxcblwiKSJ9
+</script>
+</div>
+</div>
+<div class="takeaway">
+<p>La distance Yaoundé–Douala <strong>par la route</strong> est d’environ 240 km ; à vol d’oiseau, elle est nécessairement plus courte — c’est ce que calcule <code>st_distance()</code>. Le calcul « naïf » sur les degrés donne un nombre <strong>sans dimension</strong> : il ne se compare à rien, et pourtant aucune erreur n’a été levée. C’est le prototype de l’échec silencieux : plus dangereux que ce qui plante, parce qu’il produit un résultat plausible.</p>
+</div>
+</section>
+<section id="ce-qui-ne-tourne-pas-dans-le-navigateur" class="level2">
+<h2 class="anchored" data-anchor-id="ce-qui-ne-tourne-pas-dans-le-navigateur">11. Ce qui ne tourne pas dans le navigateur</h2>
+<p>Les blocs ci-dessous sont en <strong>lecture seule</strong>. Ils s’exécutent sous RStudio desktop, à partir de <strong><code>demo_formateur_J02.qmd</code></strong> (ce même dossier), dont ils sont extraits.</p>
+<section id="importer-les-csv-du-dossier-jour-le-piège-du-séparateur" class="level3">
+<h3 class="anchored" data-anchor-id="importer-les-csv-du-dossier-jour-le-piège-du-séparateur">11.1 Importer les CSV du dossier-jour — le piège du séparateur</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr); <span class="fu">library</span>(dplyr); <span class="fu">library</span>(janitor)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># PIEGE : les deux fichiers WorldPop de ce dossier n'ont PAS le meme</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># separateur. La population est en POINTS-VIRGULES, les menages en VIRGULES.</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># read_csv() sur le premier renvoie UNE SEULE COLONNE, sans lever d'erreur.</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Reflexe : ouvrir un CSV inconnu dans un editeur avant de l'importer, et</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># verifier ncol() juste apres la lecture.</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>pop_adm2 <span class="ot">&lt;-</span> <span class="fu">read_delim</span>(<span class="st">"datasets/CMR_population_v1_0_admin_level2.csv"</span>,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>                       <span class="at">delim =</span> <span class="st">";"</span>, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span> <span class="fu">clean_names</span>()</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>men_adm2 <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"datasets/CMR_household_v1_0_admin_level2.csv"</span>,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>                     <span class="at">show_col_types =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span> <span class="fu">clean_names</span>()</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">ncol</span>(pop_adm2); <span class="fu">ncol</span>(men_adm2)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Colonnes reelles : id, names1, total, lower, median, upper, uncertainty.</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># lower / upper : l'intervalle de credibilite -- ces chiffres sont MODELISES,</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co"># pas recenses. Plus l'intervalle est large, moins l'estimation est sure.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="les-grappes-gps-de-leds-dun-tableau-à-des-points" class="level3">
+<h3 class="anchored" data-anchor-id="les-grappes-gps-de-leds-dun-tableau-à-des-points">11.2 Les grappes GPS de l’EDS : d’un tableau à des points</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sf)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Les fichiers DHS separent la GEOMETRIE et les ATTRIBUTS :</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co">#   CMGE71FL.shp -&gt; les points (coordonnees des grappes)</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co">#   CMGC72FL.csv -&gt; 130 covariables contextuelles, SANS coordonnees</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># La cle commune est le numero de grappe, DHSCLUST.</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># </span><span class="al">ATTENTION</span><span class="co"> : les coordonnees GPS EDS sont volontairement DEPLACEES</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># (2 km en urbain, 5 km en rural) pour proteger l'anonymat.</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>dhs_gps <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"datasets/CMGE71FL.shp"</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>covar   <span class="ot">&lt;-</span> readr<span class="sc">::</span><span class="fu">read_csv</span>(<span class="st">"datasets/CMGC72FL.csv"</span>, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>dhs_enrichi <span class="ot">&lt;-</span> dhs_gps <span class="sc">|&gt;</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">left_join</span>(covar, <span class="at">by =</span> <span class="st">"DHSCLUST"</span>)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Jointure SPATIALE : dans quelle region tombe chaque grappe ?</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co"># La cle n'est plus un identifiant, c'est la POSITION elle-meme.</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>cmr1 <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"datasets/gadm41_CMR_1.shp"</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>grappes_region <span class="ot">&lt;-</span> <span class="fu">st_join</span>(<span class="fu">st_transform</span>(dhs_enrichi, <span class="dv">4326</span>),</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>                          <span class="fu">st_transform</span>(cmr1, <span class="dv">4326</span>),</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>                          <span class="at">join =</span> st_within)</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(<span class="fu">is.na</span>(grappes_region<span class="sc">$</span>NAME_1))   <span class="co"># grappes hors de tout polygone</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="le-raster-sentinel-2-avec-terra" class="level3">
+<h3 class="anchored" data-anchor-id="le-raster-sentinel-2-avec-terra">11.3 Le raster : Sentinel-2 avec terra</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># terra n'est pas disponible en WebR (GDAL/PROJ/GEOS compiles en WASM,</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co"># ~15 Mo, et une regression connue de WebR 0.6 au telechargement).</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(terra)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>b08 <span class="ot">&lt;-</span> <span class="fu">rast</span>(<span class="st">"datasets/2026-06-26-00_00_2026-06-26-23_59_Sentinel-2_L2A_B08_(Raw).tiff"</span>)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>b11 <span class="ot">&lt;-</span> <span class="fu">rast</span>(<span class="st">"datasets/2026-06-26-00_00_2026-06-26-23_59_Sentinel-2_L2A_B11_(Raw).tiff"</span>)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Toujours verifier l'emprise, le CRS et la resolution REELS avant d'ecrire</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co"># un exercice : cette tuile ne couvre qu'une fraction du pays.</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="fu">ext</span>(b08); <span class="fu">crs</span>(b08, <span class="at">describe =</span> <span class="cn">TRUE</span>)<span class="sc">$</span>code; <span class="fu">res</span>(b08)</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="co"># NDMI = (NIR - SWIR) / (NIR + SWIR) : humidite de la vegetation.</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>ndmi <span class="ot">&lt;-</span> (b08 <span class="sc">-</span> b11) <span class="sc">/</span> (b08 <span class="sc">+</span> b11)</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(ndmi, <span class="at">main =</span> <span class="st">"NDMI — humidité de la végétation"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="cartographie-thématique-avec-tmap-4" class="level3">
+<h3 class="anchored" data-anchor-id="cartographie-thématique-avec-tmap-4">11.4 Cartographie thématique avec tmap 4</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># tmap est volontairement absent du runtime : trop de dependances pour un</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># chargement navigateur fluide. Les cartes ci-dessus sont donc en ggplot2.</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tmap)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(adm1_pop) <span class="sc">+</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="at">fill =</span> <span class="st">"densite"</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>              <span class="at">fill.scale  =</span> <span class="fu">tm_scale_intervals</span>(<span class="at">style =</span> <span class="st">"quantile"</span>, <span class="at">n =</span> <span class="dv">5</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>                                               <span class="at">values =</span> <span class="st">"brewer.yl_or_rd"</span>),</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>              <span class="at">fill.legend =</span> <span class="fu">tm_legend</span>(<span class="at">title =</span> <span class="st">"Densité (hab/km²)"</span>),</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>              <span class="at">col =</span> <span class="st">"white"</span>, <span class="at">lwd =</span> <span class="fl">0.3</span>) <span class="sc">+</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_title</span>(<span class="st">"Densité de population par région — Cameroun"</span>) <span class="sc">+</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scalebar</span>(<span class="at">position =</span> <span class="fu">c</span>(<span class="st">"left"</span>, <span class="st">"bottom"</span>)) <span class="sc">+</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type =</span> <span class="st">"4star"</span>, <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"top"</span>))</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="co"># NE PAS mettre tmap_mode("view") dans un document diffuse : le widget</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co"># leaflet embarque toutes les geometries dans le HTML. Le J02 est monte</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="co"># a 17 Mo pour cette raison. A lancer en direct, uniquement.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="vocabulaire-de-la-journée" class="level2">
+<h2 class="anchored" data-anchor-id="vocabulaire-de-la-journée">12. Vocabulaire de la journée</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Terme</th>
+<th>Ce qu’il désigne</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Vecteur / raster</strong></td>
+<td>entités discrètes (<code>sf</code>) / grille de pixels (<code>terra</code>)</td>
+</tr>
+<tr class="even">
+<td><strong>CRS / EPSG</strong></td>
+<td>système de référence des coordonnées, et son code</td>
+</tr>
+<tr class="odd">
+<td><strong>Géographique / projeté</strong></td>
+<td>en <strong>degrés</strong> (non mesurable) / en <strong>mètres</strong> (mesurable)</td>
+</tr>
+<tr class="even">
+<td><strong>Centroïde</strong></td>
+<td>centre de gravité d’un polygone — peut tomber hors du polygone</td>
+</tr>
+<tr class="odd">
+<td><strong>Choroplèthe</strong></td>
+<td>carte où la couleur d’un polygone code une valeur numérique</td>
+</tr>
+<tr class="even">
+<td><strong>Palette qualitative / séquentielle</strong></td>
+<td>distinguer / ordonner</td>
+</tr>
+<tr class="odd">
+<td><strong>MAUP</strong></td>
+<td>le résultat dépend de la maille ; aucune maille n’est neutre</td>
+</tr>
+<tr class="even">
+<td><strong>Erreur écologique</strong></td>
+<td>attribuer à un individu ce qui n’est vrai que de l’agrégat</td>
+</tr>
+<tr class="odd">
+<td><strong>Intervalle de crédibilité</strong></td>
+<td>l’incertitude d’un chiffre <strong>modélisé</strong> (WorldPop)</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="pour-aller-plus-loin" class="level2">
+<h2 class="anchored" data-anchor-id="pour-aller-plus-loin">13. Pour aller plus loin</h2>
+<ul>
+<li><strong><code>demo_formateur_J02.qmd</code></strong> (ce dossier) : la démonstration complète sous RStudio — import des CSV WorldPop, grappes EDS géolocalisées, raster Sentinel-2, cartographie <code>tmap</code> et tableau de bord national.</li>
+<li><strong><code>script_etudiant_J02.R</code></strong> : la trame à trous à compléter en salle ; <strong><code>script_etudiant_J02_corrige.R</code></strong> : le corrigé.</li>
+<li><strong>J03 — L’univers vectoriel</strong> : lecture de couches, prédicats spatiaux, jointures attributaires et spatiales. Tout ce que cette page effleure y est repris en détail, et entièrement exécutable dans le navigateur.</li>
+</ul>
+<p><a href="../INDEX.html">← Retour à l’accueil</a></p>
+
+
+<!-- -->
+
+<script type="webr-data">
+eyJvcHRpb25zIjp7ImJhc2VVcmwiOiJodHRwczovL3dlYnIuci13YXNtLm9yZy92MC42LjAvIn0sInBhY2thZ2VzIjp7InBrZ3MiOlsiZXZhbHVhdGUiLCJrbml0ciIsImh0bWx0b29scyIsInNmIiwiZ2dwbG90MiIsImRwbHlyIiwidGlkeXIiLCJ0aWJibGUiXSwicmVwb3MiOltdfSwicmVuZGVyX2RmIjoiZGVmYXVsdCJ9
+</script>
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W3siY2VsbE5hbWUiOiJ3ZWJyLXdpZGdldC0xNSIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IntcbiAgLy8gV2FpdCBmb3Igb3V0cHV0IHRvIGJlIHdyaXR0ZW4gdG8gdGhlIERPTSwgdGhlbiB0cmlnZ2VyIHdpZGdldCByZW5kZXJpbmdcbiAgYXdhaXQgX3dlYnJfdmFsdWVfMTU7XG4gIGlmICh3aW5kb3cuSFRNTFdpZGdldHMpIHtcbiAgICB3aW5kb3cuSFRNTFdpZGdldHMuc3RhdGljUmVuZGVyKCk7XG4gIH1cbiAgaWYgKHdpbmRvdy5QYWdlZFRhYmxlRG9jKSB7XG4gICAgd2luZG93LlBhZ2VkVGFibGVEb2MuaW5pdEFsbCgpO1xuICB9XG59XG4ifSx7ImNlbGxOYW1lIjoid2Vici0xNSIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJzb3VyY2UiOiJ2aWV3b2YgX3dlYnJfZWRpdG9yXzE1ID0ge1xuICBjb25zdCB7IFdlYlJFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuICBjb25zdCBzY3JpcHRDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcIndlYnItMTUtY29udGVudHNcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBibG9jayA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKHNjcmlwdENvbnRlbnQpKTtcblxuICBjb25zdCBvcHRpb25zID0gT2JqZWN0LmFzc2lnbih7IGlkOiBgd2Vici0xNS1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBXZWJSRXhlcmNpc2VFZGl0b3Iod2ViUk9qcy53ZWJSUHJvbWlzZSwgYmxvY2suY29kZSwgb3B0aW9ucyk7XG5cbiAgcmV0dXJuIGVkaXRvci5jb250YWluZXI7XG59XG5fd2Vicl92YWx1ZV8xNSA9IHdlYlJPanMucHJvY2Vzcyhfd2Vicl9lZGl0b3JfMTUsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLXdpZGdldC0xNCIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IntcbiAgLy8gV2FpdCBmb3Igb3V0cHV0IHRvIGJlIHdyaXR0ZW4gdG8gdGhlIERPTSwgdGhlbiB0cmlnZ2VyIHdpZGdldCByZW5kZXJpbmdcbiAgYXdhaXQgX3dlYnJfdmFsdWVfMTQ7XG4gIGlmICh3aW5kb3cuSFRNTFdpZGdldHMpIHtcbiAgICB3aW5kb3cuSFRNTFdpZGdldHMuc3RhdGljUmVuZGVyKCk7XG4gIH1cbiAgaWYgKHdpbmRvdy5QYWdlZFRhYmxlRG9jKSB7XG4gICAgd2luZG93LlBhZ2VkVGFibGVEb2MuaW5pdEFsbCgpO1xuICB9XG59XG4ifSx7ImNlbGxOYW1lIjoid2Vici0xNCIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJzb3VyY2UiOiJ2aWV3b2YgX3dlYnJfZWRpdG9yXzE0ID0ge1xuICBjb25zdCB7IFdlYlJFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuICBjb25zdCBzY3JpcHRDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcIndlYnItMTQtY29udGVudHNcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBibG9jayA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKHNjcmlwdENvbnRlbnQpKTtcblxuICBjb25zdCBvcHRpb25zID0gT2JqZWN0LmFzc2lnbih7IGlkOiBgd2Vici0xNC1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBXZWJSRXhlcmNpc2VFZGl0b3Iod2ViUk9qcy53ZWJSUHJvbWlzZSwgYmxvY2suY29kZSwgb3B0aW9ucyk7XG5cbiAgcmV0dXJuIGVkaXRvci5jb250YWluZXI7XG59XG5fd2Vicl92YWx1ZV8xNCA9IHdlYlJPanMucHJvY2Vzcyhfd2Vicl9lZGl0b3JfMTQsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLXdpZGdldC0xMyIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IntcbiAgLy8gV2FpdCBmb3Igb3V0cHV0IHRvIGJlIHdyaXR0ZW4gdG8gdGhlIERPTSwgdGhlbiB0cmlnZ2VyIHdpZGdldCByZW5kZXJpbmdcbiAgYXdhaXQgX3dlYnJfdmFsdWVfMTM7XG4gIGlmICh3aW5kb3cuSFRNTFdpZGdldHMpIHtcbiAgICB3aW5kb3cuSFRNTFdpZGdldHMuc3RhdGljUmVuZGVyKCk7XG4gIH1cbiAgaWYgKHdpbmRvdy5QYWdlZFRhYmxlRG9jKSB7XG4gICAgd2luZG93LlBhZ2VkVGFibGVEb2MuaW5pdEFsbCgpO1xuICB9XG59XG4ifSx7ImNlbGxOYW1lIjoid2Vici0xMyIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJzb3VyY2UiOiJ2aWV3b2YgX3dlYnJfZWRpdG9yXzEzID0ge1xuICBjb25zdCB7IFdlYlJFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuICBjb25zdCBzY3JpcHRDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcIndlYnItMTMtY29udGVudHNcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBibG9jayA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKHNjcmlwdENvbnRlbnQpKTtcblxuICBjb25zdCBvcHRpb25zID0gT2JqZWN0LmFzc2lnbih7IGlkOiBgd2Vici0xMy1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBXZWJSRXhlcmNpc2VFZGl0b3Iod2ViUk9qcy53ZWJSUHJvbWlzZSwgYmxvY2suY29kZSwgb3B0aW9ucyk7XG5cbiAgcmV0dXJuIGVkaXRvci5jb250YWluZXI7XG59XG5fd2Vicl92YWx1ZV8xMyA9IHdlYlJPanMucHJvY2Vzcyhfd2Vicl9lZGl0b3JfMTMsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLXdpZGdldC0xMiIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IntcbiAgLy8gV2FpdCBmb3Igb3V0cHV0IHRvIGJlIHdyaXR0ZW4gdG8gdGhlIERPTSwgdGhlbiB0cmlnZ2VyIHdpZGdldCByZW5kZXJpbmdcbiAgYXdhaXQgX3dlYnJfdmFsdWVfMTI7XG4gIGlmICh3aW5kb3cuSFRNTFdpZGdldHMpIHtcbiAgICB3aW5kb3cuSFRNTFdpZGdldHMuc3RhdGljUmVuZGVyKCk7XG4gIH1cbiAgaWYgKHdpbmRvdy5QYWdlZFRhYmxlRG9jKSB7XG4gICAgd2luZG93LlBhZ2VkVGFibGVEb2MuaW5pdEFsbCgpO1xuICB9XG59XG4ifSx7ImNlbGxOYW1lIjoid2Vici0xMiIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJzb3VyY2UiOiJ2aWV3b2YgX3dlYnJfZWRpdG9yXzEyID0ge1xuICBjb25zdCB7IFdlYlJFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuICBjb25zdCBzY3JpcHRDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcIndlYnItMTItY29udGVudHNcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBibG9jayA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKHNjcmlwdENvbnRlbnQpKTtcblxuICBjb25zdCBvcHRpb25zID0gT2JqZWN0LmFzc2lnbih7IGlkOiBgd2Vici0xMi1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBXZWJSRXhlcmNpc2VFZGl0b3Iod2ViUk9qcy53ZWJSUHJvbWlzZSwgYmxvY2suY29kZSwgb3B0aW9ucyk7XG5cbiAgcmV0dXJuIGVkaXRvci5jb250YWluZXI7XG59XG5fd2Vicl92YWx1ZV8xMiA9IHdlYlJPanMucHJvY2Vzcyhfd2Vicl9lZGl0b3JfMTIsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLXdpZGdldC0xMSIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IntcbiAgLy8gV2FpdCBmb3Igb3V0cHV0IHRvIGJlIHdyaXR0ZW4gdG8gdGhlIERPTSwgdGhlbiB0cmlnZ2VyIHdpZGdldCByZW5kZXJpbmdcbiAgYXdhaXQgX3dlYnJfdmFsdWVfMTE7XG4gIGlmICh3aW5kb3cuSFRNTFdpZGdldHMpIHtcbiAgICB3aW5kb3cuSFRNTFdpZGdldHMuc3RhdGljUmVuZGVyKCk7XG4gIH1cbiAgaWYgKHdpbmRvdy5QYWdlZFRhYmxlRG9jKSB7XG4gICAgd2luZG93LlBhZ2VkVGFibGVEb2MuaW5pdEFsbCgpO1xuICB9XG59XG4ifSx7ImNlbGxOYW1lIjoid2Vici0xMSIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJzb3VyY2UiOiJ2aWV3b2YgX3dlYnJfZWRpdG9yXzExID0ge1xuICBjb25zdCB7IFdlYlJFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuICBjb25zdCBzY3JpcHRDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcIndlYnItMTEtY29udGVudHNcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBibG9jayA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKHNjcmlwdENvbnRlbnQpKTtcblxuICBjb25zdCBvcHRpb25zID0gT2JqZWN0LmFzc2lnbih7IGlkOiBgd2Vici0xMS1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBXZWJSRXhlcmNpc2VFZGl0b3Iod2ViUk9qcy53ZWJSUHJvbWlzZSwgYmxvY2suY29kZSwgb3B0aW9ucyk7XG5cbiAgcmV0dXJuIGVkaXRvci5jb250YWluZXI7XG59XG5fd2Vicl92YWx1ZV8xMSA9IHdlYlJPanMucHJvY2Vzcyhfd2Vicl9lZGl0b3JfMTEsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLXdpZGdldC0xMCIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IntcbiAgLy8gV2FpdCBmb3Igb3V0cHV0IHRvIGJlIHdyaXR0ZW4gdG8gdGhlIERPTSwgdGhlbiB0cmlnZ2VyIHdpZGdldCByZW5kZXJpbmdcbiAgYXdhaXQgX3dlYnJfdmFsdWVfMTA7XG4gIGlmICh3aW5kb3cuSFRNTFdpZGdldHMpIHtcbiAgICB3aW5kb3cuSFRNTFdpZGdldHMuc3RhdGljUmVuZGVyKCk7XG4gIH1cbiAgaWYgKHdpbmRvdy5QYWdlZFRhYmxlRG9jKSB7XG4gICAgd2luZG93LlBhZ2VkVGFibGVEb2MuaW5pdEFsbCgpO1xuICB9XG59XG4ifSx7ImNlbGxOYW1lIjoid2Vici0xMCIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJzb3VyY2UiOiJ2aWV3b2YgX3dlYnJfZWRpdG9yXzEwID0ge1xuICBjb25zdCB7IFdlYlJFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuICBjb25zdCBzY3JpcHRDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcIndlYnItMTAtY29udGVudHNcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBibG9jayA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKHNjcmlwdENvbnRlbnQpKTtcblxuICBjb25zdCBvcHRpb25zID0gT2JqZWN0LmFzc2lnbih7IGlkOiBgd2Vici0xMC1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBXZWJSRXhlcmNpc2VFZGl0b3Iod2ViUk9qcy53ZWJSUHJvbWlzZSwgYmxvY2suY29kZSwgb3B0aW9ucyk7XG5cbiAgcmV0dXJuIGVkaXRvci5jb250YWluZXI7XG59XG5fd2Vicl92YWx1ZV8xMCA9IHdlYlJPanMucHJvY2Vzcyhfd2Vicl9lZGl0b3JfMTAsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLXdpZGdldC05IiwiaW5saW5lIjpmYWxzZSwibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoie1xuICAvLyBXYWl0IGZvciBvdXRwdXQgdG8gYmUgd3JpdHRlbiB0byB0aGUgRE9NLCB0aGVuIHRyaWdnZXIgd2lkZ2V0IHJlbmRlcmluZ1xuICBhd2FpdCBfd2Vicl92YWx1ZV85O1xuICBpZiAod2luZG93LkhUTUxXaWRnZXRzKSB7XG4gICAgd2luZG93LkhUTUxXaWRnZXRzLnN0YXRpY1JlbmRlcigpO1xuICB9XG4gIGlmICh3aW5kb3cuUGFnZWRUYWJsZURvYykge1xuICAgIHdpbmRvdy5QYWdlZFRhYmxlRG9jLmluaXRBbGwoKTtcbiAgfVxufVxuIn0seyJjZWxsTmFtZSI6IndlYnItOSIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJzb3VyY2UiOiJ2aWV3b2YgX3dlYnJfZWRpdG9yXzkgPSB7XG4gIGNvbnN0IHsgV2ViUkV4ZXJjaXNlRWRpdG9yLCBiNjREZWNvZGUgfSA9IHdpbmRvdy5fZXhlcmNpc2Vfb2pzX3J1bnRpbWU7XG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwid2Vici05LWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHdlYnItOS1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBXZWJSRXhlcmNpc2VFZGl0b3Iod2ViUk9qcy53ZWJSUHJvbWlzZSwgYmxvY2suY29kZSwgb3B0aW9ucyk7XG5cbiAgcmV0dXJuIGVkaXRvci5jb250YWluZXI7XG59XG5fd2Vicl92YWx1ZV85ID0gd2ViUk9qcy5wcm9jZXNzKF93ZWJyX2VkaXRvcl85LCB7fSk7XG4ifSx7ImNlbGxOYW1lIjoid2Vici13aWRnZXQtOCIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IntcbiAgLy8gV2FpdCBmb3Igb3V0cHV0IHRvIGJlIHdyaXR0ZW4gdG8gdGhlIERPTSwgdGhlbiB0cmlnZ2VyIHdpZGdldCByZW5kZXJpbmdcbiAgYXdhaXQgX3dlYnJfdmFsdWVfODtcbiAgaWYgKHdpbmRvdy5IVE1MV2lkZ2V0cykge1xuICAgIHdpbmRvdy5IVE1MV2lkZ2V0cy5zdGF0aWNSZW5kZXIoKTtcbiAgfVxuICBpZiAod2luZG93LlBhZ2VkVGFibGVEb2MpIHtcbiAgICB3aW5kb3cuUGFnZWRUYWJsZURvYy5pbml0QWxsKCk7XG4gIH1cbn1cbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLTgiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF93ZWJyX2VkaXRvcl84ID0ge1xuICBjb25zdCB7IFdlYlJFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuICBjb25zdCBzY3JpcHRDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcIndlYnItOC1jb250ZW50c1xcXCJdYCkudGV4dENvbnRlbnQ7XG4gIGNvbnN0IGJsb2NrID0gSlNPTi5wYXJzZShiNjREZWNvZGUoc2NyaXB0Q29udGVudCkpO1xuXG4gIGNvbnN0IG9wdGlvbnMgPSBPYmplY3QuYXNzaWduKHsgaWQ6IGB3ZWJyLTgtY29udGVudHNgIH0sIGJsb2NrLmF0dHIpO1xuICBjb25zdCBlZGl0b3IgPSBuZXcgV2ViUkV4ZXJjaXNlRWRpdG9yKHdlYlJPanMud2ViUlByb21pc2UsIGJsb2NrLmNvZGUsIG9wdGlvbnMpO1xuXG4gIHJldHVybiBlZGl0b3IuY29udGFpbmVyO1xufVxuX3dlYnJfdmFsdWVfOCA9IHdlYlJPanMucHJvY2Vzcyhfd2Vicl9lZGl0b3JfOCwge30pO1xuIn0seyJjZWxsTmFtZSI6IndlYnItd2lkZ2V0LTciLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJ7XG4gIC8vIFdhaXQgZm9yIG91dHB1dCB0byBiZSB3cml0dGVuIHRvIHRoZSBET00sIHRoZW4gdHJpZ2dlciB3aWRnZXQgcmVuZGVyaW5nXG4gIGF3YWl0IF93ZWJyX3ZhbHVlXzc7XG4gIGlmICh3aW5kb3cuSFRNTFdpZGdldHMpIHtcbiAgICB3aW5kb3cuSFRNTFdpZGdldHMuc3RhdGljUmVuZGVyKCk7XG4gIH1cbiAgaWYgKHdpbmRvdy5QYWdlZFRhYmxlRG9jKSB7XG4gICAgd2luZG93LlBhZ2VkVGFibGVEb2MuaW5pdEFsbCgpO1xuICB9XG59XG4ifSx7ImNlbGxOYW1lIjoid2Vici03IiwiaW5saW5lIjpmYWxzZSwibWV0aG9kTmFtZSI6ImludGVycHJldCIsInNvdXJjZSI6InZpZXdvZiBfd2Vicl9lZGl0b3JfNyA9IHtcbiAgY29uc3QgeyBXZWJSRXhlcmNpc2VFZGl0b3IsIGI2NERlY29kZSB9ID0gd2luZG93Ll9leGVyY2lzZV9vanNfcnVudGltZTtcbiAgY29uc3Qgc2NyaXB0Q29udGVudCA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoYHNjcmlwdFt0eXBlPVxcXCJ3ZWJyLTctY29udGVudHNcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBibG9jayA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKHNjcmlwdENvbnRlbnQpKTtcblxuICBjb25zdCBvcHRpb25zID0gT2JqZWN0LmFzc2lnbih7IGlkOiBgd2Vici03LWNvbnRlbnRzYCB9LCBibG9jay5hdHRyKTtcbiAgY29uc3QgZWRpdG9yID0gbmV3IFdlYlJFeGVyY2lzZUVkaXRvcih3ZWJST2pzLndlYlJQcm9taXNlLCBibG9jay5jb2RlLCBvcHRpb25zKTtcblxuICByZXR1cm4gZWRpdG9yLmNvbnRhaW5lcjtcbn1cbl93ZWJyX3ZhbHVlXzcgPSB3ZWJST2pzLnByb2Nlc3MoX3dlYnJfZWRpdG9yXzcsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLXdpZGdldC02IiwiaW5saW5lIjpmYWxzZSwibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoie1xuICAvLyBXYWl0IGZvciBvdXRwdXQgdG8gYmUgd3JpdHRlbiB0byB0aGUgRE9NLCB0aGVuIHRyaWdnZXIgd2lkZ2V0IHJlbmRlcmluZ1xuICBhd2FpdCBfd2Vicl92YWx1ZV82O1xuICBpZiAod2luZG93LkhUTUxXaWRnZXRzKSB7XG4gICAgd2luZG93LkhUTUxXaWRnZXRzLnN0YXRpY1JlbmRlcigpO1xuICB9XG4gIGlmICh3aW5kb3cuUGFnZWRUYWJsZURvYykge1xuICAgIHdpbmRvdy5QYWdlZFRhYmxlRG9jLmluaXRBbGwoKTtcbiAgfVxufVxuIn0seyJjZWxsTmFtZSI6IndlYnItNiIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJzb3VyY2UiOiJ2aWV3b2YgX3dlYnJfZWRpdG9yXzYgPSB7XG4gIGNvbnN0IHsgV2ViUkV4ZXJjaXNlRWRpdG9yLCBiNjREZWNvZGUgfSA9IHdpbmRvdy5fZXhlcmNpc2Vfb2pzX3J1bnRpbWU7XG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwid2Vici02LWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHdlYnItNi1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBXZWJSRXhlcmNpc2VFZGl0b3Iod2ViUk9qcy53ZWJSUHJvbWlzZSwgYmxvY2suY29kZSwgb3B0aW9ucyk7XG5cbiAgcmV0dXJuIGVkaXRvci5jb250YWluZXI7XG59XG5fd2Vicl92YWx1ZV82ID0gd2ViUk9qcy5wcm9jZXNzKF93ZWJyX2VkaXRvcl82LCB7fSk7XG4ifSx7ImNlbGxOYW1lIjoid2Vici13aWRnZXQtNSIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IntcbiAgLy8gV2FpdCBmb3Igb3V0cHV0IHRvIGJlIHdyaXR0ZW4gdG8gdGhlIERPTSwgdGhlbiB0cmlnZ2VyIHdpZGdldCByZW5kZXJpbmdcbiAgYXdhaXQgX3dlYnJfdmFsdWVfNTtcbiAgaWYgKHdpbmRvdy5IVE1MV2lkZ2V0cykge1xuICAgIHdpbmRvdy5IVE1MV2lkZ2V0cy5zdGF0aWNSZW5kZXIoKTtcbiAgfVxuICBpZiAod2luZG93LlBhZ2VkVGFibGVEb2MpIHtcbiAgICB3aW5kb3cuUGFnZWRUYWJsZURvYy5pbml0QWxsKCk7XG4gIH1cbn1cbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLTUiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF93ZWJyX2VkaXRvcl81ID0ge1xuICBjb25zdCB7IFdlYlJFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuICBjb25zdCBzY3JpcHRDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcIndlYnItNS1jb250ZW50c1xcXCJdYCkudGV4dENvbnRlbnQ7XG4gIGNvbnN0IGJsb2NrID0gSlNPTi5wYXJzZShiNjREZWNvZGUoc2NyaXB0Q29udGVudCkpO1xuXG4gIGNvbnN0IG9wdGlvbnMgPSBPYmplY3QuYXNzaWduKHsgaWQ6IGB3ZWJyLTUtY29udGVudHNgIH0sIGJsb2NrLmF0dHIpO1xuICBjb25zdCBlZGl0b3IgPSBuZXcgV2ViUkV4ZXJjaXNlRWRpdG9yKHdlYlJPanMud2ViUlByb21pc2UsIGJsb2NrLmNvZGUsIG9wdGlvbnMpO1xuXG4gIHJldHVybiBlZGl0b3IuY29udGFpbmVyO1xufVxuX3dlYnJfdmFsdWVfNSA9IHdlYlJPanMucHJvY2Vzcyhfd2Vicl9lZGl0b3JfNSwge30pO1xuIn0seyJjZWxsTmFtZSI6IndlYnItd2lkZ2V0LTQiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJ7XG4gIC8vIFdhaXQgZm9yIG91dHB1dCB0byBiZSB3cml0dGVuIHRvIHRoZSBET00sIHRoZW4gdHJpZ2dlciB3aWRnZXQgcmVuZGVyaW5nXG4gIGF3YWl0IF93ZWJyX3ZhbHVlXzQ7XG4gIGlmICh3aW5kb3cuSFRNTFdpZGdldHMpIHtcbiAgICB3aW5kb3cuSFRNTFdpZGdldHMuc3RhdGljUmVuZGVyKCk7XG4gIH1cbiAgaWYgKHdpbmRvdy5QYWdlZFRhYmxlRG9jKSB7XG4gICAgd2luZG93LlBhZ2VkVGFibGVEb2MuaW5pdEFsbCgpO1xuICB9XG59XG4ifSx7ImNlbGxOYW1lIjoid2Vici00IiwiaW5saW5lIjpmYWxzZSwibWV0aG9kTmFtZSI6ImludGVycHJldCIsInNvdXJjZSI6InZpZXdvZiBfd2Vicl9lZGl0b3JfNCA9IHtcbiAgY29uc3QgeyBXZWJSRXhlcmNpc2VFZGl0b3IsIGI2NERlY29kZSB9ID0gd2luZG93Ll9leGVyY2lzZV9vanNfcnVudGltZTtcbiAgY29uc3Qgc2NyaXB0Q29udGVudCA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoYHNjcmlwdFt0eXBlPVxcXCJ3ZWJyLTQtY29udGVudHNcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBibG9jayA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKHNjcmlwdENvbnRlbnQpKTtcblxuICBjb25zdCBvcHRpb25zID0gT2JqZWN0LmFzc2lnbih7IGlkOiBgd2Vici00LWNvbnRlbnRzYCB9LCBibG9jay5hdHRyKTtcbiAgY29uc3QgZWRpdG9yID0gbmV3IFdlYlJFeGVyY2lzZUVkaXRvcih3ZWJST2pzLndlYlJQcm9taXNlLCBibG9jay5jb2RlLCBvcHRpb25zKTtcblxuICByZXR1cm4gZWRpdG9yLmNvbnRhaW5lcjtcbn1cbl93ZWJyX3ZhbHVlXzQgPSB3ZWJST2pzLnByb2Nlc3MoX3dlYnJfZWRpdG9yXzQsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLXdpZGdldC0zIiwiaW5saW5lIjpmYWxzZSwibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoie1xuICAvLyBXYWl0IGZvciBvdXRwdXQgdG8gYmUgd3JpdHRlbiB0byB0aGUgRE9NLCB0aGVuIHRyaWdnZXIgd2lkZ2V0IHJlbmRlcmluZ1xuICBhd2FpdCBfd2Vicl92YWx1ZV8zO1xuICBpZiAod2luZG93LkhUTUxXaWRnZXRzKSB7XG4gICAgd2luZG93LkhUTUxXaWRnZXRzLnN0YXRpY1JlbmRlcigpO1xuICB9XG4gIGlmICh3aW5kb3cuUGFnZWRUYWJsZURvYykge1xuICAgIHdpbmRvdy5QYWdlZFRhYmxlRG9jLmluaXRBbGwoKTtcbiAgfVxufVxuIn0seyJjZWxsTmFtZSI6IndlYnItMyIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJzb3VyY2UiOiJ2aWV3b2YgX3dlYnJfZWRpdG9yXzMgPSB7XG4gIGNvbnN0IHsgV2ViUkV4ZXJjaXNlRWRpdG9yLCBiNjREZWNvZGUgfSA9IHdpbmRvdy5fZXhlcmNpc2Vfb2pzX3J1bnRpbWU7XG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwid2Vici0zLWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHdlYnItMy1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBXZWJSRXhlcmNpc2VFZGl0b3Iod2ViUk9qcy53ZWJSUHJvbWlzZSwgYmxvY2suY29kZSwgb3B0aW9ucyk7XG5cbiAgcmV0dXJuIGVkaXRvci5jb250YWluZXI7XG59XG5fd2Vicl92YWx1ZV8zID0gd2ViUk9qcy5wcm9jZXNzKF93ZWJyX2VkaXRvcl8zLCB7fSk7XG4ifSx7ImNlbGxOYW1lIjoid2Vici13aWRnZXQtMiIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IntcbiAgLy8gV2FpdCBmb3Igb3V0cHV0IHRvIGJlIHdyaXR0ZW4gdG8gdGhlIERPTSwgdGhlbiB0cmlnZ2VyIHdpZGdldCByZW5kZXJpbmdcbiAgYXdhaXQgX3dlYnJfdmFsdWVfMjtcbiAgaWYgKHdpbmRvdy5IVE1MV2lkZ2V0cykge1xuICAgIHdpbmRvdy5IVE1MV2lkZ2V0cy5zdGF0aWNSZW5kZXIoKTtcbiAgfVxuICBpZiAod2luZG93LlBhZ2VkVGFibGVEb2MpIHtcbiAgICB3aW5kb3cuUGFnZWRUYWJsZURvYy5pbml0QWxsKCk7XG4gIH1cbn1cbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLTIiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF93ZWJyX2VkaXRvcl8yID0ge1xuICBjb25zdCB7IFdlYlJFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuICBjb25zdCBzY3JpcHRDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcIndlYnItMi1jb250ZW50c1xcXCJdYCkudGV4dENvbnRlbnQ7XG4gIGNvbnN0IGJsb2NrID0gSlNPTi5wYXJzZShiNjREZWNvZGUoc2NyaXB0Q29udGVudCkpO1xuXG4gIGNvbnN0IG9wdGlvbnMgPSBPYmplY3QuYXNzaWduKHsgaWQ6IGB3ZWJyLTItY29udGVudHNgIH0sIGJsb2NrLmF0dHIpO1xuICBjb25zdCBlZGl0b3IgPSBuZXcgV2ViUkV4ZXJjaXNlRWRpdG9yKHdlYlJPanMud2ViUlByb21pc2UsIGJsb2NrLmNvZGUsIG9wdGlvbnMpO1xuXG4gIHJldHVybiBlZGl0b3IuY29udGFpbmVyO1xufVxuX3dlYnJfdmFsdWVfMiA9IHdlYlJPanMucHJvY2Vzcyhfd2Vicl9lZGl0b3JfMiwge30pO1xuIn0seyJjZWxsTmFtZSI6IndlYnItd2lkZ2V0LTEiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJ7XG4gIC8vIFdhaXQgZm9yIG91dHB1dCB0byBiZSB3cml0dGVuIHRvIHRoZSBET00sIHRoZW4gdHJpZ2dlciB3aWRnZXQgcmVuZGVyaW5nXG4gIGF3YWl0IF93ZWJyX3ZhbHVlXzE7XG4gIGlmICh3aW5kb3cuSFRNTFdpZGdldHMpIHtcbiAgICB3aW5kb3cuSFRNTFdpZGdldHMuc3RhdGljUmVuZGVyKCk7XG4gIH1cbiAgaWYgKHdpbmRvdy5QYWdlZFRhYmxlRG9jKSB7XG4gICAgd2luZG93LlBhZ2VkVGFibGVEb2MuaW5pdEFsbCgpO1xuICB9XG59XG4ifSx7ImNlbGxOYW1lIjoid2Vici0xIiwiaW5saW5lIjpmYWxzZSwibWV0aG9kTmFtZSI6ImludGVycHJldCIsInNvdXJjZSI6InZpZXdvZiBfd2Vicl9lZGl0b3JfMSA9IHtcbiAgY29uc3QgeyBXZWJSRXhlcmNpc2VFZGl0b3IsIGI2NERlY29kZSB9ID0gd2luZG93Ll9leGVyY2lzZV9vanNfcnVudGltZTtcbiAgY29uc3Qgc2NyaXB0Q29udGVudCA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoYHNjcmlwdFt0eXBlPVxcXCJ3ZWJyLTEtY29udGVudHNcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBibG9jayA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKHNjcmlwdENvbnRlbnQpKTtcblxuICBjb25zdCBvcHRpb25zID0gT2JqZWN0LmFzc2lnbih7IGlkOiBgd2Vici0xLWNvbnRlbnRzYCB9LCBibG9jay5hdHRyKTtcbiAgY29uc3QgZWRpdG9yID0gbmV3IFdlYlJFeGVyY2lzZUVkaXRvcih3ZWJST2pzLndlYlJQcm9taXNlLCBibG9jay5jb2RlLCBvcHRpb25zKTtcblxuICByZXR1cm4gZWRpdG9yLmNvbnRhaW5lcjtcbn1cbl93ZWJyX3ZhbHVlXzEgPSB3ZWJST2pzLnByb2Nlc3MoX3dlYnJfZWRpdG9yXzEsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLXByZWx1ZGUiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJ3ZWJST2pzID0ge1xuICBjb25zdCB7IFdlYlIsIENoYW5uZWxUeXBlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lLldlYlI7XG4gIGNvbnN0IHtcbiAgICBXZWJSRXZhbHVhdG9yLFxuICAgIFdlYlJFbnZpcm9ubWVudE1hbmFnZXIsXG4gICAgc2V0dXBSLFxuICAgIGI2NERlY29kZSxcbiAgICBjb2xsYXBzZVBhdGhcbiAgfSA9IHdpbmRvdy5fZXhlcmNpc2Vfb2pzX3J1bnRpbWU7XG5cbiAgY29uc3Qgc3RhdHVzQ29udGFpbmVyID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoXCJleGVyY2lzZS1sb2FkaW5nLXN0YXR1c1wiKTtcbiAgY29uc3QgaW5kaWNhdG9yQ29udGFpbmVyID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoXCJleGVyY2lzZS1sb2FkaW5nLWluZGljYXRvclwiKTtcbiAgaW5kaWNhdG9yQ29udGFpbmVyLmNsYXNzTGlzdC5yZW1vdmUoXCJkLW5vbmVcIik7XG5cbiAgbGV0IHN0YXR1c1RleHQgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KFwiZGl2XCIpXG4gIHN0YXR1c1RleHQuY2xhc3NMaXN0ID0gXCJleGVyY2lzZS1sb2FkaW5nLWRldGFpbHNcIjtcbiAgc3RhdHVzVGV4dCA9IHN0YXR1c0NvbnRhaW5lci5hcHBlbmRDaGlsZChzdGF0dXNUZXh0KTtcbiAgc3RhdHVzVGV4dC50ZXh0Q29udGVudCA9IGBJbml0aWFsaXNlYDtcblxuICAvLyBIb2lzdCBpbmRpY2F0b3Igb3V0IGZyb20gZmluYWwgc2xpZGUgd2hlbiBydW5uaW5nIHVuZGVyIHJldmVhbFxuICBjb25zdCByZXZlYWxTdGF0dXMgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKFwiLnJldmVhbCAuZXhlcmNpc2UtbG9hZGluZy1pbmRpY2F0b3JcIik7XG4gIGlmIChyZXZlYWxTdGF0dXMpIHtcbiAgICByZXZlYWxTdGF0dXMucmVtb3ZlKCk7XG4gICAgZG9jdW1lbnQucXVlcnlTZWxlY3RvcihcIi5yZXZlYWwgPiAuc2xpZGVzXCIpLmFwcGVuZENoaWxkKHJldmVhbFN0YXR1cyk7XG4gIH1cblxuICAvLyBNYWtlIGFueSByZXZlYWwgc2xpZGVzIHdpdGggbGl2ZSBjZWxscyBzY3JvbGxhYmxlXG4gIGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3JBbGwoXCIucmV2ZWFsIC5leGVyY2lzZS1jZWxsXCIpLmZvckVhY2goKGVsKSA9PiB7XG4gICAgZWwuY2xvc2VzdCgnc2VjdGlvbi5zbGlkZScpLmNsYXNzTGlzdC5hZGQoXCJzY3JvbGxhYmxlXCIpO1xuICB9KVxuXG4gIC8vIHdlYlIgc3VwcGxlbWVudGFsIGRhdGEgYW5kIG9wdGlvbnNcbiAgY29uc3QgZGF0YUNvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwid2Vici1kYXRhXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgZGF0YSA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKGRhdGFDb250ZW50KSk7XG5cbiAgLy8gR3JhYiBsaXN0IG9mIHJlc291cmNlcyB0byBiZSBkb3dubG9hZGVkXG4gIGNvbnN0IGZpbGVzQ29udGVudCA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoYHNjcmlwdFt0eXBlPVxcXCJ2ZnMtZmlsZVxcXCJdYCkudGV4dENvbnRlbnQ7XG4gIGNvbnN0IGZpbGVzID0gSlNPTi5wYXJzZShiNjREZWNvZGUoZmlsZXNDb250ZW50KSk7XG5cbiAgLy8gSW5pdGlhbGlzZSB3ZWJSIGFuZCBzZXR1cCBmb3IgUiBjb2RlIGV2YWx1YXRpb25cbiAgbGV0IHdlYlJQcm9taXNlID0gKGFzeW5jICh3ZWJSKSA9PiB7XG4gICAgc3RhdHVzVGV4dC50ZXh0Q29udGVudCA9IGBEb3dubG9hZGluZyB3ZWJSYDtcbiAgICBhd2FpdCB3ZWJSLmluaXQoKTtcblxuICAgIC8vIEluc3RhbGwgcHJvdmlkZWQgbGlzdCBvZiBwYWNrYWdlc1xuICAgIC8vIEVuc3VyZSB3ZWJSIGRlZmF1bHQgcmVwbyBpcyBpbmNsdWRlZFxuICAgIGRhdGEucGFja2FnZXMucmVwb3MucHVzaChcImh0dHBzOi8vcmVwby5yLXdhc20ub3JnXCIpXG4gICAgYXdhaXQgZGF0YS5wYWNrYWdlcy5wa2dzLm1hcCgocGtnKSA9PiAoKSA9PiB7XG4gICAgICBzdGF0dXNUZXh0LnRleHRDb250ZW50ID0gYERvd25sb2FkaW5nIHBhY2thZ2U6ICR7cGtnfWA7XG4gICAgICByZXR1cm4gd2ViUi5ldmFsUlZvaWQoYFxuICAgICAgICB3ZWJyOjppbnN0YWxsKHBrZywgcmVwb3MgPSByZXBvcylcbiAgICAgICAgbGlicmFyeShwa2csIGNoYXJhY3Rlci5vbmx5ID0gVFJVRSlcbiAgICAgIGAsIHsgZW52OiB7XG4gICAgICAgIHBrZzogcGtnLFxuICAgICAgICByZXBvczogZGF0YS5wYWNrYWdlcy5yZXBvcyxcbiAgICAgIH19KTtcbiAgICB9KS5yZWR1Y2UoKGN1ciwgbmV4dCkgPT4gY3VyLnRoZW4obmV4dCksIFByb21pc2UucmVzb2x2ZSgpKTtcblxuICAgIC8vIERvd25sb2FkIGFuZCBpbnN0YWxsIHJlc291cmNlc1xuICAgIGF3YWl0IGZpbGVzLm1hcCgoZmlsZSkgPT4gYXN5bmMgKCkgPT4ge1xuICAgICAgY29uc3QgbmFtZSA9IGZpbGUuc3Vic3RyaW5nKGZpbGUubGFzdEluZGV4T2YoJy8nKSArIDEpO1xuICAgICAgc3RhdHVzVGV4dC50ZXh0Q29udGVudCA9IGBEb3dubG9hZGluZyByZXNvdXJjZTogJHtuYW1lfWA7XG4gICAgICBjb25zdCByZXNwb25zZSA9IGF3YWl0IGZldGNoKGZpbGUpO1xuICAgICAgaWYgKCFyZXNwb25zZS5vaykge1xuICAgICAgICB0aHJvdyBuZXcgRXJyb3IoYENhbid0IGRvd25sb2FkIFxcYCR7ZmlsZX1cXGAuIEVycm9yICR7cmVzcG9uc2Uuc3RhdHVzfTogXCIke3Jlc3BvbnNlLnN0YXR1c1RleHR9XCIuYCk7XG4gICAgICB9XG4gICAgICBjb25zdCBkYXRhID0gYXdhaXQgcmVzcG9uc2UuYXJyYXlCdWZmZXIoKTtcblxuICAgICAgLy8gU3RvcmUgVVJMcyBpbiB0aGUgY3dkIHdpdGhvdXQgYW55IHN1YmRpcmVjdG9yeSBzdHJ1Y3R1cmVcbiAgICAgIGlmIChmaWxlLmluY2x1ZGVzKFwiOi8vXCIpKSB7XG4gICAgICAgIGZpbGUgPSBuYW1lO1xuICAgICAgfVxuXG4gICAgICAvLyBDb2xsYXBzZSBoaWdoZXIgZGlyZWN0b3J5IHN0cnVjdHVyZVxuICAgICAgZmlsZSA9IGNvbGxhcHNlUGF0aChmaWxlKTtcblxuICAgICAgLy8gQ3JlYXRlIGRpcmVjdG9yeSB0cmVlLCBpZ25vcmluZyBcImRpcmVjdG9yeSBleGlzdHNcIiBWRlMgZXJyb3JzXG4gICAgICBjb25zdCBwYXJ0cyA9IGZpbGUuc3BsaXQoJy8nKS5zbGljZSgwLCAtMSk7XG4gICAgICBsZXQgcGF0aCA9ICcnO1xuICAgICAgd2hpbGUgKHBhcnRzLmxlbmd0aCA+IDApIHtcbiAgICAgICAgcGF0aCArPSBwYXJ0cy5zaGlmdCgpICsgJy8nO1xuICAgICAgICBjb25zdCBhbmFseXNpcyA9IGF3YWl0IHdlYlIuRlMuYW5hbHl6ZVBhdGgocGF0aCk7XG4gICAgICAgIGlmICghYW5hbHlzaXMuZXhpc3RzKSB7XG4gICAgICAgICAgdHJ5IHtcbiAgICAgICAgICAgIGF3YWl0IHdlYlIuRlMubWtkaXIocGF0aCk7XG4gICAgICAgICAgfSBjYXRjaCAoZSkge1xuICAgICAgICAgICAgdGhyb3cgbmV3IEVycm9yKGBGaWxlc3lzdGVtIEVycm9yOiBcIiR7ZS5tZXNzYWdlfVwiLmApO1xuICAgICAgICAgIH1cbiAgICAgICAgfVxuICAgICAgfVxuXG4gICAgICAvLyBXcml0ZSB0aGlzIGZpbGUgdG8gdGhlIFZGU1xuICAgICAgcmV0dXJuIGF3YWl0IHdlYlIuRlMud3JpdGVGaWxlKGZpbGUsIG5ldyBVaW50OEFycmF5KGRhdGEpKTtcbiAgICB9KS5yZWR1Y2UoKGN1ciwgbmV4dCkgPT4gY3VyLnRoZW4obmV4dCksIFByb21pc2UucmVzb2x2ZSgpKTtcblxuICAgIHN0YXR1c1RleHQudGV4dENvbnRlbnQgPSBgSW5zdGFsbGluZyB3ZWJSIHNoaW1zYDtcbiAgICBhd2FpdCB3ZWJSLmV2YWxSVm9pZChgd2Vicjo6c2hpbV9pbnN0YWxsKClgKTtcblxuICAgIHN0YXR1c1RleHQudGV4dENvbnRlbnQgPSBgV2ViUiBlbnZpcm9ubWVudCBzZXR1cGA7XG4gICAgYXdhaXQgc2V0dXBSKHdlYlIsIGRhdGEpO1xuXG4gICAgc3RhdHVzVGV4dC5yZW1vdmUoKTtcbiAgICBpZiAoc3RhdHVzQ29udGFpbmVyLmNoaWxkcmVuLmxlbmd0aCA9PSAwKSB7XG4gICAgICBzdGF0dXNDb250YWluZXIucGFyZW50Tm9kZS5yZW1vdmUoKTtcbiAgICB9XG4gICAgcmV0dXJuIHdlYlI7XG4gIH0pKG5ldyBXZWJSKGRhdGEub3B0aW9ucykpO1xuXG4gIC8vIEtlZXAgdHJhY2sgb2YgaW5pdGlhbCBPSlMgYmxvY2sgcmVuZGVyXG4gIGNvbnN0IHJlbmRlcmVkT2pzID0ge307XG5cbiAgY29uc3QgcHJvY2VzcyA9IGFzeW5jIChjb250ZXh0LCBpbnB1dHMpID0+IHtcbiAgICBjb25zdCB3ZWJSID0gYXdhaXQgd2ViUlByb21pc2U7XG4gICAgY29uc3QgZXZhbHVhdG9yID0gbmV3IFdlYlJFdmFsdWF0b3Iod2ViUiwgY29udGV4dClcbiAgICBhd2FpdCBldmFsdWF0b3IucHJvY2VzcyhpbnB1dHMpO1xuICAgIHJldHVybiBldmFsdWF0b3IuY29udGFpbmVyO1xuICB9XG5cbiAgcmV0dXJuIHtcbiAgICBwcm9jZXNzLFxuICAgIHdlYlJQcm9taXNlLFxuICAgIHJlbmRlcmVkT2pzLFxuICB9O1xufVxuIn1dfQ==
+</script>
+<div id="exercise-loading-indicator" class="exercise-loading-indicator d-none d-flex align-items-center gap-2">
+<div id="exercise-loading-status" class="d-flex gap-2">
+
+</div>
+<div class="spinner-grow spinner-grow-sm">
+
+</div>
+</div>
+<script type="vfs-file">
+WyIuLi9fY29tbW9ucy9kYXRhL2dhZG00MV9DTVJfMC5qc29uIiwiLi4vX2NvbW1vbnMvZGF0YS9nYWRtNDFfQ01SXzEuanNvbiIsIi4uL19jb21tb25zL2RhdGEvZ2FkbTQxX0NNUl8yLmpzb24iLCIuLi9fY29tbW9ucy9kYXRhL2Roc19jbXIvaW5kaWNhdGV1cnNfZGhzX2Ntcl8yMDE4LmNzdiJd
+</script>
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W119
+</script>
+<div id="exercise-loading-indicator" class="exercise-loading-indicator d-none d-flex align-items-center gap-2">
+<div id="exercise-loading-status" class="d-flex gap-2">
+
+</div>
+<div class="spinner-grow spinner-grow-sm">
+
+</div>
+</div>
+<script type="vfs-file">
+W10=
+</script>
+</section>
+
+</main> <!-- /main -->
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W119
+</script>
+<script type="module">
+if (window.location.protocol === "file:") { alert("The OJS runtime does not work with file:// URLs. Please use a web server to view this document."); }
+window._ojs.paths.runtimeToDoc = "../../J02_penser_espace";
+window._ojs.paths.runtimeToRoot = "../..";
+window._ojs.paths.docToRoot = "..";
+window._ojs.selfContained = false;
+window._ojs.runtime.interpretFromScriptTags();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "J02 · Penser l'espace — runtime navigateur"</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> "Des données tabulaires aux données géographiques — code R exécutable dans le navigateur (WebR)"</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Sans engine: knitr, Quarto ne detecte aucun bloc R et se rabat sur Jupyter</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># (erreur "No module named 'yaml'"). Reglage obligatoire.</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="an">engine:</span><span class="co"> knitr</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="an">webr:</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co">  packages:</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co">    - sf</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co">    - ggplot2</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co">    - dplyr</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co">    - tidyr</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co">    - tibble</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co">  resources:</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="co">    # Chemins relatifs au .qmd (donc ../). Dans un bloc {webr}, le meme</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="co">    # fichier se lit SANS le ../ : read_sf("_commons/data/...").</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co">    - ../_commons/data/gadm41_CMR_0.json</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="co">    - ../_commons/data/gadm41_CMR_1.json</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="co">    - ../_commons/data/gadm41_CMR_2.json</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co">    - ../_commons/data/dhs_cmr/indicateurs_dhs_cmr_2018.csv</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>::: {.iford-callout}</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>**Mode d'emploi.** Cliquez **Run code** dans chaque cellule pour exécuter. Modifiez le</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>code librement, recliquez pour relancer. Rien n'est envoyé sur un serveur — tout tourne</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>dans votre navigateur.</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>**Exécutez les blocs dans l'ordre** : les objets créés dans un bloc servent aux suivants.</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>Les blocs **non bleus** sont en **lecture seule**. Ils montrent le code qui ne peut pas</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>tourner en WASM — <span class="in">`terra`</span> pour le raster, <span class="in">`tmap`</span> pour la cartographie thématique</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>publiable, <span class="in">`readr`</span> sur les fichiers du dossier-jour. Exécutez-les sous RStudio desktop</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>à partir de **`demo_formateur_J02.qmd`** (ce même dossier).</span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a><span class="fu">## 1. R comme calculatrice</span></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a><span class="in">#| autorun: true</span></span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a><span class="in"># Un *vecteur* est une séquence ordonnée de valeurs de même type.</span></span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a><span class="in"># On le crée avec c() (= "combine"). Ici un vecteur de chaînes de caractères.</span></span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a><span class="in">regions &lt;- c("Adamaoua", "Centre", "Est", "Extrême-Nord", "Littoral",</span></span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a><span class="in">             "Nord", "Nord-Ouest", "Ouest", "Sud", "Sud-Ouest")</span></span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a><span class="in"># Vecteur numérique parallèle : 1 valeur par région, dans le MÊME ordre.</span></span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a><span class="in">pop_est &lt;- c(1340000, 4400000, 870000, 4200000, 3400000,</span></span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a><span class="in">             2700000, 2000000, 2000000, 800000, 1700000)</span></span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a><span class="in">length(regions)   # nombre d'éléments</span></span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a><span class="in">sum(pop_est)      # somme totale (population du Cameroun)</span></span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a><span class="in">mean(pop_est)     # moyenne arithmétique par région</span></span>
+<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a>**À essayer :** changez les valeurs de <span class="in">`pop_est`</span>, ou ajoutez une 11ᵉ région imaginaire — puis relancez.</span>
+<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a><span class="fu">## 2. Vecteurs et opérations vectorielles</span></span>
+<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb5-62"><a href="#cb5-62" aria-hidden="true" tabindex="-1"></a><span class="in"># R vectorise : on divise les 10 valeurs d'un coup, pas besoin de boucle.</span></span>
+<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a><span class="in">pop_millions &lt;- pop_est / 1e6</span></span>
+<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a><span class="in">round(pop_millions, 2)   # arrondi à 2 décimales</span></span>
+<span id="cb5-65"><a href="#cb5-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-66"><a href="#cb5-66" aria-hidden="true" tabindex="-1"></a><span class="in"># Indexation booléenne : on garde les noms là où la condition est vraie.</span></span>
+<span id="cb5-67"><a href="#cb5-67" aria-hidden="true" tabindex="-1"></a><span class="in">regions[pop_est &gt; 3e6]</span></span>
+<span id="cb5-68"><a href="#cb5-68" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-69"><a href="#cb5-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-70"><a href="#cb5-70" aria-hidden="true" tabindex="-1"></a><span class="fu">## 3. Tibble : la table de données moderne</span></span>
+<span id="cb5-71"><a href="#cb5-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-74"><a href="#cb5-74" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb5-75"><a href="#cb5-75" aria-hidden="true" tabindex="-1"></a><span class="in">library(tibble)   # tibble = tableau moderne, affichage plus lisible</span></span>
+<span id="cb5-76"><a href="#cb5-76" aria-hidden="true" tabindex="-1"></a><span class="in">library(dplyr)    # verbes de manipulation : filter, mutate, select...</span></span>
+<span id="cb5-77"><a href="#cb5-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-78"><a href="#cb5-78" aria-hidden="true" tabindex="-1"></a><span class="in"># On crée un tibble : un tableau où chaque colonne est un vecteur de même longueur.</span></span>
+<span id="cb5-79"><a href="#cb5-79" aria-hidden="true" tabindex="-1"></a><span class="in">tbl_cmr &lt;- tibble(</span></span>
+<span id="cb5-80"><a href="#cb5-80" aria-hidden="true" tabindex="-1"></a><span class="in">  region   = regions,</span></span>
+<span id="cb5-81"><a href="#cb5-81" aria-hidden="true" tabindex="-1"></a><span class="in">  pop_2019 = pop_est,</span></span>
+<span id="cb5-82"><a href="#cb5-82" aria-hidden="true" tabindex="-1"></a><span class="in">  capitale = c("Ngaoundéré", "Yaoundé", "Bertoua", "Maroua", "Douala",</span></span>
+<span id="cb5-83"><a href="#cb5-83" aria-hidden="true" tabindex="-1"></a><span class="in">               "Garoua", "Bamenda", "Bafoussam", "Ebolowa", "Buea")</span></span>
+<span id="cb5-84"><a href="#cb5-84" aria-hidden="true" tabindex="-1"></a><span class="in">)</span></span>
+<span id="cb5-85"><a href="#cb5-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-86"><a href="#cb5-86" aria-hidden="true" tabindex="-1"></a><span class="in">tbl_cmr   # afficher le tableau</span></span>
+<span id="cb5-87"><a href="#cb5-87" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-88"><a href="#cb5-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-89"><a href="#cb5-89" aria-hidden="true" tabindex="-1"></a><span class="fu">## 4. Les verbes dplyr en pratique démographique</span></span>
+<span id="cb5-90"><a href="#cb5-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-93"><a href="#cb5-93" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb5-94"><a href="#cb5-94" aria-hidden="true" tabindex="-1"></a><span class="in"># Le pipe |&gt; se lit "puis". On enchaîne les verbes dplyr de haut en bas.</span></span>
+<span id="cb5-95"><a href="#cb5-95" aria-hidden="true" tabindex="-1"></a><span class="in">tbl_cmr |&gt;</span></span>
+<span id="cb5-96"><a href="#cb5-96" aria-hidden="true" tabindex="-1"></a><span class="in">  mutate(                                # mutate = ajouter / modifier une colonne</span></span>
+<span id="cb5-97"><a href="#cb5-97" aria-hidden="true" tabindex="-1"></a><span class="in">    pop_millions = pop_2019 / 1e6,</span></span>
+<span id="cb5-98"><a href="#cb5-98" aria-hidden="true" tabindex="-1"></a><span class="in">    classe = case_when(                  # case_when = IF / ELSE IF / ELSE lisible</span></span>
+<span id="cb5-99"><a href="#cb5-99" aria-hidden="true" tabindex="-1"></a><span class="in">      pop_2019 &lt; 1e6 ~ "Moins de 1M",</span></span>
+<span id="cb5-100"><a href="#cb5-100" aria-hidden="true" tabindex="-1"></a><span class="in">      pop_2019 &lt; 3e6 ~ "1 à 3M",</span></span>
+<span id="cb5-101"><a href="#cb5-101" aria-hidden="true" tabindex="-1"></a><span class="in">      TRUE           ~ "Plus de 3M"      # TRUE = clause par défaut</span></span>
+<span id="cb5-102"><a href="#cb5-102" aria-hidden="true" tabindex="-1"></a><span class="in">    )</span></span>
+<span id="cb5-103"><a href="#cb5-103" aria-hidden="true" tabindex="-1"></a><span class="in">  ) |&gt;</span></span>
+<span id="cb5-104"><a href="#cb5-104" aria-hidden="true" tabindex="-1"></a><span class="in">  arrange(desc(pop_2019))                # tri décroissant par population</span></span>
+<span id="cb5-105"><a href="#cb5-105" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-106"><a href="#cb5-106" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-109"><a href="#cb5-109" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb5-110"><a href="#cb5-110" aria-hidden="true" tabindex="-1"></a><span class="in"># filter = garder certaines LIGNES (selon une condition).</span></span>
+<span id="cb5-111"><a href="#cb5-111" aria-hidden="true" tabindex="-1"></a><span class="in"># select = garder certaines COLONNES (par leur nom).</span></span>
+<span id="cb5-112"><a href="#cb5-112" aria-hidden="true" tabindex="-1"></a><span class="in">tbl_cmr |&gt;</span></span>
+<span id="cb5-113"><a href="#cb5-113" aria-hidden="true" tabindex="-1"></a><span class="in">  filter(pop_2019 &gt; 3e6) |&gt;</span></span>
+<span id="cb5-114"><a href="#cb5-114" aria-hidden="true" tabindex="-1"></a><span class="in">  select(region, capitale, pop_2019)</span></span>
+<span id="cb5-115"><a href="#cb5-115" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-116"><a href="#cb5-116" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-117"><a href="#cb5-117" aria-hidden="true" tabindex="-1"></a><span class="fu">## 5. Indicateurs DHS Cameroun 2018 (vraies données)</span></span>
+<span id="cb5-118"><a href="#cb5-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-119"><a href="#cb5-119" aria-hidden="true" tabindex="-1"></a>On charge directement le CSV agrégé par région issu de l'API DHS StatCompiler</span>
+<span id="cb5-120"><a href="#cb5-120" aria-hidden="true" tabindex="-1"></a>(<span class="in">`rdhs::dhs_data`</span>). Le fichier a été pré-chargé dans la VM WebR au démarrage de la page</span>
+<span id="cb5-121"><a href="#cb5-121" aria-hidden="true" tabindex="-1"></a>(déclaré dans <span class="in">`webr.resources`</span> du YAML) — pas de téléchargement runtime, ça marche en</span>
+<span id="cb5-122"><a href="#cb5-122" aria-hidden="true" tabindex="-1"></a>ligne **et** hors-ligne en preview locale.</span>
+<span id="cb5-123"><a href="#cb5-123" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-126"><a href="#cb5-126" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb5-127"><a href="#cb5-127" aria-hidden="true" tabindex="-1"></a><span class="in">library(tidyr)   # pivot_wider / pivot_longer pour réorganiser un tableau</span></span>
+<span id="cb5-128"><a href="#cb5-128" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-129"><a href="#cb5-129" aria-hidden="true" tabindex="-1"></a><span class="in"># Lecture du CSV pré-chargé dans le runtime WebR (pas de réseau ici).</span></span>
+<span id="cb5-130"><a href="#cb5-130" aria-hidden="true" tabindex="-1"></a><span class="in">dhs &lt;- read.csv("_commons/data/dhs_cmr/indicateurs_dhs_cmr_2018.csv")</span></span>
+<span id="cb5-131"><a href="#cb5-131" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-132"><a href="#cb5-132" aria-hidden="true" tabindex="-1"></a><span class="in"># Le CSV est en format LONG (1 ligne = 1 indicateur d'1 région).</span></span>
+<span id="cb5-133"><a href="#cb5-133" aria-hidden="true" tabindex="-1"></a><span class="in"># pivot_wider transforme en format LARGE (1 ligne = 1 région, 1 col par indicateur).</span></span>
+<span id="cb5-134"><a href="#cb5-134" aria-hidden="true" tabindex="-1"></a><span class="in">dhs_wide &lt;- dhs |&gt;</span></span>
+<span id="cb5-135"><a href="#cb5-135" aria-hidden="true" tabindex="-1"></a><span class="in">  select(region, indicateur, valeur) |&gt;</span></span>
+<span id="cb5-136"><a href="#cb5-136" aria-hidden="true" tabindex="-1"></a><span class="in">  pivot_wider(names_from = indicateur, values_from = valeur) |&gt;</span></span>
+<span id="cb5-137"><a href="#cb5-137" aria-hidden="true" tabindex="-1"></a><span class="in">  rename(tx_eau_ameliore = WS_SRCE_H_IMP,   # on renomme les codes DHS</span></span>
+<span id="cb5-138"><a href="#cb5-138" aria-hidden="true" tabindex="-1"></a><span class="in">         tx_electricite  = HC_ELEC_H_ELC,   # en noms parlants en français</span></span>
+<span id="cb5-139"><a href="#cb5-139" aria-hidden="true" tabindex="-1"></a><span class="in">         tx_alpha_femmes = ED_LITR_W_LIT,</span></span>
+<span id="cb5-140"><a href="#cb5-140" aria-hidden="true" tabindex="-1"></a><span class="in">         tx_alpha_hommes = ED_LITR_M_LIT,</span></span>
+<span id="cb5-141"><a href="#cb5-141" aria-hidden="true" tabindex="-1"></a><span class="in">         taille_menage   = HC_HHSZ_H_AVG)</span></span>
+<span id="cb5-142"><a href="#cb5-142" aria-hidden="true" tabindex="-1"></a><span class="in">dhs_wide</span></span>
+<span id="cb5-143"><a href="#cb5-143" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-144"><a href="#cb5-144" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-147"><a href="#cb5-147" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb5-148"><a href="#cb5-148" aria-hidden="true" tabindex="-1"></a><span class="in"># On crée un indicateur dérivé (écart H-F) puis on classe par électrification.</span></span>
+<span id="cb5-149"><a href="#cb5-149" aria-hidden="true" tabindex="-1"></a><span class="in">dhs_wide |&gt;</span></span>
+<span id="cb5-150"><a href="#cb5-150" aria-hidden="true" tabindex="-1"></a><span class="in">  mutate(ecart_alpha_hf = round(tx_alpha_hommes - tx_alpha_femmes, 1)) |&gt;</span></span>
+<span id="cb5-151"><a href="#cb5-151" aria-hidden="true" tabindex="-1"></a><span class="in">  arrange(desc(tx_electricite)) |&gt;</span></span>
+<span id="cb5-152"><a href="#cb5-152" aria-hidden="true" tabindex="-1"></a><span class="in">  select(region, tx_alpha_femmes, tx_electricite,</span></span>
+<span id="cb5-153"><a href="#cb5-153" aria-hidden="true" tabindex="-1"></a><span class="in">         taille_menage, ecart_alpha_hf)</span></span>
+<span id="cb5-154"><a href="#cb5-154" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-155"><a href="#cb5-155" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-156"><a href="#cb5-156" aria-hidden="true" tabindex="-1"></a>::: {.takeaway}</span>
+<span id="cb5-157"><a href="#cb5-157" aria-hidden="true" tabindex="-1"></a>**À retenir.** <span class="in">`filter`</span> filtre les lignes, <span class="in">`select`</span> choisit les colonnes, <span class="in">`mutate`</span> crée</span>
+<span id="cb5-158"><a href="#cb5-158" aria-hidden="true" tabindex="-1"></a>une variable, <span class="in">`group_by + summarise`</span> agrège, <span class="in">`pivot_wider`</span> réorganise. Cinq verbes pour</span>
+<span id="cb5-159"><a href="#cb5-159" aria-hidden="true" tabindex="-1"></a>80 % de l'analyse de données. Les valeurs ci-dessus sont **les vraies estimations DHS</span>
+<span id="cb5-160"><a href="#cb5-160" aria-hidden="true" tabindex="-1"></a>2018**, déjà pondérées par le plan de sondage.</span>
+<span id="cb5-161"><a href="#cb5-161" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-162"><a href="#cb5-162" aria-hidden="true" tabindex="-1"></a>**Attention au vocabulaire.** « Source d'eau améliorée » au sens du JMP n'est pas</span>
+<span id="cb5-163"><a href="#cb5-163" aria-hidden="true" tabindex="-1"></a>« eau potable » : la définition porte sur le **type d'ouvrage** (robinet, forage, puits</span>
+<span id="cb5-164"><a href="#cb5-164" aria-hidden="true" tabindex="-1"></a>protégé), pas sur la qualité bactériologique de l'eau. Un indicateur ne vaut que ce que</span>
+<span id="cb5-165"><a href="#cb5-165" aria-hidden="true" tabindex="-1"></a>vaut sa définition, et c'est elle qu'il faut citer sous la carte.</span>
+<span id="cb5-166"><a href="#cb5-166" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-167"><a href="#cb5-167" aria-hidden="true" tabindex="-1"></a>**Ce qu'un tableau ne dit pas.** Ces lignes classent les régions ; elles ne disent pas</span>
+<span id="cb5-168"><a href="#cb5-168" aria-hidden="true" tabindex="-1"></a>**où** elles sont, ni lesquelles se touchent. Deux régions voisines mal électrifiées</span>
+<span id="cb5-169"><a href="#cb5-169" aria-hidden="true" tabindex="-1"></a>posent une question — un réseau qui s'arrête quelque part — qu'aucun tri ne fait</span>
+<span id="cb5-170"><a href="#cb5-170" aria-hidden="true" tabindex="-1"></a>apparaître. C'est le sujet des sections suivantes.</span>
+<span id="cb5-171"><a href="#cb5-171" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb5-172"><a href="#cb5-172" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-173"><a href="#cb5-173" aria-hidden="true" tabindex="-1"></a><span class="fu">## 6. Vecteur et raster : les deux familles du géospatial</span></span>
+<span id="cb5-174"><a href="#cb5-174" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-175"><a href="#cb5-175" aria-hidden="true" tabindex="-1"></a>Avant la première carte, un partage du monde en deux.</span>
+<span id="cb5-176"><a href="#cb5-176" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-177"><a href="#cb5-177" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="pp">|</span> **Vecteur** | **Raster** <span class="pp">|</span></span>
+<span id="cb5-178"><a href="#cb5-178" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
+<span id="cb5-179"><a href="#cb5-179" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Ce que ça décrit <span class="pp">|</span> des **entités discrètes** | un **phénomène continu** <span class="pp">|</span></span>
+<span id="cb5-180"><a href="#cb5-180" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> La forme <span class="pp">|</span> points, lignes, polygones <span class="pp">|</span> une grille de pixels <span class="pp">|</span></span>
+<span id="cb5-181"><a href="#cb5-181" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Exemples <span class="pp">|</span> départements, routes, grappes d'enquête <span class="pp">|</span> altitude, pluviométrie, densité, indice de végétation <span class="pp">|</span></span>
+<span id="cb5-182"><a href="#cb5-182" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> L'unité <span class="pp">|</span> l'entité, avec ses attributs <span class="pp">|</span> le pixel, avec une valeur <span class="pp">|</span></span>
+<span id="cb5-183"><a href="#cb5-183" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> En R <span class="pp">|</span> <span class="in">`sf`</span> <span class="pp">|</span> <span class="in">`terra`</span> <span class="pp">|</span></span>
+<span id="cb5-184"><a href="#cb5-184" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-185"><a href="#cb5-185" aria-hidden="true" tabindex="-1"></a>Ce runtime est **entièrement vectoriel** : <span class="in">`sf`</span> est disponible en WebR, <span class="in">`terra`</span> ne l'est</span>
+<span id="cb5-186"><a href="#cb5-186" aria-hidden="true" tabindex="-1"></a>pas. Le raster est traité au J04, et son code figure ici en lecture seule (section 10).</span>
+<span id="cb5-187"><a href="#cb5-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-188"><a href="#cb5-188" aria-hidden="true" tabindex="-1"></a>::: {.iford-callout}</span>
+<span id="cb5-189"><a href="#cb5-189" aria-hidden="true" tabindex="-1"></a>**La règle d'or des SIG.** Un **CRS** (*Coordinate Reference System*, système de</span>
+<span id="cb5-190"><a href="#cb5-190" aria-hidden="true" tabindex="-1"></a>référence des coordonnées) dit ce que mesurent les nombres d'une géométrie. Deux</span>
+<span id="cb5-191"><a href="#cb5-191" aria-hidden="true" tabindex="-1"></a>familles :</span>
+<span id="cb5-192"><a href="#cb5-192" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-193"><a href="#cb5-193" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**géographique** (EPSG:4326, WGS 84) : des **degrés**. C'est ce que donne un GPS.</span>
+<span id="cb5-194"><a href="#cb5-194" aria-hidden="true" tabindex="-1"></a>  Rien de mesurable en l'état — un degré de longitude ne vaut pas la même longueur</span>
+<span id="cb5-195"><a href="#cb5-195" aria-hidden="true" tabindex="-1"></a>  au sol selon la latitude.</span>
+<span id="cb5-196"><a href="#cb5-196" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**projeté** (EPSG:32632, UTM zone 32N) : des **mètres**. Mesurable, mais exact</span>
+<span id="cb5-197"><a href="#cb5-197" aria-hidden="true" tabindex="-1"></a>  seulement autour de son méridien central.</span>
+<span id="cb5-198"><a href="#cb5-198" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-199"><a href="#cb5-199" aria-hidden="true" tabindex="-1"></a>On **stocke** en 4326, on **mesure** après reprojection. Et on n'effectue jamais une</span>
+<span id="cb5-200"><a href="#cb5-200" aria-hidden="true" tabindex="-1"></a>opération entre deux couches de CRS différents sans les avoir harmonisées — <span class="in">`sf`</span> ne</span>
+<span id="cb5-201"><a href="#cb5-201" aria-hidden="true" tabindex="-1"></a>prévient pas toujours.</span>
+<span id="cb5-202"><a href="#cb5-202" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb5-203"><a href="#cb5-203" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-204"><a href="#cb5-204" aria-hidden="true" tabindex="-1"></a><span class="fu">## 7. Première carte — vraies limites GADM Cameroun</span></span>
+<span id="cb5-205"><a href="#cb5-205" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-206"><a href="#cb5-206" aria-hidden="true" tabindex="-1"></a>Le fichier GADM v4.1 du Cameroun (10 régions, ~190 Ko) est pré-chargé dans la VM WebR</span>
+<span id="cb5-207"><a href="#cb5-207" aria-hidden="true" tabindex="-1"></a>au démarrage de la page. On l'ouvre directement avec <span class="in">`sf::read_sf()`</span> — pas de réseau au</span>
+<span id="cb5-208"><a href="#cb5-208" aria-hidden="true" tabindex="-1"></a>runtime, ça marche aussi quand vous n'avez pas internet.</span>
+<span id="cb5-209"><a href="#cb5-209" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-212"><a href="#cb5-212" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb5-213"><a href="#cb5-213" aria-hidden="true" tabindex="-1"></a><span class="in">#| autorun: true</span></span>
+<span id="cb5-214"><a href="#cb5-214" aria-hidden="true" tabindex="-1"></a><span class="in">library(sf)        # sf = "simple features" : objets spatiaux vectoriels</span></span>
+<span id="cb5-215"><a href="#cb5-215" aria-hidden="true" tabindex="-1"></a><span class="in">library(ggplot2)   # grammaire graphique de référence en R</span></span>
+<span id="cb5-216"><a href="#cb5-216" aria-hidden="true" tabindex="-1"></a><span class="in">library(dplyr)</span></span>
+<span id="cb5-217"><a href="#cb5-217" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-218"><a href="#cb5-218" aria-hidden="true" tabindex="-1"></a><span class="in"># read_sf() lit un fichier SIG (ici GeoJSON) et renvoie un objet sf =</span></span>
+<span id="cb5-219"><a href="#cb5-219" aria-hidden="true" tabindex="-1"></a><span class="in"># un data.frame + une colonne "geometry" attachée à chaque ligne.</span></span>
+<span id="cb5-220"><a href="#cb5-220" aria-hidden="true" tabindex="-1"></a><span class="in">adm0 &lt;- read_sf("_commons/data/gadm41_CMR_0.json")   # silhouette du pays</span></span>
+<span id="cb5-221"><a href="#cb5-221" aria-hidden="true" tabindex="-1"></a><span class="in">adm1 &lt;- read_sf("_commons/data/gadm41_CMR_1.json")   # 10 régions</span></span>
+<span id="cb5-222"><a href="#cb5-222" aria-hidden="true" tabindex="-1"></a><span class="in">adm2 &lt;- read_sf("_commons/data/gadm41_CMR_2.json")   # 58 départements</span></span>
+<span id="cb5-223"><a href="#cb5-223" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-224"><a href="#cb5-224" aria-hidden="true" tabindex="-1"></a><span class="in"># Un compteur apres chaque lecture : on ne suppose jamais un effectif.</span></span>
+<span id="cb5-225"><a href="#cb5-225" aria-hidden="true" tabindex="-1"></a><span class="in">cat("ADM0 :", nrow(adm0), "| ADM1 :", nrow(adm1), "| ADM2 :", nrow(adm2), "\n")</span></span>
+<span id="cb5-226"><a href="#cb5-226" aria-hidden="true" tabindex="-1"></a><span class="in">cat("EPSG :", st_crs(adm1)$epsg, "(4326 = WGS 84, des degrés)\n")</span></span>
+<span id="cb5-227"><a href="#cb5-227" aria-hidden="true" tabindex="-1"></a><span class="in">head(adm1$NAME_1)       # quelques noms de régions</span></span>
+<span id="cb5-228"><a href="#cb5-228" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-229"><a href="#cb5-229" aria-hidden="true" tabindex="-1"></a><span class="in"># Les géométries sont-elles saines ? Un polygone auto-intersecté ne se voit</span></span>
+<span id="cb5-230"><a href="#cb5-230" aria-hidden="true" tabindex="-1"></a><span class="in"># PAS à l'affichage : il ne se manifeste qu'au premier calcul géométrique.</span></span>
+<span id="cb5-231"><a href="#cb5-231" aria-hidden="true" tabindex="-1"></a><span class="in">cat("Géométries valides :", sum(st_is_valid(adm1)), "sur", nrow(adm1), "\n")</span></span>
+<span id="cb5-232"><a href="#cb5-232" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-233"><a href="#cb5-233" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-234"><a href="#cb5-234" aria-hidden="true" tabindex="-1"></a>Et maintenant la vraie carte des 10 régions du Cameroun, avec les contours</span>
+<span id="cb5-235"><a href="#cb5-235" aria-hidden="true" tabindex="-1"></a>administratifs officiels :</span>
+<span id="cb5-236"><a href="#cb5-236" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-239"><a href="#cb5-239" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb5-240"><a href="#cb5-240" aria-hidden="true" tabindex="-1"></a><span class="in">ggplot(adm1) +</span></span>
+<span id="cb5-241"><a href="#cb5-241" aria-hidden="true" tabindex="-1"></a><span class="in">  # geom_sf dessine la géométrie ; fill = NAME_1 attribue 1 couleur par région.</span></span>
+<span id="cb5-242"><a href="#cb5-242" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(aes(fill = NAME_1), color = "white", linewidth = 0.3, show.legend = FALSE) +</span></span>
+<span id="cb5-243"><a href="#cb5-243" aria-hidden="true" tabindex="-1"></a><span class="in">  # geom_sf_label pose une étiquette au centroïde de chaque polygone.</span></span>
+<span id="cb5-244"><a href="#cb5-244" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf_label(aes(label = NAME_1),</span></span>
+<span id="cb5-245"><a href="#cb5-245" aria-hidden="true" tabindex="-1"></a><span class="in">                size = 2.4, colour = "black",</span></span>
+<span id="cb5-246"><a href="#cb5-246" aria-hidden="true" tabindex="-1"></a><span class="in">                fill = scales::alpha("white", 0.75), label.size = 0,</span></span>
+<span id="cb5-247"><a href="#cb5-247" aria-hidden="true" tabindex="-1"></a><span class="in">                fontface = "bold", label.padding = unit(0.1, "lines")) +</span></span>
+<span id="cb5-248"><a href="#cb5-248" aria-hidden="true" tabindex="-1"></a><span class="in">  # Palette viridis discrète : daltonien-friendly, lisible en N&amp;B.</span></span>
+<span id="cb5-249"><a href="#cb5-249" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_fill_viridis_d(option = "G") +</span></span>
+<span id="cb5-250"><a href="#cb5-250" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(title = "Les 10 régions du Cameroun",</span></span>
+<span id="cb5-251"><a href="#cb5-251" aria-hidden="true" tabindex="-1"></a><span class="in">       subtitle = "Limites administratives ADM1 — GADM v4.1",</span></span>
+<span id="cb5-252"><a href="#cb5-252" aria-hidden="true" tabindex="-1"></a><span class="in">       caption = "Source : GADM v4.1 · Atelier IFORD × GDSG 2026") +</span></span>
+<span id="cb5-253"><a href="#cb5-253" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal()   # retire les axes/grille parasites</span></span>
+<span id="cb5-254"><a href="#cb5-254" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-255"><a href="#cb5-255" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-256"><a href="#cb5-256" aria-hidden="true" tabindex="-1"></a>::: {.takeaway}</span>
+<span id="cb5-257"><a href="#cb5-257" aria-hidden="true" tabindex="-1"></a>**Ce que la figure code.** Rien de statistique. La couleur est **qualitative** : elle</span>
+<span id="cb5-258"><a href="#cb5-258" aria-hidden="true" tabindex="-1"></a>sert uniquement à distinguer dix polygones voisins, et il serait faux d'y lire un</span>
+<span id="cb5-259"><a href="#cb5-259" aria-hidden="true" tabindex="-1"></a>ordre. Une palette qualitative répond à « lesquels sont différents » ; une palette</span>
+<span id="cb5-260"><a href="#cb5-260" aria-hidden="true" tabindex="-1"></a>séquentielle (section 8) répond à « lesquels sont plus grands ».</span>
+<span id="cb5-261"><a href="#cb5-261" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-262"><a href="#cb5-262" aria-hidden="true" tabindex="-1"></a>**Ce qui se lit.** La géographie du découpage : trois régions du Nord très étendues,</span>
+<span id="cb5-263"><a href="#cb5-263" aria-hidden="true" tabindex="-1"></a>un Ouest densément découpé, un littoral étroit.</span>
+<span id="cb5-264"><a href="#cb5-264" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-265"><a href="#cb5-265" aria-hidden="true" tabindex="-1"></a>**Ce qui ne se lit pas.** La superficie apparente **n'est pas** la superficie réelle :</span>
+<span id="cb5-266"><a href="#cb5-266" aria-hidden="true" tabindex="-1"></a>elle dépend de la projection d'affichage. Pour comparer des surfaces, il faut les</span>
+<span id="cb5-267"><a href="#cb5-267" aria-hidden="true" tabindex="-1"></a>calculer — c'est l'objet de la section suivante.</span>
+<span id="cb5-268"><a href="#cb5-268" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb5-269"><a href="#cb5-269" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-270"><a href="#cb5-270" aria-hidden="true" tabindex="-1"></a><span class="fu">## 8. Mesurer : superficie, centroïdes, densité</span></span>
+<span id="cb5-271"><a href="#cb5-271" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-274"><a href="#cb5-274" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb5-275"><a href="#cb5-275" aria-hidden="true" tabindex="-1"></a><span class="in"># Une projection (CRS) "plane" en mètres est NÉCESSAIRE pour mesurer surfaces</span></span>
+<span id="cb5-276"><a href="#cb5-276" aria-hidden="true" tabindex="-1"></a><span class="in"># et distances. EPSG:32632 = UTM zone 32N, adapté à l'ouest du Cameroun.</span></span>
+<span id="cb5-277"><a href="#cb5-277" aria-hidden="true" tabindex="-1"></a><span class="in">adm1_utm &lt;- st_transform(adm1, 32632)</span></span>
+<span id="cb5-278"><a href="#cb5-278" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-279"><a href="#cb5-279" aria-hidden="true" tabindex="-1"></a><span class="in"># st_area renvoie une surface en m² (unité du CRS) ; on convertit en km².</span></span>
+<span id="cb5-280"><a href="#cb5-280" aria-hidden="true" tabindex="-1"></a><span class="in">adm1_utm$superficie_km2 &lt;- as.numeric(st_area(adm1_utm)) / 1e6</span></span>
+<span id="cb5-281"><a href="#cb5-281" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-282"><a href="#cb5-282" aria-hidden="true" tabindex="-1"></a><span class="in"># Contrôle de cohérence : total attendu ~475 442 km² (superficie officielle).</span></span>
+<span id="cb5-283"><a href="#cb5-283" aria-hidden="true" tabindex="-1"></a><span class="in"># Comparer un résultat à un chiffre publié vérifie d'un coup la projection,</span></span>
+<span id="cb5-284"><a href="#cb5-284" aria-hidden="true" tabindex="-1"></a><span class="in"># la validité des géométries et la lecture du fichier.</span></span>
+<span id="cb5-285"><a href="#cb5-285" aria-hidden="true" tabindex="-1"></a><span class="in">cat("Superficie totale calculée :", round(sum(adm1_utm$superficie_km2)), "km²\n")</span></span>
+<span id="cb5-286"><a href="#cb5-286" aria-hidden="true" tabindex="-1"></a><span class="in">cat("Référence officielle       : 475 442 km²\n")</span></span>
+<span id="cb5-287"><a href="#cb5-287" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-288"><a href="#cb5-288" aria-hidden="true" tabindex="-1"></a><span class="in"># Le CENTROÏDE : le "centre de gravité" d'un polygone. Utile pour poser une</span></span>
+<span id="cb5-289"><a href="#cb5-289" aria-hidden="true" tabindex="-1"></a><span class="in"># étiquette ou un symbole proportionnel. Attention : pour un polygone en</span></span>
+<span id="cb5-290"><a href="#cb5-290" aria-hidden="true" tabindex="-1"></a><span class="in"># croissant, le centroïde peut tomber HORS du polygone.</span></span>
+<span id="cb5-291"><a href="#cb5-291" aria-hidden="true" tabindex="-1"></a><span class="in">centres &lt;- st_centroid(adm1_utm)</span></span>
+<span id="cb5-292"><a href="#cb5-292" aria-hidden="true" tabindex="-1"></a><span class="in">head(st_coordinates(centres), 3)</span></span>
+<span id="cb5-293"><a href="#cb5-293" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-294"><a href="#cb5-294" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-297"><a href="#cb5-297" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb5-298"><a href="#cb5-298" aria-hidden="true" tabindex="-1"></a><span class="in"># On bâtit une table population minimale (clé = nom de région).</span></span>
+<span id="cb5-299"><a href="#cb5-299" aria-hidden="true" tabindex="-1"></a><span class="in">pop_tbl &lt;- tibble::tibble(NAME_1 = regions, pop_2019 = pop_est)</span></span>
+<span id="cb5-300"><a href="#cb5-300" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-301"><a href="#cb5-301" aria-hidden="true" tabindex="-1"></a><span class="in"># left_join = jointure SQL "à gauche" : on garde toutes les régions de adm1_utm</span></span>
+<span id="cb5-302"><a href="#cb5-302" aria-hidden="true" tabindex="-1"></a><span class="in"># et on attache la population correspondante via la clé commune NAME_1.</span></span>
+<span id="cb5-303"><a href="#cb5-303" aria-hidden="true" tabindex="-1"></a><span class="in">adm1_pop &lt;- adm1_utm |&gt;</span></span>
+<span id="cb5-304"><a href="#cb5-304" aria-hidden="true" tabindex="-1"></a><span class="in">  left_join(pop_tbl, by = "NAME_1") |&gt;</span></span>
+<span id="cb5-305"><a href="#cb5-305" aria-hidden="true" tabindex="-1"></a><span class="in">  mutate(densite = pop_2019 / superficie_km2,       # densité = hab / km²</span></span>
+<span id="cb5-306"><a href="#cb5-306" aria-hidden="true" tabindex="-1"></a><span class="in">         # Échelle racine carrée calculée EN AMONT plutôt que via</span></span>
+<span id="cb5-307"><a href="#cb5-307" aria-hidden="true" tabindex="-1"></a><span class="in">         # scale_fill_*(trans = ), déprécié selon les versions de ggplot2.</span></span>
+<span id="cb5-308"><a href="#cb5-308" aria-hidden="true" tabindex="-1"></a><span class="in">         densite_sqrt = sqrt(densite))</span></span>
+<span id="cb5-309"><a href="#cb5-309" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-310"><a href="#cb5-310" aria-hidden="true" tabindex="-1"></a><span class="in"># left_join ne prévient JAMAIS d'un non-appariement : il remplit avec NA.</span></span>
+<span id="cb5-311"><a href="#cb5-311" aria-hidden="true" tabindex="-1"></a><span class="in"># Compter les NA après chaque jointure est le réflexe qui sauve une analyse.</span></span>
+<span id="cb5-312"><a href="#cb5-312" aria-hidden="true" tabindex="-1"></a><span class="in">cat("Régions sans population après jointure :", sum(is.na(adm1_pop$pop_2019)),</span></span>
+<span id="cb5-313"><a href="#cb5-313" aria-hidden="true" tabindex="-1"></a><span class="in">    "sur", nrow(adm1_pop), "\n")</span></span>
+<span id="cb5-314"><a href="#cb5-314" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-315"><a href="#cb5-315" aria-hidden="true" tabindex="-1"></a><span class="in"># st_drop_geometry : on retire la colonne géométrie pour avoir un tableau pur.</span></span>
+<span id="cb5-316"><a href="#cb5-316" aria-hidden="true" tabindex="-1"></a><span class="in">adm1_pop |&gt;</span></span>
+<span id="cb5-317"><a href="#cb5-317" aria-hidden="true" tabindex="-1"></a><span class="in">  st_drop_geometry() |&gt;</span></span>
+<span id="cb5-318"><a href="#cb5-318" aria-hidden="true" tabindex="-1"></a><span class="in">  select(NAME_1, pop_2019, superficie_km2, densite) |&gt;</span></span>
+<span id="cb5-319"><a href="#cb5-319" aria-hidden="true" tabindex="-1"></a><span class="in">  mutate(superficie_km2 = round(superficie_km2), densite = round(densite, 1)) |&gt;</span></span>
+<span id="cb5-320"><a href="#cb5-320" aria-hidden="true" tabindex="-1"></a><span class="in">  arrange(desc(densite))</span></span>
+<span id="cb5-321"><a href="#cb5-321" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-322"><a href="#cb5-322" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-325"><a href="#cb5-325" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb5-326"><a href="#cb5-326" aria-hidden="true" tabindex="-1"></a><span class="in">ggplot(adm1_pop) +</span></span>
+<span id="cb5-327"><a href="#cb5-327" aria-hidden="true" tabindex="-1"></a><span class="in">  # Carte choroplèthe : la couleur du polygone encode la VALEUR (ici densité).</span></span>
+<span id="cb5-328"><a href="#cb5-328" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(aes(fill = densite_sqrt), color = "white", linewidth = 0.3) +</span></span>
+<span id="cb5-329"><a href="#cb5-329" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf_label(aes(label = NAME_1),</span></span>
+<span id="cb5-330"><a href="#cb5-330" aria-hidden="true" tabindex="-1"></a><span class="in">                size = 2.2, colour = "black",</span></span>
+<span id="cb5-331"><a href="#cb5-331" aria-hidden="true" tabindex="-1"></a><span class="in">                fill = scales::alpha("white", 0.75), label.size = 0,</span></span>
+<span id="cb5-332"><a href="#cb5-332" aria-hidden="true" tabindex="-1"></a><span class="in">                fontface = "bold", label.padding = unit(0.08, "lines")) +</span></span>
+<span id="cb5-333"><a href="#cb5-333" aria-hidden="true" tabindex="-1"></a><span class="in">  # Palette continue ; échelle racine carrée pour aplatir les écarts extrêmes</span></span>
+<span id="cb5-334"><a href="#cb5-334" aria-hidden="true" tabindex="-1"></a><span class="in">  # (Littoral et Centre écrasent sinon toutes les autres régions).</span></span>
+<span id="cb5-335"><a href="#cb5-335" aria-hidden="true" tabindex="-1"></a><span class="in">  # na.value : une région sans donnée reste GRISE, elle n'est pas "à zéro".</span></span>
+<span id="cb5-336"><a href="#cb5-336" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_fill_viridis_c(option = "B", name = "Densité\n(√ hab/km²)",</span></span>
+<span id="cb5-337"><a href="#cb5-337" aria-hidden="true" tabindex="-1"></a><span class="in">                       na.value = "grey85") +</span></span>
+<span id="cb5-338"><a href="#cb5-338" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(title = "Densité de population par région — Cameroun (estim. 2019)",</span></span>
+<span id="cb5-339"><a href="#cb5-339" aria-hidden="true" tabindex="-1"></a><span class="in">       subtitle = "Choroplèthe — échelle racine carrée pour visibilité",</span></span>
+<span id="cb5-340"><a href="#cb5-340" aria-hidden="true" tabindex="-1"></a><span class="in">       caption = "Source : BUCREP (estim.), GADM v4.1 · IFORD × GDSG 2026") +</span></span>
+<span id="cb5-341"><a href="#cb5-341" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal()</span></span>
+<span id="cb5-342"><a href="#cb5-342" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-343"><a href="#cb5-343" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-344"><a href="#cb5-344" aria-hidden="true" tabindex="-1"></a>::: {.takeaway}</span>
+<span id="cb5-345"><a href="#cb5-345" aria-hidden="true" tabindex="-1"></a>**Ce que la figure code.** La couleur d'une région code sa densité = population</span>
+<span id="cb5-346"><a href="#cb5-346" aria-hidden="true" tabindex="-1"></a>estimée ÷ superficie calculée en UTM 32N.</span>
+<span id="cb5-347"><a href="#cb5-347" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-348"><a href="#cb5-348" aria-hidden="true" tabindex="-1"></a>**Ce que les choix techniques font.** *Choroplèthe* : une carte où la couleur d'une</span>
+<span id="cb5-349"><a href="#cb5-349" aria-hidden="true" tabindex="-1"></a>unité administrative code une valeur. *Échelle racine carrée* : sans elle, deux régions</span>
+<span id="cb5-350"><a href="#cb5-350" aria-hidden="true" tabindex="-1"></a>écrasent les huit autres et la carte devient uniformément sombre — la transformation ne</span>
+<span id="cb5-351"><a href="#cb5-351" aria-hidden="true" tabindex="-1"></a>change pas les données, elle change ce que l'œil distingue, et doit donc être annoncée</span>
+<span id="cb5-352"><a href="#cb5-352" aria-hidden="true" tabindex="-1"></a>dans la légende, comme ici.</span>
+<span id="cb5-353"><a href="#cb5-353" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-354"><a href="#cb5-354" aria-hidden="true" tabindex="-1"></a>**Ce qui se lit.** Un gradient : le Littoral et l'Ouest se détachent nettement du</span>
+<span id="cb5-355"><a href="#cb5-355" aria-hidden="true" tabindex="-1"></a>Nord et de l'Est.</span>
+<span id="cb5-356"><a href="#cb5-356" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-357"><a href="#cb5-357" aria-hidden="true" tabindex="-1"></a>**Ce qui ne se lit pas.** (1) Les chiffres de population utilisés ici sont des</span>
+<span id="cb5-358"><a href="#cb5-358" aria-hidden="true" tabindex="-1"></a>**estimations d'illustration**, pas des données de recensement — la carte ne doit pas</span>
+<span id="cb5-359"><a href="#cb5-359" aria-hidden="true" tabindex="-1"></a>être citée. (2) La densité est une **moyenne** : elle écrase entièrement</span>
+<span id="cb5-360"><a href="#cb5-360" aria-hidden="true" tabindex="-1"></a>l'hétérogénéité interne, une région où tout le monde vit dans une seule ville prend la</span>
+<span id="cb5-361"><a href="#cb5-361" aria-hidden="true" tabindex="-1"></a>même couleur qu'une région uniformément peuplée. (3) Attribuer à un habitant ce qui</span>
+<span id="cb5-362"><a href="#cb5-362" aria-hidden="true" tabindex="-1"></a>n'est vrai que de la région serait une **erreur écologique**.</span>
+<span id="cb5-363"><a href="#cb5-363" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb5-364"><a href="#cb5-364" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-365"><a href="#cb5-365" aria-hidden="true" tabindex="-1"></a><span class="fu">## 9. Changer de maille : les 58 départements</span></span>
+<span id="cb5-366"><a href="#cb5-366" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-367"><a href="#cb5-367" aria-hidden="true" tabindex="-1"></a>::: {.iford-callout}</span>
+<span id="cb5-368"><a href="#cb5-368" aria-hidden="true" tabindex="-1"></a>**Le MAUP** (*Modifiable Areal Unit Problem*) : les résultats dépendent de la maille</span>
+<span id="cb5-369"><a href="#cb5-369" aria-hidden="true" tabindex="-1"></a>d'agrégation, et **aucune maille n'est neutre**. La même donnée agrégée en 10 régions</span>
+<span id="cb5-370"><a href="#cb5-370" aria-hidden="true" tabindex="-1"></a>ou en 58 départements ne raconte pas la même histoire. La règle : choisir la maille de</span>
+<span id="cb5-371"><a href="#cb5-371" aria-hidden="true" tabindex="-1"></a>la **décision** qu'on éclaire, pas celle qui donne la plus jolie carte.</span>
+<span id="cb5-372"><a href="#cb5-372" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb5-373"><a href="#cb5-373" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-376"><a href="#cb5-376" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb5-377"><a href="#cb5-377" aria-hidden="true" tabindex="-1"></a><span class="in"># Le même geste, une maille plus fine. Les colonnes GADM ADM2 : NAME_1 porte</span></span>
+<span id="cb5-378"><a href="#cb5-378" aria-hidden="true" tabindex="-1"></a><span class="in"># la région d'appartenance, NAME_2 le département.</span></span>
+<span id="cb5-379"><a href="#cb5-379" aria-hidden="true" tabindex="-1"></a><span class="in">adm2_utm &lt;- st_transform(adm2, 32632)</span></span>
+<span id="cb5-380"><a href="#cb5-380" aria-hidden="true" tabindex="-1"></a><span class="in">adm2_utm$superficie_km2 &lt;- as.numeric(st_area(adm2_utm)) / 1e6</span></span>
+<span id="cb5-381"><a href="#cb5-381" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-382"><a href="#cb5-382" aria-hidden="true" tabindex="-1"></a><span class="in">cat("Départements :", nrow(adm2_utm), "\n")</span></span>
+<span id="cb5-383"><a href="#cb5-383" aria-hidden="true" tabindex="-1"></a><span class="in">cat("Superficie totale ADM2 :", round(sum(adm2_utm$superficie_km2)), "km²",</span></span>
+<span id="cb5-384"><a href="#cb5-384" aria-hidden="true" tabindex="-1"></a><span class="in">    "— à comparer au total ADM1 ci-dessus\n")</span></span>
+<span id="cb5-385"><a href="#cb5-385" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-386"><a href="#cb5-386" aria-hidden="true" tabindex="-1"></a><span class="in"># Combien de départements par région ?</span></span>
+<span id="cb5-387"><a href="#cb5-387" aria-hidden="true" tabindex="-1"></a><span class="in">adm2_utm |&gt; st_drop_geometry() |&gt; count(NAME_1, name = "nb_departements")</span></span>
+<span id="cb5-388"><a href="#cb5-388" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-389"><a href="#cb5-389" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-392"><a href="#cb5-392" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb5-393"><a href="#cb5-393" aria-hidden="true" tabindex="-1"></a><span class="in">ggplot() +</span></span>
+<span id="cb5-394"><a href="#cb5-394" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(data = adm2_utm, aes(fill = superficie_km2),</span></span>
+<span id="cb5-395"><a href="#cb5-395" aria-hidden="true" tabindex="-1"></a><span class="in">          color = "white", linewidth = 0.15) +</span></span>
+<span id="cb5-396"><a href="#cb5-396" aria-hidden="true" tabindex="-1"></a><span class="in">  # Les limites de région superposées, pour situer le découpage fin.</span></span>
+<span id="cb5-397"><a href="#cb5-397" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(data = st_transform(adm1, 32632), fill = NA,</span></span>
+<span id="cb5-398"><a href="#cb5-398" aria-hidden="true" tabindex="-1"></a><span class="in">          color = "grey20", linewidth = 0.5) +</span></span>
+<span id="cb5-399"><a href="#cb5-399" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_fill_viridis_c(option = "D", name = "Superficie\n(km²)",</span></span>
+<span id="cb5-400"><a href="#cb5-400" aria-hidden="true" tabindex="-1"></a><span class="in">                       na.value = "grey85") +</span></span>
+<span id="cb5-401"><a href="#cb5-401" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(title = "Les 58 départements du Cameroun",</span></span>
+<span id="cb5-402"><a href="#cb5-402" aria-hidden="true" tabindex="-1"></a><span class="in">       subtitle = "Maille fine (ADM2) ; en trait épais, les 10 régions (ADM1)",</span></span>
+<span id="cb5-403"><a href="#cb5-403" aria-hidden="true" tabindex="-1"></a><span class="in">       caption = "Source : GADM v4.1 · IFORD × GDSG 2026") +</span></span>
+<span id="cb5-404"><a href="#cb5-404" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal() +</span></span>
+<span id="cb5-405"><a href="#cb5-405" aria-hidden="true" tabindex="-1"></a><span class="in">  theme(axis.text = element_blank(), axis.ticks = element_blank(),</span></span>
+<span id="cb5-406"><a href="#cb5-406" aria-hidden="true" tabindex="-1"></a><span class="in">        panel.grid = element_blank())</span></span>
+<span id="cb5-407"><a href="#cb5-407" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-408"><a href="#cb5-408" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-409"><a href="#cb5-409" aria-hidden="true" tabindex="-1"></a>::: {.takeaway}</span>
+<span id="cb5-410"><a href="#cb5-410" aria-hidden="true" tabindex="-1"></a>**Ce que la figure code.** La couleur code une superficie en km², donc une propriété</span>
+<span id="cb5-411"><a href="#cb5-411" aria-hidden="true" tabindex="-1"></a>purement géométrique — pas un phénomène social.</span>
+<span id="cb5-412"><a href="#cb5-412" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-413"><a href="#cb5-413" aria-hidden="true" tabindex="-1"></a>**En quoi le changement de maille est utile.** Mettez cette carte à côté de celle de la</span>
+<span id="cb5-414"><a href="#cb5-414" aria-hidden="true" tabindex="-1"></a>section 8 : les régions du Nord, uniformes en ADM1, se révèlent composées de</span>
+<span id="cb5-415"><a href="#cb5-415" aria-hidden="true" tabindex="-1"></a>départements très inégaux. Une moyenne régionale calculée sur des départements de</span>
+<span id="cb5-416"><a href="#cb5-416" aria-hidden="true" tabindex="-1"></a>tailles aussi différentes pèse implicitement chaque département de la même façon — ce</span>
+<span id="cb5-417"><a href="#cb5-417" aria-hidden="true" tabindex="-1"></a>qui est rarement ce qu'on veut.</span>
+<span id="cb5-418"><a href="#cb5-418" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-419"><a href="#cb5-419" aria-hidden="true" tabindex="-1"></a>**Ce qui ne se lit pas.** Rien sur la population. Un grand département peut être</span>
+<span id="cb5-420"><a href="#cb5-420" aria-hidden="true" tabindex="-1"></a>quasiment vide ; c'est précisément pourquoi on rapporte les effectifs à la surface</span>
+<span id="cb5-421"><a href="#cb5-421" aria-hidden="true" tabindex="-1"></a>avant de comparer.</span>
+<span id="cb5-422"><a href="#cb5-422" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-423"><a href="#cb5-423" aria-hidden="true" tabindex="-1"></a>**Un piège de lecture des données, à connaître.** Dans ce fichier GeoJSON, les noms de</span>
+<span id="cb5-424"><a href="#cb5-424" aria-hidden="true" tabindex="-1"></a>départements composés ont perdu leurs espaces : on y lit <span class="in">`MefouetAfamba`</span>,</span>
+<span id="cb5-425"><a href="#cb5-425" aria-hidden="true" tabindex="-1"></a><span class="in">`NyongetSo'o`</span>, <span class="in">`ValléeduNtem`</span>. Cela n'a aucune conséquence sur la géométrie, mais rend</span>
+<span id="cb5-426"><a href="#cb5-426" aria-hidden="true" tabindex="-1"></a>toute jointure sur le libellé impossible sans normalisation préalable. Le J03 en fait</span>
+<span id="cb5-427"><a href="#cb5-427" aria-hidden="true" tabindex="-1"></a>un exercice complet.</span>
+<span id="cb5-428"><a href="#cb5-428" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb5-429"><a href="#cb5-429" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-430"><a href="#cb5-430" aria-hidden="true" tabindex="-1"></a><span class="fu">## 10. Points et distance : la démonstration du CRS</span></span>
+<span id="cb5-431"><a href="#cb5-431" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-434"><a href="#cb5-434" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb5-435"><a href="#cb5-435" aria-hidden="true" tabindex="-1"></a><span class="in"># st_point(c(lon, lat)) crée 1 point ; st_sfc l'enveloppe dans une "simple</span></span>
+<span id="cb5-436"><a href="#cb5-436" aria-hidden="true" tabindex="-1"></a><span class="in"># feature collection" étiquetée par un CRS. 4326 = WGS 84 (degrés GPS).</span></span>
+<span id="cb5-437"><a href="#cb5-437" aria-hidden="true" tabindex="-1"></a><span class="in"># ORDRE : c(longitude, latitude). L'inversion ne lève AUCUNE erreur.</span></span>
+<span id="cb5-438"><a href="#cb5-438" aria-hidden="true" tabindex="-1"></a><span class="in">yaounde &lt;- st_sfc(st_point(c(11.5021, 3.8480)), crs = 4326)</span></span>
+<span id="cb5-439"><a href="#cb5-439" aria-hidden="true" tabindex="-1"></a><span class="in">douala  &lt;- st_sfc(st_point(c(9.7679,  4.0511)), crs = 4326)</span></span>
+<span id="cb5-440"><a href="#cb5-440" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-441"><a href="#cb5-441" aria-hidden="true" tabindex="-1"></a><span class="in"># st_distance détecte que le CRS est géographique et calcule la distance</span></span>
+<span id="cb5-442"><a href="#cb5-442" aria-hidden="true" tabindex="-1"></a><span class="in"># géodésique sur l'ellipsoïde (en mètres).</span></span>
+<span id="cb5-443"><a href="#cb5-443" aria-hidden="true" tabindex="-1"></a><span class="in">dist_m &lt;- st_distance(yaounde, douala)</span></span>
+<span id="cb5-444"><a href="#cb5-444" aria-hidden="true" tabindex="-1"></a><span class="in">dist_m</span></span>
+<span id="cb5-445"><a href="#cb5-445" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-446"><a href="#cb5-446" aria-hidden="true" tabindex="-1"></a><span class="in"># Comparaison avec un calcul "naïf" type Pythagore sur les degrés.</span></span>
+<span id="cb5-447"><a href="#cb5-447" aria-hidden="true" tabindex="-1"></a><span class="in"># C'EST FAUX : un degré de longitude ne mesure pas la même chose qu'un degré</span></span>
+<span id="cb5-448"><a href="#cb5-448" aria-hidden="true" tabindex="-1"></a><span class="in"># de latitude (et ça dépend en plus de la latitude).</span></span>
+<span id="cb5-449"><a href="#cb5-449" aria-hidden="true" tabindex="-1"></a><span class="in">cat("Distance naïve (degrés - sans dimension):",</span></span>
+<span id="cb5-450"><a href="#cb5-450" aria-hidden="true" tabindex="-1"></a><span class="in">    round(sqrt((11.5021-9.7679)^2 + (3.8480-4.0511)^2), 4), "\n")</span></span>
+<span id="cb5-451"><a href="#cb5-451" aria-hidden="true" tabindex="-1"></a><span class="in">cat("Distance correcte (km):", round(as.numeric(dist_m) / 1000, 1), "km\n")</span></span>
+<span id="cb5-452"><a href="#cb5-452" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-453"><a href="#cb5-453" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-454"><a href="#cb5-454" aria-hidden="true" tabindex="-1"></a>::: {.takeaway}</span>
+<span id="cb5-455"><a href="#cb5-455" aria-hidden="true" tabindex="-1"></a>La distance Yaoundé–Douala **par la route** est d'environ 240 km ; à vol d'oiseau, elle</span>
+<span id="cb5-456"><a href="#cb5-456" aria-hidden="true" tabindex="-1"></a>est nécessairement plus courte — c'est ce que calcule <span class="in">`st_distance()`</span>. Le calcul</span>
+<span id="cb5-457"><a href="#cb5-457" aria-hidden="true" tabindex="-1"></a>« naïf » sur les degrés donne un nombre **sans dimension** : il ne se compare à rien,</span>
+<span id="cb5-458"><a href="#cb5-458" aria-hidden="true" tabindex="-1"></a>et pourtant aucune erreur n'a été levée. C'est le prototype de l'échec silencieux :</span>
+<span id="cb5-459"><a href="#cb5-459" aria-hidden="true" tabindex="-1"></a>plus dangereux que ce qui plante, parce qu'il produit un résultat plausible.</span>
+<span id="cb5-460"><a href="#cb5-460" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb5-461"><a href="#cb5-461" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-462"><a href="#cb5-462" aria-hidden="true" tabindex="-1"></a><span class="fu">## 11. Ce qui ne tourne pas dans le navigateur</span></span>
+<span id="cb5-463"><a href="#cb5-463" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-464"><a href="#cb5-464" aria-hidden="true" tabindex="-1"></a>Les blocs ci-dessous sont en **lecture seule**. Ils s'exécutent sous RStudio desktop, à</span>
+<span id="cb5-465"><a href="#cb5-465" aria-hidden="true" tabindex="-1"></a>partir de **`demo_formateur_J02.qmd`** (ce même dossier), dont ils sont extraits.</span>
+<span id="cb5-466"><a href="#cb5-466" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-467"><a href="#cb5-467" aria-hidden="true" tabindex="-1"></a><span class="fu">### 11.1 Importer les CSV du dossier-jour — le piège du séparateur</span></span>
+<span id="cb5-468"><a href="#cb5-468" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-469"><a href="#cb5-469" aria-hidden="true" tabindex="-1"></a><span class="in">```r</span></span>
+<span id="cb5-470"><a href="#cb5-470" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr); <span class="fu">library</span>(dplyr); <span class="fu">library</span>(janitor)</span>
+<span id="cb5-471"><a href="#cb5-471" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-472"><a href="#cb5-472" aria-hidden="true" tabindex="-1"></a><span class="co"># PIEGE : les deux fichiers WorldPop de ce dossier n'ont PAS le meme</span></span>
+<span id="cb5-473"><a href="#cb5-473" aria-hidden="true" tabindex="-1"></a><span class="co"># separateur. La population est en POINTS-VIRGULES, les menages en VIRGULES.</span></span>
+<span id="cb5-474"><a href="#cb5-474" aria-hidden="true" tabindex="-1"></a><span class="co"># read_csv() sur le premier renvoie UNE SEULE COLONNE, sans lever d'erreur.</span></span>
+<span id="cb5-475"><a href="#cb5-475" aria-hidden="true" tabindex="-1"></a><span class="co"># Reflexe : ouvrir un CSV inconnu dans un editeur avant de l'importer, et</span></span>
+<span id="cb5-476"><a href="#cb5-476" aria-hidden="true" tabindex="-1"></a><span class="co"># verifier ncol() juste apres la lecture.</span></span>
+<span id="cb5-477"><a href="#cb5-477" aria-hidden="true" tabindex="-1"></a>pop_adm2 <span class="ot">&lt;-</span> <span class="fu">read_delim</span>(<span class="st">"datasets/CMR_population_v1_0_admin_level2.csv"</span>,</span>
+<span id="cb5-478"><a href="#cb5-478" aria-hidden="true" tabindex="-1"></a>                       <span class="at">delim =</span> <span class="st">";"</span>, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span> <span class="fu">clean_names</span>()</span>
+<span id="cb5-479"><a href="#cb5-479" aria-hidden="true" tabindex="-1"></a>men_adm2 <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"datasets/CMR_household_v1_0_admin_level2.csv"</span>,</span>
+<span id="cb5-480"><a href="#cb5-480" aria-hidden="true" tabindex="-1"></a>                     <span class="at">show_col_types =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span> <span class="fu">clean_names</span>()</span>
+<span id="cb5-481"><a href="#cb5-481" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-482"><a href="#cb5-482" aria-hidden="true" tabindex="-1"></a><span class="fu">ncol</span>(pop_adm2); <span class="fu">ncol</span>(men_adm2)</span>
+<span id="cb5-483"><a href="#cb5-483" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-484"><a href="#cb5-484" aria-hidden="true" tabindex="-1"></a><span class="co"># Colonnes reelles : id, names1, total, lower, median, upper, uncertainty.</span></span>
+<span id="cb5-485"><a href="#cb5-485" aria-hidden="true" tabindex="-1"></a><span class="co"># lower / upper : l'intervalle de credibilite -- ces chiffres sont MODELISES,</span></span>
+<span id="cb5-486"><a href="#cb5-486" aria-hidden="true" tabindex="-1"></a><span class="co"># pas recenses. Plus l'intervalle est large, moins l'estimation est sure.</span></span>
+<span id="cb5-487"><a href="#cb5-487" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-488"><a href="#cb5-488" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-489"><a href="#cb5-489" aria-hidden="true" tabindex="-1"></a><span class="fu">### 11.2 Les grappes GPS de l'EDS : d'un tableau à des points</span></span>
+<span id="cb5-490"><a href="#cb5-490" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-491"><a href="#cb5-491" aria-hidden="true" tabindex="-1"></a><span class="in">```r</span></span>
+<span id="cb5-492"><a href="#cb5-492" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sf)</span>
+<span id="cb5-493"><a href="#cb5-493" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-494"><a href="#cb5-494" aria-hidden="true" tabindex="-1"></a><span class="co"># Les fichiers DHS separent la GEOMETRIE et les ATTRIBUTS :</span></span>
+<span id="cb5-495"><a href="#cb5-495" aria-hidden="true" tabindex="-1"></a><span class="co">#   CMGE71FL.shp -&gt; les points (coordonnees des grappes)</span></span>
+<span id="cb5-496"><a href="#cb5-496" aria-hidden="true" tabindex="-1"></a><span class="co">#   CMGC72FL.csv -&gt; 130 covariables contextuelles, SANS coordonnees</span></span>
+<span id="cb5-497"><a href="#cb5-497" aria-hidden="true" tabindex="-1"></a><span class="co"># La cle commune est le numero de grappe, DHSCLUST.</span></span>
+<span id="cb5-498"><a href="#cb5-498" aria-hidden="true" tabindex="-1"></a><span class="co"># </span><span class="al">ATTENTION</span><span class="co"> : les coordonnees GPS EDS sont volontairement DEPLACEES</span></span>
+<span id="cb5-499"><a href="#cb5-499" aria-hidden="true" tabindex="-1"></a><span class="co"># (2 km en urbain, 5 km en rural) pour proteger l'anonymat.</span></span>
+<span id="cb5-500"><a href="#cb5-500" aria-hidden="true" tabindex="-1"></a>dhs_gps <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"datasets/CMGE71FL.shp"</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb5-501"><a href="#cb5-501" aria-hidden="true" tabindex="-1"></a>covar   <span class="ot">&lt;-</span> readr<span class="sc">::</span><span class="fu">read_csv</span>(<span class="st">"datasets/CMGC72FL.csv"</span>, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb5-502"><a href="#cb5-502" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-503"><a href="#cb5-503" aria-hidden="true" tabindex="-1"></a>dhs_enrichi <span class="ot">&lt;-</span> dhs_gps <span class="sc">|&gt;</span></span>
+<span id="cb5-504"><a href="#cb5-504" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">left_join</span>(covar, <span class="at">by =</span> <span class="st">"DHSCLUST"</span>)</span>
+<span id="cb5-505"><a href="#cb5-505" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-506"><a href="#cb5-506" aria-hidden="true" tabindex="-1"></a><span class="co"># Jointure SPATIALE : dans quelle region tombe chaque grappe ?</span></span>
+<span id="cb5-507"><a href="#cb5-507" aria-hidden="true" tabindex="-1"></a><span class="co"># La cle n'est plus un identifiant, c'est la POSITION elle-meme.</span></span>
+<span id="cb5-508"><a href="#cb5-508" aria-hidden="true" tabindex="-1"></a>cmr1 <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"datasets/gadm41_CMR_1.shp"</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb5-509"><a href="#cb5-509" aria-hidden="true" tabindex="-1"></a>grappes_region <span class="ot">&lt;-</span> <span class="fu">st_join</span>(<span class="fu">st_transform</span>(dhs_enrichi, <span class="dv">4326</span>),</span>
+<span id="cb5-510"><a href="#cb5-510" aria-hidden="true" tabindex="-1"></a>                          <span class="fu">st_transform</span>(cmr1, <span class="dv">4326</span>),</span>
+<span id="cb5-511"><a href="#cb5-511" aria-hidden="true" tabindex="-1"></a>                          <span class="at">join =</span> st_within)</span>
+<span id="cb5-512"><a href="#cb5-512" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(<span class="fu">is.na</span>(grappes_region<span class="sc">$</span>NAME_1))   <span class="co"># grappes hors de tout polygone</span></span>
+<span id="cb5-513"><a href="#cb5-513" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-514"><a href="#cb5-514" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-515"><a href="#cb5-515" aria-hidden="true" tabindex="-1"></a><span class="fu">### 11.3 Le raster : Sentinel-2 avec terra</span></span>
+<span id="cb5-516"><a href="#cb5-516" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-517"><a href="#cb5-517" aria-hidden="true" tabindex="-1"></a><span class="in">```r</span></span>
+<span id="cb5-518"><a href="#cb5-518" aria-hidden="true" tabindex="-1"></a><span class="co"># terra n'est pas disponible en WebR (GDAL/PROJ/GEOS compiles en WASM,</span></span>
+<span id="cb5-519"><a href="#cb5-519" aria-hidden="true" tabindex="-1"></a><span class="co"># ~15 Mo, et une regression connue de WebR 0.6 au telechargement).</span></span>
+<span id="cb5-520"><a href="#cb5-520" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(terra)</span>
+<span id="cb5-521"><a href="#cb5-521" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-522"><a href="#cb5-522" aria-hidden="true" tabindex="-1"></a>b08 <span class="ot">&lt;-</span> <span class="fu">rast</span>(<span class="st">"datasets/2026-06-26-00_00_2026-06-26-23_59_Sentinel-2_L2A_B08_(Raw).tiff"</span>)</span>
+<span id="cb5-523"><a href="#cb5-523" aria-hidden="true" tabindex="-1"></a>b11 <span class="ot">&lt;-</span> <span class="fu">rast</span>(<span class="st">"datasets/2026-06-26-00_00_2026-06-26-23_59_Sentinel-2_L2A_B11_(Raw).tiff"</span>)</span>
+<span id="cb5-524"><a href="#cb5-524" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-525"><a href="#cb5-525" aria-hidden="true" tabindex="-1"></a><span class="co"># Toujours verifier l'emprise, le CRS et la resolution REELS avant d'ecrire</span></span>
+<span id="cb5-526"><a href="#cb5-526" aria-hidden="true" tabindex="-1"></a><span class="co"># un exercice : cette tuile ne couvre qu'une fraction du pays.</span></span>
+<span id="cb5-527"><a href="#cb5-527" aria-hidden="true" tabindex="-1"></a><span class="fu">ext</span>(b08); <span class="fu">crs</span>(b08, <span class="at">describe =</span> <span class="cn">TRUE</span>)<span class="sc">$</span>code; <span class="fu">res</span>(b08)</span>
+<span id="cb5-528"><a href="#cb5-528" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-529"><a href="#cb5-529" aria-hidden="true" tabindex="-1"></a><span class="co"># NDMI = (NIR - SWIR) / (NIR + SWIR) : humidite de la vegetation.</span></span>
+<span id="cb5-530"><a href="#cb5-530" aria-hidden="true" tabindex="-1"></a>ndmi <span class="ot">&lt;-</span> (b08 <span class="sc">-</span> b11) <span class="sc">/</span> (b08 <span class="sc">+</span> b11)</span>
+<span id="cb5-531"><a href="#cb5-531" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(ndmi, <span class="at">main =</span> <span class="st">"NDMI — humidité de la végétation"</span>)</span>
+<span id="cb5-532"><a href="#cb5-532" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-533"><a href="#cb5-533" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-534"><a href="#cb5-534" aria-hidden="true" tabindex="-1"></a><span class="fu">### 11.4 Cartographie thématique avec tmap 4</span></span>
+<span id="cb5-535"><a href="#cb5-535" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-536"><a href="#cb5-536" aria-hidden="true" tabindex="-1"></a><span class="in">```r</span></span>
+<span id="cb5-537"><a href="#cb5-537" aria-hidden="true" tabindex="-1"></a><span class="co"># tmap est volontairement absent du runtime : trop de dependances pour un</span></span>
+<span id="cb5-538"><a href="#cb5-538" aria-hidden="true" tabindex="-1"></a><span class="co"># chargement navigateur fluide. Les cartes ci-dessus sont donc en ggplot2.</span></span>
+<span id="cb5-539"><a href="#cb5-539" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tmap)</span>
+<span id="cb5-540"><a href="#cb5-540" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(adm1_pop) <span class="sc">+</span></span>
+<span id="cb5-541"><a href="#cb5-541" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="at">fill =</span> <span class="st">"densite"</span>,</span>
+<span id="cb5-542"><a href="#cb5-542" aria-hidden="true" tabindex="-1"></a>              <span class="at">fill.scale  =</span> <span class="fu">tm_scale_intervals</span>(<span class="at">style =</span> <span class="st">"quantile"</span>, <span class="at">n =</span> <span class="dv">5</span>,</span>
+<span id="cb5-543"><a href="#cb5-543" aria-hidden="true" tabindex="-1"></a>                                               <span class="at">values =</span> <span class="st">"brewer.yl_or_rd"</span>),</span>
+<span id="cb5-544"><a href="#cb5-544" aria-hidden="true" tabindex="-1"></a>              <span class="at">fill.legend =</span> <span class="fu">tm_legend</span>(<span class="at">title =</span> <span class="st">"Densité (hab/km²)"</span>),</span>
+<span id="cb5-545"><a href="#cb5-545" aria-hidden="true" tabindex="-1"></a>              <span class="at">col =</span> <span class="st">"white"</span>, <span class="at">lwd =</span> <span class="fl">0.3</span>) <span class="sc">+</span></span>
+<span id="cb5-546"><a href="#cb5-546" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_title</span>(<span class="st">"Densité de population par région — Cameroun"</span>) <span class="sc">+</span></span>
+<span id="cb5-547"><a href="#cb5-547" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scalebar</span>(<span class="at">position =</span> <span class="fu">c</span>(<span class="st">"left"</span>, <span class="st">"bottom"</span>)) <span class="sc">+</span></span>
+<span id="cb5-548"><a href="#cb5-548" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type =</span> <span class="st">"4star"</span>, <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"top"</span>))</span>
+<span id="cb5-549"><a href="#cb5-549" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-550"><a href="#cb5-550" aria-hidden="true" tabindex="-1"></a><span class="co"># NE PAS mettre tmap_mode("view") dans un document diffuse : le widget</span></span>
+<span id="cb5-551"><a href="#cb5-551" aria-hidden="true" tabindex="-1"></a><span class="co"># leaflet embarque toutes les geometries dans le HTML. Le J02 est monte</span></span>
+<span id="cb5-552"><a href="#cb5-552" aria-hidden="true" tabindex="-1"></a><span class="co"># a 17 Mo pour cette raison. A lancer en direct, uniquement.</span></span>
+<span id="cb5-553"><a href="#cb5-553" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-554"><a href="#cb5-554" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-555"><a href="#cb5-555" aria-hidden="true" tabindex="-1"></a><span class="fu">## 12. Vocabulaire de la journée</span></span>
+<span id="cb5-556"><a href="#cb5-556" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-557"><a href="#cb5-557" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Terme <span class="pp">|</span> Ce qu'il désigne <span class="pp">|</span></span>
+<span id="cb5-558"><a href="#cb5-558" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|</span></span>
+<span id="cb5-559"><a href="#cb5-559" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Vecteur / raster** <span class="pp">|</span> entités discrètes (<span class="in">`sf`</span>) / grille de pixels (<span class="in">`terra`</span>) <span class="pp">|</span></span>
+<span id="cb5-560"><a href="#cb5-560" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **CRS / EPSG** <span class="pp">|</span> système de référence des coordonnées, et son code <span class="pp">|</span></span>
+<span id="cb5-561"><a href="#cb5-561" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Géographique / projeté** | en **degrés** (non mesurable) / en **mètres** (mesurable) <span class="pp">|</span></span>
+<span id="cb5-562"><a href="#cb5-562" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Centroïde** <span class="pp">|</span> centre de gravité d'un polygone — peut tomber hors du polygone <span class="pp">|</span></span>
+<span id="cb5-563"><a href="#cb5-563" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Choroplèthe** <span class="pp">|</span> carte où la couleur d'un polygone code une valeur numérique <span class="pp">|</span></span>
+<span id="cb5-564"><a href="#cb5-564" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Palette qualitative / séquentielle** <span class="pp">|</span> distinguer / ordonner <span class="pp">|</span></span>
+<span id="cb5-565"><a href="#cb5-565" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **MAUP** <span class="pp">|</span> le résultat dépend de la maille ; aucune maille n'est neutre <span class="pp">|</span></span>
+<span id="cb5-566"><a href="#cb5-566" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Erreur écologique** <span class="pp">|</span> attribuer à un individu ce qui n'est vrai que de l'agrégat <span class="pp">|</span></span>
+<span id="cb5-567"><a href="#cb5-567" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Intervalle de crédibilité** | l'incertitude d'un chiffre **modélisé** (WorldPop) <span class="pp">|</span></span>
+<span id="cb5-568"><a href="#cb5-568" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-569"><a href="#cb5-569" aria-hidden="true" tabindex="-1"></a><span class="fu">## 13. Pour aller plus loin</span></span>
+<span id="cb5-570"><a href="#cb5-570" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-571"><a href="#cb5-571" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`demo_formateur_J02.qmd`** (ce dossier) : la démonstration complète sous RStudio —</span>
+<span id="cb5-572"><a href="#cb5-572" aria-hidden="true" tabindex="-1"></a>  import des CSV WorldPop, grappes EDS géolocalisées, raster Sentinel-2, cartographie</span>
+<span id="cb5-573"><a href="#cb5-573" aria-hidden="true" tabindex="-1"></a>  <span class="in">`tmap`</span> et tableau de bord national.</span>
+<span id="cb5-574"><a href="#cb5-574" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**`script_etudiant_J02.R`** : la trame à trous à compléter en salle ;</span>
+<span id="cb5-575"><a href="#cb5-575" aria-hidden="true" tabindex="-1"></a>  **`script_etudiant_J02_corrige.R`** : le corrigé.</span>
+<span id="cb5-576"><a href="#cb5-576" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**J03 — L'univers vectoriel** : lecture de couches, prédicats spatiaux, jointures</span>
+<span id="cb5-577"><a href="#cb5-577" aria-hidden="true" tabindex="-1"></a>  attributaires et spatiales. Tout ce que cette page effleure y est repris en détail,</span>
+<span id="cb5-578"><a href="#cb5-578" aria-hidden="true" tabindex="-1"></a>  et entièrement exécutable dans le navigateur.</span>
+<span id="cb5-579"><a href="#cb5-579" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-580"><a href="#cb5-580" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">← Retour à l'accueil</span><span class="co">](../INDEX.md)</span></span>
+</code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

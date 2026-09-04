@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>J06 · L’art de la cartographie — runtime navigateur – Runtime IFORD × GDSG 2026</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-cbfcc28fdddbba26d4008a6ad21285bb.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-ba4b3e9e4b2a78949e1cf3c0f076353c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/live-runtime/live-runtime.js" type="module"></script>
+<link href="../site_libs/quarto-contrib/live-runtime/live-runtime.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script type="module" src="../site_libs/quarto-ojs/quarto-ojs-runtime.js"></script>
+<link href="../site_libs/quarto-ojs/quarto-ojs.css" rel="stylesheet">
+
+
+</head>
+
+<body class="floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="INDEX.md" class="navbar-brand navbar-brand-logo">
+    <img src="../_commons/img/logo-iford.jpg" alt="IFORD" class="navbar-logo light-content">
+    <img src="../_commons/img/logo-iford.jpg" alt="IFORD" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="INDEX.md">
+    <span class="navbar-title">Runtime IFORD × GDSG 2026</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../INDEX.html"> 
+<span class="menu-text">Accueil</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-modules" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Modules</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-modules">    
+        <li>
+    <a class="dropdown-item" href="../J01_fondations/runtime.html">
+ <span class="dropdown-text">J01 · Fondations R &amp; RStudio</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J02_penser_espace/runtime.html">
+ <span class="dropdown-text">J02 · Penser l’espace</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J03_univers_vectoriel/runtime.html">
+ <span class="dropdown-text">J03 · L’univers vectoriel</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J04_terre_en_pixels/runtime.html">
+ <span class="dropdown-text">J04 · La Terre en pixels</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J05_enquetes_carte/runtime.html">
+ <span class="dropdown-text">J05 · Des enquêtes à la carte</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J06_art_cartographie/runtime.html">
+ <span class="dropdown-text">J06 · L’art de la cartographie</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J07_statistiques_spatiales/runtime.html">
+ <span class="dropdown-text">J07 · Statistiques spatiales</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J08_population_haute_resolution/runtime.html">
+ <span class="dropdown-text">J08 · Population en haute résolution</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J09_teledetection/runtime.html">
+ <span class="dropdown-text">J09 · Télédétection et inondations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J10_politiques_publiques/runtime.html">
+ <span class="dropdown-text">J10 · Politiques publiques</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J11_perenniser_transmettre/runtime.html">
+ <span class="dropdown-text">J11 · Pérenniser et transmettre</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul class="collapse">
+  <li><a href="#charger-les-trois-mailles-et-la-carte-la-plus-simple-possible" id="toc-charger-les-trois-mailles-et-la-carte-la-plus-simple-possible" class="nav-link active" data-scroll-target="#charger-les-trois-mailles-et-la-carte-la-plus-simple-possible">1. Charger les trois mailles, et la carte la plus simple possible</a></li>
+  <li><a href="#discrétiser-quatre-découpages-du-même-tableau-quatre-cartes" id="toc-discrétiser-quatre-découpages-du-même-tableau-quatre-cartes" class="nav-link" data-scroll-target="#discrétiser-quatre-découpages-du-même-tableau-quatre-cartes">2. Discrétiser — quatre découpages du même tableau, quatre cartes</a></li>
+  <li><a href="#les-trois-familles-de-palettes-et-le-contresens-à-ne-jamais-commettre" id="toc-les-trois-familles-de-palettes-et-le-contresens-à-ne-jamais-commettre" class="nav-link" data-scroll-target="#les-trois-familles-de-palettes-et-le-contresens-à-ne-jamais-commettre">3. Les trois familles de palettes — et le contresens à ne jamais commettre</a></li>
+  <li><a href="#symboles-proportionnels-quand-la-choroplèthe-ment" id="toc-symboles-proportionnels-quand-la-choroplèthe-ment" class="nav-link" data-scroll-target="#symboles-proportionnels-quand-la-choroplèthe-ment">4. Symboles proportionnels — quand la choroplèthe ment</a></li>
+  <li><a href="#facettes-comparer-sans-changer-déchelle" id="toc-facettes-comparer-sans-changer-déchelle" class="nav-link" data-scroll-target="#facettes-comparer-sans-changer-déchelle">5. Facettes — comparer sans changer d’échelle</a></li>
+  <li><a href="#lhabillage-ce-qui-transforme-un-graphique-en-document" id="toc-lhabillage-ce-qui-transforme-un-graphique-en-document" class="nav-link" data-scroll-target="#lhabillage-ce-qui-transforme-un-graphique-en-document">6. L’habillage — ce qui transforme un graphique en document</a></li>
+  <li><a href="#ce-qui-reste-sous-rstudio-tmap-linteractif-et-lexport" id="toc-ce-qui-reste-sous-rstudio-tmap-linteractif-et-lexport" class="nav-link" data-scroll-target="#ce-qui-reste-sous-rstudio-tmap-linteractif-et-lexport">7. Ce qui reste sous RStudio : <code>tmap</code>, l’interactif et l’export</a></li>
+  <li><a href="#checklist-de-fin-de-j06" id="toc-checklist-de-fin-de-j06" class="nav-link" data-scroll-target="#checklist-de-fin-de-j06">Checklist de fin de J06</a></li>
+  </ul>
+</nav>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">J06 · L’art de la cartographie — runtime navigateur</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<p class="subtitle lead">Discrétiser, colorer, habiller — la même donnée, plusieurs messages · Atelier IFORD × GDSG 2026</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Comment utiliser cette page
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Les cellules <strong>Run code</strong> (blocs bleus <code>{webr}</code>) s’exécutent <strong>dans votre navigateur</strong> : cliquez, changez une couleur, un nombre de classes, une palette, relancez. C’est le meilleur usage possible de cette page — une journée sur l’art de la carte se travaille en modifiant, pas en lisant.</p>
+<p>Les blocs gris ordinaires sont en <strong>lecture seule</strong> : ils montrent <code>tmap</code>, <code>leaflet</code> et <code>mapview</code>, qui ne tournent pas dans le navigateur. Le déroulé complet est dans <code>demo_formateur_J6.qmd</code> (ce même dossier), sous RStudio desktop.</p>
+<p><strong>Pourquoi <code>ggplot2</code> et non <code>tmap</code> ici ?</strong> <code>tmap</code> embarque trop de dépendances pour un chargement navigateur fluide. Ce n’est pas une perte : <code>ggplot2</code> + <code>geom_sf()</code> oblige à rendre <strong>explicite</strong> chaque décision cartographique — l’échelle de couleur, la discrétisation, la légende, l’habillage sont des objets qu’on écrit. C’est exactement ce qu’une journée sur la sémiologie graphique doit faire apparaître.</p>
+<p><strong>Ce qui a été calculé en amont.</strong> Le script <code>_commons/data/J06_extraits/00_extraire_J06.R</code> a lu les fichiers Stata et SPSS (<code>haven</code>), pondéré les indicateurs, et calculé les bornes de <strong>Jenks</strong> — que <code>classInt</code>, absent du navigateur, est seul à savoir produire. Les quantiles et les intervalles égaux, eux, se recalculent ici en direct : vous verrez la différence.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Warning
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Les indicateurs issus d’ECAM5 (<code>tx_pauvrete</code>, <code>tx_insatisf_alim</code>) proviennent d’un <strong>extrait de formation non représentatif à l’intérieur des régions</strong> : ils servent à apprendre la carte, <strong>pas à décrire le Cameroun</strong>. Ne les citez pas. Les indicateurs EDS (<code>tx_eau_amelioree</code>) et WorldPop (<code>pop_total</code>) sont, eux, exploitables avec les précautions énoncées sous chaque figure.</p>
+</div>
+</div>
+<section id="charger-les-trois-mailles-et-la-carte-la-plus-simple-possible" class="level2">
+<h2 class="anchored" data-anchor-id="charger-les-trois-mailles-et-la-carte-la-plus-simple-possible">1. Charger les trois mailles, et la carte la plus simple possible</h2>
+<div class="cell" data-autorun="true">
+<div>
+<div id="webr-1" class="exercise-cell">
+
+</div>
+<script type="webr-1-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoibGlicmFyeShzZilcbmxpYnJhcnkoZHBseXIpXG5saWJyYXJ5KGdncGxvdDIpXG5cbiMgVHJvaXMgZGVjb3VwYWdlcyBkdSBtZW1lIHRlcnJpdG9pcmUsIGR1IHBsdXMgZ3Jvc3NpZXIgYXUgcGx1cyBmaW4uXG5yZWdpb25zICAgICAgPC0gcmVhZF9zZihcIl9jb21tb25zL2RhdGEvSjA2X2V4dHJhaXRzL2Ntcl9hZG0xX2NhcnRvLmdlb2pzb25cIilcbmRlcGFydGVtZW50cyA8LSByZWFkX3NmKFwiX2NvbW1vbnMvZGF0YS9KMDZfZXh0cmFpdHMvY21yX2FkbTJfY2FydG8uZ2VvanNvblwiKVxuZGlzdHJpY3RzICAgIDwtIHJlYWRfc2YoXCJfY29tbW9ucy9kYXRhL0owNl9leHRyYWl0cy9jbXJfZHNfY2FydG8uZ2VvanNvblwiKVxuXG5jKHJlZ2lvbnMgPSBucm93KHJlZ2lvbnMpLCBkZXBhcnRlbWVudHMgPSBucm93KGRlcGFydGVtZW50cyksXG4gIGRpc3RyaWN0cyA9IG5yb3coZGlzdHJpY3RzKSkifQ==
+</script>
+</div>
+</div>
+<div class="cell">
+<div>
+<div id="webr-2" class="exercise-cell">
+
+</div>
+<script type="webr-2-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBMYSBncmFtbWFpcmUgY2FydG9ncmFwaGlxdWUgbWluaW1hbGUgOiB1bmUgZ2VvbWV0cmllLCB1bmUgZXN0aGV0aXF1ZS5cbiMgZ2VvbV9zZigpIHNhaXQgZGVzc2luZXIgcG9pbnRzLCBsaWduZXMgZXQgcG9seWdvbmVzIHNhbnMgcXUnb24gbGUgbHVpIGRpc2UgOlxuIyBpbCBsaXQgbGUgdHlwZSBkZSBsYSBjb2xvbm5lIGdlb21ldHJ5LlxuZ2dwbG90KCkgK1xuICBnZW9tX3NmKGRhdGEgPSBkZXBhcnRlbWVudHMsIGZpbGwgPSBcImdyZXk5NlwiLCBjb2xvciA9IFwiZ3JleTcwXCIsIGxpbmV3aWR0aCA9IDAuMTUpICtcbiAgZ2VvbV9zZihkYXRhID0gcmVnaW9ucywgZmlsbCA9IE5BLCBjb2xvciA9IFwiZ3JleTIwXCIsIGxpbmV3aWR0aCA9IDAuNSkgK1xuICBsYWJzKHRpdGxlID0gXCJDYW1lcm91biDigJQgNTggZMOpcGFydGVtZW50cyBzdXIgMTAgcsOpZ2lvbnNcIixcbiAgICAgICBzdWJ0aXRsZSA9IFwiRGV1eCBuaXZlYXV4IGQndW4gbcOqbWUgZMOpY291cGFnZSBhZG1pbmlzdHJhdGlmLCBzdXBlcnBvc8Opc1wiLFxuICAgICAgIGNhcHRpb24gPSBcIlNvdXJjZSA6IEdBRE0gNC4xIMK3IElGT1JEIMOXIEdEU0cgMjAyNlwiKSArXG4gIHRoZW1lX21pbmltYWwoKSArXG4gIHRoZW1lKGF4aXMudGV4dCA9IGVsZW1lbnRfYmxhbmsoKSwgYXhpcy50aWNrcyA9IGVsZW1lbnRfYmxhbmsoKSxcbiAgICAgICAgcGFuZWwuZ3JpZCA9IGVsZW1lbnRfYmxhbmsoKSkifQ==
+</script>
+</div>
+</div>
+<div class="iford-callout">
+<p><strong>Ce que la figure code.</strong> Rien d’autre qu’une géométrie : aucune variable n’est encodée en couleur. C’est une <strong>carte de repérage</strong>, pas une carte thématique. Le fin trait gris dessine les 58 <strong>départements</strong> — pas les arrondissements, contrairement à ce qu’affirmait le matériel d’origine ; le trait épais, les 10 régions.</p>
+<p><strong>Ce que les choix techniques font.</strong> L’ordre des <code>geom_sf()</code> compte : la seconde couche se dessine <strong>par-dessus</strong> la première. <code>fill = NA</code> sur les régions laisse voir les départements en dessous. <code>theme_minimal()</code> retire la grille et les graduations, qui n’ont aucun sens sur une carte thématique de pays.</p>
+<p><strong>Ce qui ne se lit pas.</strong> Rien de thématique, et c’est volontaire. Une carte de repérage sert à savoir <strong>où</strong> on est avant de savoir <strong>combien</strong> — la sauter, c’est demander au lecteur d’interpréter des couleurs sur une géographie qu’il ne reconnaît pas encore.</p>
+</div>
+</section>
+<section id="discrétiser-quatre-découpages-du-même-tableau-quatre-cartes" class="level2">
+<h2 class="anchored" data-anchor-id="discrétiser-quatre-découpages-du-même-tableau-quatre-cartes">2. Discrétiser — quatre découpages du même tableau, quatre cartes</h2>
+<p>C’est la décision la plus lourde de conséquences de toute la journée, et la moins souvent discutée. <strong>La donnée ne change pas ; la carte, si.</strong></p>
+<div class="cell" data-autorun="true">
+<div>
+<div id="webr-3" class="exercise-cell">
+
+</div>
+<script type="webr-3-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBMZXMgYm9ybmVzIGRlIEplbmtzIGV0IGQnZWNhcnQtdHlwZSBvbnQgZXRlIHByZS1jYWxjdWxlZXMgKGNsYXNzSW50IG4nZXhpc3RlXG4jIHBhcyBkYW5zIGxlIG5hdmlnYXRldXIpLiBRdWFudGlsZXMgZXQgaW50ZXJ2YWxsZXMgZWdhdXgsIGV1eCwgc2UgY2FsY3VsZW50IGljaS5cbmJvcm5lcyA8LSByZWFkLmNzdihcIl9jb21tb25zL2RhdGEvSjA2X2V4dHJhaXRzL2Jvcm5lc19kaXNjcmV0aXNhdGlvbi5jc3ZcIilcblxuYm9ybmVzIHw+XG4gIGZpbHRlcih2YXJpYWJsZSA9PSBcInR4X2VhdV9hbWVsaW9yZWVcIiwgbWFpbGxlID09IFwicmVnaW9uXCIpIHw+XG4gIG11dGF0ZShhY3Jvc3MoYyhib3JuZV9pbmYsIGJvcm5lX3N1cCksIFxcKHgpIHJvdW5kKHgsIDEpKSkifQ==
+</script>
+</div>
+</div>
+<div class="cell">
+<div>
+<div id="webr-4" class="exercise-cell">
+
+</div>
+<script type="webr-4-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoieCA8LSByZWdpb25zJHR4X2VhdV9hbWVsaW9yZWVcbk4gPC0gNSAgICMgbm9tYnJlIGRlIGNsYXNzZXMgLS0gY2hhbmdlei1sZSBldCByZWxhbmNleiA6IGxhIGNhcnRlIGJvdWdlLlxuXG4jIFFVQU5USUxFUyA6IGNoYXF1ZSBjbGFzc2UgY29udGllbnQgbGUgTUVNRSBOT01CUkUgZCd1bml0ZXMuXG5icl9xdWFudCA8LSB1bmlxdWUocXVhbnRpbGUoeCwgcHJvYnMgPSBzZXEoMCwgMSwgbGVuZ3RoLm91dCA9IE4gKyAxKSwgbmEucm0gPSBUUlVFKSlcblxuIyBJTlRFUlZBTExFUyBFR0FVWCA6IGNoYXF1ZSBjbGFzc2UgY291dnJlIGxhIE1FTUUgTEFSR0VVUiBkZSB2YWxldXJzLlxuYnJfZWdhbCA8LSBzZXEobWluKHgsIG5hLnJtID0gVFJVRSksIG1heCh4LCBuYS5ybSA9IFRSVUUpLCBsZW5ndGgub3V0ID0gTiArIDEpXG5cbiMgSkVOS1MgKMKrIG5hdHVyYWwgYnJlYWtzIMK7KSA6IGxlcyBib3JuZXMgc29udCBwbGFjZWVzIGxhIG91IGxhIGRpc3RyaWJ1dGlvblxuIyBzZSBjcmV1c2UsIHBvdXIgbWluaW1pc2VyIGxhIHZhcmlhbmNlIGludHJhLWNsYXNzZS4gTHUgZGVwdWlzIGxlIENTVi5cbmxpZ25lc19qIDwtIGJvcm5lcyB8PlxuICBmaWx0ZXIodmFyaWFibGUgPT0gXCJ0eF9lYXVfYW1lbGlvcmVlXCIsIG1haWxsZSA9PSBcInJlZ2lvblwiLCBtZXRob2RlID09IFwiamVua3NcIikgfD5cbiAgYXJyYW5nZShjbGFzc2UpXG5icl9qZW5rcyA8LSB1bmlxdWUoYyhsaWduZXNfaiRib3JuZV9pbmYsIHRhaWwobGlnbmVzX2okYm9ybmVfc3VwLCAxKSkpXG5cbnJiaW5kKHF1YW50aWxlcyA9IHJvdW5kKGJyX3F1YW50LCAxKVtzZXFfbGVuKE4gKyAxKV0sXG4gICAgICBlZ2F1eCAgICAgPSByb3VuZChicl9lZ2FsLCAxKSxcbiAgICAgIGplbmtzICAgICA9IHJvdW5kKGJyX2plbmtzLCAxKVtzZXFfbGVuKE4gKyAxKV0pIn0=
+</script>
+</div>
+</div>
+<div class="cell">
+<div>
+<div id="webr-5" class="exercise-cell">
+
+</div>
+<script type="webr-5-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBPbiBjb25zdHJ1aXQgdW5lIHNldWxlIGNvdWNoZSBlbXBpbGVlIDogbGEgTUVNRSBnZW9tZXRyaWUsIHRyb2lzIGZvaXMsXG4jIGF2ZWMgdHJvaXMgY29sb25uZXMgZGUgY2xhc3NlcyBkaWZmZXJlbnRlcy4gZmFjZXRfd3JhcCBmYWl0IGxlIHJlc3RlLlxuY2xhc3NlciA8LSBmdW5jdGlvbihjb3VjaGUsIGJvcm5lc192LCBub20pIHtcbiAgY291Y2hlIHw+XG4gICAgbXV0YXRlKG1ldGhvZGUgPSBub20sXG4gICAgICAgICAgIGNsYXNzZSAgPSBjdXQodHhfZWF1X2FtZWxpb3JlZSwgYnJlYWtzID0gYm9ybmVzX3YsXG4gICAgICAgICAgICAgICAgICAgICAgICAgaW5jbHVkZS5sb3dlc3QgPSBUUlVFLCBkaWcubGFiID0gMykpXG59XG5cbmNvbXBhcmFpc29uIDwtIHJiaW5kKFxuICBjbGFzc2VyKHJlZ2lvbnMsIGJyX3F1YW50LCBcIjEuIFF1YW50aWxlcyAoZWZmZWN0aWZzIMOpZ2F1eClcIiksXG4gIGNsYXNzZXIocmVnaW9ucywgYnJfZWdhbCwgIFwiMi4gSW50ZXJ2YWxsZXMgw6lnYXV4XCIpLFxuICBjbGFzc2VyKHJlZ2lvbnMsIGJyX2plbmtzLCBcIjMuIEplbmtzIChzZXVpbHMgbmF0dXJlbHMpXCIpXG4pXG5cbmdncGxvdChjb21wYXJhaXNvbikgK1xuICBnZW9tX3NmKGFlcyhmaWxsID0gY2xhc3NlKSwgY29sb3IgPSBcIndoaXRlXCIsIGxpbmV3aWR0aCA9IDAuMjUpICtcbiAgZmFjZXRfd3JhcCh+IG1ldGhvZGUpICtcbiAgc2NhbGVfZmlsbF92aXJpZGlzX2Qob3B0aW9uID0gXCJEXCIsIG5hbWUgPSBcIkNsYXNzZVwiLCBuYS52YWx1ZSA9IFwiZ3JleTg4XCIpICtcbiAgbGFicyh0aXRsZSA9IFwiVW5lIGRvbm7DqWUsIHRyb2lzIGRpc2Nyw6l0aXNhdGlvbnMsIHRyb2lzIGNhcnRlc1wiLFxuICAgICAgIHN1YnRpdGxlID0gXCJBY2PDqHMgw6AgdW5lIHNvdXJjZSBkJ2VhdSBhbcOpbGlvcsOpZSBwYXIgcsOpZ2lvbiAoRURTLU1JQ1MgMjAxOClcIixcbiAgICAgICBjYXB0aW9uID0gXCJTb3VyY2UgOiBFRFMtTUlDUyAyMDE4IChESFMpIMK3IEdBRE0gNC4xIMK3IElGT1JEIMOXIEdEU0cgMjAyNlwiKSArXG4gIHRoZW1lX21pbmltYWwoKSArXG4gIHRoZW1lKGF4aXMudGV4dCA9IGVsZW1lbnRfYmxhbmsoKSwgYXhpcy50aWNrcyA9IGVsZW1lbnRfYmxhbmsoKSxcbiAgICAgICAgcGFuZWwuZ3JpZCA9IGVsZW1lbnRfYmxhbmsoKSwgbGVnZW5kLnBvc2l0aW9uID0gXCJib3R0b21cIikifQ==
+</script>
+</div>
+</div>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Ce que chaque discrétisation raconte du <strong>même</strong> tableau
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Ce que la figure code.</strong> Trois fois la même variable, sur la même géométrie, avec la même palette. Seule la <strong>règle de découpage en classes</strong> change.</p>
+<p><strong>Ce que les choix techniques font.</strong></p>
+<ul>
+<li><strong>Quantiles.</strong> Chaque classe reçoit le même nombre d’unités. La carte est toujours « équilibrée » visuellement — toutes les couleurs sont représentées. Elle raconte des <strong>rangs</strong> : qui est dans le cinquième supérieur. Danger : deux unités aux valeurs presque identiques peuvent tomber de part et d’autre d’une borne et apparaître très différentes.</li>
+<li><strong>Intervalles égaux.</strong> Chaque classe couvre la même largeur de valeurs. La carte raconte des <strong>niveaux</strong> et respecte les distances entre valeurs. Danger : sur une distribution asymétrique, presque toutes les unités s’entassent dans une ou deux classes, et la carte paraît vide.</li>
+<li><strong>Jenks.</strong> Les bornes se placent là où la distribution se <strong>creuse</strong> : l’algorithme minimise la variance à l’intérieur des classes. La carte respecte la <strong>structure</strong> des données. Danger : les bornes sont propres à ce jeu de données, donc <strong>deux cartes Jenks ne sont jamais comparables entre elles</strong> — ni entre deux années, ni entre deux pays.</li>
+</ul>
+<p><strong>Ce qui se lit.</strong> Le classement des régions les unes par rapport aux autres bouge peu ; ce qui bouge, c’est <strong>l’impression de contraste</strong>, c’est-à-dire le message. Un lecteur pressé ne lit pas les bornes : il lit les couleurs.</p>
+<p><strong>Ce qui ne se lit pas — et la règle qui en découle.</strong> Aucune de ces trois cartes n’est « la vraie ». Une discrétisation est un <strong>argument</strong>, pas une propriété de la donnée. D’où trois obligations : afficher les bornes dans la légende, dire la méthode dans la note de la carte, et fixer les bornes <strong>à la main</strong> dès qu’on veut comparer deux cartes entre elles.</p>
+</div>
+</div>
+</section>
+<section id="les-trois-familles-de-palettes-et-le-contresens-à-ne-jamais-commettre" class="level2">
+<h2 class="anchored" data-anchor-id="les-trois-familles-de-palettes-et-le-contresens-à-ne-jamais-commettre">3. Les trois familles de palettes — et le contresens à ne jamais commettre</h2>
+<div class="cell">
+<div>
+<div id="webr-6" class="exercise-cell">
+
+</div>
+<script type="webr-6-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBQQUxFVFRFIFNFUVVFTlRJRUxMRSA6IHVuZSBzZXVsZSBkaXJlY3Rpb24gZGUgbGVjdHVyZSwgZHUgY2xhaXIgYXUgZm9uY2UuXG4jIFBvdXIgdW5lIGdyYW5kZXVyIHF1aSB2YSBzaW1wbGVtZW50IGRlIFwiYmFzXCIgYSBcImVsZXZlXCIuXG5wX3NlcSA8LSBnZ3Bsb3QocmVnaW9ucykgK1xuICBnZW9tX3NmKGFlcyhmaWxsID0gdHhfZWF1X2FtZWxpb3JlZSksIGNvbG9yID0gXCJ3aGl0ZVwiLCBsaW5ld2lkdGggPSAwLjI1KSArXG4gIHNjYWxlX2ZpbGxfdmlyaWRpc19jKG9wdGlvbiA9IFwiRFwiLCBuYW1lID0gXCJFYXUgYW3DqWxpb3LDqWUgKCUpXCIsXG4gICAgICAgICAgICAgICAgICAgICAgIG5hLnZhbHVlID0gXCJncmV5ODhcIikgK1xuICBsYWJzKHRpdGxlID0gXCJTw6lxdWVudGllbGxlIOKAlCB1biBuaXZlYXVcIixcbiAgICAgICBzdWJ0aXRsZSA9IFwiUGFydCBkZXMgbcOpbmFnZXMgYXlhbnQgYWNjw6hzIMOgIHVuZSBzb3VyY2UgYW3DqWxpb3LDqWVcIikgK1xuICB0aGVtZV9taW5pbWFsKCkgK1xuICB0aGVtZShheGlzLnRleHQgPSBlbGVtZW50X2JsYW5rKCksIGF4aXMudGlja3MgPSBlbGVtZW50X2JsYW5rKCksXG4gICAgICAgIHBhbmVsLmdyaWQgPSBlbGVtZW50X2JsYW5rKCkpXG5wX3NlcSJ9
+</script>
+</div>
+</div>
+<div class="cell">
+<div>
+<div id="webr-7" class="exercise-cell">
+
+</div>
+<script type="webr-7-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBQQUxFVFRFIERJVkVSR0VOVEUgOiBkZXV4IGRpcmVjdGlvbnMgYXV0b3VyIGQndW4gQ0VOVFJFIE5FVVRSRS5cbiMgTGEgY29sb25uZSBlY2FydF9lYXVfbW95ZW5uZSBhIHVuIHZyYWkgemVybyA6IGwnZWNhcnQgYSBsYSBtb3llbm5lIGRlc1xuIyByZWdpb25zLiBDJ2VzdCBjZSB6ZXJvIHF1aSBhdXRvcmlzZSBsYSBkaXZlcmdlbnRlIC0tIGV0IGwnaW50ZXJkaXQgYWlsbGV1cnMuXG5nZ3Bsb3QocmVnaW9ucykgK1xuICBnZW9tX3NmKGFlcyhmaWxsID0gZWNhcnRfZWF1X21veWVubmUpLCBjb2xvciA9IFwid2hpdGVcIiwgbGluZXdpZHRoID0gMC4yNSkgK1xuICBzY2FsZV9maWxsX2dyYWRpZW50Mihsb3cgPSBcIiNCMjE4MkJcIiwgbWlkID0gXCJncmV5OTVcIiwgaGlnaCA9IFwiIzIxNjZBQ1wiLFxuICAgICAgICAgICAgICAgICAgICAgICBtaWRwb2ludCA9IDAsIG5hbWUgPSBcIsOJY2FydCDDoCBsYVxcbm1veWVubmUgKHB0cylcIixcbiAgICAgICAgICAgICAgICAgICAgICAgbmEudmFsdWUgPSBcImdyZXk4OFwiKSArXG4gIGxhYnModGl0bGUgPSBcIkRpdmVyZ2VudGUg4oCUIHVuIMOpY2FydCBkZSBwYXJ0IGV0IGQnYXV0cmUgZCd1biBjZW50cmVcIixcbiAgICAgICBzdWJ0aXRsZSA9IFwiw4ljYXJ0IChlbiBwb2ludHMpIMOgIGxhIG1veWVubmUgbmF0aW9uYWxlIGRlcyByw6lnaW9uc1wiLFxuICAgICAgIGNhcHRpb24gPSBcIlNvdXJjZSA6IEVEUy1NSUNTIDIwMTggwrcgSUZPUkQgw5cgR0RTRyAyMDI2XCIpICtcbiAgdGhlbWVfbWluaW1hbCgpICtcbiAgdGhlbWUoYXhpcy50ZXh0ID0gZWxlbWVudF9ibGFuaygpLCBheGlzLnRpY2tzID0gZWxlbWVudF9ibGFuaygpLFxuICAgICAgICBwYW5lbC5ncmlkID0gZWxlbWVudF9ibGFuaygpKSJ9
+</script>
+</div>
+</div>
+<div class="cell">
+<div>
+<div id="webr-8" class="exercise-cell">
+
+</div>
+<script type="webr-8-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBQQUxFVFRFIFFVQUxJVEFUSVZFIDogZGVzIG1vZGFsaXRlcyBTQU5TIG9yZHJlLiBUZWludGVzIGRpc3RpbmN0ZXMsIGphbWFpc1xuIyBkZXMgbnVhbmNlcyBkJ3VuIG1lbWUgdG9uIC0tIHVuZSBudWFuY2Ugc3VnZ2VyZSB1biBjbGFzc2VtZW50IHF1aSBuJ2V4aXN0ZSBwYXMuXG5ncmFwcGVzIDwtIHJlYWQuY3N2KFwiX2NvbW1vbnMvZGF0YS9KMDZfZXh0cmFpdHMvZWRzX2dyYXBwZXNfcG9pbnRzLmNzdlwiKVxucHRzIDwtIHN0X2FzX3NmKGdyYXBwZXNbIWlzLm5hKGdyYXBwZXMkbG9uKSwgXSxcbiAgICAgICAgICAgICAgICBjb29yZHMgPSBjKFwibG9uXCIsIFwibGF0XCIpLCBjcnMgPSA0MzI2LCByZW1vdmUgPSBGQUxTRSlcblxuZ2dwbG90KCkgK1xuICBnZW9tX3NmKGRhdGEgPSByZWdpb25zLCBmaWxsID0gXCJncmV5OTZcIiwgY29sb3IgPSBcIndoaXRlXCIsIGxpbmV3aWR0aCA9IDAuMykgK1xuICBnZW9tX3NmKGRhdGEgPSBwdHMsIGFlcyhjb2xvciA9IG1pbGlldSksIHNpemUgPSAxLjEsIGFscGhhID0gMC44KSArXG4gIHNjYWxlX2NvbG9yX21hbnVhbCh2YWx1ZXMgPSBjKFwiVVwiID0gXCIjMEY0QzgxXCIsIFwiUlwiID0gXCIjQzE2NjJGXCIpLFxuICAgICAgICAgICAgICAgICAgICAgbGFiZWxzID0gYyhcIlVcIiA9IFwiVXJiYWluXCIsIFwiUlwiID0gXCJSdXJhbFwiKSxcbiAgICAgICAgICAgICAgICAgICAgIG5hbWUgPSBcIk1pbGlldVwiKSArXG4gIGxhYnModGl0bGUgPSBcIlF1YWxpdGF0aXZlIOKAlCBkZXMgY2F0w6lnb3JpZXMsIHBhcyBkZXMgbml2ZWF1eFwiLFxuICAgICAgIHN1YnRpdGxlID0gXCI0MzAgZ3JhcHBlcyBFRFMtTUlDUyAyMDE4IHBhciBtaWxpZXUgZGUgcsOpc2lkZW5jZVwiLFxuICAgICAgIGNhcHRpb24gPSBcIlNvdXJjZSA6IEVEUy1NSUNTIDIwMTggKERIUykgwrcgSUZPUkQgw5cgR0RTRyAyMDI2XCIpICtcbiAgdGhlbWVfbWluaW1hbCgpICtcbiAgdGhlbWUoYXhpcy50ZXh0ID0gZWxlbWVudF9ibGFuaygpLCBheGlzLnRpY2tzID0gZWxlbWVudF9ibGFuaygpLFxuICAgICAgICBwYW5lbC5ncmlkID0gZWxlbWVudF9ibGFuaygpKSJ9
+</script>
+</div>
+</div>
+<div class="iford-callout">
+<p><strong>Ce que les trois figures codent.</strong> Trois <strong>types de variables</strong>, donc trois familles de palettes. Le choix n’est pas esthétique : il annonce au lecteur la <strong>nature</strong> de ce qu’il regarde, avant même qu’il lise la légende.</p>
+<p><strong>Ce que les choix techniques font.</strong></p>
+<ul>
+<li><strong>Séquentielle</strong> (<code>viridis</code>, ici) — une seule direction de lecture. <code>viridis</code> a deux propriétés qu’un dégradé arbitraire n’a pas : elle est <strong>perceptivement uniforme</strong> (un même écart de valeur produit un même écart visuel sur toute l’échelle) et <strong>lisible en vision daltonienne</strong> comme en noir et blanc. Sur un rapport photocopié, c’est décisif.</li>
+<li><strong>Divergente</strong> — deux directions autour d’un centre neutre. Elle exige un <strong>vrai point zéro</strong> : un écart, une différence, un solde. La poser sur un taux brut, dont la valeur centrale serait arbitrairement choisie, revient à <strong>fabriquer</strong> deux camps qui n’existent pas dans la donnée. C’est le contresens de sémiologie le plus fréquent.</li>
+<li><strong>Qualitative</strong> — des teintes franchement distinctes. Utiliser deux nuances d’un même ton pour « urbain » et « rural » suggérerait que l’un est <em>plus</em> que l’autre.</li>
+</ul>
+<p><strong>Ce qui ne se lit pas.</strong> Aucune palette ne corrige une mauvaise discrétisation, et aucune ne compense l’absence de données. Notez que sur les trois cartes, les unités sans valeur restent <strong>grises</strong> (<code>na.value</code>) : elles ne sont pas « à zéro », elles sont <strong>non mesurées</strong>.</p>
+</div>
+</section>
+<section id="symboles-proportionnels-quand-la-choroplèthe-ment" class="level2">
+<h2 class="anchored" data-anchor-id="symboles-proportionnels-quand-la-choroplèthe-ment">4. Symboles proportionnels — quand la choroplèthe ment</h2>
+<div class="cell" data-autorun="true">
+<div>
+<div id="webr-9" class="exercise-cell">
+
+</div>
+<script type="webr-9-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBMYSBjaG9yb3BsZXRoZSBjb2xvcmUgZGVzIFNVUkZBQ0VTLiBQb3VyIHVuIEVGRkVDVElGICh1bmUgcG9wdWxhdGlvbiwgdW5cbiMgbm9tYnJlIGRlIG1lbmFnZXMpLCBlbGxlIGVzdCB0cm9tcGV1c2UgOiB1biBncmFuZCBkZXBhcnRlbWVudCBwZXUgcGV1cGxlXG4jIG9jY3VwZSBwbHVzIGRlIHBsYWNlIGEgbCdlY3JhbiBxdSd1biBwZXRpdCBkZXBhcnRlbWVudCB0cmVzIHBldXBsZS5cbmdncGxvdCgpICtcbiAgZ2VvbV9zZihkYXRhID0gZGVwYXJ0ZW1lbnRzLCBmaWxsID0gXCJncmV5OTZcIiwgY29sb3IgPSBcImdyZXk4MFwiLCBsaW5ld2lkdGggPSAwLjEyKSArXG4gIGdlb21fc2YoZGF0YSA9IHJlZ2lvbnMsIGZpbGwgPSBOQSwgY29sb3IgPSBcImdyZXk0MFwiLCBsaW5ld2lkdGggPSAwLjM1KSArXG4gIGdlb21fcG9pbnQoZGF0YSA9IHN0X2Ryb3BfZ2VvbWV0cnkoZGVwYXJ0ZW1lbnRzKSxcbiAgICAgICAgICAgICBhZXMoeCA9IGxvbl9jLCB5ID0gbGF0X2MsIHNpemUgPSBwb3BfdG90YWwpLFxuICAgICAgICAgICAgIHNoYXBlID0gMjEsIGZpbGwgPSBcIiMwRjRDODFcIiwgY29sb3IgPSBcIndoaXRlXCIsXG4gICAgICAgICAgICAgYWxwaGEgPSAwLjc1LCBzdHJva2UgPSAwLjMpICtcbiAgIyBMJ2FpcmUgZHUgY2VyY2xlIGRvaXQgZXRyZSBwcm9wb3J0aW9ubmVsbGUgYSBsYSB2YWxldXIsIHBhcyBzb24gcmF5b24gOlxuICAjIHNjYWxlX3NpemVfYXJlYSgpIGltcG9zZSBjZXR0ZSByZWdsZSAoZXQgZmFpdCBwYXNzZXIgbGEgdmFsZXVyIDAgcGFyIHVuZVxuICAjIGFpcmUgbnVsbGUpLlxuICBzY2FsZV9zaXplX2FyZWEobWF4X3NpemUgPSAxMiwgbmFtZSA9IFwiUG9wdWxhdGlvblxcbihXb3JsZFBvcClcIixcbiAgICAgICAgICAgICAgICAgIGxhYmVscyA9IHNjYWxlczo6Y29tbWEpICtcbiAgY29vcmRfc2YoKSArXG4gIGxhYnModGl0bGUgPSBcIlBvcHVsYXRpb24gcGFyIGTDqXBhcnRlbWVudCDigJQgc3ltYm9sZXMgcHJvcG9ydGlvbm5lbHNcIixcbiAgICAgICBzdWJ0aXRsZSA9IFwiTCdhaXJlIGR1IGNlcmNsZSBlc3QgcHJvcG9ydGlvbm5lbGxlIMOgIGwnZWZmZWN0aWYgOyBsZXMgc3VyZmFjZXMgbmUgY29kZW50IHJpZW5cIixcbiAgICAgICB4ID0gTlVMTCwgeSA9IE5VTEwsXG4gICAgICAgY2FwdGlvbiA9IFwiU291cmNlIDogV29ybGRQb3AgYWRtaW4gbGV2ZWwgMiDCtyBHQURNIDQuMSDCtyBJRk9SRCDDlyBHRFNHIDIwMjZcIikgK1xuICB0aGVtZV9taW5pbWFsKCkgK1xuICB0aGVtZShheGlzLnRleHQgPSBlbGVtZW50X2JsYW5rKCksIGF4aXMudGlja3MgPSBlbGVtZW50X2JsYW5rKCksXG4gICAgICAgIHBhbmVsLmdyaWQgPSBlbGVtZW50X2JsYW5rKCkpIn0=
+</script>
+</div>
+</div>
+<div class="cell">
+<div>
+<div id="webr-10" class="exercise-cell">
+
+</div>
+<script type="webr-10-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBMYSBNRU1FIGRvbm5lZSBlbiBjaG9yb3BsZXRoZSAtLSBtYWlzIHJhcHBvcnRlZSBhIGxhIHN1cGVyZmljaWUsIGRvbmNcbiMgdHJhbnNmb3JtZWUgZW4gREVOU0lURS4gVW4gZWZmZWN0aWYgc2UgY2FydG9ncmFwaGllIGVuIGNlcmNsZXMgOyB1blxuIyByYXBwb3J0ICh0YXV4LCBkZW5zaXRlLCBwYXJ0KSBzZSBjYXJ0b2dyYXBoaWUgZW4gYXBsYXRzLlxuZ2dwbG90KGRlcGFydGVtZW50cykgK1xuICBnZW9tX3NmKGFlcyhmaWxsID0gZGVuc2l0ZSksIGNvbG9yID0gXCJ3aGl0ZVwiLCBsaW5ld2lkdGggPSAwLjEyKSArXG4gICMgVHJhbnNmb3JtYXRpb24gcmFjaW5lIGNhcnJlZSA6IHNhbnMgZWxsZSwgRG91YWxhIGV0IFlhb3VuZGUgZWNyYXNlbnRcbiAgIyB0b3V0ZXMgbGVzIGF1dHJlcyB1bml0ZXMgZXQgbGEgY2FydGUgZGV2aWVudCB1bmlmb3JtZW1lbnQgcGFsZS5cbiAgc2NhbGVfZmlsbF92aXJpZGlzX2Mob3B0aW9uID0gXCJCXCIsIHRyYW5zID0gXCJzcXJ0XCIsXG4gICAgICAgICAgICAgICAgICAgICAgIG5hbWUgPSBcIkRlbnNpdMOpXFxuKGhhYi9rbcKyKVwiLCBuYS52YWx1ZSA9IFwiZ3JleTg4XCIpICtcbiAgbGFicyh0aXRsZSA9IFwiRGVuc2l0w6kgZGUgcG9wdWxhdGlvbiBwYXIgZMOpcGFydGVtZW50XCIsXG4gICAgICAgc3VidGl0bGUgPSBcIkNob3JvcGzDqHRoZSDigJQgw6ljaGVsbGUgcmFjaW5lIGNhcnLDqWUgcG91ciByZW5kcmUgbGVzIMOpY2FydHMgbGlzaWJsZXNcIixcbiAgICAgICBjYXB0aW9uID0gXCJTb3VyY2UgOiBXb3JsZFBvcCAoZWZmZWN0aWZzIG1vZMOpbGlzw6lzKSDCtyBHQURNIDQuMSDCtyBJRk9SRCDDlyBHRFNHIDIwMjZcIikgK1xuICB0aGVtZV9taW5pbWFsKCkgK1xuICB0aGVtZShheGlzLnRleHQgPSBlbGVtZW50X2JsYW5rKCksIGF4aXMudGlja3MgPSBlbGVtZW50X2JsYW5rKCksXG4gICAgICAgIHBhbmVsLmdyaWQgPSBlbGVtZW50X2JsYW5rKCkpIn0=
+</script>
+</div>
+</div>
+<div class="iford-callout">
+<p><strong>Ce que les figures codent.</strong> La première encode un <strong>effectif</strong> (nombre d’habitants) par l’aire d’un cercle posé au centroïde du département. La seconde encode un <strong>rapport</strong> (habitants par km²) par la couleur du polygone.</p>
+<p><strong>La règle, et elle est absolue.</strong> Une <strong>choroplèthe se réserve aux rapports</strong> — taux, parts, densités, moyennes. Colorier un effectif brut donne à voir la superficie autant que la valeur : les grands départements ruraux dominent visuellement des départements urbains beaucoup plus peuplés. Symétriquement, <code>scale_size_area()</code> garantit que c’est l’<strong>aire</strong> du cercle, non son rayon, qui est proportionnelle à la valeur — un rayon proportionnel exagérerait les grandes valeurs d’un facteur considérable.</p>
+<p><strong>Ce qui se lit.</strong> Les deux figures ensemble : les cercles montrent <strong>où sont les gens</strong>, la choroplèthe montre <strong>à quelle intensité ils y sont</strong>. Douala et Yaoundé apparaissent sur les deux, mais pour des raisons différentes.</p>
+<p><strong>Ce qui ne se lit pas.</strong> Les effectifs WorldPop sont <strong>modélisés</strong>, pas dénombrés : ils sont construits par désagrégation d’un recensement à l’aide d’imagerie satellitaire et de covariables. Le fichier source porte d’ailleurs un intervalle <code>lower</code>–<code>upper</code> et un indice d’incertitude. Un cercle est donc une estimation, avec une marge que la figure n’affiche pas. Et la densité est une moyenne sur tout le département : elle ne dit rien de la répartition interne — le J08 y revient avec des grilles de population à 100 mètres.</p>
+</div>
+</section>
+<section id="facettes-comparer-sans-changer-déchelle" class="level2">
+<h2 class="anchored" data-anchor-id="facettes-comparer-sans-changer-déchelle">5. Facettes — comparer sans changer d’échelle</h2>
+<div class="cell">
+<div>
+<div id="webr-11" class="exercise-cell">
+
+</div>
+<script type="webr-11-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBMYSBNRU1FIHZhcmlhYmxlLCBsYSBNRU1FIGVjaGVsbGUgZGUgY291bGV1ciwgc3VyIERFVVggbWFpbGxlcy5cbiMgQXN0dWNlIGRlIGNvbnN0cnVjdGlvbiA6IG9uIGVtcGlsZSBkZXV4IGNvdWNoZXMgZW4gaGFybW9uaXNhbnQgbGVzIGNvbG9ubmVzLFxuIyBwdWlzIGZhY2V0X3dyYXAuIENvbW1lIGwnZWNoZWxsZSBlc3QgdW5pcXVlLCBsZXMgY291bGV1cnMgc29udCBjb21wYXJhYmxlc1xuIyBkJ3VuIHBhbm5lYXUgYSBsJ2F1dHJlIC0tIGNlIHF1aSBuJ2VzdCBQQVMgbGUgY2FzIGRlIGRldXggY2FydGVzIGNvdGUgYSBjb3RlXG4jIHByb2R1aXRlcyBzZXBhcmVtZW50LlxuYSA8LSByZWdpb25zICAgfD4gdHJhbnNtdXRlKG1haWxsZSA9IFwiMTAgcsOpZ2lvbnNcIiwgICAgICAgICAgICAgdmFsZXVyID0gdHhfZWF1X2FtZWxpb3JlZSlcbmIgPC0gZGlzdHJpY3RzIHw+IHRyYW5zbXV0ZShtYWlsbGUgPSBcIjIwMCBkaXN0cmljdHMgc2FuaXRhaXJlc1wiLCB2YWxldXIgPSB0eF9lYXVfYW1lbGlvcmVlKVxuZGV1eCA8LSByYmluZChhLCBiKVxuXG5nZ3Bsb3QoZGV1eCkgK1xuICBnZW9tX3NmKGFlcyhmaWxsID0gdmFsZXVyKSwgY29sb3IgPSBcIndoaXRlXCIsIGxpbmV3aWR0aCA9IDAuMTIpICtcbiAgZmFjZXRfd3JhcCh+IG1haWxsZSkgK1xuICBzY2FsZV9maWxsX3ZpcmlkaXNfYyhvcHRpb24gPSBcIkRcIiwgbmFtZSA9IFwiRWF1IGFtw6lsaW9yw6llICglKVwiLFxuICAgICAgICAgICAgICAgICAgICAgICBuYS52YWx1ZSA9IFwiZ3JleTg4XCIsIGxpbWl0cyA9IHJhbmdlKGRldXgkdmFsZXVyLCBuYS5ybSA9IFRSVUUpKSArXG4gIGxhYnModGl0bGUgPSBcIk3Dqm1lIGluZGljYXRldXIsIG3Dqm1lIMOpY2hlbGxlIGRlIGNvdWxldXIsIGRldXggbWFpbGxlc1wiLFxuICAgICAgIHN1YnRpdGxlID0gXCJHcmlzID0gYXVjdW5lIGdyYXBwZSBlbnF1w6p0w6llIGRhbnMgbCd1bml0w6lcIixcbiAgICAgICBjYXB0aW9uID0gXCJTb3VyY2UgOiBFRFMtTUlDUyAyMDE4IMK3IEdBRE0gNC4xIMK3IERISVMyIE1JTlNBTlRFIMK3IElGT1JEIMOXIEdEU0cgMjAyNlwiKSArXG4gIHRoZW1lX21pbmltYWwoKSArXG4gIHRoZW1lKGF4aXMudGV4dCA9IGVsZW1lbnRfYmxhbmsoKSwgYXhpcy50aWNrcyA9IGVsZW1lbnRfYmxhbmsoKSxcbiAgICAgICAgcGFuZWwuZ3JpZCA9IGVsZW1lbnRfYmxhbmsoKSwgbGVnZW5kLnBvc2l0aW9uID0gXCJib3R0b21cIikifQ==
+</script>
+</div>
+</div>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>MAUP et non-mesuré : ce que cette paire met en scène
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Ce que la figure code.</strong> Une seule variable, une seule échelle de couleur (<code>limits</code> la force à être commune), deux découpages du même territoire.</p>
+<p><strong>Ce qui se lit.</strong> Monter d’échelle <strong>lisse</strong> : l’amplitude se resserre, les contrastes locaux disparaissent dans la moyenne régionale. C’est le <strong>MAUP</strong> — <em>Modifiable Areal Unit Problem</em> : le résultat dépend de la maille d’agrégation, et <strong>aucune maille n’est neutre</strong>. Il a deux composantes : l’effet d’<strong>échelle</strong> (la finesse du découpage) et l’effet de <strong>zonage</strong> (à finesse égale, un autre tracé donne un autre résultat). La règle pratique : choisir la maille de la <strong>décision</strong> qu’on éclaire.</p>
+<p><strong>Ce qui ne se lit pas — et qu’il faut dire sous la carte.</strong> Les plages grises du panneau de droite. 430 grappes pour 200 districts : de nombreux districts n’ont <strong>aucune</strong> observation. Un polygone gris n’est pas « à zéro », il est <strong>non mesuré</strong> — et une carte qui les colorierait en clair mentirait. C’est aussi la protection contre l’<strong>erreur écologique</strong> : la couleur d’un district décrit l’agrégat, jamais un ménage particulier de ce district.</p>
+<p><strong>En quoi le spatial apporte ici ce que le tableau ne contient pas.</strong> Les <strong>trous d’échantillonnage</strong> se voient sur une carte et nulle part ailleurs. Un tableau de 200 lignes avec des <code>NA</code> ne dit pas si ces <code>NA</code> sont dispersés au hasard ou concentrés sur une région entière. La carte le montre en un regard — et si les trous forment un bloc, l’indicateur national qu’on en tire est biaisé, pas seulement imprécis.</p>
+</div>
+</div>
+</section>
+<section id="lhabillage-ce-qui-transforme-un-graphique-en-document" class="level2">
+<h2 class="anchored" data-anchor-id="lhabillage-ce-qui-transforme-un-graphique-en-document">6. L’habillage — ce qui transforme un graphique en document</h2>
+<div class="cell">
+<div>
+<div id="webr-12" class="exercise-cell">
+
+</div>
+<script type="webr-12-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBVbmUgY2FydGUgZGVzdGluZWUgYSB1biByYXBwb3J0IG9mZmljaWVsIHBvcnRlIFNJWCBlbGVtZW50cyBvYmxpZ2F0b2lyZXMgOlxuIyB0aXRyZSwgc291cy10aXRyZSBkaXNhbnQgbCdpbmRpY2F0ZXVyIGV4YWN0LCBsZWdlbmRlIHRpdHJlZSBhdmVjIHVuaXRlLFxuIyBzb3VyY2UgZGF0ZWUsIG1lbnRpb24gZGUgbGEgbWV0aG9kZSwgZXQgbm90ZSBzdXIgbGUgbm9uLW1lc3VyZS5cbmdncGxvdCgpICtcbiAgZ2VvbV9zZihkYXRhID0gZGlzdHJpY3RzLCBhZXMoZmlsbCA9IHR4X2VhdV9hbWVsaW9yZWUpLFxuICAgICAgICAgIGNvbG9yID0gXCJ3aGl0ZVwiLCBsaW5ld2lkdGggPSAwLjEpICtcbiAgZ2VvbV9zZihkYXRhID0gcmVnaW9ucywgZmlsbCA9IE5BLCBjb2xvciA9IFwiZ3JleTI1XCIsIGxpbmV3aWR0aCA9IDAuNDUpICtcbiAgc2NhbGVfZmlsbF92aXJpZGlzX2Mob3B0aW9uID0gXCJEXCIsIG5hbWUgPSBcIk3DqW5hZ2VzIGF5YW50IGFjY8Ooc1xcbsOgIHVuZSBzb3VyY2UgYW3DqWxpb3LDqWUgKCUpXCIsXG4gICAgICAgICAgICAgICAgICAgICAgIG5hLnZhbHVlID0gXCJncmV5ODhcIikgK1xuICBsYWJzKFxuICAgIHRpdGxlICAgID0gXCJBY2PDqHMgw6AgdW5lIHNvdXJjZSBkJ2VhdSBhbcOpbGlvcsOpZSwgcGFyIGRpc3RyaWN0IHNhbml0YWlyZVwiLFxuICAgIHN1YnRpdGxlID0gXCJEw6lmaW5pdGlvbiBKTVAgKE9NUy9VTklDRUYpIMK3IGVzdGltYXRpb25zIHBvbmTDqXLDqWVzIHBhciBsZSBwbGFuIGRlIHNvbmRhZ2UgRURTXCIsXG4gICAgY2FwdGlvbiAgPSBwYXN0ZShcIlNvdXJjZXMgOiBFRFMtTUlDUyBDYW1lcm91biAyMDE4IChESFMpIDsgZGlzdHJpY3RzIHNhbml0YWlyZXMgREhJUzIgKE1JTlNBTlRFKSA7XCIsXG4gICAgICAgICAgICAgICAgICAgICBcImxpbWl0ZXMgcsOpZ2lvbmFsZXMgR0FETSA0LjEuXFxuXCIsXG4gICAgICAgICAgICAgICAgICAgICBcIkRpc2Nyw6l0aXNhdGlvbiA6IMOpY2hlbGxlIGNvbnRpbnVlLiBHcmlzID0gYXVjdW5lIGdyYXBwZSBlbnF1w6p0w6llLlwiLFxuICAgICAgICAgICAgICAgICAgICAgXCJHw6lvbcOpdHJpZXMgc2ltcGxpZmnDqWVzIHBvdXIgbCdhZmZpY2hhZ2UuXFxuXCIsXG4gICAgICAgICAgICAgICAgICAgICBcIlLDqWFsaXNhdGlvbiA6IGF0ZWxpZXIgSUZPUkQgw5cgR0RTRyAyMDI2LlwiKVxuICApICtcbiAgdGhlbWVfbWluaW1hbChiYXNlX3NpemUgPSAxMSkgK1xuICB0aGVtZShcbiAgICBwbG90LnRpdGxlICAgID0gZWxlbWVudF90ZXh0KGZhY2UgPSBcImJvbGRcIiwgc2l6ZSA9IDEzKSxcbiAgICBwbG90LnN1YnRpdGxlID0gZWxlbWVudF90ZXh0KGNvbG9yID0gXCJncmV5MzBcIiwgc2l6ZSA9IDkuNSksXG4gICAgcGxvdC5jYXB0aW9uICA9IGVsZW1lbnRfdGV4dChjb2xvciA9IFwiZ3JleTQwXCIsIHNpemUgPSA3LCBoanVzdCA9IDApLFxuICAgIGxlZ2VuZC5wb3NpdGlvbiA9IFwicmlnaHRcIixcbiAgICBheGlzLnRleHQgPSBlbGVtZW50X2JsYW5rKCksIGF4aXMudGlja3MgPSBlbGVtZW50X2JsYW5rKCksXG4gICAgcGFuZWwuZ3JpZCA9IGVsZW1lbnRfYmxhbmsoKVxuICApIn0=
+</script>
+</div>
+</div>
+<div class="iford-callout">
+<p><strong>Ce que la figure code.</strong> La même donnée que la section 5, mais <strong>prête à insérer dans un rapport</strong>. Ce qui a changé n’est pas la donnée : c’est ce que la carte <strong>déclare d’elle-même</strong>.</p>
+<p><strong>Ce que les choix techniques font.</strong> Le <code>subtitle</code> porte la <strong>définition exacte</strong> de l’indicateur — « source améliorée » au sens du JMP n’est pas « eau potable » — et le fait qu’il est pondéré. Le <code>caption</code> porte les trois sources avec leurs dates, la méthode de discrétisation, la signification du gris, et l’avertissement sur la simplification des géométries. Le titre de la légende porte l’<strong>unité</strong>. Une carte sans unité dans sa légende n’est pas interprétable ; une carte sans source n’est pas vérifiable ; une carte sans date n’est pas comparable.</p>
+<p><strong>Ce qui ne se lit pas, et qu’aucun habillage ne répare.</strong> L’incertitude d’échantillonnage n’apparaît pas. Deux districts de couleurs voisines peuvent être statistiquement indiscernables. Si la décision porte sur des unités précises, il faut soit afficher les effectifs, soit masquer sous un seuil déclaré — et le dire.</p>
+</div>
+</section>
+<section id="ce-qui-reste-sous-rstudio-tmap-linteractif-et-lexport" class="level2">
+<h2 class="anchored" data-anchor-id="ce-qui-reste-sous-rstudio-tmap-linteractif-et-lexport">7. Ce qui reste sous RStudio : <code>tmap</code>, l’interactif et l’export</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Lecture seule : RStudio desktop. Voir demo_formateur_J6.qmd.</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># tmap raisonne en couches empilees, comme un logiciel SIG. Syntaxe tmap 4.</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tmap)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(ds_indicateurs) <span class="sc">+</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill =</span> <span class="st">"tx_eau"</span>,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill.scale  =</span> <span class="fu">tm_scale_intervals</span>(<span class="at">style =</span> <span class="st">"jenks"</span>, <span class="at">n =</span> <span class="dv">5</span>,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">values =</span> <span class="st">"viridis"</span>, <span class="at">value.na =</span> <span class="st">"grey85"</span>),</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill.legend =</span> <span class="fu">tm_legend</span>(<span class="at">title =</span> <span class="st">"Eau améliorée (%)"</span>)) <span class="sc">+</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(regions) <span class="sc">+</span> <span class="fu">tm_borders</span>(<span class="at">col =</span> <span class="st">"grey20"</span>, <span class="at">lwd =</span> <span class="fl">1.2</span>) <span class="sc">+</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_text</span>(<span class="st">"NAME_1"</span>, <span class="at">size =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Les ornements que ggplot2 n'a pas nativement :</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type =</span> <span class="st">"arrow"</span>, <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"top"</span>)) <span class="sc">+</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scalebar</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">100</span>, <span class="dv">200</span>), <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"left"</span>, <span class="st">"bottom"</span>)) <span class="sc">+</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_credits</span>(<span class="st">"Source : EDS-MICS 2018 · DHIS2 MINSANTE"</span>, <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"left"</span>, <span class="st">"bottom"</span>)) <span class="sc">+</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">title =</span> <span class="st">"Accès à une source d'eau améliorée"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Lecture seule. Export haute resolution pour un rapport imprime.</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co"># 300 dpi est le minimum pour l'impression ; 96 dpi suffit a l'ecran.</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_save</span>(ma_carte, <span class="st">"outputs/eau_districts.png"</span>,</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>          <span class="at">dpi =</span> <span class="dv">300</span>, <span class="at">width =</span> <span class="dv">20</span>, <span class="at">height =</span> <span class="dv">16</span>, <span class="at">units =</span> <span class="st">"cm"</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Avec ggplot2, l'equivalent :</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="st">"outputs/eau_districts.png"</span>, <span class="at">plot =</span> ma_carte_gg,</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>       <span class="at">dpi =</span> <span class="dv">300</span>, <span class="at">width =</span> <span class="dv">20</span>, <span class="at">height =</span> <span class="dv">16</span>, <span class="at">units =</span> <span class="st">"cm"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Lecture seule, et VOLONTAIREMENT non execute meme sous RStudio quand on</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co"># rend un document a distribuer. leaflet et mapview embarquent TOUTES les</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># geometries dans le HTML : 200 districts + 430 points font passer un fichier</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># de quelques centaines de kilooctets a plusieurs dizaines de megaoctets.</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Utiliser ces outils pour EXPLORER en console, jamais dans un livrable.</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(leaflet); <span class="fu">library</span>(mapview)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="fu">mapview</span>(ds_indicateurs, <span class="at">zcol =</span> <span class="st">"tx_eau"</span>) <span class="sc">+</span> <span class="fu">mapview</span>(dhs_points, <span class="at">zcol =</span> <span class="st">"milieu"</span>)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="fu">leaflet</span>(ds_indicateurs) <span class="sc">|&gt;</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">addProviderTiles</span>(<span class="st">"CartoDB.Positron"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">addPolygons</span>(<span class="at">fillColor =</span> <span class="sc">~</span><span class="fu">pal</span>(tx_eau), <span class="at">fillOpacity =</span> <span class="fl">0.7</span>, <span class="at">weight =</span> <span class="fl">0.5</span>,</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>              <span class="at">popup =</span> <span class="sc">~</span><span class="fu">paste0</span>(<span class="st">"&lt;b&gt;"</span>, ds_nom, <span class="st">"&lt;/b&gt;&lt;br&gt;Eau : "</span>,</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>                              <span class="fu">round</span>(tx_eau, <span class="dv">1</span>), <span class="st">" %"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="checklist-de-fin-de-j06" class="level2">
+<h2 class="anchored" data-anchor-id="checklist-de-fin-de-j06">Checklist de fin de J06</h2>
+<ul class="task-list">
+<li><label><input type="checkbox">Je choisis la <strong>discrétisation</strong> en connaissance de cause, j’affiche les bornes, et je fixe les bornes à la main dès que je veux comparer deux cartes.</label></li>
+<li><label><input type="checkbox">Je réserve la <strong>choroplèthe aux rapports</strong> (taux, parts, densités) et les <strong>symboles proportionnels aux effectifs</strong>, avec l’aire — jamais le rayon — proportionnelle.</label></li>
+<li><label><input type="checkbox">Ma palette correspond à la <strong>nature de la variable</strong> : séquentielle pour un niveau, divergente <strong>seulement</strong> s’il existe un vrai zéro, qualitative pour des catégories.</label></li>
+<li><label><input type="checkbox">Le <strong>non-mesuré est gris</strong>, et je le dis dans la note.</label></li>
+<li><label><input type="checkbox">Titre, définition de l’indicateur, unité en légende, sources datées, méthode de discrétisation : les six mentions y sont.</label></li>
+<li><label><input type="checkbox">Je sais nommer <strong>MAUP</strong> et <strong>erreur écologique</strong>, et dire lequel menace ma carte.</label></li>
+</ul>
+<p><strong>Demain (J07)</strong> : les statistiques spatiales. On cesse de décrire la carte pour la <strong>tester</strong> — l’autocorrélation, l’indice de Moran, les points chauds. La question devient : ce bloc de couleurs contiguës est-il autre chose que du hasard ?</p>
+<p><a href="../INDEX.html">← Retour à l’accueil</a></p>
+
+
+<!-- -->
+
+<script type="webr-data">
+eyJvcHRpb25zIjp7ImJhc2VVcmwiOiJodHRwczovL3dlYnIuci13YXNtLm9yZy92MC42LjAvIn0sInBhY2thZ2VzIjp7InBrZ3MiOlsiZXZhbHVhdGUiLCJrbml0ciIsImh0bWx0b29scyIsInNmIiwiZHBseXIiLCJ0aWR5ciIsImdncGxvdDIiXSwicmVwb3MiOltdfSwicmVuZGVyX2RmIjoiZGVmYXVsdCJ9
+</script>
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W3siY2VsbE5hbWUiOiJ3ZWJyLXdpZGdldC0xMiIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IntcbiAgLy8gV2FpdCBmb3Igb3V0cHV0IHRvIGJlIHdyaXR0ZW4gdG8gdGhlIERPTSwgdGhlbiB0cmlnZ2VyIHdpZGdldCByZW5kZXJpbmdcbiAgYXdhaXQgX3dlYnJfdmFsdWVfMTI7XG4gIGlmICh3aW5kb3cuSFRNTFdpZGdldHMpIHtcbiAgICB3aW5kb3cuSFRNTFdpZGdldHMuc3RhdGljUmVuZGVyKCk7XG4gIH1cbiAgaWYgKHdpbmRvdy5QYWdlZFRhYmxlRG9jKSB7XG4gICAgd2luZG93LlBhZ2VkVGFibGVEb2MuaW5pdEFsbCgpO1xuICB9XG59XG4ifSx7ImNlbGxOYW1lIjoid2Vici0xMiIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJzb3VyY2UiOiJ2aWV3b2YgX3dlYnJfZWRpdG9yXzEyID0ge1xuICBjb25zdCB7IFdlYlJFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuICBjb25zdCBzY3JpcHRDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcIndlYnItMTItY29udGVudHNcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBibG9jayA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKHNjcmlwdENvbnRlbnQpKTtcblxuICBjb25zdCBvcHRpb25zID0gT2JqZWN0LmFzc2lnbih7IGlkOiBgd2Vici0xMi1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBXZWJSRXhlcmNpc2VFZGl0b3Iod2ViUk9qcy53ZWJSUHJvbWlzZSwgYmxvY2suY29kZSwgb3B0aW9ucyk7XG5cbiAgcmV0dXJuIGVkaXRvci5jb250YWluZXI7XG59XG5fd2Vicl92YWx1ZV8xMiA9IHdlYlJPanMucHJvY2Vzcyhfd2Vicl9lZGl0b3JfMTIsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLXdpZGdldC0xMSIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IntcbiAgLy8gV2FpdCBmb3Igb3V0cHV0IHRvIGJlIHdyaXR0ZW4gdG8gdGhlIERPTSwgdGhlbiB0cmlnZ2VyIHdpZGdldCByZW5kZXJpbmdcbiAgYXdhaXQgX3dlYnJfdmFsdWVfMTE7XG4gIGlmICh3aW5kb3cuSFRNTFdpZGdldHMpIHtcbiAgICB3aW5kb3cuSFRNTFdpZGdldHMuc3RhdGljUmVuZGVyKCk7XG4gIH1cbiAgaWYgKHdpbmRvdy5QYWdlZFRhYmxlRG9jKSB7XG4gICAgd2luZG93LlBhZ2VkVGFibGVEb2MuaW5pdEFsbCgpO1xuICB9XG59XG4ifSx7ImNlbGxOYW1lIjoid2Vici0xMSIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJzb3VyY2UiOiJ2aWV3b2YgX3dlYnJfZWRpdG9yXzExID0ge1xuICBjb25zdCB7IFdlYlJFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuICBjb25zdCBzY3JpcHRDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcIndlYnItMTEtY29udGVudHNcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBibG9jayA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKHNjcmlwdENvbnRlbnQpKTtcblxuICBjb25zdCBvcHRpb25zID0gT2JqZWN0LmFzc2lnbih7IGlkOiBgd2Vici0xMS1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBXZWJSRXhlcmNpc2VFZGl0b3Iod2ViUk9qcy53ZWJSUHJvbWlzZSwgYmxvY2suY29kZSwgb3B0aW9ucyk7XG5cbiAgcmV0dXJuIGVkaXRvci5jb250YWluZXI7XG59XG5fd2Vicl92YWx1ZV8xMSA9IHdlYlJPanMucHJvY2Vzcyhfd2Vicl9lZGl0b3JfMTEsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLXdpZGdldC0xMCIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IntcbiAgLy8gV2FpdCBmb3Igb3V0cHV0IHRvIGJlIHdyaXR0ZW4gdG8gdGhlIERPTSwgdGhlbiB0cmlnZ2VyIHdpZGdldCByZW5kZXJpbmdcbiAgYXdhaXQgX3dlYnJfdmFsdWVfMTA7XG4gIGlmICh3aW5kb3cuSFRNTFdpZGdldHMpIHtcbiAgICB3aW5kb3cuSFRNTFdpZGdldHMuc3RhdGljUmVuZGVyKCk7XG4gIH1cbiAgaWYgKHdpbmRvdy5QYWdlZFRhYmxlRG9jKSB7XG4gICAgd2luZG93LlBhZ2VkVGFibGVEb2MuaW5pdEFsbCgpO1xuICB9XG59XG4ifSx7ImNlbGxOYW1lIjoid2Vici0xMCIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJzb3VyY2UiOiJ2aWV3b2YgX3dlYnJfZWRpdG9yXzEwID0ge1xuICBjb25zdCB7IFdlYlJFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuICBjb25zdCBzY3JpcHRDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcIndlYnItMTAtY29udGVudHNcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBibG9jayA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKHNjcmlwdENvbnRlbnQpKTtcblxuICBjb25zdCBvcHRpb25zID0gT2JqZWN0LmFzc2lnbih7IGlkOiBgd2Vici0xMC1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBXZWJSRXhlcmNpc2VFZGl0b3Iod2ViUk9qcy53ZWJSUHJvbWlzZSwgYmxvY2suY29kZSwgb3B0aW9ucyk7XG5cbiAgcmV0dXJuIGVkaXRvci5jb250YWluZXI7XG59XG5fd2Vicl92YWx1ZV8xMCA9IHdlYlJPanMucHJvY2Vzcyhfd2Vicl9lZGl0b3JfMTAsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLXdpZGdldC05IiwiaW5saW5lIjpmYWxzZSwibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoie1xuICAvLyBXYWl0IGZvciBvdXRwdXQgdG8gYmUgd3JpdHRlbiB0byB0aGUgRE9NLCB0aGVuIHRyaWdnZXIgd2lkZ2V0IHJlbmRlcmluZ1xuICBhd2FpdCBfd2Vicl92YWx1ZV85O1xuICBpZiAod2luZG93LkhUTUxXaWRnZXRzKSB7XG4gICAgd2luZG93LkhUTUxXaWRnZXRzLnN0YXRpY1JlbmRlcigpO1xuICB9XG4gIGlmICh3aW5kb3cuUGFnZWRUYWJsZURvYykge1xuICAgIHdpbmRvdy5QYWdlZFRhYmxlRG9jLmluaXRBbGwoKTtcbiAgfVxufVxuIn0seyJjZWxsTmFtZSI6IndlYnItOSIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJzb3VyY2UiOiJ2aWV3b2YgX3dlYnJfZWRpdG9yXzkgPSB7XG4gIGNvbnN0IHsgV2ViUkV4ZXJjaXNlRWRpdG9yLCBiNjREZWNvZGUgfSA9IHdpbmRvdy5fZXhlcmNpc2Vfb2pzX3J1bnRpbWU7XG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwid2Vici05LWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHdlYnItOS1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBXZWJSRXhlcmNpc2VFZGl0b3Iod2ViUk9qcy53ZWJSUHJvbWlzZSwgYmxvY2suY29kZSwgb3B0aW9ucyk7XG5cbiAgcmV0dXJuIGVkaXRvci5jb250YWluZXI7XG59XG5fd2Vicl92YWx1ZV85ID0gd2ViUk9qcy5wcm9jZXNzKF93ZWJyX2VkaXRvcl85LCB7fSk7XG4ifSx7ImNlbGxOYW1lIjoid2Vici13aWRnZXQtOCIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IntcbiAgLy8gV2FpdCBmb3Igb3V0cHV0IHRvIGJlIHdyaXR0ZW4gdG8gdGhlIERPTSwgdGhlbiB0cmlnZ2VyIHdpZGdldCByZW5kZXJpbmdcbiAgYXdhaXQgX3dlYnJfdmFsdWVfODtcbiAgaWYgKHdpbmRvdy5IVE1MV2lkZ2V0cykge1xuICAgIHdpbmRvdy5IVE1MV2lkZ2V0cy5zdGF0aWNSZW5kZXIoKTtcbiAgfVxuICBpZiAod2luZG93LlBhZ2VkVGFibGVEb2MpIHtcbiAgICB3aW5kb3cuUGFnZWRUYWJsZURvYy5pbml0QWxsKCk7XG4gIH1cbn1cbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLTgiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF93ZWJyX2VkaXRvcl84ID0ge1xuICBjb25zdCB7IFdlYlJFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuICBjb25zdCBzY3JpcHRDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcIndlYnItOC1jb250ZW50c1xcXCJdYCkudGV4dENvbnRlbnQ7XG4gIGNvbnN0IGJsb2NrID0gSlNPTi5wYXJzZShiNjREZWNvZGUoc2NyaXB0Q29udGVudCkpO1xuXG4gIGNvbnN0IG9wdGlvbnMgPSBPYmplY3QuYXNzaWduKHsgaWQ6IGB3ZWJyLTgtY29udGVudHNgIH0sIGJsb2NrLmF0dHIpO1xuICBjb25zdCBlZGl0b3IgPSBuZXcgV2ViUkV4ZXJjaXNlRWRpdG9yKHdlYlJPanMud2ViUlByb21pc2UsIGJsb2NrLmNvZGUsIG9wdGlvbnMpO1xuXG4gIHJldHVybiBlZGl0b3IuY29udGFpbmVyO1xufVxuX3dlYnJfdmFsdWVfOCA9IHdlYlJPanMucHJvY2Vzcyhfd2Vicl9lZGl0b3JfOCwge30pO1xuIn0seyJjZWxsTmFtZSI6IndlYnItd2lkZ2V0LTciLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJ7XG4gIC8vIFdhaXQgZm9yIG91dHB1dCB0byBiZSB3cml0dGVuIHRvIHRoZSBET00sIHRoZW4gdHJpZ2dlciB3aWRnZXQgcmVuZGVyaW5nXG4gIGF3YWl0IF93ZWJyX3ZhbHVlXzc7XG4gIGlmICh3aW5kb3cuSFRNTFdpZGdldHMpIHtcbiAgICB3aW5kb3cuSFRNTFdpZGdldHMuc3RhdGljUmVuZGVyKCk7XG4gIH1cbiAgaWYgKHdpbmRvdy5QYWdlZFRhYmxlRG9jKSB7XG4gICAgd2luZG93LlBhZ2VkVGFibGVEb2MuaW5pdEFsbCgpO1xuICB9XG59XG4ifSx7ImNlbGxOYW1lIjoid2Vici03IiwiaW5saW5lIjpmYWxzZSwibWV0aG9kTmFtZSI6ImludGVycHJldCIsInNvdXJjZSI6InZpZXdvZiBfd2Vicl9lZGl0b3JfNyA9IHtcbiAgY29uc3QgeyBXZWJSRXhlcmNpc2VFZGl0b3IsIGI2NERlY29kZSB9ID0gd2luZG93Ll9leGVyY2lzZV9vanNfcnVudGltZTtcbiAgY29uc3Qgc2NyaXB0Q29udGVudCA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoYHNjcmlwdFt0eXBlPVxcXCJ3ZWJyLTctY29udGVudHNcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBibG9jayA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKHNjcmlwdENvbnRlbnQpKTtcblxuICBjb25zdCBvcHRpb25zID0gT2JqZWN0LmFzc2lnbih7IGlkOiBgd2Vici03LWNvbnRlbnRzYCB9LCBibG9jay5hdHRyKTtcbiAgY29uc3QgZWRpdG9yID0gbmV3IFdlYlJFeGVyY2lzZUVkaXRvcih3ZWJST2pzLndlYlJQcm9taXNlLCBibG9jay5jb2RlLCBvcHRpb25zKTtcblxuICByZXR1cm4gZWRpdG9yLmNvbnRhaW5lcjtcbn1cbl93ZWJyX3ZhbHVlXzcgPSB3ZWJST2pzLnByb2Nlc3MoX3dlYnJfZWRpdG9yXzcsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLXdpZGdldC02IiwiaW5saW5lIjpmYWxzZSwibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoie1xuICAvLyBXYWl0IGZvciBvdXRwdXQgdG8gYmUgd3JpdHRlbiB0byB0aGUgRE9NLCB0aGVuIHRyaWdnZXIgd2lkZ2V0IHJlbmRlcmluZ1xuICBhd2FpdCBfd2Vicl92YWx1ZV82O1xuICBpZiAod2luZG93LkhUTUxXaWRnZXRzKSB7XG4gICAgd2luZG93LkhUTUxXaWRnZXRzLnN0YXRpY1JlbmRlcigpO1xuICB9XG4gIGlmICh3aW5kb3cuUGFnZWRUYWJsZURvYykge1xuICAgIHdpbmRvdy5QYWdlZFRhYmxlRG9jLmluaXRBbGwoKTtcbiAgfVxufVxuIn0seyJjZWxsTmFtZSI6IndlYnItNiIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJzb3VyY2UiOiJ2aWV3b2YgX3dlYnJfZWRpdG9yXzYgPSB7XG4gIGNvbnN0IHsgV2ViUkV4ZXJjaXNlRWRpdG9yLCBiNjREZWNvZGUgfSA9IHdpbmRvdy5fZXhlcmNpc2Vfb2pzX3J1bnRpbWU7XG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwid2Vici02LWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHdlYnItNi1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBXZWJSRXhlcmNpc2VFZGl0b3Iod2ViUk9qcy53ZWJSUHJvbWlzZSwgYmxvY2suY29kZSwgb3B0aW9ucyk7XG5cbiAgcmV0dXJuIGVkaXRvci5jb250YWluZXI7XG59XG5fd2Vicl92YWx1ZV82ID0gd2ViUk9qcy5wcm9jZXNzKF93ZWJyX2VkaXRvcl82LCB7fSk7XG4ifSx7ImNlbGxOYW1lIjoid2Vici13aWRnZXQtNSIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IntcbiAgLy8gV2FpdCBmb3Igb3V0cHV0IHRvIGJlIHdyaXR0ZW4gdG8gdGhlIERPTSwgdGhlbiB0cmlnZ2VyIHdpZGdldCByZW5kZXJpbmdcbiAgYXdhaXQgX3dlYnJfdmFsdWVfNTtcbiAgaWYgKHdpbmRvdy5IVE1MV2lkZ2V0cykge1xuICAgIHdpbmRvdy5IVE1MV2lkZ2V0cy5zdGF0aWNSZW5kZXIoKTtcbiAgfVxuICBpZiAod2luZG93LlBhZ2VkVGFibGVEb2MpIHtcbiAgICB3aW5kb3cuUGFnZWRUYWJsZURvYy5pbml0QWxsKCk7XG4gIH1cbn1cbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLTUiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF93ZWJyX2VkaXRvcl81ID0ge1xuICBjb25zdCB7IFdlYlJFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuICBjb25zdCBzY3JpcHRDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcIndlYnItNS1jb250ZW50c1xcXCJdYCkudGV4dENvbnRlbnQ7XG4gIGNvbnN0IGJsb2NrID0gSlNPTi5wYXJzZShiNjREZWNvZGUoc2NyaXB0Q29udGVudCkpO1xuXG4gIGNvbnN0IG9wdGlvbnMgPSBPYmplY3QuYXNzaWduKHsgaWQ6IGB3ZWJyLTUtY29udGVudHNgIH0sIGJsb2NrLmF0dHIpO1xuICBjb25zdCBlZGl0b3IgPSBuZXcgV2ViUkV4ZXJjaXNlRWRpdG9yKHdlYlJPanMud2ViUlByb21pc2UsIGJsb2NrLmNvZGUsIG9wdGlvbnMpO1xuXG4gIHJldHVybiBlZGl0b3IuY29udGFpbmVyO1xufVxuX3dlYnJfdmFsdWVfNSA9IHdlYlJPanMucHJvY2Vzcyhfd2Vicl9lZGl0b3JfNSwge30pO1xuIn0seyJjZWxsTmFtZSI6IndlYnItd2lkZ2V0LTQiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJ7XG4gIC8vIFdhaXQgZm9yIG91dHB1dCB0byBiZSB3cml0dGVuIHRvIHRoZSBET00sIHRoZW4gdHJpZ2dlciB3aWRnZXQgcmVuZGVyaW5nXG4gIGF3YWl0IF93ZWJyX3ZhbHVlXzQ7XG4gIGlmICh3aW5kb3cuSFRNTFdpZGdldHMpIHtcbiAgICB3aW5kb3cuSFRNTFdpZGdldHMuc3RhdGljUmVuZGVyKCk7XG4gIH1cbiAgaWYgKHdpbmRvdy5QYWdlZFRhYmxlRG9jKSB7XG4gICAgd2luZG93LlBhZ2VkVGFibGVEb2MuaW5pdEFsbCgpO1xuICB9XG59XG4ifSx7ImNlbGxOYW1lIjoid2Vici00IiwiaW5saW5lIjpmYWxzZSwibWV0aG9kTmFtZSI6ImludGVycHJldCIsInNvdXJjZSI6InZpZXdvZiBfd2Vicl9lZGl0b3JfNCA9IHtcbiAgY29uc3QgeyBXZWJSRXhlcmNpc2VFZGl0b3IsIGI2NERlY29kZSB9ID0gd2luZG93Ll9leGVyY2lzZV9vanNfcnVudGltZTtcbiAgY29uc3Qgc2NyaXB0Q29udGVudCA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoYHNjcmlwdFt0eXBlPVxcXCJ3ZWJyLTQtY29udGVudHNcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBibG9jayA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKHNjcmlwdENvbnRlbnQpKTtcblxuICBjb25zdCBvcHRpb25zID0gT2JqZWN0LmFzc2lnbih7IGlkOiBgd2Vici00LWNvbnRlbnRzYCB9LCBibG9jay5hdHRyKTtcbiAgY29uc3QgZWRpdG9yID0gbmV3IFdlYlJFeGVyY2lzZUVkaXRvcih3ZWJST2pzLndlYlJQcm9taXNlLCBibG9jay5jb2RlLCBvcHRpb25zKTtcblxuICByZXR1cm4gZWRpdG9yLmNvbnRhaW5lcjtcbn1cbl93ZWJyX3ZhbHVlXzQgPSB3ZWJST2pzLnByb2Nlc3MoX3dlYnJfZWRpdG9yXzQsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLXdpZGdldC0zIiwiaW5saW5lIjpmYWxzZSwibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoie1xuICAvLyBXYWl0IGZvciBvdXRwdXQgdG8gYmUgd3JpdHRlbiB0byB0aGUgRE9NLCB0aGVuIHRyaWdnZXIgd2lkZ2V0IHJlbmRlcmluZ1xuICBhd2FpdCBfd2Vicl92YWx1ZV8zO1xuICBpZiAod2luZG93LkhUTUxXaWRnZXRzKSB7XG4gICAgd2luZG93LkhUTUxXaWRnZXRzLnN0YXRpY1JlbmRlcigpO1xuICB9XG4gIGlmICh3aW5kb3cuUGFnZWRUYWJsZURvYykge1xuICAgIHdpbmRvdy5QYWdlZFRhYmxlRG9jLmluaXRBbGwoKTtcbiAgfVxufVxuIn0seyJjZWxsTmFtZSI6IndlYnItMyIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJzb3VyY2UiOiJ2aWV3b2YgX3dlYnJfZWRpdG9yXzMgPSB7XG4gIGNvbnN0IHsgV2ViUkV4ZXJjaXNlRWRpdG9yLCBiNjREZWNvZGUgfSA9IHdpbmRvdy5fZXhlcmNpc2Vfb2pzX3J1bnRpbWU7XG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwid2Vici0zLWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHdlYnItMy1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBXZWJSRXhlcmNpc2VFZGl0b3Iod2ViUk9qcy53ZWJSUHJvbWlzZSwgYmxvY2suY29kZSwgb3B0aW9ucyk7XG5cbiAgcmV0dXJuIGVkaXRvci5jb250YWluZXI7XG59XG5fd2Vicl92YWx1ZV8zID0gd2ViUk9qcy5wcm9jZXNzKF93ZWJyX2VkaXRvcl8zLCB7fSk7XG4ifSx7ImNlbGxOYW1lIjoid2Vici13aWRnZXQtMiIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IntcbiAgLy8gV2FpdCBmb3Igb3V0cHV0IHRvIGJlIHdyaXR0ZW4gdG8gdGhlIERPTSwgdGhlbiB0cmlnZ2VyIHdpZGdldCByZW5kZXJpbmdcbiAgYXdhaXQgX3dlYnJfdmFsdWVfMjtcbiAgaWYgKHdpbmRvdy5IVE1MV2lkZ2V0cykge1xuICAgIHdpbmRvdy5IVE1MV2lkZ2V0cy5zdGF0aWNSZW5kZXIoKTtcbiAgfVxuICBpZiAod2luZG93LlBhZ2VkVGFibGVEb2MpIHtcbiAgICB3aW5kb3cuUGFnZWRUYWJsZURvYy5pbml0QWxsKCk7XG4gIH1cbn1cbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLTIiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF93ZWJyX2VkaXRvcl8yID0ge1xuICBjb25zdCB7IFdlYlJFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuICBjb25zdCBzY3JpcHRDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcIndlYnItMi1jb250ZW50c1xcXCJdYCkudGV4dENvbnRlbnQ7XG4gIGNvbnN0IGJsb2NrID0gSlNPTi5wYXJzZShiNjREZWNvZGUoc2NyaXB0Q29udGVudCkpO1xuXG4gIGNvbnN0IG9wdGlvbnMgPSBPYmplY3QuYXNzaWduKHsgaWQ6IGB3ZWJyLTItY29udGVudHNgIH0sIGJsb2NrLmF0dHIpO1xuICBjb25zdCBlZGl0b3IgPSBuZXcgV2ViUkV4ZXJjaXNlRWRpdG9yKHdlYlJPanMud2ViUlByb21pc2UsIGJsb2NrLmNvZGUsIG9wdGlvbnMpO1xuXG4gIHJldHVybiBlZGl0b3IuY29udGFpbmVyO1xufVxuX3dlYnJfdmFsdWVfMiA9IHdlYlJPanMucHJvY2Vzcyhfd2Vicl9lZGl0b3JfMiwge30pO1xuIn0seyJjZWxsTmFtZSI6IndlYnItd2lkZ2V0LTEiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJ7XG4gIC8vIFdhaXQgZm9yIG91dHB1dCB0byBiZSB3cml0dGVuIHRvIHRoZSBET00sIHRoZW4gdHJpZ2dlciB3aWRnZXQgcmVuZGVyaW5nXG4gIGF3YWl0IF93ZWJyX3ZhbHVlXzE7XG4gIGlmICh3aW5kb3cuSFRNTFdpZGdldHMpIHtcbiAgICB3aW5kb3cuSFRNTFdpZGdldHMuc3RhdGljUmVuZGVyKCk7XG4gIH1cbiAgaWYgKHdpbmRvdy5QYWdlZFRhYmxlRG9jKSB7XG4gICAgd2luZG93LlBhZ2VkVGFibGVEb2MuaW5pdEFsbCgpO1xuICB9XG59XG4ifSx7ImNlbGxOYW1lIjoid2Vici0xIiwiaW5saW5lIjpmYWxzZSwibWV0aG9kTmFtZSI6ImludGVycHJldCIsInNvdXJjZSI6InZpZXdvZiBfd2Vicl9lZGl0b3JfMSA9IHtcbiAgY29uc3QgeyBXZWJSRXhlcmNpc2VFZGl0b3IsIGI2NERlY29kZSB9ID0gd2luZG93Ll9leGVyY2lzZV9vanNfcnVudGltZTtcbiAgY29uc3Qgc2NyaXB0Q29udGVudCA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoYHNjcmlwdFt0eXBlPVxcXCJ3ZWJyLTEtY29udGVudHNcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBibG9jayA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKHNjcmlwdENvbnRlbnQpKTtcblxuICBjb25zdCBvcHRpb25zID0gT2JqZWN0LmFzc2lnbih7IGlkOiBgd2Vici0xLWNvbnRlbnRzYCB9LCBibG9jay5hdHRyKTtcbiAgY29uc3QgZWRpdG9yID0gbmV3IFdlYlJFeGVyY2lzZUVkaXRvcih3ZWJST2pzLndlYlJQcm9taXNlLCBibG9jay5jb2RlLCBvcHRpb25zKTtcblxuICByZXR1cm4gZWRpdG9yLmNvbnRhaW5lcjtcbn1cbl93ZWJyX3ZhbHVlXzEgPSB3ZWJST2pzLnByb2Nlc3MoX3dlYnJfZWRpdG9yXzEsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLXByZWx1ZGUiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJ3ZWJST2pzID0ge1xuICBjb25zdCB7IFdlYlIsIENoYW5uZWxUeXBlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lLldlYlI7XG4gIGNvbnN0IHtcbiAgICBXZWJSRXZhbHVhdG9yLFxuICAgIFdlYlJFbnZpcm9ubWVudE1hbmFnZXIsXG4gICAgc2V0dXBSLFxuICAgIGI2NERlY29kZSxcbiAgICBjb2xsYXBzZVBhdGhcbiAgfSA9IHdpbmRvdy5fZXhlcmNpc2Vfb2pzX3J1bnRpbWU7XG5cbiAgY29uc3Qgc3RhdHVzQ29udGFpbmVyID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoXCJleGVyY2lzZS1sb2FkaW5nLXN0YXR1c1wiKTtcbiAgY29uc3QgaW5kaWNhdG9yQ29udGFpbmVyID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoXCJleGVyY2lzZS1sb2FkaW5nLWluZGljYXRvclwiKTtcbiAgaW5kaWNhdG9yQ29udGFpbmVyLmNsYXNzTGlzdC5yZW1vdmUoXCJkLW5vbmVcIik7XG5cbiAgbGV0IHN0YXR1c1RleHQgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KFwiZGl2XCIpXG4gIHN0YXR1c1RleHQuY2xhc3NMaXN0ID0gXCJleGVyY2lzZS1sb2FkaW5nLWRldGFpbHNcIjtcbiAgc3RhdHVzVGV4dCA9IHN0YXR1c0NvbnRhaW5lci5hcHBlbmRDaGlsZChzdGF0dXNUZXh0KTtcbiAgc3RhdHVzVGV4dC50ZXh0Q29udGVudCA9IGBJbml0aWFsaXNlYDtcblxuICAvLyBIb2lzdCBpbmRpY2F0b3Igb3V0IGZyb20gZmluYWwgc2xpZGUgd2hlbiBydW5uaW5nIHVuZGVyIHJldmVhbFxuICBjb25zdCByZXZlYWxTdGF0dXMgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKFwiLnJldmVhbCAuZXhlcmNpc2UtbG9hZGluZy1pbmRpY2F0b3JcIik7XG4gIGlmIChyZXZlYWxTdGF0dXMpIHtcbiAgICByZXZlYWxTdGF0dXMucmVtb3ZlKCk7XG4gICAgZG9jdW1lbnQucXVlcnlTZWxlY3RvcihcIi5yZXZlYWwgPiAuc2xpZGVzXCIpLmFwcGVuZENoaWxkKHJldmVhbFN0YXR1cyk7XG4gIH1cblxuICAvLyBNYWtlIGFueSByZXZlYWwgc2xpZGVzIHdpdGggbGl2ZSBjZWxscyBzY3JvbGxhYmxlXG4gIGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3JBbGwoXCIucmV2ZWFsIC5leGVyY2lzZS1jZWxsXCIpLmZvckVhY2goKGVsKSA9PiB7XG4gICAgZWwuY2xvc2VzdCgnc2VjdGlvbi5zbGlkZScpLmNsYXNzTGlzdC5hZGQoXCJzY3JvbGxhYmxlXCIpO1xuICB9KVxuXG4gIC8vIHdlYlIgc3VwcGxlbWVudGFsIGRhdGEgYW5kIG9wdGlvbnNcbiAgY29uc3QgZGF0YUNvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwid2Vici1kYXRhXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgZGF0YSA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKGRhdGFDb250ZW50KSk7XG5cbiAgLy8gR3JhYiBsaXN0IG9mIHJlc291cmNlcyB0byBiZSBkb3dubG9hZGVkXG4gIGNvbnN0IGZpbGVzQ29udGVudCA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoYHNjcmlwdFt0eXBlPVxcXCJ2ZnMtZmlsZVxcXCJdYCkudGV4dENvbnRlbnQ7XG4gIGNvbnN0IGZpbGVzID0gSlNPTi5wYXJzZShiNjREZWNvZGUoZmlsZXNDb250ZW50KSk7XG5cbiAgLy8gSW5pdGlhbGlzZSB3ZWJSIGFuZCBzZXR1cCBmb3IgUiBjb2RlIGV2YWx1YXRpb25cbiAgbGV0IHdlYlJQcm9taXNlID0gKGFzeW5jICh3ZWJSKSA9PiB7XG4gICAgc3RhdHVzVGV4dC50ZXh0Q29udGVudCA9IGBEb3dubG9hZGluZyB3ZWJSYDtcbiAgICBhd2FpdCB3ZWJSLmluaXQoKTtcblxuICAgIC8vIEluc3RhbGwgcHJvdmlkZWQgbGlzdCBvZiBwYWNrYWdlc1xuICAgIC8vIEVuc3VyZSB3ZWJSIGRlZmF1bHQgcmVwbyBpcyBpbmNsdWRlZFxuICAgIGRhdGEucGFja2FnZXMucmVwb3MucHVzaChcImh0dHBzOi8vcmVwby5yLXdhc20ub3JnXCIpXG4gICAgYXdhaXQgZGF0YS5wYWNrYWdlcy5wa2dzLm1hcCgocGtnKSA9PiAoKSA9PiB7XG4gICAgICBzdGF0dXNUZXh0LnRleHRDb250ZW50ID0gYERvd25sb2FkaW5nIHBhY2thZ2U6ICR7cGtnfWA7XG4gICAgICByZXR1cm4gd2ViUi5ldmFsUlZvaWQoYFxuICAgICAgICB3ZWJyOjppbnN0YWxsKHBrZywgcmVwb3MgPSByZXBvcylcbiAgICAgICAgbGlicmFyeShwa2csIGNoYXJhY3Rlci5vbmx5ID0gVFJVRSlcbiAgICAgIGAsIHsgZW52OiB7XG4gICAgICAgIHBrZzogcGtnLFxuICAgICAgICByZXBvczogZGF0YS5wYWNrYWdlcy5yZXBvcyxcbiAgICAgIH19KTtcbiAgICB9KS5yZWR1Y2UoKGN1ciwgbmV4dCkgPT4gY3VyLnRoZW4obmV4dCksIFByb21pc2UucmVzb2x2ZSgpKTtcblxuICAgIC8vIERvd25sb2FkIGFuZCBpbnN0YWxsIHJlc291cmNlc1xuICAgIGF3YWl0IGZpbGVzLm1hcCgoZmlsZSkgPT4gYXN5bmMgKCkgPT4ge1xuICAgICAgY29uc3QgbmFtZSA9IGZpbGUuc3Vic3RyaW5nKGZpbGUubGFzdEluZGV4T2YoJy8nKSArIDEpO1xuICAgICAgc3RhdHVzVGV4dC50ZXh0Q29udGVudCA9IGBEb3dubG9hZGluZyByZXNvdXJjZTogJHtuYW1lfWA7XG4gICAgICBjb25zdCByZXNwb25zZSA9IGF3YWl0IGZldGNoKGZpbGUpO1xuICAgICAgaWYgKCFyZXNwb25zZS5vaykge1xuICAgICAgICB0aHJvdyBuZXcgRXJyb3IoYENhbid0IGRvd25sb2FkIFxcYCR7ZmlsZX1cXGAuIEVycm9yICR7cmVzcG9uc2Uuc3RhdHVzfTogXCIke3Jlc3BvbnNlLnN0YXR1c1RleHR9XCIuYCk7XG4gICAgICB9XG4gICAgICBjb25zdCBkYXRhID0gYXdhaXQgcmVzcG9uc2UuYXJyYXlCdWZmZXIoKTtcblxuICAgICAgLy8gU3RvcmUgVVJMcyBpbiB0aGUgY3dkIHdpdGhvdXQgYW55IHN1YmRpcmVjdG9yeSBzdHJ1Y3R1cmVcbiAgICAgIGlmIChmaWxlLmluY2x1ZGVzKFwiOi8vXCIpKSB7XG4gICAgICAgIGZpbGUgPSBuYW1lO1xuICAgICAgfVxuXG4gICAgICAvLyBDb2xsYXBzZSBoaWdoZXIgZGlyZWN0b3J5IHN0cnVjdHVyZVxuICAgICAgZmlsZSA9IGNvbGxhcHNlUGF0aChmaWxlKTtcblxuICAgICAgLy8gQ3JlYXRlIGRpcmVjdG9yeSB0cmVlLCBpZ25vcmluZyBcImRpcmVjdG9yeSBleGlzdHNcIiBWRlMgZXJyb3JzXG4gICAgICBjb25zdCBwYXJ0cyA9IGZpbGUuc3BsaXQoJy8nKS5zbGljZSgwLCAtMSk7XG4gICAgICBsZXQgcGF0aCA9ICcnO1xuICAgICAgd2hpbGUgKHBhcnRzLmxlbmd0aCA+IDApIHtcbiAgICAgICAgcGF0aCArPSBwYXJ0cy5zaGlmdCgpICsgJy8nO1xuICAgICAgICBjb25zdCBhbmFseXNpcyA9IGF3YWl0IHdlYlIuRlMuYW5hbHl6ZVBhdGgocGF0aCk7XG4gICAgICAgIGlmICghYW5hbHlzaXMuZXhpc3RzKSB7XG4gICAgICAgICAgdHJ5IHtcbiAgICAgICAgICAgIGF3YWl0IHdlYlIuRlMubWtkaXIocGF0aCk7XG4gICAgICAgICAgfSBjYXRjaCAoZSkge1xuICAgICAgICAgICAgdGhyb3cgbmV3IEVycm9yKGBGaWxlc3lzdGVtIEVycm9yOiBcIiR7ZS5tZXNzYWdlfVwiLmApO1xuICAgICAgICAgIH1cbiAgICAgICAgfVxuICAgICAgfVxuXG4gICAgICAvLyBXcml0ZSB0aGlzIGZpbGUgdG8gdGhlIFZGU1xuICAgICAgcmV0dXJuIGF3YWl0IHdlYlIuRlMud3JpdGVGaWxlKGZpbGUsIG5ldyBVaW50OEFycmF5KGRhdGEpKTtcbiAgICB9KS5yZWR1Y2UoKGN1ciwgbmV4dCkgPT4gY3VyLnRoZW4obmV4dCksIFByb21pc2UucmVzb2x2ZSgpKTtcblxuICAgIHN0YXR1c1RleHQudGV4dENvbnRlbnQgPSBgSW5zdGFsbGluZyB3ZWJSIHNoaW1zYDtcbiAgICBhd2FpdCB3ZWJSLmV2YWxSVm9pZChgd2Vicjo6c2hpbV9pbnN0YWxsKClgKTtcblxuICAgIHN0YXR1c1RleHQudGV4dENvbnRlbnQgPSBgV2ViUiBlbnZpcm9ubWVudCBzZXR1cGA7XG4gICAgYXdhaXQgc2V0dXBSKHdlYlIsIGRhdGEpO1xuXG4gICAgc3RhdHVzVGV4dC5yZW1vdmUoKTtcbiAgICBpZiAoc3RhdHVzQ29udGFpbmVyLmNoaWxkcmVuLmxlbmd0aCA9PSAwKSB7XG4gICAgICBzdGF0dXNDb250YWluZXIucGFyZW50Tm9kZS5yZW1vdmUoKTtcbiAgICB9XG4gICAgcmV0dXJuIHdlYlI7XG4gIH0pKG5ldyBXZWJSKGRhdGEub3B0aW9ucykpO1xuXG4gIC8vIEtlZXAgdHJhY2sgb2YgaW5pdGlhbCBPSlMgYmxvY2sgcmVuZGVyXG4gIGNvbnN0IHJlbmRlcmVkT2pzID0ge307XG5cbiAgY29uc3QgcHJvY2VzcyA9IGFzeW5jIChjb250ZXh0LCBpbnB1dHMpID0+IHtcbiAgICBjb25zdCB3ZWJSID0gYXdhaXQgd2ViUlByb21pc2U7XG4gICAgY29uc3QgZXZhbHVhdG9yID0gbmV3IFdlYlJFdmFsdWF0b3Iod2ViUiwgY29udGV4dClcbiAgICBhd2FpdCBldmFsdWF0b3IucHJvY2VzcyhpbnB1dHMpO1xuICAgIHJldHVybiBldmFsdWF0b3IuY29udGFpbmVyO1xuICB9XG5cbiAgcmV0dXJuIHtcbiAgICBwcm9jZXNzLFxuICAgIHdlYlJQcm9taXNlLFxuICAgIHJlbmRlcmVkT2pzLFxuICB9O1xufVxuIn1dfQ==
+</script>
+<div id="exercise-loading-indicator" class="exercise-loading-indicator d-none d-flex align-items-center gap-2">
+<div id="exercise-loading-status" class="d-flex gap-2">
+
+</div>
+<div class="spinner-grow spinner-grow-sm">
+
+</div>
+</div>
+<script type="vfs-file">
+WyIuLi9fY29tbW9ucy9kYXRhL0owNl9leHRyYWl0cy9jbXJfYWRtMV9jYXJ0by5nZW9qc29uIiwiLi4vX2NvbW1vbnMvZGF0YS9KMDZfZXh0cmFpdHMvY21yX2FkbTJfY2FydG8uZ2VvanNvbiIsIi4uL19jb21tb25zL2RhdGEvSjA2X2V4dHJhaXRzL2Ntcl9kc19jYXJ0by5nZW9qc29uIiwiLi4vX2NvbW1vbnMvZGF0YS9KMDZfZXh0cmFpdHMvZWRzX2dyYXBwZXNfcG9pbnRzLmNzdiIsIi4uL19jb21tb25zL2RhdGEvSjA2X2V4dHJhaXRzL2Jvcm5lc19kaXNjcmV0aXNhdGlvbi5jc3YiXQ==
+</script>
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W119
+</script>
+<div id="exercise-loading-indicator" class="exercise-loading-indicator d-none d-flex align-items-center gap-2">
+<div id="exercise-loading-status" class="d-flex gap-2">
+
+</div>
+<div class="spinner-grow spinner-grow-sm">
+
+</div>
+</div>
+<script type="vfs-file">
+W10=
+</script>
+</section>
+
+</main> <!-- /main -->
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W119
+</script>
+<script type="module">
+if (window.location.protocol === "file:") { alert("The OJS runtime does not work with file:// URLs. Please use a web server to view this document."); }
+window._ojs.paths.runtimeToDoc = "../../J06_art_cartographie";
+window._ojs.paths.runtimeToRoot = "../..";
+window._ojs.paths.docToRoot = "..";
+window._ojs.selfContained = false;
+window._ojs.runtime.interpretFromScriptTags();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "J06 · L'art de la cartographie — runtime navigateur"</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> "Discrétiser, colorer, habiller — la même donnée, plusieurs messages · Atelier IFORD × GDSG 2026"</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># engine: knitr est OBLIGATOIRE. Sans lui, Quarto ne detecte aucun bloc R</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># et se rabat sur Jupyter, le rendu echoue.</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="an">engine:</span><span class="co"> knitr</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="an">webr:</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co">  packages:</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co">    - sf</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co">    - dplyr</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co">    - tidyr</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="co">    - ggplot2</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co">  # Chemins RELATIFS AU .qmd (prefixe ../). Dans les blocs {webr}, on lit les</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="co">  # MEMES fichiers SANS le ../.</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co">  # Tous produits par _commons/data/J06_extraits/00_extraire_J06.R</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="co">  resources:</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="co">    - ../_commons/data/J06_extraits/cmr_adm1_carto.geojson</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="co">    - ../_commons/data/J06_extraits/cmr_adm2_carto.geojson</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="co">    - ../_commons/data/J06_extraits/cmr_ds_carto.geojson</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="co">    - ../_commons/data/J06_extraits/eds_grappes_points.csv</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="co">    - ../_commons/data/J06_extraits/bornes_discretisation.csv</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="fu">## Comment utiliser cette page</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>Les cellules **Run code** (blocs bleus `{webr}`) s'exécutent **dans votre navigateur** :</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>cliquez, changez une couleur, un nombre de classes, une palette, relancez. C'est le meilleur</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>usage possible de cette page — une journée sur l'art de la carte se travaille en modifiant,</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>pas en lisant.</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>Les blocs gris ordinaires sont en **lecture seule** : ils montrent <span class="in">`tmap`</span>, <span class="in">`leaflet`</span> et</span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a><span class="in">`mapview`</span>, qui ne tournent pas dans le navigateur. Le déroulé complet est dans</span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a><span class="in">`demo_formateur_J6.qmd`</span> (ce même dossier), sous RStudio desktop.</span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>**Pourquoi `ggplot2` et non `tmap` ici ?** <span class="in">`tmap`</span> embarque trop de dépendances pour un</span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>chargement navigateur fluide. Ce n'est pas une perte : <span class="in">`ggplot2`</span> + <span class="in">`geom_sf()`</span> oblige à</span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>rendre **explicite** chaque décision cartographique — l'échelle de couleur, la</span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>discrétisation, la légende, l'habillage sont des objets qu'on écrit. C'est exactement ce</span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>qu'une journée sur la sémiologie graphique doit faire apparaître.</span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>**Ce qui a été calculé en amont.** Le script <span class="in">`_commons/data/J06_extraits/00_extraire_J06.R`</span></span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>a lu les fichiers Stata et SPSS (<span class="in">`haven`</span>), pondéré les indicateurs, et calculé les bornes de</span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>**Jenks** — que <span class="in">`classInt`</span>, absent du navigateur, est seul à savoir produire. Les quantiles</span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>et les intervalles égaux, eux, se recalculent ici en direct : vous verrez la différence.</span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>::: {.callout-warning}</span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>Les indicateurs issus d'ECAM5 (<span class="in">`tx_pauvrete`</span>, <span class="in">`tx_insatisf_alim`</span>) proviennent d'un **extrait</span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>de formation non représentatif à l'intérieur des régions** : ils servent à apprendre la</span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>carte, **pas à décrire le Cameroun**. Ne les citez pas. Les indicateurs EDS</span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>(<span class="in">`tx_eau_amelioree`</span>) et WorldPop (<span class="in">`pop_total`</span>) sont, eux, exploitables avec les précautions</span>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>énoncées sous chaque figure.</span>
+<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a><span class="fu">## 1. Charger les trois mailles, et la carte la plus simple possible</span></span>
+<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a><span class="in">#| autorun: true</span></span>
+<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a><span class="in">library(sf)</span></span>
+<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a><span class="in">library(dplyr)</span></span>
+<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a><span class="in">library(ggplot2)</span></span>
+<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a><span class="in"># Trois decoupages du meme territoire, du plus grossier au plus fin.</span></span>
+<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a><span class="in">regions      &lt;- read_sf("_commons/data/J06_extraits/cmr_adm1_carto.geojson")</span></span>
+<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a><span class="in">departements &lt;- read_sf("_commons/data/J06_extraits/cmr_adm2_carto.geojson")</span></span>
+<span id="cb4-69"><a href="#cb4-69" aria-hidden="true" tabindex="-1"></a><span class="in">districts    &lt;- read_sf("_commons/data/J06_extraits/cmr_ds_carto.geojson")</span></span>
+<span id="cb4-70"><a href="#cb4-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-71"><a href="#cb4-71" aria-hidden="true" tabindex="-1"></a><span class="in">c(regions = nrow(regions), departements = nrow(departements),</span></span>
+<span id="cb4-72"><a href="#cb4-72" aria-hidden="true" tabindex="-1"></a><span class="in">  districts = nrow(districts))</span></span>
+<span id="cb4-73"><a href="#cb4-73" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-74"><a href="#cb4-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-77"><a href="#cb4-77" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb4-78"><a href="#cb4-78" aria-hidden="true" tabindex="-1"></a><span class="in"># La grammaire cartographique minimale : une geometrie, une esthetique.</span></span>
+<span id="cb4-79"><a href="#cb4-79" aria-hidden="true" tabindex="-1"></a><span class="in"># geom_sf() sait dessiner points, lignes et polygones sans qu'on le lui dise :</span></span>
+<span id="cb4-80"><a href="#cb4-80" aria-hidden="true" tabindex="-1"></a><span class="in"># il lit le type de la colonne geometry.</span></span>
+<span id="cb4-81"><a href="#cb4-81" aria-hidden="true" tabindex="-1"></a><span class="in">ggplot() +</span></span>
+<span id="cb4-82"><a href="#cb4-82" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(data = departements, fill = "grey96", color = "grey70", linewidth = 0.15) +</span></span>
+<span id="cb4-83"><a href="#cb4-83" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(data = regions, fill = NA, color = "grey20", linewidth = 0.5) +</span></span>
+<span id="cb4-84"><a href="#cb4-84" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(title = "Cameroun — 58 départements sur 10 régions",</span></span>
+<span id="cb4-85"><a href="#cb4-85" aria-hidden="true" tabindex="-1"></a><span class="in">       subtitle = "Deux niveaux d'un même découpage administratif, superposés",</span></span>
+<span id="cb4-86"><a href="#cb4-86" aria-hidden="true" tabindex="-1"></a><span class="in">       caption = "Source : GADM 4.1 · IFORD × GDSG 2026") +</span></span>
+<span id="cb4-87"><a href="#cb4-87" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal() +</span></span>
+<span id="cb4-88"><a href="#cb4-88" aria-hidden="true" tabindex="-1"></a><span class="in">  theme(axis.text = element_blank(), axis.ticks = element_blank(),</span></span>
+<span id="cb4-89"><a href="#cb4-89" aria-hidden="true" tabindex="-1"></a><span class="in">        panel.grid = element_blank())</span></span>
+<span id="cb4-90"><a href="#cb4-90" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-91"><a href="#cb4-91" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-92"><a href="#cb4-92" aria-hidden="true" tabindex="-1"></a>::: {.iford-callout}</span>
+<span id="cb4-93"><a href="#cb4-93" aria-hidden="true" tabindex="-1"></a>**Ce que la figure code.** Rien d'autre qu'une géométrie : aucune variable n'est encodée en</span>
+<span id="cb4-94"><a href="#cb4-94" aria-hidden="true" tabindex="-1"></a>couleur. C'est une **carte de repérage**, pas une carte thématique. Le fin trait gris dessine</span>
+<span id="cb4-95"><a href="#cb4-95" aria-hidden="true" tabindex="-1"></a>les 58 **départements** — pas les arrondissements, contrairement à ce qu'affirmait le</span>
+<span id="cb4-96"><a href="#cb4-96" aria-hidden="true" tabindex="-1"></a>matériel d'origine ; le trait épais, les 10 régions.</span>
+<span id="cb4-97"><a href="#cb4-97" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-98"><a href="#cb4-98" aria-hidden="true" tabindex="-1"></a>**Ce que les choix techniques font.** L'ordre des <span class="in">`geom_sf()`</span> compte : la seconde couche se</span>
+<span id="cb4-99"><a href="#cb4-99" aria-hidden="true" tabindex="-1"></a>dessine **par-dessus** la première. <span class="in">`fill = NA`</span> sur les régions laisse voir les départements</span>
+<span id="cb4-100"><a href="#cb4-100" aria-hidden="true" tabindex="-1"></a>en dessous. <span class="in">`theme_minimal()`</span> retire la grille et les graduations, qui n'ont aucun sens sur</span>
+<span id="cb4-101"><a href="#cb4-101" aria-hidden="true" tabindex="-1"></a>une carte thématique de pays.</span>
+<span id="cb4-102"><a href="#cb4-102" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-103"><a href="#cb4-103" aria-hidden="true" tabindex="-1"></a>**Ce qui ne se lit pas.** Rien de thématique, et c'est volontaire. Une carte de repérage</span>
+<span id="cb4-104"><a href="#cb4-104" aria-hidden="true" tabindex="-1"></a>sert à savoir **où** on est avant de savoir **combien** — la sauter, c'est demander au</span>
+<span id="cb4-105"><a href="#cb4-105" aria-hidden="true" tabindex="-1"></a>lecteur d'interpréter des couleurs sur une géographie qu'il ne reconnaît pas encore.</span>
+<span id="cb4-106"><a href="#cb4-106" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb4-107"><a href="#cb4-107" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-108"><a href="#cb4-108" aria-hidden="true" tabindex="-1"></a><span class="fu">## 2. Discrétiser — quatre découpages du même tableau, quatre cartes</span></span>
+<span id="cb4-109"><a href="#cb4-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-110"><a href="#cb4-110" aria-hidden="true" tabindex="-1"></a>C'est la décision la plus lourde de conséquences de toute la journée, et la moins souvent</span>
+<span id="cb4-111"><a href="#cb4-111" aria-hidden="true" tabindex="-1"></a>discutée. **La donnée ne change pas ; la carte, si.**</span>
+<span id="cb4-112"><a href="#cb4-112" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-115"><a href="#cb4-115" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb4-116"><a href="#cb4-116" aria-hidden="true" tabindex="-1"></a><span class="in">#| autorun: true</span></span>
+<span id="cb4-117"><a href="#cb4-117" aria-hidden="true" tabindex="-1"></a><span class="in"># Les bornes de Jenks et d'ecart-type ont ete pre-calculees (classInt n'existe</span></span>
+<span id="cb4-118"><a href="#cb4-118" aria-hidden="true" tabindex="-1"></a><span class="in"># pas dans le navigateur). Quantiles et intervalles egaux, eux, se calculent ici.</span></span>
+<span id="cb4-119"><a href="#cb4-119" aria-hidden="true" tabindex="-1"></a><span class="in">bornes &lt;- read.csv("_commons/data/J06_extraits/bornes_discretisation.csv")</span></span>
+<span id="cb4-120"><a href="#cb4-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-121"><a href="#cb4-121" aria-hidden="true" tabindex="-1"></a><span class="in">bornes |&gt;</span></span>
+<span id="cb4-122"><a href="#cb4-122" aria-hidden="true" tabindex="-1"></a><span class="in">  filter(variable == "tx_eau_amelioree", maille == "region") |&gt;</span></span>
+<span id="cb4-123"><a href="#cb4-123" aria-hidden="true" tabindex="-1"></a><span class="in">  mutate(across(c(borne_inf, borne_sup), \(x) round(x, 1)))</span></span>
+<span id="cb4-124"><a href="#cb4-124" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-125"><a href="#cb4-125" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-128"><a href="#cb4-128" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb4-129"><a href="#cb4-129" aria-hidden="true" tabindex="-1"></a><span class="in">x &lt;- regions$tx_eau_amelioree</span></span>
+<span id="cb4-130"><a href="#cb4-130" aria-hidden="true" tabindex="-1"></a><span class="in">N &lt;- 5   # nombre de classes -- changez-le et relancez : la carte bouge.</span></span>
+<span id="cb4-131"><a href="#cb4-131" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-132"><a href="#cb4-132" aria-hidden="true" tabindex="-1"></a><span class="in"># QUANTILES : chaque classe contient le MEME NOMBRE d'unites.</span></span>
+<span id="cb4-133"><a href="#cb4-133" aria-hidden="true" tabindex="-1"></a><span class="in">br_quant &lt;- unique(quantile(x, probs = seq(0, 1, length.out = N + 1), na.rm = TRUE))</span></span>
+<span id="cb4-134"><a href="#cb4-134" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-135"><a href="#cb4-135" aria-hidden="true" tabindex="-1"></a><span class="in"># INTERVALLES EGAUX : chaque classe couvre la MEME LARGEUR de valeurs.</span></span>
+<span id="cb4-136"><a href="#cb4-136" aria-hidden="true" tabindex="-1"></a><span class="in">br_egal &lt;- seq(min(x, na.rm = TRUE), max(x, na.rm = TRUE), length.out = N + 1)</span></span>
+<span id="cb4-137"><a href="#cb4-137" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-138"><a href="#cb4-138" aria-hidden="true" tabindex="-1"></a><span class="in"># JENKS (« natural breaks ») : les bornes sont placees la ou la distribution</span></span>
+<span id="cb4-139"><a href="#cb4-139" aria-hidden="true" tabindex="-1"></a><span class="in"># se creuse, pour minimiser la variance intra-classe. Lu depuis le CSV.</span></span>
+<span id="cb4-140"><a href="#cb4-140" aria-hidden="true" tabindex="-1"></a><span class="in">lignes_j &lt;- bornes |&gt;</span></span>
+<span id="cb4-141"><a href="#cb4-141" aria-hidden="true" tabindex="-1"></a><span class="in">  filter(variable == "tx_eau_amelioree", maille == "region", methode == "jenks") |&gt;</span></span>
+<span id="cb4-142"><a href="#cb4-142" aria-hidden="true" tabindex="-1"></a><span class="in">  arrange(classe)</span></span>
+<span id="cb4-143"><a href="#cb4-143" aria-hidden="true" tabindex="-1"></a><span class="in">br_jenks &lt;- unique(c(lignes_j$borne_inf, tail(lignes_j$borne_sup, 1)))</span></span>
+<span id="cb4-144"><a href="#cb4-144" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-145"><a href="#cb4-145" aria-hidden="true" tabindex="-1"></a><span class="in">rbind(quantiles = round(br_quant, 1)[seq_len(N + 1)],</span></span>
+<span id="cb4-146"><a href="#cb4-146" aria-hidden="true" tabindex="-1"></a><span class="in">      egaux     = round(br_egal, 1),</span></span>
+<span id="cb4-147"><a href="#cb4-147" aria-hidden="true" tabindex="-1"></a><span class="in">      jenks     = round(br_jenks, 1)[seq_len(N + 1)])</span></span>
+<span id="cb4-148"><a href="#cb4-148" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-149"><a href="#cb4-149" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-152"><a href="#cb4-152" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb4-153"><a href="#cb4-153" aria-hidden="true" tabindex="-1"></a><span class="in"># On construit une seule couche empilee : la MEME geometrie, trois fois,</span></span>
+<span id="cb4-154"><a href="#cb4-154" aria-hidden="true" tabindex="-1"></a><span class="in"># avec trois colonnes de classes differentes. facet_wrap fait le reste.</span></span>
+<span id="cb4-155"><a href="#cb4-155" aria-hidden="true" tabindex="-1"></a><span class="in">classer &lt;- function(couche, bornes_v, nom) {</span></span>
+<span id="cb4-156"><a href="#cb4-156" aria-hidden="true" tabindex="-1"></a><span class="in">  couche |&gt;</span></span>
+<span id="cb4-157"><a href="#cb4-157" aria-hidden="true" tabindex="-1"></a><span class="in">    mutate(methode = nom,</span></span>
+<span id="cb4-158"><a href="#cb4-158" aria-hidden="true" tabindex="-1"></a><span class="in">           classe  = cut(tx_eau_amelioree, breaks = bornes_v,</span></span>
+<span id="cb4-159"><a href="#cb4-159" aria-hidden="true" tabindex="-1"></a><span class="in">                         include.lowest = TRUE, dig.lab = 3))</span></span>
+<span id="cb4-160"><a href="#cb4-160" aria-hidden="true" tabindex="-1"></a><span class="in">}</span></span>
+<span id="cb4-161"><a href="#cb4-161" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-162"><a href="#cb4-162" aria-hidden="true" tabindex="-1"></a><span class="in">comparaison &lt;- rbind(</span></span>
+<span id="cb4-163"><a href="#cb4-163" aria-hidden="true" tabindex="-1"></a><span class="in">  classer(regions, br_quant, "1. Quantiles (effectifs égaux)"),</span></span>
+<span id="cb4-164"><a href="#cb4-164" aria-hidden="true" tabindex="-1"></a><span class="in">  classer(regions, br_egal,  "2. Intervalles égaux"),</span></span>
+<span id="cb4-165"><a href="#cb4-165" aria-hidden="true" tabindex="-1"></a><span class="in">  classer(regions, br_jenks, "3. Jenks (seuils naturels)")</span></span>
+<span id="cb4-166"><a href="#cb4-166" aria-hidden="true" tabindex="-1"></a><span class="in">)</span></span>
+<span id="cb4-167"><a href="#cb4-167" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-168"><a href="#cb4-168" aria-hidden="true" tabindex="-1"></a><span class="in">ggplot(comparaison) +</span></span>
+<span id="cb4-169"><a href="#cb4-169" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(aes(fill = classe), color = "white", linewidth = 0.25) +</span></span>
+<span id="cb4-170"><a href="#cb4-170" aria-hidden="true" tabindex="-1"></a><span class="in">  facet_wrap(~ methode) +</span></span>
+<span id="cb4-171"><a href="#cb4-171" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_fill_viridis_d(option = "D", name = "Classe", na.value = "grey88") +</span></span>
+<span id="cb4-172"><a href="#cb4-172" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(title = "Une donnée, trois discrétisations, trois cartes",</span></span>
+<span id="cb4-173"><a href="#cb4-173" aria-hidden="true" tabindex="-1"></a><span class="in">       subtitle = "Accès à une source d'eau améliorée par région (EDS-MICS 2018)",</span></span>
+<span id="cb4-174"><a href="#cb4-174" aria-hidden="true" tabindex="-1"></a><span class="in">       caption = "Source : EDS-MICS 2018 (DHS) · GADM 4.1 · IFORD × GDSG 2026") +</span></span>
+<span id="cb4-175"><a href="#cb4-175" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal() +</span></span>
+<span id="cb4-176"><a href="#cb4-176" aria-hidden="true" tabindex="-1"></a><span class="in">  theme(axis.text = element_blank(), axis.ticks = element_blank(),</span></span>
+<span id="cb4-177"><a href="#cb4-177" aria-hidden="true" tabindex="-1"></a><span class="in">        panel.grid = element_blank(), legend.position = "bottom")</span></span>
+<span id="cb4-178"><a href="#cb4-178" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-179"><a href="#cb4-179" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-180"><a href="#cb4-180" aria-hidden="true" tabindex="-1"></a>::: {.callout-important}</span>
+<span id="cb4-181"><a href="#cb4-181" aria-hidden="true" tabindex="-1"></a><span class="fu">## Ce que chaque discrétisation raconte du **même** tableau</span></span>
+<span id="cb4-182"><a href="#cb4-182" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-183"><a href="#cb4-183" aria-hidden="true" tabindex="-1"></a>**Ce que la figure code.** Trois fois la même variable, sur la même géométrie, avec la même</span>
+<span id="cb4-184"><a href="#cb4-184" aria-hidden="true" tabindex="-1"></a>palette. Seule la **règle de découpage en classes** change.</span>
+<span id="cb4-185"><a href="#cb4-185" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-186"><a href="#cb4-186" aria-hidden="true" tabindex="-1"></a>**Ce que les choix techniques font.**</span>
+<span id="cb4-187"><a href="#cb4-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-188"><a href="#cb4-188" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Quantiles.** Chaque classe reçoit le même nombre d'unités. La carte est toujours</span>
+<span id="cb4-189"><a href="#cb4-189" aria-hidden="true" tabindex="-1"></a>  « équilibrée » visuellement — toutes les couleurs sont représentées. Elle raconte des</span>
+<span id="cb4-190"><a href="#cb4-190" aria-hidden="true" tabindex="-1"></a>  **rangs** : qui est dans le cinquième supérieur. Danger : deux unités aux valeurs presque</span>
+<span id="cb4-191"><a href="#cb4-191" aria-hidden="true" tabindex="-1"></a>  identiques peuvent tomber de part et d'autre d'une borne et apparaître très différentes.</span>
+<span id="cb4-192"><a href="#cb4-192" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Intervalles égaux.** Chaque classe couvre la même largeur de valeurs. La carte raconte</span>
+<span id="cb4-193"><a href="#cb4-193" aria-hidden="true" tabindex="-1"></a>  des **niveaux** et respecte les distances entre valeurs. Danger : sur une distribution</span>
+<span id="cb4-194"><a href="#cb4-194" aria-hidden="true" tabindex="-1"></a>  asymétrique, presque toutes les unités s'entassent dans une ou deux classes, et la carte</span>
+<span id="cb4-195"><a href="#cb4-195" aria-hidden="true" tabindex="-1"></a>  paraît vide.</span>
+<span id="cb4-196"><a href="#cb4-196" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Jenks.** Les bornes se placent là où la distribution se **creuse** : l'algorithme</span>
+<span id="cb4-197"><a href="#cb4-197" aria-hidden="true" tabindex="-1"></a>  minimise la variance à l'intérieur des classes. La carte respecte la **structure** des</span>
+<span id="cb4-198"><a href="#cb4-198" aria-hidden="true" tabindex="-1"></a>  données. Danger : les bornes sont propres à ce jeu de données, donc **deux cartes Jenks ne</span>
+<span id="cb4-199"><a href="#cb4-199" aria-hidden="true" tabindex="-1"></a>  sont jamais comparables entre elles** — ni entre deux années, ni entre deux pays.</span>
+<span id="cb4-200"><a href="#cb4-200" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-201"><a href="#cb4-201" aria-hidden="true" tabindex="-1"></a>**Ce qui se lit.** Le classement des régions les unes par rapport aux autres bouge peu ; ce</span>
+<span id="cb4-202"><a href="#cb4-202" aria-hidden="true" tabindex="-1"></a>qui bouge, c'est **l'impression de contraste**, c'est-à-dire le message. Un lecteur pressé ne</span>
+<span id="cb4-203"><a href="#cb4-203" aria-hidden="true" tabindex="-1"></a>lit pas les bornes : il lit les couleurs.</span>
+<span id="cb4-204"><a href="#cb4-204" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-205"><a href="#cb4-205" aria-hidden="true" tabindex="-1"></a>**Ce qui ne se lit pas — et la règle qui en découle.** Aucune de ces trois cartes n'est</span>
+<span id="cb4-206"><a href="#cb4-206" aria-hidden="true" tabindex="-1"></a>« la vraie ». Une discrétisation est un **argument**, pas une propriété de la donnée. D'où</span>
+<span id="cb4-207"><a href="#cb4-207" aria-hidden="true" tabindex="-1"></a>trois obligations : afficher les bornes dans la légende, dire la méthode dans la note de la</span>
+<span id="cb4-208"><a href="#cb4-208" aria-hidden="true" tabindex="-1"></a>carte, et fixer les bornes **à la main** dès qu'on veut comparer deux cartes entre elles.</span>
+<span id="cb4-209"><a href="#cb4-209" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb4-210"><a href="#cb4-210" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-211"><a href="#cb4-211" aria-hidden="true" tabindex="-1"></a><span class="fu">## 3. Les trois familles de palettes — et le contresens à ne jamais commettre</span></span>
+<span id="cb4-212"><a href="#cb4-212" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-215"><a href="#cb4-215" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb4-216"><a href="#cb4-216" aria-hidden="true" tabindex="-1"></a><span class="in"># PALETTE SEQUENTIELLE : une seule direction de lecture, du clair au fonce.</span></span>
+<span id="cb4-217"><a href="#cb4-217" aria-hidden="true" tabindex="-1"></a><span class="in"># Pour une grandeur qui va simplement de "bas" a "eleve".</span></span>
+<span id="cb4-218"><a href="#cb4-218" aria-hidden="true" tabindex="-1"></a><span class="in">p_seq &lt;- ggplot(regions) +</span></span>
+<span id="cb4-219"><a href="#cb4-219" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(aes(fill = tx_eau_amelioree), color = "white", linewidth = 0.25) +</span></span>
+<span id="cb4-220"><a href="#cb4-220" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_fill_viridis_c(option = "D", name = "Eau améliorée (%)",</span></span>
+<span id="cb4-221"><a href="#cb4-221" aria-hidden="true" tabindex="-1"></a><span class="in">                       na.value = "grey88") +</span></span>
+<span id="cb4-222"><a href="#cb4-222" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(title = "Séquentielle — un niveau",</span></span>
+<span id="cb4-223"><a href="#cb4-223" aria-hidden="true" tabindex="-1"></a><span class="in">       subtitle = "Part des ménages ayant accès à une source améliorée") +</span></span>
+<span id="cb4-224"><a href="#cb4-224" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal() +</span></span>
+<span id="cb4-225"><a href="#cb4-225" aria-hidden="true" tabindex="-1"></a><span class="in">  theme(axis.text = element_blank(), axis.ticks = element_blank(),</span></span>
+<span id="cb4-226"><a href="#cb4-226" aria-hidden="true" tabindex="-1"></a><span class="in">        panel.grid = element_blank())</span></span>
+<span id="cb4-227"><a href="#cb4-227" aria-hidden="true" tabindex="-1"></a><span class="in">p_seq</span></span>
+<span id="cb4-228"><a href="#cb4-228" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-229"><a href="#cb4-229" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-232"><a href="#cb4-232" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb4-233"><a href="#cb4-233" aria-hidden="true" tabindex="-1"></a><span class="in"># PALETTE DIVERGENTE : deux directions autour d'un CENTRE NEUTRE.</span></span>
+<span id="cb4-234"><a href="#cb4-234" aria-hidden="true" tabindex="-1"></a><span class="in"># La colonne ecart_eau_moyenne a un vrai zero : l'ecart a la moyenne des</span></span>
+<span id="cb4-235"><a href="#cb4-235" aria-hidden="true" tabindex="-1"></a><span class="in"># regions. C'est ce zero qui autorise la divergente -- et l'interdit ailleurs.</span></span>
+<span id="cb4-236"><a href="#cb4-236" aria-hidden="true" tabindex="-1"></a><span class="in">ggplot(regions) +</span></span>
+<span id="cb4-237"><a href="#cb4-237" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(aes(fill = ecart_eau_moyenne), color = "white", linewidth = 0.25) +</span></span>
+<span id="cb4-238"><a href="#cb4-238" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_fill_gradient2(low = "#B2182B", mid = "grey95", high = "#2166AC",</span></span>
+<span id="cb4-239"><a href="#cb4-239" aria-hidden="true" tabindex="-1"></a><span class="in">                       midpoint = 0, name = "Écart à la\nmoyenne (pts)",</span></span>
+<span id="cb4-240"><a href="#cb4-240" aria-hidden="true" tabindex="-1"></a><span class="in">                       na.value = "grey88") +</span></span>
+<span id="cb4-241"><a href="#cb4-241" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(title = "Divergente — un écart de part et d'autre d'un centre",</span></span>
+<span id="cb4-242"><a href="#cb4-242" aria-hidden="true" tabindex="-1"></a><span class="in">       subtitle = "Écart (en points) à la moyenne nationale des régions",</span></span>
+<span id="cb4-243"><a href="#cb4-243" aria-hidden="true" tabindex="-1"></a><span class="in">       caption = "Source : EDS-MICS 2018 · IFORD × GDSG 2026") +</span></span>
+<span id="cb4-244"><a href="#cb4-244" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal() +</span></span>
+<span id="cb4-245"><a href="#cb4-245" aria-hidden="true" tabindex="-1"></a><span class="in">  theme(axis.text = element_blank(), axis.ticks = element_blank(),</span></span>
+<span id="cb4-246"><a href="#cb4-246" aria-hidden="true" tabindex="-1"></a><span class="in">        panel.grid = element_blank())</span></span>
+<span id="cb4-247"><a href="#cb4-247" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-248"><a href="#cb4-248" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-251"><a href="#cb4-251" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb4-252"><a href="#cb4-252" aria-hidden="true" tabindex="-1"></a><span class="in"># PALETTE QUALITATIVE : des modalites SANS ordre. Teintes distinctes, jamais</span></span>
+<span id="cb4-253"><a href="#cb4-253" aria-hidden="true" tabindex="-1"></a><span class="in"># des nuances d'un meme ton -- une nuance suggere un classement qui n'existe pas.</span></span>
+<span id="cb4-254"><a href="#cb4-254" aria-hidden="true" tabindex="-1"></a><span class="in">grappes &lt;- read.csv("_commons/data/J06_extraits/eds_grappes_points.csv")</span></span>
+<span id="cb4-255"><a href="#cb4-255" aria-hidden="true" tabindex="-1"></a><span class="in">pts &lt;- st_as_sf(grappes[!is.na(grappes$lon), ],</span></span>
+<span id="cb4-256"><a href="#cb4-256" aria-hidden="true" tabindex="-1"></a><span class="in">                coords = c("lon", "lat"), crs = 4326, remove = FALSE)</span></span>
+<span id="cb4-257"><a href="#cb4-257" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-258"><a href="#cb4-258" aria-hidden="true" tabindex="-1"></a><span class="in">ggplot() +</span></span>
+<span id="cb4-259"><a href="#cb4-259" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(data = regions, fill = "grey96", color = "white", linewidth = 0.3) +</span></span>
+<span id="cb4-260"><a href="#cb4-260" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(data = pts, aes(color = milieu), size = 1.1, alpha = 0.8) +</span></span>
+<span id="cb4-261"><a href="#cb4-261" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_color_manual(values = c("U" = "#0F4C81", "R" = "#C1662F"),</span></span>
+<span id="cb4-262"><a href="#cb4-262" aria-hidden="true" tabindex="-1"></a><span class="in">                     labels = c("U" = "Urbain", "R" = "Rural"),</span></span>
+<span id="cb4-263"><a href="#cb4-263" aria-hidden="true" tabindex="-1"></a><span class="in">                     name = "Milieu") +</span></span>
+<span id="cb4-264"><a href="#cb4-264" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(title = "Qualitative — des catégories, pas des niveaux",</span></span>
+<span id="cb4-265"><a href="#cb4-265" aria-hidden="true" tabindex="-1"></a><span class="in">       subtitle = "430 grappes EDS-MICS 2018 par milieu de résidence",</span></span>
+<span id="cb4-266"><a href="#cb4-266" aria-hidden="true" tabindex="-1"></a><span class="in">       caption = "Source : EDS-MICS 2018 (DHS) · IFORD × GDSG 2026") +</span></span>
+<span id="cb4-267"><a href="#cb4-267" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal() +</span></span>
+<span id="cb4-268"><a href="#cb4-268" aria-hidden="true" tabindex="-1"></a><span class="in">  theme(axis.text = element_blank(), axis.ticks = element_blank(),</span></span>
+<span id="cb4-269"><a href="#cb4-269" aria-hidden="true" tabindex="-1"></a><span class="in">        panel.grid = element_blank())</span></span>
+<span id="cb4-270"><a href="#cb4-270" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-271"><a href="#cb4-271" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-272"><a href="#cb4-272" aria-hidden="true" tabindex="-1"></a>::: {.iford-callout}</span>
+<span id="cb4-273"><a href="#cb4-273" aria-hidden="true" tabindex="-1"></a>**Ce que les trois figures codent.** Trois **types de variables**, donc trois familles de</span>
+<span id="cb4-274"><a href="#cb4-274" aria-hidden="true" tabindex="-1"></a>palettes. Le choix n'est pas esthétique : il annonce au lecteur la **nature** de ce qu'il</span>
+<span id="cb4-275"><a href="#cb4-275" aria-hidden="true" tabindex="-1"></a>regarde, avant même qu'il lise la légende.</span>
+<span id="cb4-276"><a href="#cb4-276" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-277"><a href="#cb4-277" aria-hidden="true" tabindex="-1"></a>**Ce que les choix techniques font.**</span>
+<span id="cb4-278"><a href="#cb4-278" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-279"><a href="#cb4-279" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Séquentielle** (<span class="in">`viridis`</span>, ici) — une seule direction de lecture. <span class="in">`viridis`</span> a deux</span>
+<span id="cb4-280"><a href="#cb4-280" aria-hidden="true" tabindex="-1"></a>  propriétés qu'un dégradé arbitraire n'a pas : elle est **perceptivement uniforme** (un</span>
+<span id="cb4-281"><a href="#cb4-281" aria-hidden="true" tabindex="-1"></a>  même écart de valeur produit un même écart visuel sur toute l'échelle) et **lisible en</span>
+<span id="cb4-282"><a href="#cb4-282" aria-hidden="true" tabindex="-1"></a>  vision daltonienne** comme en noir et blanc. Sur un rapport photocopié, c'est décisif.</span>
+<span id="cb4-283"><a href="#cb4-283" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Divergente** — deux directions autour d'un centre neutre. Elle exige un **vrai point</span>
+<span id="cb4-284"><a href="#cb4-284" aria-hidden="true" tabindex="-1"></a>  zéro** : un écart, une différence, un solde. La poser sur un taux brut, dont la valeur</span>
+<span id="cb4-285"><a href="#cb4-285" aria-hidden="true" tabindex="-1"></a>  centrale serait arbitrairement choisie, revient à **fabriquer** deux camps qui n'existent</span>
+<span id="cb4-286"><a href="#cb4-286" aria-hidden="true" tabindex="-1"></a>  pas dans la donnée. C'est le contresens de sémiologie le plus fréquent.</span>
+<span id="cb4-287"><a href="#cb4-287" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Qualitative** — des teintes franchement distinctes. Utiliser deux nuances d'un même ton</span>
+<span id="cb4-288"><a href="#cb4-288" aria-hidden="true" tabindex="-1"></a>  pour « urbain » et « rural » suggérerait que l'un est *plus* que l'autre.</span>
+<span id="cb4-289"><a href="#cb4-289" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-290"><a href="#cb4-290" aria-hidden="true" tabindex="-1"></a>**Ce qui ne se lit pas.** Aucune palette ne corrige une mauvaise discrétisation, et aucune</span>
+<span id="cb4-291"><a href="#cb4-291" aria-hidden="true" tabindex="-1"></a>ne compense l'absence de données. Notez que sur les trois cartes, les unités sans valeur</span>
+<span id="cb4-292"><a href="#cb4-292" aria-hidden="true" tabindex="-1"></a>restent **grises** (`na.value`) : elles ne sont pas « à zéro », elles sont **non mesurées**.</span>
+<span id="cb4-293"><a href="#cb4-293" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb4-294"><a href="#cb4-294" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-295"><a href="#cb4-295" aria-hidden="true" tabindex="-1"></a><span class="fu">## 4. Symboles proportionnels — quand la choroplèthe ment</span></span>
+<span id="cb4-296"><a href="#cb4-296" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-299"><a href="#cb4-299" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb4-300"><a href="#cb4-300" aria-hidden="true" tabindex="-1"></a><span class="in">#| autorun: true</span></span>
+<span id="cb4-301"><a href="#cb4-301" aria-hidden="true" tabindex="-1"></a><span class="in"># La choroplethe colore des SURFACES. Pour un EFFECTIF (une population, un</span></span>
+<span id="cb4-302"><a href="#cb4-302" aria-hidden="true" tabindex="-1"></a><span class="in"># nombre de menages), elle est trompeuse : un grand departement peu peuple</span></span>
+<span id="cb4-303"><a href="#cb4-303" aria-hidden="true" tabindex="-1"></a><span class="in"># occupe plus de place a l'ecran qu'un petit departement tres peuple.</span></span>
+<span id="cb4-304"><a href="#cb4-304" aria-hidden="true" tabindex="-1"></a><span class="in">ggplot() +</span></span>
+<span id="cb4-305"><a href="#cb4-305" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(data = departements, fill = "grey96", color = "grey80", linewidth = 0.12) +</span></span>
+<span id="cb4-306"><a href="#cb4-306" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(data = regions, fill = NA, color = "grey40", linewidth = 0.35) +</span></span>
+<span id="cb4-307"><a href="#cb4-307" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_point(data = st_drop_geometry(departements),</span></span>
+<span id="cb4-308"><a href="#cb4-308" aria-hidden="true" tabindex="-1"></a><span class="in">             aes(x = lon_c, y = lat_c, size = pop_total),</span></span>
+<span id="cb4-309"><a href="#cb4-309" aria-hidden="true" tabindex="-1"></a><span class="in">             shape = 21, fill = "#0F4C81", color = "white",</span></span>
+<span id="cb4-310"><a href="#cb4-310" aria-hidden="true" tabindex="-1"></a><span class="in">             alpha = 0.75, stroke = 0.3) +</span></span>
+<span id="cb4-311"><a href="#cb4-311" aria-hidden="true" tabindex="-1"></a><span class="in">  # L'aire du cercle doit etre proportionnelle a la valeur, pas son rayon :</span></span>
+<span id="cb4-312"><a href="#cb4-312" aria-hidden="true" tabindex="-1"></a><span class="in">  # scale_size_area() impose cette regle (et fait passer la valeur 0 par une</span></span>
+<span id="cb4-313"><a href="#cb4-313" aria-hidden="true" tabindex="-1"></a><span class="in">  # aire nulle).</span></span>
+<span id="cb4-314"><a href="#cb4-314" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_size_area(max_size = 12, name = "Population\n(WorldPop)",</span></span>
+<span id="cb4-315"><a href="#cb4-315" aria-hidden="true" tabindex="-1"></a><span class="in">                  labels = scales::comma) +</span></span>
+<span id="cb4-316"><a href="#cb4-316" aria-hidden="true" tabindex="-1"></a><span class="in">  coord_sf() +</span></span>
+<span id="cb4-317"><a href="#cb4-317" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(title = "Population par département — symboles proportionnels",</span></span>
+<span id="cb4-318"><a href="#cb4-318" aria-hidden="true" tabindex="-1"></a><span class="in">       subtitle = "L'aire du cercle est proportionnelle à l'effectif ; les surfaces ne codent rien",</span></span>
+<span id="cb4-319"><a href="#cb4-319" aria-hidden="true" tabindex="-1"></a><span class="in">       x = NULL, y = NULL,</span></span>
+<span id="cb4-320"><a href="#cb4-320" aria-hidden="true" tabindex="-1"></a><span class="in">       caption = "Source : WorldPop admin level 2 · GADM 4.1 · IFORD × GDSG 2026") +</span></span>
+<span id="cb4-321"><a href="#cb4-321" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal() +</span></span>
+<span id="cb4-322"><a href="#cb4-322" aria-hidden="true" tabindex="-1"></a><span class="in">  theme(axis.text = element_blank(), axis.ticks = element_blank(),</span></span>
+<span id="cb4-323"><a href="#cb4-323" aria-hidden="true" tabindex="-1"></a><span class="in">        panel.grid = element_blank())</span></span>
+<span id="cb4-324"><a href="#cb4-324" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-325"><a href="#cb4-325" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-328"><a href="#cb4-328" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb4-329"><a href="#cb4-329" aria-hidden="true" tabindex="-1"></a><span class="in"># La MEME donnee en choroplethe -- mais rapportee a la superficie, donc</span></span>
+<span id="cb4-330"><a href="#cb4-330" aria-hidden="true" tabindex="-1"></a><span class="in"># transformee en DENSITE. Un effectif se cartographie en cercles ; un</span></span>
+<span id="cb4-331"><a href="#cb4-331" aria-hidden="true" tabindex="-1"></a><span class="in"># rapport (taux, densite, part) se cartographie en aplats.</span></span>
+<span id="cb4-332"><a href="#cb4-332" aria-hidden="true" tabindex="-1"></a><span class="in">ggplot(departements) +</span></span>
+<span id="cb4-333"><a href="#cb4-333" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(aes(fill = densite), color = "white", linewidth = 0.12) +</span></span>
+<span id="cb4-334"><a href="#cb4-334" aria-hidden="true" tabindex="-1"></a><span class="in">  # Transformation racine carree : sans elle, Douala et Yaounde ecrasent</span></span>
+<span id="cb4-335"><a href="#cb4-335" aria-hidden="true" tabindex="-1"></a><span class="in">  # toutes les autres unites et la carte devient uniformement pale.</span></span>
+<span id="cb4-336"><a href="#cb4-336" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_fill_viridis_c(option = "B", trans = "sqrt",</span></span>
+<span id="cb4-337"><a href="#cb4-337" aria-hidden="true" tabindex="-1"></a><span class="in">                       name = "Densité\n(hab/km²)", na.value = "grey88") +</span></span>
+<span id="cb4-338"><a href="#cb4-338" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(title = "Densité de population par département",</span></span>
+<span id="cb4-339"><a href="#cb4-339" aria-hidden="true" tabindex="-1"></a><span class="in">       subtitle = "Choroplèthe — échelle racine carrée pour rendre les écarts lisibles",</span></span>
+<span id="cb4-340"><a href="#cb4-340" aria-hidden="true" tabindex="-1"></a><span class="in">       caption = "Source : WorldPop (effectifs modélisés) · GADM 4.1 · IFORD × GDSG 2026") +</span></span>
+<span id="cb4-341"><a href="#cb4-341" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal() +</span></span>
+<span id="cb4-342"><a href="#cb4-342" aria-hidden="true" tabindex="-1"></a><span class="in">  theme(axis.text = element_blank(), axis.ticks = element_blank(),</span></span>
+<span id="cb4-343"><a href="#cb4-343" aria-hidden="true" tabindex="-1"></a><span class="in">        panel.grid = element_blank())</span></span>
+<span id="cb4-344"><a href="#cb4-344" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-345"><a href="#cb4-345" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-346"><a href="#cb4-346" aria-hidden="true" tabindex="-1"></a>::: {.iford-callout}</span>
+<span id="cb4-347"><a href="#cb4-347" aria-hidden="true" tabindex="-1"></a>**Ce que les figures codent.** La première encode un **effectif** (nombre d'habitants) par</span>
+<span id="cb4-348"><a href="#cb4-348" aria-hidden="true" tabindex="-1"></a>l'aire d'un cercle posé au centroïde du département. La seconde encode un **rapport**</span>
+<span id="cb4-349"><a href="#cb4-349" aria-hidden="true" tabindex="-1"></a>(habitants par km²) par la couleur du polygone.</span>
+<span id="cb4-350"><a href="#cb4-350" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-351"><a href="#cb4-351" aria-hidden="true" tabindex="-1"></a>**La règle, et elle est absolue.** Une **choroplèthe se réserve aux rapports** — taux, parts,</span>
+<span id="cb4-352"><a href="#cb4-352" aria-hidden="true" tabindex="-1"></a>densités, moyennes. Colorier un effectif brut donne à voir la superficie autant que la</span>
+<span id="cb4-353"><a href="#cb4-353" aria-hidden="true" tabindex="-1"></a>valeur : les grands départements ruraux dominent visuellement des départements urbains</span>
+<span id="cb4-354"><a href="#cb4-354" aria-hidden="true" tabindex="-1"></a>beaucoup plus peuplés. Symétriquement, <span class="in">`scale_size_area()`</span> garantit que c'est l'**aire** du</span>
+<span id="cb4-355"><a href="#cb4-355" aria-hidden="true" tabindex="-1"></a>cercle, non son rayon, qui est proportionnelle à la valeur — un rayon proportionnel</span>
+<span id="cb4-356"><a href="#cb4-356" aria-hidden="true" tabindex="-1"></a>exagérerait les grandes valeurs d'un facteur considérable.</span>
+<span id="cb4-357"><a href="#cb4-357" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-358"><a href="#cb4-358" aria-hidden="true" tabindex="-1"></a>**Ce qui se lit.** Les deux figures ensemble : les cercles montrent **où sont les gens**, la</span>
+<span id="cb4-359"><a href="#cb4-359" aria-hidden="true" tabindex="-1"></a>choroplèthe montre **à quelle intensité ils y sont**. Douala et Yaoundé apparaissent sur les</span>
+<span id="cb4-360"><a href="#cb4-360" aria-hidden="true" tabindex="-1"></a>deux, mais pour des raisons différentes.</span>
+<span id="cb4-361"><a href="#cb4-361" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-362"><a href="#cb4-362" aria-hidden="true" tabindex="-1"></a>**Ce qui ne se lit pas.** Les effectifs WorldPop sont **modélisés**, pas dénombrés : ils sont</span>
+<span id="cb4-363"><a href="#cb4-363" aria-hidden="true" tabindex="-1"></a>construits par désagrégation d'un recensement à l'aide d'imagerie satellitaire et de</span>
+<span id="cb4-364"><a href="#cb4-364" aria-hidden="true" tabindex="-1"></a>covariables. Le fichier source porte d'ailleurs un intervalle <span class="in">`lower`</span>–<span class="in">`upper`</span> et un indice</span>
+<span id="cb4-365"><a href="#cb4-365" aria-hidden="true" tabindex="-1"></a>d'incertitude. Un cercle est donc une estimation, avec une marge que la figure n'affiche pas.</span>
+<span id="cb4-366"><a href="#cb4-366" aria-hidden="true" tabindex="-1"></a>Et la densité est une moyenne sur tout le département : elle ne dit rien de la répartition</span>
+<span id="cb4-367"><a href="#cb4-367" aria-hidden="true" tabindex="-1"></a>interne — le J08 y revient avec des grilles de population à 100 mètres.</span>
+<span id="cb4-368"><a href="#cb4-368" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb4-369"><a href="#cb4-369" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-370"><a href="#cb4-370" aria-hidden="true" tabindex="-1"></a><span class="fu">## 5. Facettes — comparer sans changer d'échelle</span></span>
+<span id="cb4-371"><a href="#cb4-371" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-374"><a href="#cb4-374" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb4-375"><a href="#cb4-375" aria-hidden="true" tabindex="-1"></a><span class="in"># La MEME variable, la MEME echelle de couleur, sur DEUX mailles.</span></span>
+<span id="cb4-376"><a href="#cb4-376" aria-hidden="true" tabindex="-1"></a><span class="in"># Astuce de construction : on empile deux couches en harmonisant les colonnes,</span></span>
+<span id="cb4-377"><a href="#cb4-377" aria-hidden="true" tabindex="-1"></a><span class="in"># puis facet_wrap. Comme l'echelle est unique, les couleurs sont comparables</span></span>
+<span id="cb4-378"><a href="#cb4-378" aria-hidden="true" tabindex="-1"></a><span class="in"># d'un panneau a l'autre -- ce qui n'est PAS le cas de deux cartes cote a cote</span></span>
+<span id="cb4-379"><a href="#cb4-379" aria-hidden="true" tabindex="-1"></a><span class="in"># produites separement.</span></span>
+<span id="cb4-380"><a href="#cb4-380" aria-hidden="true" tabindex="-1"></a><span class="in">a &lt;- regions   |&gt; transmute(maille = "10 régions",             valeur = tx_eau_amelioree)</span></span>
+<span id="cb4-381"><a href="#cb4-381" aria-hidden="true" tabindex="-1"></a><span class="in">b &lt;- districts |&gt; transmute(maille = "200 districts sanitaires", valeur = tx_eau_amelioree)</span></span>
+<span id="cb4-382"><a href="#cb4-382" aria-hidden="true" tabindex="-1"></a><span class="in">deux &lt;- rbind(a, b)</span></span>
+<span id="cb4-383"><a href="#cb4-383" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-384"><a href="#cb4-384" aria-hidden="true" tabindex="-1"></a><span class="in">ggplot(deux) +</span></span>
+<span id="cb4-385"><a href="#cb4-385" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(aes(fill = valeur), color = "white", linewidth = 0.12) +</span></span>
+<span id="cb4-386"><a href="#cb4-386" aria-hidden="true" tabindex="-1"></a><span class="in">  facet_wrap(~ maille) +</span></span>
+<span id="cb4-387"><a href="#cb4-387" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_fill_viridis_c(option = "D", name = "Eau améliorée (%)",</span></span>
+<span id="cb4-388"><a href="#cb4-388" aria-hidden="true" tabindex="-1"></a><span class="in">                       na.value = "grey88", limits = range(deux$valeur, na.rm = TRUE)) +</span></span>
+<span id="cb4-389"><a href="#cb4-389" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(title = "Même indicateur, même échelle de couleur, deux mailles",</span></span>
+<span id="cb4-390"><a href="#cb4-390" aria-hidden="true" tabindex="-1"></a><span class="in">       subtitle = "Gris = aucune grappe enquêtée dans l'unité",</span></span>
+<span id="cb4-391"><a href="#cb4-391" aria-hidden="true" tabindex="-1"></a><span class="in">       caption = "Source : EDS-MICS 2018 · GADM 4.1 · DHIS2 MINSANTE · IFORD × GDSG 2026") +</span></span>
+<span id="cb4-392"><a href="#cb4-392" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal() +</span></span>
+<span id="cb4-393"><a href="#cb4-393" aria-hidden="true" tabindex="-1"></a><span class="in">  theme(axis.text = element_blank(), axis.ticks = element_blank(),</span></span>
+<span id="cb4-394"><a href="#cb4-394" aria-hidden="true" tabindex="-1"></a><span class="in">        panel.grid = element_blank(), legend.position = "bottom")</span></span>
+<span id="cb4-395"><a href="#cb4-395" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-396"><a href="#cb4-396" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-397"><a href="#cb4-397" aria-hidden="true" tabindex="-1"></a>::: {.callout-important}</span>
+<span id="cb4-398"><a href="#cb4-398" aria-hidden="true" tabindex="-1"></a><span class="fu">## MAUP et non-mesuré : ce que cette paire met en scène</span></span>
+<span id="cb4-399"><a href="#cb4-399" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-400"><a href="#cb4-400" aria-hidden="true" tabindex="-1"></a>**Ce que la figure code.** Une seule variable, une seule échelle de couleur (<span class="in">`limits`</span> la</span>
+<span id="cb4-401"><a href="#cb4-401" aria-hidden="true" tabindex="-1"></a>force à être commune), deux découpages du même territoire.</span>
+<span id="cb4-402"><a href="#cb4-402" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-403"><a href="#cb4-403" aria-hidden="true" tabindex="-1"></a>**Ce qui se lit.** Monter d'échelle **lisse** : l'amplitude se resserre, les contrastes</span>
+<span id="cb4-404"><a href="#cb4-404" aria-hidden="true" tabindex="-1"></a>locaux disparaissent dans la moyenne régionale. C'est le **MAUP** — *Modifiable Areal Unit</span>
+<span id="cb4-405"><a href="#cb4-405" aria-hidden="true" tabindex="-1"></a>Problem* : le résultat dépend de la maille d'agrégation, et **aucune maille n'est neutre**.</span>
+<span id="cb4-406"><a href="#cb4-406" aria-hidden="true" tabindex="-1"></a>Il a deux composantes : l'effet d'**échelle** (la finesse du découpage) et l'effet de</span>
+<span id="cb4-407"><a href="#cb4-407" aria-hidden="true" tabindex="-1"></a>**zonage** (à finesse égale, un autre tracé donne un autre résultat). La règle pratique :</span>
+<span id="cb4-408"><a href="#cb4-408" aria-hidden="true" tabindex="-1"></a>choisir la maille de la **décision** qu'on éclaire.</span>
+<span id="cb4-409"><a href="#cb4-409" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-410"><a href="#cb4-410" aria-hidden="true" tabindex="-1"></a>**Ce qui ne se lit pas — et qu'il faut dire sous la carte.** Les plages grises du panneau de</span>
+<span id="cb4-411"><a href="#cb4-411" aria-hidden="true" tabindex="-1"></a>droite. 430 grappes pour 200 districts : de nombreux districts n'ont **aucune** observation.</span>
+<span id="cb4-412"><a href="#cb4-412" aria-hidden="true" tabindex="-1"></a>Un polygone gris n'est pas « à zéro », il est **non mesuré** — et une carte qui les</span>
+<span id="cb4-413"><a href="#cb4-413" aria-hidden="true" tabindex="-1"></a>colorierait en clair mentirait. C'est aussi la protection contre l'**erreur écologique** :</span>
+<span id="cb4-414"><a href="#cb4-414" aria-hidden="true" tabindex="-1"></a>la couleur d'un district décrit l'agrégat, jamais un ménage particulier de ce district.</span>
+<span id="cb4-415"><a href="#cb4-415" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-416"><a href="#cb4-416" aria-hidden="true" tabindex="-1"></a>**En quoi le spatial apporte ici ce que le tableau ne contient pas.** Les **trous</span>
+<span id="cb4-417"><a href="#cb4-417" aria-hidden="true" tabindex="-1"></a>d'échantillonnage** se voient sur une carte et nulle part ailleurs. Un tableau de 200 lignes</span>
+<span id="cb4-418"><a href="#cb4-418" aria-hidden="true" tabindex="-1"></a>avec des <span class="in">`NA`</span> ne dit pas si ces <span class="in">`NA`</span> sont dispersés au hasard ou concentrés sur une région</span>
+<span id="cb4-419"><a href="#cb4-419" aria-hidden="true" tabindex="-1"></a>entière. La carte le montre en un regard — et si les trous forment un bloc, l'indicateur</span>
+<span id="cb4-420"><a href="#cb4-420" aria-hidden="true" tabindex="-1"></a>national qu'on en tire est biaisé, pas seulement imprécis.</span>
+<span id="cb4-421"><a href="#cb4-421" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb4-422"><a href="#cb4-422" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-423"><a href="#cb4-423" aria-hidden="true" tabindex="-1"></a><span class="fu">## 6. L'habillage — ce qui transforme un graphique en document</span></span>
+<span id="cb4-424"><a href="#cb4-424" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-427"><a href="#cb4-427" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb4-428"><a href="#cb4-428" aria-hidden="true" tabindex="-1"></a><span class="in"># Une carte destinee a un rapport officiel porte SIX elements obligatoires :</span></span>
+<span id="cb4-429"><a href="#cb4-429" aria-hidden="true" tabindex="-1"></a><span class="in"># titre, sous-titre disant l'indicateur exact, legende titree avec unite,</span></span>
+<span id="cb4-430"><a href="#cb4-430" aria-hidden="true" tabindex="-1"></a><span class="in"># source datee, mention de la methode, et note sur le non-mesure.</span></span>
+<span id="cb4-431"><a href="#cb4-431" aria-hidden="true" tabindex="-1"></a><span class="in">ggplot() +</span></span>
+<span id="cb4-432"><a href="#cb4-432" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(data = districts, aes(fill = tx_eau_amelioree),</span></span>
+<span id="cb4-433"><a href="#cb4-433" aria-hidden="true" tabindex="-1"></a><span class="in">          color = "white", linewidth = 0.1) +</span></span>
+<span id="cb4-434"><a href="#cb4-434" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(data = regions, fill = NA, color = "grey25", linewidth = 0.45) +</span></span>
+<span id="cb4-435"><a href="#cb4-435" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_fill_viridis_c(option = "D", name = "Ménages ayant accès\nà une source améliorée (%)",</span></span>
+<span id="cb4-436"><a href="#cb4-436" aria-hidden="true" tabindex="-1"></a><span class="in">                       na.value = "grey88") +</span></span>
+<span id="cb4-437"><a href="#cb4-437" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(</span></span>
+<span id="cb4-438"><a href="#cb4-438" aria-hidden="true" tabindex="-1"></a><span class="in">    title    = "Accès à une source d'eau améliorée, par district sanitaire",</span></span>
+<span id="cb4-439"><a href="#cb4-439" aria-hidden="true" tabindex="-1"></a><span class="in">    subtitle = "Définition JMP (OMS/UNICEF) · estimations pondérées par le plan de sondage EDS",</span></span>
+<span id="cb4-440"><a href="#cb4-440" aria-hidden="true" tabindex="-1"></a><span class="in">    caption  = paste("Sources : EDS-MICS Cameroun 2018 (DHS) ; districts sanitaires DHIS2 (MINSANTE) ;",</span></span>
+<span id="cb4-441"><a href="#cb4-441" aria-hidden="true" tabindex="-1"></a><span class="in">                     "limites régionales GADM 4.1.\n",</span></span>
+<span id="cb4-442"><a href="#cb4-442" aria-hidden="true" tabindex="-1"></a><span class="in">                     "Discrétisation : échelle continue. Gris = aucune grappe enquêtée.",</span></span>
+<span id="cb4-443"><a href="#cb4-443" aria-hidden="true" tabindex="-1"></a><span class="in">                     "Géométries simplifiées pour l'affichage.\n",</span></span>
+<span id="cb4-444"><a href="#cb4-444" aria-hidden="true" tabindex="-1"></a><span class="in">                     "Réalisation : atelier IFORD × GDSG 2026.")</span></span>
+<span id="cb4-445"><a href="#cb4-445" aria-hidden="true" tabindex="-1"></a><span class="in">  ) +</span></span>
+<span id="cb4-446"><a href="#cb4-446" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal(base_size = 11) +</span></span>
+<span id="cb4-447"><a href="#cb4-447" aria-hidden="true" tabindex="-1"></a><span class="in">  theme(</span></span>
+<span id="cb4-448"><a href="#cb4-448" aria-hidden="true" tabindex="-1"></a><span class="in">    plot.title    = element_text(face = "bold", size = 13),</span></span>
+<span id="cb4-449"><a href="#cb4-449" aria-hidden="true" tabindex="-1"></a><span class="in">    plot.subtitle = element_text(color = "grey30", size = 9.5),</span></span>
+<span id="cb4-450"><a href="#cb4-450" aria-hidden="true" tabindex="-1"></a><span class="in">    plot.caption  = element_text(color = "grey40", size = 7, hjust = 0),</span></span>
+<span id="cb4-451"><a href="#cb4-451" aria-hidden="true" tabindex="-1"></a><span class="in">    legend.position = "right",</span></span>
+<span id="cb4-452"><a href="#cb4-452" aria-hidden="true" tabindex="-1"></a><span class="in">    axis.text = element_blank(), axis.ticks = element_blank(),</span></span>
+<span id="cb4-453"><a href="#cb4-453" aria-hidden="true" tabindex="-1"></a><span class="in">    panel.grid = element_blank()</span></span>
+<span id="cb4-454"><a href="#cb4-454" aria-hidden="true" tabindex="-1"></a><span class="in">  )</span></span>
+<span id="cb4-455"><a href="#cb4-455" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-456"><a href="#cb4-456" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-457"><a href="#cb4-457" aria-hidden="true" tabindex="-1"></a>::: {.iford-callout}</span>
+<span id="cb4-458"><a href="#cb4-458" aria-hidden="true" tabindex="-1"></a>**Ce que la figure code.** La même donnée que la section 5, mais **prête à insérer dans un</span>
+<span id="cb4-459"><a href="#cb4-459" aria-hidden="true" tabindex="-1"></a>rapport**. Ce qui a changé n'est pas la donnée : c'est ce que la carte **déclare d'elle-même**.</span>
+<span id="cb4-460"><a href="#cb4-460" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-461"><a href="#cb4-461" aria-hidden="true" tabindex="-1"></a>**Ce que les choix techniques font.** Le `subtitle` porte la **définition exacte** de</span>
+<span id="cb4-462"><a href="#cb4-462" aria-hidden="true" tabindex="-1"></a>l'indicateur — « source améliorée » au sens du JMP n'est pas « eau potable » — et le fait</span>
+<span id="cb4-463"><a href="#cb4-463" aria-hidden="true" tabindex="-1"></a>qu'il est pondéré. Le <span class="in">`caption`</span> porte les trois sources avec leurs dates, la méthode de</span>
+<span id="cb4-464"><a href="#cb4-464" aria-hidden="true" tabindex="-1"></a>discrétisation, la signification du gris, et l'avertissement sur la simplification des</span>
+<span id="cb4-465"><a href="#cb4-465" aria-hidden="true" tabindex="-1"></a>géométries. Le titre de la légende porte l'**unité**. Une carte sans unité dans sa légende</span>
+<span id="cb4-466"><a href="#cb4-466" aria-hidden="true" tabindex="-1"></a>n'est pas interprétable ; une carte sans source n'est pas vérifiable ; une carte sans date</span>
+<span id="cb4-467"><a href="#cb4-467" aria-hidden="true" tabindex="-1"></a>n'est pas comparable.</span>
+<span id="cb4-468"><a href="#cb4-468" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-469"><a href="#cb4-469" aria-hidden="true" tabindex="-1"></a>**Ce qui ne se lit pas, et qu'aucun habillage ne répare.** L'incertitude d'échantillonnage</span>
+<span id="cb4-470"><a href="#cb4-470" aria-hidden="true" tabindex="-1"></a>n'apparaît pas. Deux districts de couleurs voisines peuvent être statistiquement</span>
+<span id="cb4-471"><a href="#cb4-471" aria-hidden="true" tabindex="-1"></a>indiscernables. Si la décision porte sur des unités précises, il faut soit afficher les</span>
+<span id="cb4-472"><a href="#cb4-472" aria-hidden="true" tabindex="-1"></a>effectifs, soit masquer sous un seuil déclaré — et le dire.</span>
+<span id="cb4-473"><a href="#cb4-473" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb4-474"><a href="#cb4-474" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-475"><a href="#cb4-475" aria-hidden="true" tabindex="-1"></a><span class="fu">## 7. Ce qui reste sous RStudio : `tmap`, l'interactif et l'export</span></span>
+<span id="cb4-476"><a href="#cb4-476" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-477"><a href="#cb4-477" aria-hidden="true" tabindex="-1"></a><span class="in">```r</span></span>
+<span id="cb4-478"><a href="#cb4-478" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Lecture seule : RStudio desktop. Voir demo_formateur_J6.qmd.</span></span>
+<span id="cb4-479"><a href="#cb4-479" aria-hidden="true" tabindex="-1"></a><span class="co"># tmap raisonne en couches empilees, comme un logiciel SIG. Syntaxe tmap 4.</span></span>
+<span id="cb4-480"><a href="#cb4-480" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tmap)</span>
+<span id="cb4-481"><a href="#cb4-481" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-482"><a href="#cb4-482" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(ds_indicateurs) <span class="sc">+</span></span>
+<span id="cb4-483"><a href="#cb4-483" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(</span>
+<span id="cb4-484"><a href="#cb4-484" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill =</span> <span class="st">"tx_eau"</span>,</span>
+<span id="cb4-485"><a href="#cb4-485" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill.scale  =</span> <span class="fu">tm_scale_intervals</span>(<span class="at">style =</span> <span class="st">"jenks"</span>, <span class="at">n =</span> <span class="dv">5</span>,</span>
+<span id="cb4-486"><a href="#cb4-486" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">values =</span> <span class="st">"viridis"</span>, <span class="at">value.na =</span> <span class="st">"grey85"</span>),</span>
+<span id="cb4-487"><a href="#cb4-487" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill.legend =</span> <span class="fu">tm_legend</span>(<span class="at">title =</span> <span class="st">"Eau améliorée (%)"</span>)) <span class="sc">+</span></span>
+<span id="cb4-488"><a href="#cb4-488" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_shape</span>(regions) <span class="sc">+</span> <span class="fu">tm_borders</span>(<span class="at">col =</span> <span class="st">"grey20"</span>, <span class="at">lwd =</span> <span class="fl">1.2</span>) <span class="sc">+</span></span>
+<span id="cb4-489"><a href="#cb4-489" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_text</span>(<span class="st">"NAME_1"</span>, <span class="at">size =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb4-490"><a href="#cb4-490" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Les ornements que ggplot2 n'a pas nativement :</span></span>
+<span id="cb4-491"><a href="#cb4-491" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>(<span class="at">type =</span> <span class="st">"arrow"</span>, <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"right"</span>, <span class="st">"top"</span>)) <span class="sc">+</span></span>
+<span id="cb4-492"><a href="#cb4-492" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_scalebar</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">100</span>, <span class="dv">200</span>), <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"left"</span>, <span class="st">"bottom"</span>)) <span class="sc">+</span></span>
+<span id="cb4-493"><a href="#cb4-493" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_credits</span>(<span class="st">"Source : EDS-MICS 2018 · DHIS2 MINSANTE"</span>, <span class="at">position =</span> <span class="fu">c</span>(<span class="st">"left"</span>, <span class="st">"bottom"</span>)) <span class="sc">+</span></span>
+<span id="cb4-494"><a href="#cb4-494" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">title =</span> <span class="st">"Accès à une source d'eau améliorée"</span>)</span>
+<span id="cb4-495"><a href="#cb4-495" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-496"><a href="#cb4-496" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-497"><a href="#cb4-497" aria-hidden="true" tabindex="-1"></a><span class="in">```r</span></span>
+<span id="cb4-498"><a href="#cb4-498" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Lecture seule. Export haute resolution pour un rapport imprime.</span></span>
+<span id="cb4-499"><a href="#cb4-499" aria-hidden="true" tabindex="-1"></a><span class="co"># 300 dpi est le minimum pour l'impression ; 96 dpi suffit a l'ecran.</span></span>
+<span id="cb4-500"><a href="#cb4-500" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_save</span>(ma_carte, <span class="st">"outputs/eau_districts.png"</span>,</span>
+<span id="cb4-501"><a href="#cb4-501" aria-hidden="true" tabindex="-1"></a>          <span class="at">dpi =</span> <span class="dv">300</span>, <span class="at">width =</span> <span class="dv">20</span>, <span class="at">height =</span> <span class="dv">16</span>, <span class="at">units =</span> <span class="st">"cm"</span>)</span>
+<span id="cb4-502"><a href="#cb4-502" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-503"><a href="#cb4-503" aria-hidden="true" tabindex="-1"></a><span class="co"># Avec ggplot2, l'equivalent :</span></span>
+<span id="cb4-504"><a href="#cb4-504" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="st">"outputs/eau_districts.png"</span>, <span class="at">plot =</span> ma_carte_gg,</span>
+<span id="cb4-505"><a href="#cb4-505" aria-hidden="true" tabindex="-1"></a>       <span class="at">dpi =</span> <span class="dv">300</span>, <span class="at">width =</span> <span class="dv">20</span>, <span class="at">height =</span> <span class="dv">16</span>, <span class="at">units =</span> <span class="st">"cm"</span>)</span>
+<span id="cb4-506"><a href="#cb4-506" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-507"><a href="#cb4-507" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-508"><a href="#cb4-508" aria-hidden="true" tabindex="-1"></a><span class="in">```r</span></span>
+<span id="cb4-509"><a href="#cb4-509" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Lecture seule, et VOLONTAIREMENT non execute meme sous RStudio quand on</span></span>
+<span id="cb4-510"><a href="#cb4-510" aria-hidden="true" tabindex="-1"></a><span class="co"># rend un document a distribuer. leaflet et mapview embarquent TOUTES les</span></span>
+<span id="cb4-511"><a href="#cb4-511" aria-hidden="true" tabindex="-1"></a><span class="co"># geometries dans le HTML : 200 districts + 430 points font passer un fichier</span></span>
+<span id="cb4-512"><a href="#cb4-512" aria-hidden="true" tabindex="-1"></a><span class="co"># de quelques centaines de kilooctets a plusieurs dizaines de megaoctets.</span></span>
+<span id="cb4-513"><a href="#cb4-513" aria-hidden="true" tabindex="-1"></a><span class="co"># Utiliser ces outils pour EXPLORER en console, jamais dans un livrable.</span></span>
+<span id="cb4-514"><a href="#cb4-514" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(leaflet); <span class="fu">library</span>(mapview)</span>
+<span id="cb4-515"><a href="#cb4-515" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-516"><a href="#cb4-516" aria-hidden="true" tabindex="-1"></a><span class="fu">mapview</span>(ds_indicateurs, <span class="at">zcol =</span> <span class="st">"tx_eau"</span>) <span class="sc">+</span> <span class="fu">mapview</span>(dhs_points, <span class="at">zcol =</span> <span class="st">"milieu"</span>)</span>
+<span id="cb4-517"><a href="#cb4-517" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-518"><a href="#cb4-518" aria-hidden="true" tabindex="-1"></a><span class="fu">leaflet</span>(ds_indicateurs) <span class="sc">|&gt;</span></span>
+<span id="cb4-519"><a href="#cb4-519" aria-hidden="true" tabindex="-1"></a>  <span class="fu">addProviderTiles</span>(<span class="st">"CartoDB.Positron"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb4-520"><a href="#cb4-520" aria-hidden="true" tabindex="-1"></a>  <span class="fu">addPolygons</span>(<span class="at">fillColor =</span> <span class="sc">~</span><span class="fu">pal</span>(tx_eau), <span class="at">fillOpacity =</span> <span class="fl">0.7</span>, <span class="at">weight =</span> <span class="fl">0.5</span>,</span>
+<span id="cb4-521"><a href="#cb4-521" aria-hidden="true" tabindex="-1"></a>              <span class="at">popup =</span> <span class="sc">~</span><span class="fu">paste0</span>(<span class="st">"&lt;b&gt;"</span>, ds_nom, <span class="st">"&lt;/b&gt;&lt;br&gt;Eau : "</span>,</span>
+<span id="cb4-522"><a href="#cb4-522" aria-hidden="true" tabindex="-1"></a>                              <span class="fu">round</span>(tx_eau, <span class="dv">1</span>), <span class="st">" %"</span>))</span>
+<span id="cb4-523"><a href="#cb4-523" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-524"><a href="#cb4-524" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-525"><a href="#cb4-525" aria-hidden="true" tabindex="-1"></a><span class="fu">## Checklist de fin de J06</span></span>
+<span id="cb4-526"><a href="#cb4-526" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-527"><a href="#cb4-527" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> Je choisis la **discrétisation** en connaissance de cause, j'affiche les bornes, et je</span>
+<span id="cb4-528"><a href="#cb4-528" aria-hidden="true" tabindex="-1"></a>      fixe les bornes à la main dès que je veux comparer deux cartes.</span>
+<span id="cb4-529"><a href="#cb4-529" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> Je réserve la **choroplèthe aux rapports** (taux, parts, densités) et les **symboles</span>
+<span id="cb4-530"><a href="#cb4-530" aria-hidden="true" tabindex="-1"></a>      proportionnels aux effectifs**, avec l'aire — jamais le rayon — proportionnelle.</span>
+<span id="cb4-531"><a href="#cb4-531" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> Ma palette correspond à la **nature de la variable** : séquentielle pour un niveau,</span>
+<span id="cb4-532"><a href="#cb4-532" aria-hidden="true" tabindex="-1"></a>      divergente **seulement** s'il existe un vrai zéro, qualitative pour des catégories.</span>
+<span id="cb4-533"><a href="#cb4-533" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> Le **non-mesuré est gris**, et je le dis dans la note.</span>
+<span id="cb4-534"><a href="#cb4-534" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> Titre, définition de l'indicateur, unité en légende, sources datées, méthode de</span>
+<span id="cb4-535"><a href="#cb4-535" aria-hidden="true" tabindex="-1"></a>      discrétisation : les six mentions y sont.</span>
+<span id="cb4-536"><a href="#cb4-536" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> Je sais nommer **MAUP** et **erreur écologique**, et dire lequel menace ma carte.</span>
+<span id="cb4-537"><a href="#cb4-537" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-538"><a href="#cb4-538" aria-hidden="true" tabindex="-1"></a>**Demain (J07)** : les statistiques spatiales. On cesse de décrire la carte pour la</span>
+<span id="cb4-539"><a href="#cb4-539" aria-hidden="true" tabindex="-1"></a>**tester** — l'autocorrélation, l'indice de Moran, les points chauds. La question devient :</span>
+<span id="cb4-540"><a href="#cb4-540" aria-hidden="true" tabindex="-1"></a>ce bloc de couleurs contiguës est-il autre chose que du hasard ?</span>
+<span id="cb4-541"><a href="#cb4-541" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-542"><a href="#cb4-542" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">← Retour à l'accueil</span><span class="co">](../INDEX.md)</span></span>
+</code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

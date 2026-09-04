@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"name": "J09_fenetre_yagoua",
+"xy_coordinate_resolution": 1e-06,
+"features": [
+{ "type": "Feature", "properties": { "nom": "Fenetre d'etude 5 x 5 km", "cote_m": 5000.0, "origine": "centroide du plus grand polygone inonde de l'AOI01" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 15.321506, 10.222641 ], [ 15.367159, 10.222593 ], [ 15.367211, 10.267814 ], [ 15.321551, 10.267862 ], [ 15.321506, 10.222641 ] ] ] } }
+]
+}

@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>J05 · Des enquêtes à la carte — runtime navigateur – Runtime IFORD × GDSG 2026</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-cbfcc28fdddbba26d4008a6ad21285bb.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-ba4b3e9e4b2a78949e1cf3c0f076353c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/live-runtime/live-runtime.js" type="module"></script>
+<link href="../site_libs/quarto-contrib/live-runtime/live-runtime.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script type="module" src="../site_libs/quarto-ojs/quarto-ojs-runtime.js"></script>
+<link href="../site_libs/quarto-ojs/quarto-ojs.css" rel="stylesheet">
+
+
+</head>
+
+<body class="floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="INDEX.md" class="navbar-brand navbar-brand-logo">
+    <img src="../_commons/img/logo-iford.jpg" alt="IFORD" class="navbar-logo light-content">
+    <img src="../_commons/img/logo-iford.jpg" alt="IFORD" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="INDEX.md">
+    <span class="navbar-title">Runtime IFORD × GDSG 2026</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../INDEX.html"> 
+<span class="menu-text">Accueil</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-modules" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Modules</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-modules">    
+        <li>
+    <a class="dropdown-item" href="../J01_fondations/runtime.html">
+ <span class="dropdown-text">J01 · Fondations R &amp; RStudio</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J02_penser_espace/runtime.html">
+ <span class="dropdown-text">J02 · Penser l’espace</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J03_univers_vectoriel/runtime.html">
+ <span class="dropdown-text">J03 · L’univers vectoriel</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J04_terre_en_pixels/runtime.html">
+ <span class="dropdown-text">J04 · La Terre en pixels</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J05_enquetes_carte/runtime.html">
+ <span class="dropdown-text">J05 · Des enquêtes à la carte</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J06_art_cartographie/runtime.html">
+ <span class="dropdown-text">J06 · L’art de la cartographie</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J07_statistiques_spatiales/runtime.html">
+ <span class="dropdown-text">J07 · Statistiques spatiales</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J08_population_haute_resolution/runtime.html">
+ <span class="dropdown-text">J08 · Population en haute résolution</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J09_teledetection/runtime.html">
+ <span class="dropdown-text">J09 · Télédétection et inondations</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J10_politiques_publiques/runtime.html">
+ <span class="dropdown-text">J10 · Politiques publiques</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../J11_perenniser_transmettre/runtime.html">
+ <span class="dropdown-text">J11 · Pérenniser et transmettre</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul class="collapse">
+  <li><a href="#ce-que-le-navigateur-sait-faire-et-ce-quil-ne-sait-pas" id="toc-ce-que-le-navigateur-sait-faire-et-ce-quil-ne-sait-pas" class="nav-link active" data-scroll-target="#ce-que-le-navigateur-sait-faire-et-ce-quil-ne-sait-pas">1. Ce que le navigateur sait faire, et ce qu’il ne sait pas</a></li>
+  <li><a href="#biais-de-taille-trois-chiffres-exacts-pour-une-même-question" id="toc-biais-de-taille-trois-chiffres-exacts-pour-une-même-question" class="nav-link" data-scroll-target="#biais-de-taille-trois-chiffres-exacts-pour-une-même-question">2. Biais de taille — trois chiffres exacts pour une même question</a></li>
+  <li><a href="#le-tableau-régional-pondéré-et-son-écart-à-la-référence-publiée" id="toc-le-tableau-régional-pondéré-et-son-écart-à-la-référence-publiée" class="nav-link" data-scroll-target="#le-tableau-régional-pondéré-et-son-écart-à-la-référence-publiée">3. Le tableau régional pondéré — et son écart à la référence publiée</a></li>
+  <li><a href="#la-première-carte-le-tableau-devient-territoire" id="toc-la-première-carte-le-tableau-devient-territoire" class="nav-link" data-scroll-target="#la-première-carte-le-tableau-devient-territoire">4. La première carte — le tableau devient territoire</a></li>
+  <li><a href="#ce-que-la-moyenne-régionale-cache-urbain-contre-rural" id="toc-ce-que-la-moyenne-régionale-cache-urbain-contre-rural" class="nav-link" data-scroll-target="#ce-que-la-moyenne-régionale-cache-urbain-contre-rural">5. Ce que la moyenne régionale cache : urbain contre rural</a></li>
+  <li><a href="#des-coordonnées-denquête-aux-points-lautre-pont-vers-la-carte" id="toc-des-coordonnées-denquête-aux-points-lautre-pont-vers-la-carte" class="nav-link" data-scroll-target="#des-coordonnées-denquête-aux-points-lautre-pont-vers-la-carte">6. Des coordonnées d’enquête aux points — l’autre pont vers la carte</a></li>
+  <li><a href="#changer-de-maille-le-maup-en-deux-cartes-du-même-phénomène" id="toc-changer-de-maille-le-maup-en-deux-cartes-du-même-phénomène" class="nav-link" data-scroll-target="#changer-de-maille-le-maup-en-deux-cartes-du-même-phénomène">7. Changer de maille : le MAUP, en deux cartes du même phénomène</a></li>
+  <li><a href="#superposer-deux-échelles-lantidote-à-lerreur-écologique" id="toc-superposer-deux-échelles-lantidote-à-lerreur-écologique" class="nav-link" data-scroll-target="#superposer-deux-échelles-lantidote-à-lerreur-écologique">8. Superposer deux échelles — l’antidote à l’erreur écologique</a></li>
+  <li><a href="#ce-qui-reste-sous-rstudio" id="toc-ce-qui-reste-sous-rstudio" class="nav-link" data-scroll-target="#ce-qui-reste-sous-rstudio">9. Ce qui reste sous RStudio</a></li>
+  <li><a href="#checklist-de-fin-de-j05" id="toc-checklist-de-fin-de-j05" class="nav-link" data-scroll-target="#checklist-de-fin-de-j05">Checklist de fin de J05</a></li>
+  </ul>
+</nav>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">J05 · Des enquêtes à la carte — runtime navigateur</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<p class="subtitle lead">Pondérer, agréger, cartographier — et savoir de quoi la couleur est faite · Atelier IFORD × GDSG 2026</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Comment utiliser cette page
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Les cellules <strong>Run code</strong> (blocs bleus <code>{webr}</code>) s’exécutent <strong>directement dans votre navigateur</strong> : cliquez, modifiez, relancez. Rien n’est installé sur votre poste, rien n’est envoyé sur un serveur.</p>
+<p>Les blocs gris ordinaires sont en <strong>lecture seule</strong>. Ils montrent le code qui ne peut pas tourner dans un navigateur — lecture de fichiers Stata/SPSS (<code>haven</code>), estimation avec plan de sondage (<code>survey</code>), cartographie <code>tmap</code> — et qui s’exécute <strong>sous RStudio desktop</strong> avec <code>demo_formateur_J05.qmd</code> (ce même dossier).</p>
+<p><strong>Le partage des rôles de la journée.</strong> Toute la pondération a été faite <strong>en amont</strong>, par le script <code>_commons/data/J05_extraits/00_extraire_J05.R</code>. Cette page ne repondère rien : elle <strong>cartographie</strong> des taux déjà pondérés, et fait travailler leur <strong>lecture</strong> — comparer des mailles, nommer les pièges, dire ce qui ne se lit pas.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Avertissement sur les chiffres régionaux d’ECAM5 — à lire avant toute carte
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>ecam5.dta</code> est un <strong>extrait de formation</strong>, pas le fichier de production de l’INS. Le contrôle a été fait : le taux de pauvreté <strong>national</strong> calculé sur cet extrait colle à la publication de l’INS (38,6 % contre 37,7 %), mais <strong>à l’intérieur des régions il ne colle pas</strong> — l’Est ressort à 7,5 % là où l’INS publie 41,5 %.</p>
+<p>Conséquence, et c’est une règle de la journée, pas une précaution de style :</p>
+<ul>
+<li>les taux régionaux affichés sur cette page servent <strong>uniquement</strong> à apprendre la chaîne technique (pondérer → agréger → joindre → cartographier) ;</li>
+<li><strong>il est interdit de les citer</strong>, de les reprendre dans un rapport, ou de les commenter comme s’ils décrivaient le Cameroun.</li>
+</ul>
+<p>On ne masque pas l’écart : on en fait l’objet d’un exercice. Une carte hérite de toutes les décisions prises en amont sans jamais les afficher — c’est pourquoi elles s’écrivent <strong>sous</strong> la carte.</p>
+</div>
+</div>
+<section id="ce-que-le-navigateur-sait-faire-et-ce-quil-ne-sait-pas" class="level2">
+<h2 class="anchored" data-anchor-id="ce-que-le-navigateur-sait-faire-et-ce-quil-ne-sait-pas">1. Ce que le navigateur sait faire, et ce qu’il ne sait pas</h2>
+<p>WebR embarque une distribution R compilée pour le navigateur. <code>sf</code>, <code>dplyr</code>, <code>ggplot2</code>, <code>tidyr</code> y tournent. <strong><code>haven</code> et <code>survey</code> n’y sont pas</strong>, et ne peuvent donc pas lire <code>ecam5.dta</code> ni construire un plan de sondage.</p>
+<p>Le code ci-dessous est celui qui a été <strong>réellement exécuté en amont</strong> pour produire les fichiers que cette page consomme. Il est ici pour être lu et copié vers RStudio, pas pour être exécuté.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Lecture seule : s'execute sous RStudio desktop, pas dans le navigateur.</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(haven)    <span class="co"># lecture .dta (Stata) et .SAV (SPSS)</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(survey)   <span class="co"># estimation avec plan de sondage</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>ecam5 <span class="ot">&lt;-</span> <span class="fu">read_dta</span>(<span class="st">"datasets/ecam5.dta"</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># coefextr est le COEFFICIENT D'EXTRAPOLATION : le nombre de personnes du</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># pays que represente chaque ligne du fichier. Sans lui, on ne decrit pas le</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Cameroun, on decrit l'echantillon.</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>plan <span class="ot">&lt;-</span> <span class="fu">svydesign</span>(<span class="at">ids =</span> <span class="sc">~</span><span class="dv">1</span>, <span class="at">weights =</span> <span class="sc">~</span>coefextr, <span class="at">data =</span> ecam5)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Taux de pauvrete national, avec son intervalle de confiance.</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">svymean</span>(<span class="sc">~</span>nivie, plan, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="fu">confint</span>(<span class="fu">svymean</span>(<span class="sc">~</span>nivie, plan, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Le meme taux, region par region.</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="fu">svyby</span>(<span class="sc">~</span>nivie, <span class="sc">~</span>s0q1, plan, svymean, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Le script complet est dans <code>_commons/data/J05_extraits/00_extraire_J05.R</code> ; le déroulé pédagogique, avec les vérifications de clé et les diagnostics de valeurs manquantes, est dans <code>demo_formateur_J05.qmd</code>.</p>
+</section>
+<section id="biais-de-taille-trois-chiffres-exacts-pour-une-même-question" class="level2">
+<h2 class="anchored" data-anchor-id="biais-de-taille-trois-chiffres-exacts-pour-une-même-question">2. Biais de taille — trois chiffres exacts pour une même question</h2>
+<p>Avant toute carte, une leçon de lecture. « Quelle est la taille moyenne d’un ménage ? » admet <strong>trois réponses justes</strong>, selon ce dont on prend la moyenne.</p>
+<div class="cell" data-autorun="true">
+<div>
+<div id="webr-1" class="exercise-cell">
+
+</div>
+<script type="webr-1-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoibGlicmFyeShkcGx5cilcbmxpYnJhcnkoZ2dwbG90MilcblxuIyBGaWNoaWVyIHByb2R1aXQgZW4gYW1vbnQgOyBvbiBsZSBsaXQgU0FOUyBsZSBwcmVmaXhlIC4uL1xudGFpbGxlIDwtIHJlYWQuY3N2KFwiX2NvbW1vbnMvZGF0YS9KMDVfZXh0cmFpdHMvZWNhbTVfdGFpbGxlX21lbmFnZXMuY3N2XCIpXG50YWlsbGUifQ==
+</script>
+</div>
+</div>
+<div class="cell">
+<div>
+<div id="webr-2" class="exercise-cell">
+
+</div>
+<script type="webr-2-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiZ2dwbG90KHRhaWxsZSwgYWVzKHggPSByZW9yZGVyKGJhc2UsIHRhaWxsZV9tb3llbm5lKSwgeSA9IHRhaWxsZV9tb3llbm5lKSkgK1xuICBnZW9tX2NvbChmaWxsID0gXCIjMEY0QzgxXCIsIHdpZHRoID0gMC42KSArXG4gIGdlb21fdGV4dChhZXMobGFiZWwgPSByb3VuZCh0YWlsbGVfbW95ZW5uZSwgMikpLCBoanVzdCA9IC0wLjE1LCBzaXplID0gMy41KSArXG4gIGNvb3JkX2ZsaXAoKSArXG4gIGV4cGFuZF9saW1pdHMoeSA9IG1heCh0YWlsbGUkdGFpbGxlX21veWVubmUpICogMS4xNSkgK1xuICBsYWJzKHRpdGxlID0gXCJUcm9pcyBsZWN0dXJlcyBkZSBsYSBtw6ptZSBkb25uw6llIEVDQU01XCIsXG4gICAgICAgc3VidGl0bGUgPSBcIlRhaWxsZSBtb3llbm5lIGQndW4gbcOpbmFnZSBzZWxvbiBsYSBiYXNlIGRlIGNhbGN1bFwiLFxuICAgICAgIHggPSBOVUxMLCB5ID0gXCJwZXJzb25uZXMgcGFyIG3DqW5hZ2VcIixcbiAgICAgICBjYXB0aW9uID0gXCJTb3VyY2UgOiBFQ0FNNSAyMDIxLTIwMjIgKGV4dHJhaXQgZGUgZm9ybWF0aW9uKSDCtyBJRk9SRCDDlyBHRFNHIDIwMjZcIikgK1xuICB0aGVtZV9taW5pbWFsKCkifQ==
+</script>
+</div>
+</div>
+<div class="iford-callout">
+<p><strong>Ce que la figure code.</strong> Chaque barre est une moyenne de la <strong>même</strong> variable <code>tailm</code> (nombre de personnes du ménage), calculée sur une <strong>base d’observation différente</strong> : toutes les lignes du fichier (des <em>individus</em>), les seules lignes de chef de ménage (des <em>ménages</em>), et ces dernières sans les poids de sondage.</p>
+<p><strong>Ce qui se lit.</strong> Les trois barres ne sont pas égales. Parcourir un fichier d’individus revient à compter chaque ménage <strong>autant de fois qu’il compte de membres</strong> : les grands ménages y pèsent mécaniquement plus. C’est le <strong>biais de taille</strong>. La barre « individus » est donc structurellement au-dessus de la barre « ménages ».</p>
+<p><strong>Ce qui ne se lit pas.</strong> Aucune des trois n’est « la bonne ». Elles répondent à trois questions distinctes : <em>dans quel ménage vit une personne prise au hasard ?</em>, <em>combien de personnes compte un ménage pris au hasard ?</em>, <em>combien en compte un ménage de l’échantillon brut ?</em> La seule faute serait de ne pas dire laquelle on publie. Le même mécanisme frappe les taux de pauvreté par individu et par ménage — comparez-les dans le tableau de la section 3.</p>
+</div>
+</section>
+<section id="le-tableau-régional-pondéré-et-son-écart-à-la-référence-publiée" class="level2">
+<h2 class="anchored" data-anchor-id="le-tableau-régional-pondéré-et-son-écart-à-la-référence-publiée">3. Le tableau régional pondéré — et son écart à la référence publiée</h2>
+<div class="cell" data-autorun="true">
+<div>
+<div id="webr-3" class="exercise-cell">
+
+</div>
+<script type="webr-3-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoicGF1dnJldGUgPC0gcmVhZC5jc3YoXCJfY29tbW9ucy9kYXRhL0owNV9leHRyYWl0cy9lY2FtNV9wYXV2cmV0ZV9yZWdpb24uY3N2XCIpXG5cbnBhdXZyZXRlIHw+XG4gIHNlbGVjdChyZWdpb25fYWRtLCBuX2luZGl2aWR1cywgbl9tZW5hZ2VzLFxuICAgICAgICAgdHhfcGF1dnJldGVfcG9uZCwgdHhfcGF1dnJldGVfYnJ1dCwgdHhfcGF1dnJldGVfbWVuYWdlLFxuICAgICAgICAgdHhfaW5zX3B1YmxpZSwgZWNhcnRfaW5zKSB8PlxuICBtdXRhdGUoYWNyb3NzKHdoZXJlKGlzLm51bWVyaWMpLCBcXCh4KSByb3VuZCh4LCAxKSkpIHw+XG4gIGFycmFuZ2UoZGVzYyh0eF9wYXV2cmV0ZV9wb25kKSkifQ==
+</script>
+</div>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Warning
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Le geste qui manque presque toujours : confronter à une référence.</strong></p>
+<p><code>tx_ins_publie</code> est le taux publié par l’INS ; <code>ecart_ins</code> la différence avec ce que l’extrait produit. Là où la colonne <code>ecart_ins</code> est grande, <strong>le chiffre de l’extrait est faux</strong> — pas « surprenant », faux. Sans ce contrôle, la carte aurait donné à un chiffre faux exactement la même autorité visuelle qu’à un chiffre juste.</p>
+<p><code>tx_pauvrete_brut</code> est le même calcul <strong>sans les poids</strong>. L’écart entre les deux colonnes mesure exactement ce que la pondération apporte : sans elle, on décrit l’échantillon, pas le pays.</p>
+</div>
+</div>
+</section>
+<section id="la-première-carte-le-tableau-devient-territoire" class="level2">
+<h2 class="anchored" data-anchor-id="la-première-carte-le-tableau-devient-territoire">4. La première carte — le tableau devient territoire</h2>
+<div class="cell" data-autorun="true">
+<div>
+<div id="webr-4" class="exercise-cell">
+
+</div>
+<script type="webr-4-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoibGlicmFyeShzZilcblxuIyByZWFkX3NmIGxpdCB1biBmaWNoaWVyIFNJRyBldCByZW52b2llIHVuIGRhdGEuZnJhbWUgKyB1bmUgY29sb25uZSBnZW9tZXRyeS5cbnJlZ2lvbnMgPC0gcmVhZF9zZihcIl9jb21tb25zL2RhdGEvSjA1X2V4dHJhaXRzL2Ntcl9yZWdpb25zX0owNS5nZW9qc29uXCIpXG5cbmMoZW50aXRlcyA9IG5yb3cocmVnaW9ucyksIGVwc2cgPSBzdF9jcnMocmVnaW9ucykkZXBzZylcbm5hbWVzKHJlZ2lvbnMpIn0=
+</script>
+</div>
+</div>
+<div class="cell">
+<div>
+<div id="webr-5" class="exercise-cell">
+
+</div>
+<script type="webr-5-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiZ2dwbG90KHJlZ2lvbnMpICtcbiAgZ2VvbV9zZihhZXMoZmlsbCA9IHR4X3BhdXZyZXRlX3BvbmQpLCBjb2xvciA9IFwid2hpdGVcIiwgbGluZXdpZHRoID0gMC4zKSArXG4gIGdlb21fc2ZfdGV4dChhZXMobGFiZWwgPSBOQU1FXzEpLCBzaXplID0gMi4zLCBjb2xvdXIgPSBcImdyZXkxNVwiKSArXG4gIHNjYWxlX2ZpbGxfdmlyaWRpc19jKG9wdGlvbiA9IFwiQlwiLCBkaXJlY3Rpb24gPSAtMSxcbiAgICAgICAgICAgICAgICAgICAgICAgbmFtZSA9IFwiVGF1eCBkZVxcbnBhdXZyZXTDqSAoJSlcIixcbiAgICAgICAgICAgICAgICAgICAgICAgbmEudmFsdWUgPSBcImdyZXk4NVwiKSArXG4gIGxhYnModGl0bGUgPSBcIlBhdXZyZXTDqSBtb27DqXRhaXJlIHBhciByw6lnaW9uIOKAlCBFQ0FNNVwiLFxuICAgICAgIHN1YnRpdGxlID0gXCJDSElGRlJFUyBOT04gQ0lUQUJMRVMgOiBleHRyYWl0IGRlIGZvcm1hdGlvbiwgbm9uIHJlcHLDqXNlbnRhdGlmIGRhbnMgbGVzIHLDqWdpb25zXCIsXG4gICAgICAgY2FwdGlvbiA9IFwiU291cmNlIDogRUNBTTUgMjAyMS0yMDIyIChleHRyYWl0KSDCtyBHQURNIDQuMSDCtyBJRk9SRCDDlyBHRFNHIDIwMjZcIikgK1xuICB0aGVtZV9taW5pbWFsKCkgK1xuICB0aGVtZShheGlzLnRleHQgPSBlbGVtZW50X2JsYW5rKCksIGF4aXMudGlja3MgPSBlbGVtZW50X2JsYW5rKCksXG4gICAgICAgIHBhbmVsLmdyaWQgPSBlbGVtZW50X2JsYW5rKCkpIn0=
+</script>
+</div>
+</div>
+<div class="iford-callout">
+<p><strong>Ce que la figure code.</strong> La couleur de chaque polygone encode <code>tx_pauvrete_pond</code> : la part de la population régionale dont le niveau de vie est sous le seuil de pauvreté monétaire, <strong>pondérée</strong> par <code>coefextr</code>. C’est une <strong>choroplèthe</strong> : une valeur par unité administrative, traduite en intensité de couleur. La palette est <strong>séquentielle</strong> (du clair au foncé, un seul sens de lecture), ce qui est le bon choix pour une grandeur qui va simplement de « bas » à « élevé » ; les polygones sans valeur resteraient <strong>gris</strong>, jamais « à zéro ».</p>
+<p><strong>Ce qui se lit — techniquement.</strong> Les régions du Grand Nord et du Nord-Ouest se détachent comme un <strong>bloc contigu</strong>. C’est cela que la carte apporte et que le tableau ne contient pas : un tableau trié donne un classement, la carte montre que <strong>les unités semblables se touchent</strong>. Un bloc contigu ne s’explique pas par les caractéristiques propres de chaque région prise isolément, mais par ce qu’elles partagent <em>parce qu’elles sont voisines</em> — climat, enclavement, réseau routier, histoire du peuplement. On passe d’une liste d’unités indépendantes à un <strong>système de voisinages</strong>, et la ressemblance entre voisins devient elle-même l’objet à expliquer. C’est exactement le programme du <strong>J07</strong>.</p>
+<p><strong>Ce qui ne se lit pas.</strong> Trois choses. 1. <strong>Les niveaux eux-mêmes ne sont pas exploitables</strong> ici — voir l’avertissement en tête de page. Ce que cette carte enseigne, c’est la <em>chaîne</em>, pas le <em>résultat</em>. 2. <strong>L’erreur écologique.</strong> Colorier une région ne dit rien d’un habitant de cette région. Une région à 60 % de pauvreté contient des ménages aisés ; une région à 20 % contient des ménages très pauvres. Attribuer à un individu ce qui n’est vrai que de l’agrégat est la faute permanente de la choroplèthe. 3. <strong>L’hétérogénéité interne</strong>, écrasée par la moyenne — la section 5 la fait ressortir.</p>
+</div>
+</section>
+<section id="ce-que-la-moyenne-régionale-cache-urbain-contre-rural" class="level2">
+<h2 class="anchored" data-anchor-id="ce-que-la-moyenne-régionale-cache-urbain-contre-rural">5. Ce que la moyenne régionale cache : urbain contre rural</h2>
+<div class="cell">
+<div>
+<div id="webr-6" class="exercise-cell">
+
+</div>
+<script type="webr-6-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoibWlsaWV1IDwtIHJlYWQuY3N2KFwiX2NvbW1vbnMvZGF0YS9KMDVfZXh0cmFpdHMvZWNhbTVfcGF1dnJldGVfcmVnaW9uX21pbGlldS5jc3ZcIilcblxuZ2dwbG90KG1pbGlldSwgYWVzKHggPSByZW9yZGVyKHJlZ2lvbl9hZG0sIHR4X3BhdXZyZXRlX3BvbmQpLFxuICAgICAgICAgICAgICAgICAgIHkgPSB0eF9wYXV2cmV0ZV9wb25kLCBmaWxsID0gbWlsaWV1X2xiKSkgK1xuICBnZW9tX2NvbChwb3NpdGlvbiA9IHBvc2l0aW9uX2RvZGdlKHdpZHRoID0gMC43NSksIHdpZHRoID0gMC43KSArXG4gIGNvb3JkX2ZsaXAoKSArXG4gICMgUGFsZXR0ZSBRVUFMSVRBVElWRSA6IGRldXggbW9kYWxpdGVzIHNhbnMgb3JkcmUgbmF0dXJlbCwgZGV1eCB0ZWludGVzXG4gICMgbmV0dGVtZW50IGRpc3RpbmN0ZXMsIHBhcyBkZXV4IG51YW5jZXMgZCd1biBtZW1lIHRvbi5cbiAgc2NhbGVfZmlsbF9tYW51YWwodmFsdWVzID0gYyhcIlVyYmFpblwiID0gXCIjMEY0QzgxXCIsIFwiUnVyYWxcIiA9IFwiI0MxNjYyRlwiKSxcbiAgICAgICAgICAgICAgICAgICAgbmFtZSA9IFwiTWlsaWV1XCIpICtcbiAgbGFicyh0aXRsZSA9IFwiTGEgbcOqbWUgcsOpZ2lvbiwgZGV1eCBtb25kZXNcIixcbiAgICAgICBzdWJ0aXRsZSA9IFwiVGF1eCBkZSBwYXV2cmV0w6kgcG9uZMOpcsOpIHBhciByw6lnaW9uIGV0IG1pbGlldSBkZSByw6lzaWRlbmNlIChjaGlmZnJlcyBub24gY2l0YWJsZXMpXCIsXG4gICAgICAgeCA9IE5VTEwsIHkgPSBcInRhdXggZGUgcGF1dnJldMOpICglKVwiLFxuICAgICAgIGNhcHRpb24gPSBcIlNvdXJjZSA6IEVDQU01IDIwMjEtMjAyMiAoZXh0cmFpdCkgwrcgSUZPUkQgw5cgR0RTRyAyMDI2XCIpICtcbiAgdGhlbWVfbWluaW1hbCgpIn0=
+</script>
+</div>
+</div>
+<div class="iford-callout">
+<p><strong>Ce que la figure code.</strong> Le même indicateur que la carte, décomposé selon <code>milieu</code> (1 = urbain, 2 = rural). Deux barres par région, palette <strong>qualitative</strong> : les deux modalités n’ont pas d’ordre, donc pas de dégradé.</p>
+<p><strong>Ce qui se lit.</strong> L’écart entre les deux barres d’une même région est la mesure de l’hétérogénéité que la carte de la section 4 a écrasée en une seule couleur. Là où il est large, la valeur régionale unique est une <strong>fiction utile</strong> : elle n’est vraie ni pour la ville ni pour la campagne.</p>
+<p><strong>Ce qui ne se lit pas.</strong> Le milieu n’est pas la seule ligne de fracture interne — le département, l’arrondissement, le quartier en portent d’autres. Et cette figure reste un graphique : elle dit <em>combien</em> les milieux diffèrent, jamais <em>où</em> dans la région. Il faut une maille plus fine pour cela : c’est l’objet de la section suivante.</p>
+</div>
+</section>
+<section id="des-coordonnées-denquête-aux-points-lautre-pont-vers-la-carte" class="level2">
+<h2 class="anchored" data-anchor-id="des-coordonnées-denquête-aux-points-lautre-pont-vers-la-carte">6. Des coordonnées d’enquête aux points — l’autre pont vers la carte</h2>
+<div class="cell" data-autorun="true">
+<div>
+<div id="webr-7" class="exercise-cell">
+
+</div>
+<script type="webr-7-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiZ3JhcHBlcyA8LSByZWFkLmNzdihcIl9jb21tb25zL2RhdGEvSjA1X2V4dHJhaXRzL2Vkc19ncmFwcGVzX2VhdS5jc3ZcIilcbmNhdChcIkdyYXBwZXMgRURTIDpcIiwgbnJvdyhncmFwcGVzKSwgXCJcXG5cIilcblxuIyBPUkRSRSBjKGxvbmdpdHVkZSwgbGF0aXR1ZGUpLiBMJ2ludmVyc2lvbiBuZSBsZXZlIEFVQ1VORSBlcnJldXIgOiBlbGxlXG4jIHBsYWNlIHNpbXBsZW1lbnQgbGVzIHBvaW50cyBhaWxsZXVycy4gTGUgc2V1bCBnYXJkZS1mb3UgZXN0IGRlIHRyYWNlciBsYVxuIyBjb3VjaGUgaW1tZWRpYXRlbWVudCBhcHJlcyBsJ2F2b2lyIGNyZWVlIC0tIGNlIHF1J29uIGZhaXQgY2ktZGVzc291cy5cbnB0cyA8LSBzdF9hc19zZihncmFwcGVzWyFpcy5uYShncmFwcGVzJGxvbiksIF0sXG4gICAgICAgICAgICAgICAgY29vcmRzID0gYyhcImxvblwiLCBcImxhdFwiKSwgY3JzID0gNDMyNiwgcmVtb3ZlID0gRkFMU0UpXG5cbnN0X2Jib3gocHRzKSJ9
+</script>
+</div>
+</div>
+<div class="cell">
+<div>
+<div id="webr-8" class="exercise-cell">
+
+</div>
+<script type="webr-8-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiZ2dwbG90KCkgK1xuICBnZW9tX3NmKGRhdGEgPSByZWdpb25zLCBmaWxsID0gXCJncmV5OTVcIiwgY29sb3IgPSBcIndoaXRlXCIsIGxpbmV3aWR0aCA9IDAuMykgK1xuICBnZW9tX3NmKGRhdGEgPSBwdHMsIGFlcyhzaXplID0gbl9tZW5hZ2VzLCBjb2xvciA9IHR4X2VhdV9hbWVsaW9yZWUpLFxuICAgICAgICAgIGFscGhhID0gMC43NSkgK1xuICBzY2FsZV9jb2xvcl92aXJpZGlzX2Mob3B0aW9uID0gXCJEXCIsIG5hbWUgPSBcIlNvdXJjZSBkJ2VhdVxcbmFtw6lsaW9yw6llICglKVwiKSArXG4gIHNjYWxlX3NpemVfY29udGludW91cyhyYW5nZSA9IGMoMC42LCAzKSwgbmFtZSA9IFwiTcOpbmFnZXNcXG5lbnF1w6p0w6lzXCIpICtcbiAgbGFicyh0aXRsZSA9IFwiNDMwIGdyYXBwZXMgRURTLU1JQ1MgMjAxOCBzdXIgbGVzIDEwIHLDqWdpb25zXCIsXG4gICAgICAgc3VidGl0bGUgPSBcIkNvdWxldXIgPSBhY2PDqHMgw6AgdW5lIHNvdXJjZSBhbcOpbGlvcsOpZSAoZMOpZi4gSk1QKSA7IHRhaWxsZSA9IG5vbWJyZSBkZSBtw6luYWdlcyBlbnF1w6p0w6lzXCIsXG4gICAgICAgY2FwdGlvbiA9IFwiU291cmNlIDogRURTLU1JQ1MgMjAxOCAoREhTKSDCtyBHQURNIDQuMSDCtyBJRk9SRCDDlyBHRFNHIDIwMjZcIikgK1xuICB0aGVtZV9taW5pbWFsKCkgK1xuICB0aGVtZShheGlzLnRleHQgPSBlbGVtZW50X2JsYW5rKCksIGF4aXMudGlja3MgPSBlbGVtZW50X2JsYW5rKCksXG4gICAgICAgIHBhbmVsLmdyaWQgPSBlbGVtZW50X2JsYW5rKCkpIn0=
+</script>
+</div>
+</div>
+<div class="iford-callout">
+<p><strong>Ce que la figure code.</strong> Chaque point est une <strong>grappe</strong> d’enquête (l’unité primaire de sondage), pas un ménage ni un village. La couleur encode la part pondérée des ménages de la grappe utilisant une <strong>source améliorée au sens du JMP</strong> (OMS/UNICEF) : réseau, borne-fontaine, forage, puits ou source protégée, eau de pluie, eau en bouteille. <strong>Ce n’est pas « eau potable »</strong> — la définition porte sur le <em>type d’ouvrage</em>, pas sur la qualité mesurée de l’eau ni sur la continuité du service. La taille encode l’effectif enquêté : elle dit la <strong>précision locale</strong>, pas l’importance du lieu.</p>
+<p><strong>Ce qui se lit.</strong> Les points ne couvrent pas le territoire uniformément. C’est un enseignement à part entière : <strong>les trous d’échantillonnage se voient sur une carte, jamais dans un tableau</strong>. Un tableau régional de 10 lignes ne laisse pas soupçonner que des pans entiers du pays ne portent aucune observation.</p>
+<p><strong>Ce qui ne se lit pas.</strong> Les positions ne sont <strong>pas</strong> exactement celles de l’enquête : le DHS déplace aléatoirement chaque grappe — 2 km en urbain, 5 km en rural, 10 km pour 1 % des grappes rurales — afin de protéger la confidentialité des ménages. Conséquence directe : un point peut tomber dans le mauvais district, voire hors du pays. À l’échelle régionale c’est sans effet ; à l’échelle d’une unité de quelques kilomètres, l’affectation devient incertaine. On ne supprime jamais ces grappes — elles portent de vrais ménages enquêtés — on les <strong>recale</strong> sur l’unité la plus proche et <strong>on trace le recalage</strong> (colonne dédiée dans le script d’extraction).</p>
+</div>
+</section>
+<section id="changer-de-maille-le-maup-en-deux-cartes-du-même-phénomène" class="level2">
+<h2 class="anchored" data-anchor-id="changer-de-maille-le-maup-en-deux-cartes-du-même-phénomène">7. Changer de maille : le MAUP, en deux cartes du même phénomène</h2>
+<div class="cell" data-autorun="true">
+<div>
+<div id="webr-9" class="exercise-cell">
+
+</div>
+<script type="webr-9-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiZGlzdHJpY3RzIDwtIHJlYWRfc2YoXCJfY29tbW9ucy9kYXRhL0owNV9leHRyYWl0cy9kaXN0cmljdHNfc2FuaXRhaXJlc19KMDUuZ2VvanNvblwiKVxuY2F0KFwiRGlzdHJpY3RzIHNhbml0YWlyZXMgOlwiLCBucm93KGRpc3RyaWN0cyksXG4gICAgXCJ8IHJlbnNlaWduw6lzIDpcIiwgc3VtKCFpcy5uYShkaXN0cmljdHMkdHhfZWF1X2FtZWxpb3JlZSkpLFxuICAgIFwifCBmaWFibGVzICg+PSAzIGdyYXBwZXMpIDpcIiwgc3VtKGRpc3RyaWN0cyRmaWFibGUpLCBcIlxcblwiKSJ9
+</script>
+</div>
+</div>
+<div class="cell">
+<div>
+<div id="webr-10" class="exercise-cell">
+
+</div>
+<script type="webr-10-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiZ2dwbG90KGRpc3RyaWN0cykgK1xuICAjIExlcyBkaXN0cmljdHMgc2FucyBncmFwcGUgcmVzdGVudCBHUklTIDogaWxzIG5lIHNvbnQgcGFzIFwiYSB6ZXJvXCIsXG4gICMgaWxzIHNvbnQgTk9OIE1FU1VSRVMuIG5hLnZhbHVlIGxlIGRpdCBleHBsaWNpdGVtZW50LlxuICBnZW9tX3NmKGFlcyhmaWxsID0gdHhfZWF1X2FtZWxpb3JlZSksIGNvbG9yID0gXCJ3aGl0ZVwiLCBsaW5ld2lkdGggPSAwLjE1KSArXG4gICMgTGVzIGRpc3RyaWN0cyByZXBvc2FudCBzdXIgbW9pbnMgZGUgMyBncmFwcGVzIHNvbnQgc291bGlnbmVzIDogbGUgc2V1aWxcbiAgIyBlc3QgREVDTEFSRSBkYW5zIGxlIGNvZGUsIHBhcyBzdWJpLlxuICBnZW9tX3NmKGRhdGEgPSBzdWJzZXQoZGlzdHJpY3RzLCAhZmlhYmxlICYgIWlzLm5hKHR4X2VhdV9hbWVsaW9yZWUpKSxcbiAgICAgICAgICBmaWxsID0gTkEsIGNvbG9yID0gXCJncmV5MjBcIiwgbGluZXdpZHRoID0gMC40LCBsaW5ldHlwZSA9IFwiZG90dGVkXCIpICtcbiAgc2NhbGVfZmlsbF92aXJpZGlzX2Mob3B0aW9uID0gXCJEXCIsIG5hbWUgPSBcIlNvdXJjZSBkJ2VhdVxcbmFtw6lsaW9yw6llICglKVwiLFxuICAgICAgICAgICAgICAgICAgICAgICBuYS52YWx1ZSA9IFwiZ3JleTg4XCIpICtcbiAgbGFicyh0aXRsZSA9IFwiQWNjw6hzIMOgIHVuZSBzb3VyY2UgYW3DqWxpb3LDqWUg4oCUIDIwMCBkaXN0cmljdHMgc2FuaXRhaXJlc1wiLFxuICAgICAgIHN1YnRpdGxlID0gXCJHcmlzID0gYXVjdW5lIGdyYXBwZSBlbnF1w6p0w6llIMK3IHBvaW50aWxsw6kgPSBtb2lucyBkZSAzIGdyYXBwZXNcIixcbiAgICAgICBjYXB0aW9uID0gXCJTb3VyY2UgOiBFRFMtTUlDUyAyMDE4IMK3IERISVMyIE1JTlNBTlRFIMK3IElGT1JEIMOXIEdEU0cgMjAyNlwiKSArXG4gIHRoZW1lX21pbmltYWwoKSArXG4gIHRoZW1lKGF4aXMudGV4dCA9IGVsZW1lbnRfYmxhbmsoKSwgYXhpcy50aWNrcyA9IGVsZW1lbnRfYmxhbmsoKSxcbiAgICAgICAgcGFuZWwuZ3JpZCA9IGVsZW1lbnRfYmxhbmsoKSkifQ==
+</script>
+</div>
+</div>
+<div class="cell">
+<div>
+<div id="webr-11" class="exercise-cell">
+
+</div>
+<script type="webr-11-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiIyBMZSBNRU1FIGluZGljYXRldXIsIGxhIE1FTUUgZG9ubmVlIHNvdXJjZSwgYWdyZWdlIGEgbGEgbWFpbGxlIFJFR0lPTkFMRS5cbmdncGxvdChyZWdpb25zKSArXG4gIGdlb21fc2YoYWVzKGZpbGwgPSB0eF9lYXVfYW1lbGlvcmVlKSwgY29sb3IgPSBcIndoaXRlXCIsIGxpbmV3aWR0aCA9IDAuMykgK1xuICBnZW9tX3NmX3RleHQoYWVzKGxhYmVsID0gTkFNRV8xKSwgc2l6ZSA9IDIuMywgY29sb3VyID0gXCJncmV5MTVcIikgK1xuICBzY2FsZV9maWxsX3ZpcmlkaXNfYyhvcHRpb24gPSBcIkRcIiwgbmFtZSA9IFwiU291cmNlIGQnZWF1XFxuYW3DqWxpb3LDqWUgKCUpXCIsXG4gICAgICAgICAgICAgICAgICAgICAgIG5hLnZhbHVlID0gXCJncmV5ODhcIikgK1xuICBsYWJzKHRpdGxlID0gXCJMZSBtw6ptZSBpbmRpY2F0ZXVyLCBhZ3LDqWfDqSBhdXggMTAgcsOpZ2lvbnNcIixcbiAgICAgICBzdWJ0aXRsZSA9IFwiTcOqbWUgZG9ubsOpZSwgbcOqbWUgcG9uZMOpcmF0aW9uIOKAlCBhdXRyZSBtYWlsbGUsIGF1dHJlIGNhcnRlXCIsXG4gICAgICAgY2FwdGlvbiA9IFwiU291cmNlIDogRURTLU1JQ1MgMjAxOCDCtyBHQURNIDQuMSDCtyBJRk9SRCDDlyBHRFNHIDIwMjZcIikgK1xuICB0aGVtZV9taW5pbWFsKCkgK1xuICB0aGVtZShheGlzLnRleHQgPSBlbGVtZW50X2JsYW5rKCksIGF4aXMudGlja3MgPSBlbGVtZW50X2JsYW5rKCksXG4gICAgICAgIHBhbmVsLmdyaWQgPSBlbGVtZW50X2JsYW5rKCkpIn0=
+</script>
+</div>
+</div>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Le MAUP — <em>Modifiable Areal Unit Problem</em>
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Ce que les deux figures codent.</strong> Rigoureusement la même grandeur, calculée sur les mêmes 430 grappes, avec la même pondération. <strong>Seule la maille d’agrégation change</strong> : 200 districts sanitaires d’un côté, 10 régions administratives de l’autre.</p>
+<p><strong>Ce qui se lit.</strong> Les deux cartes ne racontent pas la même chose. L’amplitude des valeurs se réduit en montant d’échelle — l’agrégation moyenne, donc lisse. Des contrastes locaux visibles au district disparaissent dans la région ; inversement, la carte régionale offre une lecture d’ensemble que les 200 polygones brouillent.</p>
+<p><strong>Ce qu’il faut en retenir.</strong> <strong>Aucune maille n’est neutre</strong>, et il n’existe pas de maille « vraie ». Le MAUP a deux composantes : l’effet d’<strong>échelle</strong> (le résultat change avec la finesse du découpage) et l’effet de <strong>zonage</strong> (à finesse égale, un autre tracé donne un autre résultat). La règle pratique : <strong>choisir la maille de la décision qu’on éclaire</strong>. Une politique d’adduction d’eau se pilote par district sanitaire, pas par région — donc on cartographie par district, en assumant les trous. Un arbitrage budgétaire entre régions se lit à la région.</p>
+<p><strong>Ce qui ne se lit toujours pas.</strong> Sur la carte des districts, les zones grises. 430 grappes pour 200 districts, ce sont, en pratique, <strong>de nombreux districts sans aucune observation</strong>. Un polygone gris n’est pas « à zéro » : il est <strong>non mesuré</strong>. Et les districts en pointillé reposent sur moins de trois grappes : leur couleur est une estimation très instable, qu’un seul ménage supplémentaire ferait bouger.</p>
+</div>
+</div>
+</section>
+<section id="superposer-deux-échelles-lantidote-à-lerreur-écologique" class="level2">
+<h2 class="anchored" data-anchor-id="superposer-deux-échelles-lantidote-à-lerreur-écologique">8. Superposer deux échelles — l’antidote à l’erreur écologique</h2>
+<div class="cell">
+<div>
+<div id="webr-12" class="exercise-cell">
+
+</div>
+<script type="webr-12-contents">
+eyJhdHRyIjp7ImVkaXQiOnRydWUsImV2YWwiOnRydWV9LCJjb2RlIjoiZ2dwbG90KCkgK1xuICAjIEZvbmQgOiBsYSBwYXV2cmV0ZSByZWdpb25hbGUsIGxlIENPTlRFWFRFLlxuICBnZW9tX3NmKGRhdGEgPSByZWdpb25zLCBhZXMoZmlsbCA9IHR4X3BhdXZyZXRlX3BvbmQpLFxuICAgICAgICAgIGNvbG9yID0gXCJ3aGl0ZVwiLCBsaW5ld2lkdGggPSAwLjMsIGFscGhhID0gMC44NSkgK1xuICBzY2FsZV9maWxsX3ZpcmlkaXNfYyhvcHRpb24gPSBcIkJcIiwgZGlyZWN0aW9uID0gLTEsXG4gICAgICAgICAgICAgICAgICAgICAgIG5hbWUgPSBcIlBhdXZyZXTDqVxcbnLDqWdpb25hbGUgKCUpXCIsIG5hLnZhbHVlID0gXCJncmV5ODVcIikgK1xuICAjIFBvaW50cyA6IGxhIG1lc3VyZSBMT0NBTEUsIHN1ciB1bmUgYXV0cmUgZW5xdWV0ZSBldCB1bmUgYXV0cmUgYW5uZWUuXG4gIGdlb21fc2YoZGF0YSA9IHB0cywgYWVzKHNpemUgPSBuX21lbmFnZXMpLCBzaGFwZSA9IDIxLFxuICAgICAgICAgIGZpbGwgPSBcIndoaXRlXCIsIGNvbG9yID0gXCJncmV5MjBcIiwgc3Ryb2tlID0gMC4zLCBhbHBoYSA9IDAuOCkgK1xuICBzY2FsZV9zaXplX2NvbnRpbnVvdXMocmFuZ2UgPSBjKDAuNCwgMi42KSwgbmFtZSA9IFwiTcOpbmFnZXNcXG5lbnF1w6p0w6lzXCIpICtcbiAgbGFicyh0aXRsZSA9IFwiRGV1eCDDqWNoZWxsZXMgc3VyIHVuZSBtw6ptZSBwYWdlXCIsXG4gICAgICAgc3VidGl0bGUgPSBcIkZvbmQgOiBwYXV2cmV0w6kgcsOpZ2lvbmFsZSAoRUNBTTUsIG5vbiBjaXRhYmxlKSDCtyBQb2ludHMgOiBncmFwcGVzIEVEUyAyMDE4XCIsXG4gICAgICAgY2FwdGlvbiA9IFwiU291cmNlcyA6IEVDQU01IDIwMjEtMjAyMiAoZXh0cmFpdCkgwrcgRURTLU1JQ1MgMjAxOCDCtyBJRk9SRCDDlyBHRFNHIDIwMjZcIikgK1xuICB0aGVtZV9taW5pbWFsKCkgK1xuICB0aGVtZShheGlzLnRleHQgPSBlbGVtZW50X2JsYW5rKCksIGF4aXMudGlja3MgPSBlbGVtZW50X2JsYW5rKCksXG4gICAgICAgIHBhbmVsLmdyaWQgPSBlbGVtZW50X2JsYW5rKCkpIn0=
+</script>
+</div>
+</div>
+<div class="iford-callout">
+<p><strong>Ce que la figure code.</strong> Deux couches d’information à deux échelles : un fond agrégé (région) et des points d’observation (grappe). Le fond donne le contexte, les points montrent <strong>où la mesure a effectivement eu lieu</strong>.</p>
+<p><strong>En quoi le spatial apporte ici ce qu’aucun tableau ne contient.</strong> La superposition rend visible l’<strong>hétérogénéité interne</strong> de chaque polygone du fond, et c’est la meilleure protection contre l’<strong>erreur écologique</strong> : on voit d’un coup d’œil qu’une région d’une seule couleur abrite des grappes très dissemblables, et que certaines parties de la région ne sont pas observées du tout. Un tableau à deux colonnes « région / taux » ne peut rien dire de cela.</p>
+<p><strong>Ce qui ne se lit pas — et c’est essentiel.</strong> Les deux couches <strong>ne se comparent pas directement</strong>. ECAM5 (INS, 2021-2022) et l’EDS-MICS (DHS, 2018) n’ont ni le même échantillon, ni le même questionnaire, ni la même année ; les indicateurs eux-mêmes diffèrent (pauvreté monétaire d’un côté, accès à l’eau de l’autre). Cette figure met deux géographies en regard — elle <strong>n’établit aucune relation</strong> entre les deux grandeurs, et encore moins une causalité. Le seul niveau où l’on peut honnêtement les rapprocher est la région, et sous réserve de les ramener au même découpage.</p>
+</div>
+</section>
+<section id="ce-qui-reste-sous-rstudio" class="level2">
+<h2 class="anchored" data-anchor-id="ce-qui-reste-sous-rstudio">9. Ce qui reste sous RStudio</h2>
+<p>Trois choses ne peuvent pas se faire dans un navigateur. Elles se trouvent dans <code>demo_formateur_J05.qmd</code>, exécutable avec R installé.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Lecture seule : RStudio desktop uniquement.</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. La chaine complete a partir des binaires : 72 Mo de SPSS, plus de</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co">#    4 000 colonnes -- on ne demande QUE les variables utiles.</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(haven); <span class="fu">library</span>(sf); <span class="fu">library</span>(dplyr)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>noms_sav <span class="ot">&lt;-</span> <span class="fu">names</span>(<span class="fu">read_sav</span>(<span class="st">"datasets/CMHR71FL.SAV"</span>, <span class="at">n_max =</span> <span class="dv">0</span>))</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>vars     <span class="ot">&lt;-</span> noms_sav[<span class="fu">match</span>(<span class="fu">toupper</span>(<span class="fu">c</span>(<span class="st">"hv001"</span>,<span class="st">"hv005"</span>,<span class="st">"hv201"</span>)), <span class="fu">toupper</span>(noms_sav))]</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>hr <span class="ot">&lt;-</span> <span class="fu">read_sav</span>(<span class="st">"datasets/CMHR71FL.SAV"</span>, <span class="at">col_select =</span> <span class="fu">all_of</span>(<span class="fu">na.omit</span>(vars)))</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. La jointure spatiale et le recalage des points orphelins.</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co">#    st_join(x, y) renvoie TOUJOURS la geometrie de x, enrichie des</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co">#    attributs de y : on part de ce qu'on veut garder.</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>pts_ds <span class="ot">&lt;-</span> <span class="fu">st_join</span>(pts, ds_sante, <span class="at">join =</span> st_within)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>orphelins <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="fu">is.na</span>(pts_ds<span class="sc">$</span>ds_nom))</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>j <span class="ot">&lt;-</span> <span class="fu">st_nearest_feature</span>(pts_ds[orphelins, ], ds_sante)   <span class="co"># on recale, on ne supprime pas</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. La cartographie tmap, avec ses ornements de publication.</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tmap)</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(ds_indicateurs) <span class="sc">+</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="at">fill =</span> <span class="st">"tx_eau"</span>,</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>              <span class="at">fill.scale =</span> <span class="fu">tm_scale_intervals</span>(<span class="at">style =</span> <span class="st">"quantile"</span>, <span class="at">n =</span> <span class="dv">5</span>),</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>              <span class="at">fill.legend =</span> <span class="fu">tm_legend</span>(<span class="at">title =</span> <span class="st">"Eau améliorée (%)"</span>)) <span class="sc">+</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>() <span class="sc">+</span> <span class="fu">tm_scalebar</span>() <span class="sc">+</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">title =</span> <span class="st">"Accès à l'eau améliorée par district sanitaire"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="checklist-de-fin-de-j05" class="level2">
+<h2 class="anchored" data-anchor-id="checklist-de-fin-de-j05">Checklist de fin de J05</h2>
+<ul class="task-list">
+<li><label><input type="checkbox">Je sais dire <strong>de quoi</strong> je prends la moyenne (individus ou ménages) et pourquoi les deux chiffres diffèrent — biais de taille.</label></li>
+<li><label><input type="checkbox">Je pondère à <strong>chaque étage</strong> d’agrégation : du ménage à la grappe, de la grappe au district. La moyenne d’une moyenne n’est pas la moyenne.</label></li>
+<li><label><input type="checkbox">Je <strong>confronte à une référence publiée</strong> avant de cartographier, et je refuse de citer ce qui ne passe pas le contrôle.</label></li>
+<li><label><input type="checkbox">Je laisse <strong>gris</strong> ce qui n’est pas mesuré, et je <strong>signale</strong> ce qui repose sur trop peu d’observations, avec un seuil déclaré dans le code.</label></li>
+<li><label><input type="checkbox">Je sais nommer les trois pièges de la journée : <strong>MAUP</strong>, <strong>erreur écologique</strong>, <strong>biais de taille</strong>.</label></li>
+</ul>
+<p><strong>Demain (J06)</strong> : l’art de la carte — discrétisation, palettes, habillage. La même donnée, quatre découpages en classes, quatre messages différents.</p>
+<p><a href="../INDEX.html">← Retour à l’accueil</a></p>
+
+
+<!-- -->
+
+<script type="webr-data">
+eyJvcHRpb25zIjp7ImJhc2VVcmwiOiJodHRwczovL3dlYnIuci13YXNtLm9yZy92MC42LjAvIn0sInBhY2thZ2VzIjp7InBrZ3MiOlsiZXZhbHVhdGUiLCJrbml0ciIsImh0bWx0b29scyIsInNmIiwiZHBseXIiLCJ0aWR5ciIsImdncGxvdDIiXSwicmVwb3MiOltdfSwicmVuZGVyX2RmIjoiZGVmYXVsdCJ9
+</script>
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W3siY2VsbE5hbWUiOiJ3ZWJyLXdpZGdldC0xMiIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IntcbiAgLy8gV2FpdCBmb3Igb3V0cHV0IHRvIGJlIHdyaXR0ZW4gdG8gdGhlIERPTSwgdGhlbiB0cmlnZ2VyIHdpZGdldCByZW5kZXJpbmdcbiAgYXdhaXQgX3dlYnJfdmFsdWVfMTI7XG4gIGlmICh3aW5kb3cuSFRNTFdpZGdldHMpIHtcbiAgICB3aW5kb3cuSFRNTFdpZGdldHMuc3RhdGljUmVuZGVyKCk7XG4gIH1cbiAgaWYgKHdpbmRvdy5QYWdlZFRhYmxlRG9jKSB7XG4gICAgd2luZG93LlBhZ2VkVGFibGVEb2MuaW5pdEFsbCgpO1xuICB9XG59XG4ifSx7ImNlbGxOYW1lIjoid2Vici0xMiIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJzb3VyY2UiOiJ2aWV3b2YgX3dlYnJfZWRpdG9yXzEyID0ge1xuICBjb25zdCB7IFdlYlJFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuICBjb25zdCBzY3JpcHRDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcIndlYnItMTItY29udGVudHNcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBibG9jayA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKHNjcmlwdENvbnRlbnQpKTtcblxuICBjb25zdCBvcHRpb25zID0gT2JqZWN0LmFzc2lnbih7IGlkOiBgd2Vici0xMi1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBXZWJSRXhlcmNpc2VFZGl0b3Iod2ViUk9qcy53ZWJSUHJvbWlzZSwgYmxvY2suY29kZSwgb3B0aW9ucyk7XG5cbiAgcmV0dXJuIGVkaXRvci5jb250YWluZXI7XG59XG5fd2Vicl92YWx1ZV8xMiA9IHdlYlJPanMucHJvY2Vzcyhfd2Vicl9lZGl0b3JfMTIsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLXdpZGdldC0xMSIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IntcbiAgLy8gV2FpdCBmb3Igb3V0cHV0IHRvIGJlIHdyaXR0ZW4gdG8gdGhlIERPTSwgdGhlbiB0cmlnZ2VyIHdpZGdldCByZW5kZXJpbmdcbiAgYXdhaXQgX3dlYnJfdmFsdWVfMTE7XG4gIGlmICh3aW5kb3cuSFRNTFdpZGdldHMpIHtcbiAgICB3aW5kb3cuSFRNTFdpZGdldHMuc3RhdGljUmVuZGVyKCk7XG4gIH1cbiAgaWYgKHdpbmRvdy5QYWdlZFRhYmxlRG9jKSB7XG4gICAgd2luZG93LlBhZ2VkVGFibGVEb2MuaW5pdEFsbCgpO1xuICB9XG59XG4ifSx7ImNlbGxOYW1lIjoid2Vici0xMSIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJzb3VyY2UiOiJ2aWV3b2YgX3dlYnJfZWRpdG9yXzExID0ge1xuICBjb25zdCB7IFdlYlJFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuICBjb25zdCBzY3JpcHRDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcIndlYnItMTEtY29udGVudHNcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBibG9jayA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKHNjcmlwdENvbnRlbnQpKTtcblxuICBjb25zdCBvcHRpb25zID0gT2JqZWN0LmFzc2lnbih7IGlkOiBgd2Vici0xMS1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBXZWJSRXhlcmNpc2VFZGl0b3Iod2ViUk9qcy53ZWJSUHJvbWlzZSwgYmxvY2suY29kZSwgb3B0aW9ucyk7XG5cbiAgcmV0dXJuIGVkaXRvci5jb250YWluZXI7XG59XG5fd2Vicl92YWx1ZV8xMSA9IHdlYlJPanMucHJvY2Vzcyhfd2Vicl9lZGl0b3JfMTEsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLXdpZGdldC0xMCIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IntcbiAgLy8gV2FpdCBmb3Igb3V0cHV0IHRvIGJlIHdyaXR0ZW4gdG8gdGhlIERPTSwgdGhlbiB0cmlnZ2VyIHdpZGdldCByZW5kZXJpbmdcbiAgYXdhaXQgX3dlYnJfdmFsdWVfMTA7XG4gIGlmICh3aW5kb3cuSFRNTFdpZGdldHMpIHtcbiAgICB3aW5kb3cuSFRNTFdpZGdldHMuc3RhdGljUmVuZGVyKCk7XG4gIH1cbiAgaWYgKHdpbmRvdy5QYWdlZFRhYmxlRG9jKSB7XG4gICAgd2luZG93LlBhZ2VkVGFibGVEb2MuaW5pdEFsbCgpO1xuICB9XG59XG4ifSx7ImNlbGxOYW1lIjoid2Vici0xMCIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJzb3VyY2UiOiJ2aWV3b2YgX3dlYnJfZWRpdG9yXzEwID0ge1xuICBjb25zdCB7IFdlYlJFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuICBjb25zdCBzY3JpcHRDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcIndlYnItMTAtY29udGVudHNcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBibG9jayA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKHNjcmlwdENvbnRlbnQpKTtcblxuICBjb25zdCBvcHRpb25zID0gT2JqZWN0LmFzc2lnbih7IGlkOiBgd2Vici0xMC1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBXZWJSRXhlcmNpc2VFZGl0b3Iod2ViUk9qcy53ZWJSUHJvbWlzZSwgYmxvY2suY29kZSwgb3B0aW9ucyk7XG5cbiAgcmV0dXJuIGVkaXRvci5jb250YWluZXI7XG59XG5fd2Vicl92YWx1ZV8xMCA9IHdlYlJPanMucHJvY2Vzcyhfd2Vicl9lZGl0b3JfMTAsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLXdpZGdldC05IiwiaW5saW5lIjpmYWxzZSwibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoie1xuICAvLyBXYWl0IGZvciBvdXRwdXQgdG8gYmUgd3JpdHRlbiB0byB0aGUgRE9NLCB0aGVuIHRyaWdnZXIgd2lkZ2V0IHJlbmRlcmluZ1xuICBhd2FpdCBfd2Vicl92YWx1ZV85O1xuICBpZiAod2luZG93LkhUTUxXaWRnZXRzKSB7XG4gICAgd2luZG93LkhUTUxXaWRnZXRzLnN0YXRpY1JlbmRlcigpO1xuICB9XG4gIGlmICh3aW5kb3cuUGFnZWRUYWJsZURvYykge1xuICAgIHdpbmRvdy5QYWdlZFRhYmxlRG9jLmluaXRBbGwoKTtcbiAgfVxufVxuIn0seyJjZWxsTmFtZSI6IndlYnItOSIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJzb3VyY2UiOiJ2aWV3b2YgX3dlYnJfZWRpdG9yXzkgPSB7XG4gIGNvbnN0IHsgV2ViUkV4ZXJjaXNlRWRpdG9yLCBiNjREZWNvZGUgfSA9IHdpbmRvdy5fZXhlcmNpc2Vfb2pzX3J1bnRpbWU7XG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwid2Vici05LWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHdlYnItOS1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBXZWJSRXhlcmNpc2VFZGl0b3Iod2ViUk9qcy53ZWJSUHJvbWlzZSwgYmxvY2suY29kZSwgb3B0aW9ucyk7XG5cbiAgcmV0dXJuIGVkaXRvci5jb250YWluZXI7XG59XG5fd2Vicl92YWx1ZV85ID0gd2ViUk9qcy5wcm9jZXNzKF93ZWJyX2VkaXRvcl85LCB7fSk7XG4ifSx7ImNlbGxOYW1lIjoid2Vici13aWRnZXQtOCIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IntcbiAgLy8gV2FpdCBmb3Igb3V0cHV0IHRvIGJlIHdyaXR0ZW4gdG8gdGhlIERPTSwgdGhlbiB0cmlnZ2VyIHdpZGdldCByZW5kZXJpbmdcbiAgYXdhaXQgX3dlYnJfdmFsdWVfODtcbiAgaWYgKHdpbmRvdy5IVE1MV2lkZ2V0cykge1xuICAgIHdpbmRvdy5IVE1MV2lkZ2V0cy5zdGF0aWNSZW5kZXIoKTtcbiAgfVxuICBpZiAod2luZG93LlBhZ2VkVGFibGVEb2MpIHtcbiAgICB3aW5kb3cuUGFnZWRUYWJsZURvYy5pbml0QWxsKCk7XG4gIH1cbn1cbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLTgiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF93ZWJyX2VkaXRvcl84ID0ge1xuICBjb25zdCB7IFdlYlJFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuICBjb25zdCBzY3JpcHRDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcIndlYnItOC1jb250ZW50c1xcXCJdYCkudGV4dENvbnRlbnQ7XG4gIGNvbnN0IGJsb2NrID0gSlNPTi5wYXJzZShiNjREZWNvZGUoc2NyaXB0Q29udGVudCkpO1xuXG4gIGNvbnN0IG9wdGlvbnMgPSBPYmplY3QuYXNzaWduKHsgaWQ6IGB3ZWJyLTgtY29udGVudHNgIH0sIGJsb2NrLmF0dHIpO1xuICBjb25zdCBlZGl0b3IgPSBuZXcgV2ViUkV4ZXJjaXNlRWRpdG9yKHdlYlJPanMud2ViUlByb21pc2UsIGJsb2NrLmNvZGUsIG9wdGlvbnMpO1xuXG4gIHJldHVybiBlZGl0b3IuY29udGFpbmVyO1xufVxuX3dlYnJfdmFsdWVfOCA9IHdlYlJPanMucHJvY2Vzcyhfd2Vicl9lZGl0b3JfOCwge30pO1xuIn0seyJjZWxsTmFtZSI6IndlYnItd2lkZ2V0LTciLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJ7XG4gIC8vIFdhaXQgZm9yIG91dHB1dCB0byBiZSB3cml0dGVuIHRvIHRoZSBET00sIHRoZW4gdHJpZ2dlciB3aWRnZXQgcmVuZGVyaW5nXG4gIGF3YWl0IF93ZWJyX3ZhbHVlXzc7XG4gIGlmICh3aW5kb3cuSFRNTFdpZGdldHMpIHtcbiAgICB3aW5kb3cuSFRNTFdpZGdldHMuc3RhdGljUmVuZGVyKCk7XG4gIH1cbiAgaWYgKHdpbmRvdy5QYWdlZFRhYmxlRG9jKSB7XG4gICAgd2luZG93LlBhZ2VkVGFibGVEb2MuaW5pdEFsbCgpO1xuICB9XG59XG4ifSx7ImNlbGxOYW1lIjoid2Vici03IiwiaW5saW5lIjpmYWxzZSwibWV0aG9kTmFtZSI6ImludGVycHJldCIsInNvdXJjZSI6InZpZXdvZiBfd2Vicl9lZGl0b3JfNyA9IHtcbiAgY29uc3QgeyBXZWJSRXhlcmNpc2VFZGl0b3IsIGI2NERlY29kZSB9ID0gd2luZG93Ll9leGVyY2lzZV9vanNfcnVudGltZTtcbiAgY29uc3Qgc2NyaXB0Q29udGVudCA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoYHNjcmlwdFt0eXBlPVxcXCJ3ZWJyLTctY29udGVudHNcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBibG9jayA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKHNjcmlwdENvbnRlbnQpKTtcblxuICBjb25zdCBvcHRpb25zID0gT2JqZWN0LmFzc2lnbih7IGlkOiBgd2Vici03LWNvbnRlbnRzYCB9LCBibG9jay5hdHRyKTtcbiAgY29uc3QgZWRpdG9yID0gbmV3IFdlYlJFeGVyY2lzZUVkaXRvcih3ZWJST2pzLndlYlJQcm9taXNlLCBibG9jay5jb2RlLCBvcHRpb25zKTtcblxuICByZXR1cm4gZWRpdG9yLmNvbnRhaW5lcjtcbn1cbl93ZWJyX3ZhbHVlXzcgPSB3ZWJST2pzLnByb2Nlc3MoX3dlYnJfZWRpdG9yXzcsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLXdpZGdldC02IiwiaW5saW5lIjpmYWxzZSwibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoie1xuICAvLyBXYWl0IGZvciBvdXRwdXQgdG8gYmUgd3JpdHRlbiB0byB0aGUgRE9NLCB0aGVuIHRyaWdnZXIgd2lkZ2V0IHJlbmRlcmluZ1xuICBhd2FpdCBfd2Vicl92YWx1ZV82O1xuICBpZiAod2luZG93LkhUTUxXaWRnZXRzKSB7XG4gICAgd2luZG93LkhUTUxXaWRnZXRzLnN0YXRpY1JlbmRlcigpO1xuICB9XG4gIGlmICh3aW5kb3cuUGFnZWRUYWJsZURvYykge1xuICAgIHdpbmRvdy5QYWdlZFRhYmxlRG9jLmluaXRBbGwoKTtcbiAgfVxufVxuIn0seyJjZWxsTmFtZSI6IndlYnItNiIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJzb3VyY2UiOiJ2aWV3b2YgX3dlYnJfZWRpdG9yXzYgPSB7XG4gIGNvbnN0IHsgV2ViUkV4ZXJjaXNlRWRpdG9yLCBiNjREZWNvZGUgfSA9IHdpbmRvdy5fZXhlcmNpc2Vfb2pzX3J1bnRpbWU7XG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwid2Vici02LWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHdlYnItNi1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBXZWJSRXhlcmNpc2VFZGl0b3Iod2ViUk9qcy53ZWJSUHJvbWlzZSwgYmxvY2suY29kZSwgb3B0aW9ucyk7XG5cbiAgcmV0dXJuIGVkaXRvci5jb250YWluZXI7XG59XG5fd2Vicl92YWx1ZV82ID0gd2ViUk9qcy5wcm9jZXNzKF93ZWJyX2VkaXRvcl82LCB7fSk7XG4ifSx7ImNlbGxOYW1lIjoid2Vici13aWRnZXQtNSIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IntcbiAgLy8gV2FpdCBmb3Igb3V0cHV0IHRvIGJlIHdyaXR0ZW4gdG8gdGhlIERPTSwgdGhlbiB0cmlnZ2VyIHdpZGdldCByZW5kZXJpbmdcbiAgYXdhaXQgX3dlYnJfdmFsdWVfNTtcbiAgaWYgKHdpbmRvdy5IVE1MV2lkZ2V0cykge1xuICAgIHdpbmRvdy5IVE1MV2lkZ2V0cy5zdGF0aWNSZW5kZXIoKTtcbiAgfVxuICBpZiAod2luZG93LlBhZ2VkVGFibGVEb2MpIHtcbiAgICB3aW5kb3cuUGFnZWRUYWJsZURvYy5pbml0QWxsKCk7XG4gIH1cbn1cbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLTUiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF93ZWJyX2VkaXRvcl81ID0ge1xuICBjb25zdCB7IFdlYlJFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuICBjb25zdCBzY3JpcHRDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcIndlYnItNS1jb250ZW50c1xcXCJdYCkudGV4dENvbnRlbnQ7XG4gIGNvbnN0IGJsb2NrID0gSlNPTi5wYXJzZShiNjREZWNvZGUoc2NyaXB0Q29udGVudCkpO1xuXG4gIGNvbnN0IG9wdGlvbnMgPSBPYmplY3QuYXNzaWduKHsgaWQ6IGB3ZWJyLTUtY29udGVudHNgIH0sIGJsb2NrLmF0dHIpO1xuICBjb25zdCBlZGl0b3IgPSBuZXcgV2ViUkV4ZXJjaXNlRWRpdG9yKHdlYlJPanMud2ViUlByb21pc2UsIGJsb2NrLmNvZGUsIG9wdGlvbnMpO1xuXG4gIHJldHVybiBlZGl0b3IuY29udGFpbmVyO1xufVxuX3dlYnJfdmFsdWVfNSA9IHdlYlJPanMucHJvY2Vzcyhfd2Vicl9lZGl0b3JfNSwge30pO1xuIn0seyJjZWxsTmFtZSI6IndlYnItd2lkZ2V0LTQiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJ7XG4gIC8vIFdhaXQgZm9yIG91dHB1dCB0byBiZSB3cml0dGVuIHRvIHRoZSBET00sIHRoZW4gdHJpZ2dlciB3aWRnZXQgcmVuZGVyaW5nXG4gIGF3YWl0IF93ZWJyX3ZhbHVlXzQ7XG4gIGlmICh3aW5kb3cuSFRNTFdpZGdldHMpIHtcbiAgICB3aW5kb3cuSFRNTFdpZGdldHMuc3RhdGljUmVuZGVyKCk7XG4gIH1cbiAgaWYgKHdpbmRvdy5QYWdlZFRhYmxlRG9jKSB7XG4gICAgd2luZG93LlBhZ2VkVGFibGVEb2MuaW5pdEFsbCgpO1xuICB9XG59XG4ifSx7ImNlbGxOYW1lIjoid2Vici00IiwiaW5saW5lIjpmYWxzZSwibWV0aG9kTmFtZSI6ImludGVycHJldCIsInNvdXJjZSI6InZpZXdvZiBfd2Vicl9lZGl0b3JfNCA9IHtcbiAgY29uc3QgeyBXZWJSRXhlcmNpc2VFZGl0b3IsIGI2NERlY29kZSB9ID0gd2luZG93Ll9leGVyY2lzZV9vanNfcnVudGltZTtcbiAgY29uc3Qgc2NyaXB0Q29udGVudCA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoYHNjcmlwdFt0eXBlPVxcXCJ3ZWJyLTQtY29udGVudHNcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBibG9jayA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKHNjcmlwdENvbnRlbnQpKTtcblxuICBjb25zdCBvcHRpb25zID0gT2JqZWN0LmFzc2lnbih7IGlkOiBgd2Vici00LWNvbnRlbnRzYCB9LCBibG9jay5hdHRyKTtcbiAgY29uc3QgZWRpdG9yID0gbmV3IFdlYlJFeGVyY2lzZUVkaXRvcih3ZWJST2pzLndlYlJQcm9taXNlLCBibG9jay5jb2RlLCBvcHRpb25zKTtcblxuICByZXR1cm4gZWRpdG9yLmNvbnRhaW5lcjtcbn1cbl93ZWJyX3ZhbHVlXzQgPSB3ZWJST2pzLnByb2Nlc3MoX3dlYnJfZWRpdG9yXzQsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLXdpZGdldC0zIiwiaW5saW5lIjpmYWxzZSwibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoie1xuICAvLyBXYWl0IGZvciBvdXRwdXQgdG8gYmUgd3JpdHRlbiB0byB0aGUgRE9NLCB0aGVuIHRyaWdnZXIgd2lkZ2V0IHJlbmRlcmluZ1xuICBhd2FpdCBfd2Vicl92YWx1ZV8zO1xuICBpZiAod2luZG93LkhUTUxXaWRnZXRzKSB7XG4gICAgd2luZG93LkhUTUxXaWRnZXRzLnN0YXRpY1JlbmRlcigpO1xuICB9XG4gIGlmICh3aW5kb3cuUGFnZWRUYWJsZURvYykge1xuICAgIHdpbmRvdy5QYWdlZFRhYmxlRG9jLmluaXRBbGwoKTtcbiAgfVxufVxuIn0seyJjZWxsTmFtZSI6IndlYnItMyIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJzb3VyY2UiOiJ2aWV3b2YgX3dlYnJfZWRpdG9yXzMgPSB7XG4gIGNvbnN0IHsgV2ViUkV4ZXJjaXNlRWRpdG9yLCBiNjREZWNvZGUgfSA9IHdpbmRvdy5fZXhlcmNpc2Vfb2pzX3J1bnRpbWU7XG4gIGNvbnN0IHNjcmlwdENvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwid2Vici0zLWNvbnRlbnRzXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgYmxvY2sgPSBKU09OLnBhcnNlKGI2NERlY29kZShzY3JpcHRDb250ZW50KSk7XG5cbiAgY29uc3Qgb3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oeyBpZDogYHdlYnItMy1jb250ZW50c2AgfSwgYmxvY2suYXR0cik7XG4gIGNvbnN0IGVkaXRvciA9IG5ldyBXZWJSRXhlcmNpc2VFZGl0b3Iod2ViUk9qcy53ZWJSUHJvbWlzZSwgYmxvY2suY29kZSwgb3B0aW9ucyk7XG5cbiAgcmV0dXJuIGVkaXRvci5jb250YWluZXI7XG59XG5fd2Vicl92YWx1ZV8zID0gd2ViUk9qcy5wcm9jZXNzKF93ZWJyX2VkaXRvcl8zLCB7fSk7XG4ifSx7ImNlbGxOYW1lIjoid2Vici13aWRnZXQtMiIsImlubGluZSI6ZmFsc2UsIm1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6IntcbiAgLy8gV2FpdCBmb3Igb3V0cHV0IHRvIGJlIHdyaXR0ZW4gdG8gdGhlIERPTSwgdGhlbiB0cmlnZ2VyIHdpZGdldCByZW5kZXJpbmdcbiAgYXdhaXQgX3dlYnJfdmFsdWVfMjtcbiAgaWYgKHdpbmRvdy5IVE1MV2lkZ2V0cykge1xuICAgIHdpbmRvdy5IVE1MV2lkZ2V0cy5zdGF0aWNSZW5kZXIoKTtcbiAgfVxuICBpZiAod2luZG93LlBhZ2VkVGFibGVEb2MpIHtcbiAgICB3aW5kb3cuUGFnZWRUYWJsZURvYy5pbml0QWxsKCk7XG4gIH1cbn1cbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLTIiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0Iiwic291cmNlIjoidmlld29mIF93ZWJyX2VkaXRvcl8yID0ge1xuICBjb25zdCB7IFdlYlJFeGVyY2lzZUVkaXRvciwgYjY0RGVjb2RlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lO1xuICBjb25zdCBzY3JpcHRDb250ZW50ID0gZG9jdW1lbnQucXVlcnlTZWxlY3Rvcihgc2NyaXB0W3R5cGU9XFxcIndlYnItMi1jb250ZW50c1xcXCJdYCkudGV4dENvbnRlbnQ7XG4gIGNvbnN0IGJsb2NrID0gSlNPTi5wYXJzZShiNjREZWNvZGUoc2NyaXB0Q29udGVudCkpO1xuXG4gIGNvbnN0IG9wdGlvbnMgPSBPYmplY3QuYXNzaWduKHsgaWQ6IGB3ZWJyLTItY29udGVudHNgIH0sIGJsb2NrLmF0dHIpO1xuICBjb25zdCBlZGl0b3IgPSBuZXcgV2ViUkV4ZXJjaXNlRWRpdG9yKHdlYlJPanMud2ViUlByb21pc2UsIGJsb2NrLmNvZGUsIG9wdGlvbnMpO1xuXG4gIHJldHVybiBlZGl0b3IuY29udGFpbmVyO1xufVxuX3dlYnJfdmFsdWVfMiA9IHdlYlJPanMucHJvY2Vzcyhfd2Vicl9lZGl0b3JfMiwge30pO1xuIn0seyJjZWxsTmFtZSI6IndlYnItd2lkZ2V0LTEiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJ7XG4gIC8vIFdhaXQgZm9yIG91dHB1dCB0byBiZSB3cml0dGVuIHRvIHRoZSBET00sIHRoZW4gdHJpZ2dlciB3aWRnZXQgcmVuZGVyaW5nXG4gIGF3YWl0IF93ZWJyX3ZhbHVlXzE7XG4gIGlmICh3aW5kb3cuSFRNTFdpZGdldHMpIHtcbiAgICB3aW5kb3cuSFRNTFdpZGdldHMuc3RhdGljUmVuZGVyKCk7XG4gIH1cbiAgaWYgKHdpbmRvdy5QYWdlZFRhYmxlRG9jKSB7XG4gICAgd2luZG93LlBhZ2VkVGFibGVEb2MuaW5pdEFsbCgpO1xuICB9XG59XG4ifSx7ImNlbGxOYW1lIjoid2Vici0xIiwiaW5saW5lIjpmYWxzZSwibWV0aG9kTmFtZSI6ImludGVycHJldCIsInNvdXJjZSI6InZpZXdvZiBfd2Vicl9lZGl0b3JfMSA9IHtcbiAgY29uc3QgeyBXZWJSRXhlcmNpc2VFZGl0b3IsIGI2NERlY29kZSB9ID0gd2luZG93Ll9leGVyY2lzZV9vanNfcnVudGltZTtcbiAgY29uc3Qgc2NyaXB0Q29udGVudCA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoYHNjcmlwdFt0eXBlPVxcXCJ3ZWJyLTEtY29udGVudHNcXFwiXWApLnRleHRDb250ZW50O1xuICBjb25zdCBibG9jayA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKHNjcmlwdENvbnRlbnQpKTtcblxuICBjb25zdCBvcHRpb25zID0gT2JqZWN0LmFzc2lnbih7IGlkOiBgd2Vici0xLWNvbnRlbnRzYCB9LCBibG9jay5hdHRyKTtcbiAgY29uc3QgZWRpdG9yID0gbmV3IFdlYlJFeGVyY2lzZUVkaXRvcih3ZWJST2pzLndlYlJQcm9taXNlLCBibG9jay5jb2RlLCBvcHRpb25zKTtcblxuICByZXR1cm4gZWRpdG9yLmNvbnRhaW5lcjtcbn1cbl93ZWJyX3ZhbHVlXzEgPSB3ZWJST2pzLnByb2Nlc3MoX3dlYnJfZWRpdG9yXzEsIHt9KTtcbiJ9LHsiY2VsbE5hbWUiOiJ3ZWJyLXByZWx1ZGUiLCJpbmxpbmUiOmZhbHNlLCJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJ3ZWJST2pzID0ge1xuICBjb25zdCB7IFdlYlIsIENoYW5uZWxUeXBlIH0gPSB3aW5kb3cuX2V4ZXJjaXNlX29qc19ydW50aW1lLldlYlI7XG4gIGNvbnN0IHtcbiAgICBXZWJSRXZhbHVhdG9yLFxuICAgIFdlYlJFbnZpcm9ubWVudE1hbmFnZXIsXG4gICAgc2V0dXBSLFxuICAgIGI2NERlY29kZSxcbiAgICBjb2xsYXBzZVBhdGhcbiAgfSA9IHdpbmRvdy5fZXhlcmNpc2Vfb2pzX3J1bnRpbWU7XG5cbiAgY29uc3Qgc3RhdHVzQ29udGFpbmVyID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoXCJleGVyY2lzZS1sb2FkaW5nLXN0YXR1c1wiKTtcbiAgY29uc3QgaW5kaWNhdG9yQ29udGFpbmVyID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoXCJleGVyY2lzZS1sb2FkaW5nLWluZGljYXRvclwiKTtcbiAgaW5kaWNhdG9yQ29udGFpbmVyLmNsYXNzTGlzdC5yZW1vdmUoXCJkLW5vbmVcIik7XG5cbiAgbGV0IHN0YXR1c1RleHQgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KFwiZGl2XCIpXG4gIHN0YXR1c1RleHQuY2xhc3NMaXN0ID0gXCJleGVyY2lzZS1sb2FkaW5nLWRldGFpbHNcIjtcbiAgc3RhdHVzVGV4dCA9IHN0YXR1c0NvbnRhaW5lci5hcHBlbmRDaGlsZChzdGF0dXNUZXh0KTtcbiAgc3RhdHVzVGV4dC50ZXh0Q29udGVudCA9IGBJbml0aWFsaXNlYDtcblxuICAvLyBIb2lzdCBpbmRpY2F0b3Igb3V0IGZyb20gZmluYWwgc2xpZGUgd2hlbiBydW5uaW5nIHVuZGVyIHJldmVhbFxuICBjb25zdCByZXZlYWxTdGF0dXMgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKFwiLnJldmVhbCAuZXhlcmNpc2UtbG9hZGluZy1pbmRpY2F0b3JcIik7XG4gIGlmIChyZXZlYWxTdGF0dXMpIHtcbiAgICByZXZlYWxTdGF0dXMucmVtb3ZlKCk7XG4gICAgZG9jdW1lbnQucXVlcnlTZWxlY3RvcihcIi5yZXZlYWwgPiAuc2xpZGVzXCIpLmFwcGVuZENoaWxkKHJldmVhbFN0YXR1cyk7XG4gIH1cblxuICAvLyBNYWtlIGFueSByZXZlYWwgc2xpZGVzIHdpdGggbGl2ZSBjZWxscyBzY3JvbGxhYmxlXG4gIGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3JBbGwoXCIucmV2ZWFsIC5leGVyY2lzZS1jZWxsXCIpLmZvckVhY2goKGVsKSA9PiB7XG4gICAgZWwuY2xvc2VzdCgnc2VjdGlvbi5zbGlkZScpLmNsYXNzTGlzdC5hZGQoXCJzY3JvbGxhYmxlXCIpO1xuICB9KVxuXG4gIC8vIHdlYlIgc3VwcGxlbWVudGFsIGRhdGEgYW5kIG9wdGlvbnNcbiAgY29uc3QgZGF0YUNvbnRlbnQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGBzY3JpcHRbdHlwZT1cXFwid2Vici1kYXRhXFxcIl1gKS50ZXh0Q29udGVudDtcbiAgY29uc3QgZGF0YSA9IEpTT04ucGFyc2UoYjY0RGVjb2RlKGRhdGFDb250ZW50KSk7XG5cbiAgLy8gR3JhYiBsaXN0IG9mIHJlc291cmNlcyB0byBiZSBkb3dubG9hZGVkXG4gIGNvbnN0IGZpbGVzQ29udGVudCA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoYHNjcmlwdFt0eXBlPVxcXCJ2ZnMtZmlsZVxcXCJdYCkudGV4dENvbnRlbnQ7XG4gIGNvbnN0IGZpbGVzID0gSlNPTi5wYXJzZShiNjREZWNvZGUoZmlsZXNDb250ZW50KSk7XG5cbiAgLy8gSW5pdGlhbGlzZSB3ZWJSIGFuZCBzZXR1cCBmb3IgUiBjb2RlIGV2YWx1YXRpb25cbiAgbGV0IHdlYlJQcm9taXNlID0gKGFzeW5jICh3ZWJSKSA9PiB7XG4gICAgc3RhdHVzVGV4dC50ZXh0Q29udGVudCA9IGBEb3dubG9hZGluZyB3ZWJSYDtcbiAgICBhd2FpdCB3ZWJSLmluaXQoKTtcblxuICAgIC8vIEluc3RhbGwgcHJvdmlkZWQgbGlzdCBvZiBwYWNrYWdlc1xuICAgIC8vIEVuc3VyZSB3ZWJSIGRlZmF1bHQgcmVwbyBpcyBpbmNsdWRlZFxuICAgIGRhdGEucGFja2FnZXMucmVwb3MucHVzaChcImh0dHBzOi8vcmVwby5yLXdhc20ub3JnXCIpXG4gICAgYXdhaXQgZGF0YS5wYWNrYWdlcy5wa2dzLm1hcCgocGtnKSA9PiAoKSA9PiB7XG4gICAgICBzdGF0dXNUZXh0LnRleHRDb250ZW50ID0gYERvd25sb2FkaW5nIHBhY2thZ2U6ICR7cGtnfWA7XG4gICAgICByZXR1cm4gd2ViUi5ldmFsUlZvaWQoYFxuICAgICAgICB3ZWJyOjppbnN0YWxsKHBrZywgcmVwb3MgPSByZXBvcylcbiAgICAgICAgbGlicmFyeShwa2csIGNoYXJhY3Rlci5vbmx5ID0gVFJVRSlcbiAgICAgIGAsIHsgZW52OiB7XG4gICAgICAgIHBrZzogcGtnLFxuICAgICAgICByZXBvczogZGF0YS5wYWNrYWdlcy5yZXBvcyxcbiAgICAgIH19KTtcbiAgICB9KS5yZWR1Y2UoKGN1ciwgbmV4dCkgPT4gY3VyLnRoZW4obmV4dCksIFByb21pc2UucmVzb2x2ZSgpKTtcblxuICAgIC8vIERvd25sb2FkIGFuZCBpbnN0YWxsIHJlc291cmNlc1xuICAgIGF3YWl0IGZpbGVzLm1hcCgoZmlsZSkgPT4gYXN5bmMgKCkgPT4ge1xuICAgICAgY29uc3QgbmFtZSA9IGZpbGUuc3Vic3RyaW5nKGZpbGUubGFzdEluZGV4T2YoJy8nKSArIDEpO1xuICAgICAgc3RhdHVzVGV4dC50ZXh0Q29udGVudCA9IGBEb3dubG9hZGluZyByZXNvdXJjZTogJHtuYW1lfWA7XG4gICAgICBjb25zdCByZXNwb25zZSA9IGF3YWl0IGZldGNoKGZpbGUpO1xuICAgICAgaWYgKCFyZXNwb25zZS5vaykge1xuICAgICAgICB0aHJvdyBuZXcgRXJyb3IoYENhbid0IGRvd25sb2FkIFxcYCR7ZmlsZX1cXGAuIEVycm9yICR7cmVzcG9uc2Uuc3RhdHVzfTogXCIke3Jlc3BvbnNlLnN0YXR1c1RleHR9XCIuYCk7XG4gICAgICB9XG4gICAgICBjb25zdCBkYXRhID0gYXdhaXQgcmVzcG9uc2UuYXJyYXlCdWZmZXIoKTtcblxuICAgICAgLy8gU3RvcmUgVVJMcyBpbiB0aGUgY3dkIHdpdGhvdXQgYW55IHN1YmRpcmVjdG9yeSBzdHJ1Y3R1cmVcbiAgICAgIGlmIChmaWxlLmluY2x1ZGVzKFwiOi8vXCIpKSB7XG4gICAgICAgIGZpbGUgPSBuYW1lO1xuICAgICAgfVxuXG4gICAgICAvLyBDb2xsYXBzZSBoaWdoZXIgZGlyZWN0b3J5IHN0cnVjdHVyZVxuICAgICAgZmlsZSA9IGNvbGxhcHNlUGF0aChmaWxlKTtcblxuICAgICAgLy8gQ3JlYXRlIGRpcmVjdG9yeSB0cmVlLCBpZ25vcmluZyBcImRpcmVjdG9yeSBleGlzdHNcIiBWRlMgZXJyb3JzXG4gICAgICBjb25zdCBwYXJ0cyA9IGZpbGUuc3BsaXQoJy8nKS5zbGljZSgwLCAtMSk7XG4gICAgICBsZXQgcGF0aCA9ICcnO1xuICAgICAgd2hpbGUgKHBhcnRzLmxlbmd0aCA+IDApIHtcbiAgICAgICAgcGF0aCArPSBwYXJ0cy5zaGlmdCgpICsgJy8nO1xuICAgICAgICBjb25zdCBhbmFseXNpcyA9IGF3YWl0IHdlYlIuRlMuYW5hbHl6ZVBhdGgocGF0aCk7XG4gICAgICAgIGlmICghYW5hbHlzaXMuZXhpc3RzKSB7XG4gICAgICAgICAgdHJ5IHtcbiAgICAgICAgICAgIGF3YWl0IHdlYlIuRlMubWtkaXIocGF0aCk7XG4gICAgICAgICAgfSBjYXRjaCAoZSkge1xuICAgICAgICAgICAgdGhyb3cgbmV3IEVycm9yKGBGaWxlc3lzdGVtIEVycm9yOiBcIiR7ZS5tZXNzYWdlfVwiLmApO1xuICAgICAgICAgIH1cbiAgICAgICAgfVxuICAgICAgfVxuXG4gICAgICAvLyBXcml0ZSB0aGlzIGZpbGUgdG8gdGhlIFZGU1xuICAgICAgcmV0dXJuIGF3YWl0IHdlYlIuRlMud3JpdGVGaWxlKGZpbGUsIG5ldyBVaW50OEFycmF5KGRhdGEpKTtcbiAgICB9KS5yZWR1Y2UoKGN1ciwgbmV4dCkgPT4gY3VyLnRoZW4obmV4dCksIFByb21pc2UucmVzb2x2ZSgpKTtcblxuICAgIHN0YXR1c1RleHQudGV4dENvbnRlbnQgPSBgSW5zdGFsbGluZyB3ZWJSIHNoaW1zYDtcbiAgICBhd2FpdCB3ZWJSLmV2YWxSVm9pZChgd2Vicjo6c2hpbV9pbnN0YWxsKClgKTtcblxuICAgIHN0YXR1c1RleHQudGV4dENvbnRlbnQgPSBgV2ViUiBlbnZpcm9ubWVudCBzZXR1cGA7XG4gICAgYXdhaXQgc2V0dXBSKHdlYlIsIGRhdGEpO1xuXG4gICAgc3RhdHVzVGV4dC5yZW1vdmUoKTtcbiAgICBpZiAoc3RhdHVzQ29udGFpbmVyLmNoaWxkcmVuLmxlbmd0aCA9PSAwKSB7XG4gICAgICBzdGF0dXNDb250YWluZXIucGFyZW50Tm9kZS5yZW1vdmUoKTtcbiAgICB9XG4gICAgcmV0dXJuIHdlYlI7XG4gIH0pKG5ldyBXZWJSKGRhdGEub3B0aW9ucykpO1xuXG4gIC8vIEtlZXAgdHJhY2sgb2YgaW5pdGlhbCBPSlMgYmxvY2sgcmVuZGVyXG4gIGNvbnN0IHJlbmRlcmVkT2pzID0ge307XG5cbiAgY29uc3QgcHJvY2VzcyA9IGFzeW5jIChjb250ZXh0LCBpbnB1dHMpID0+IHtcbiAgICBjb25zdCB3ZWJSID0gYXdhaXQgd2ViUlByb21pc2U7XG4gICAgY29uc3QgZXZhbHVhdG9yID0gbmV3IFdlYlJFdmFsdWF0b3Iod2ViUiwgY29udGV4dClcbiAgICBhd2FpdCBldmFsdWF0b3IucHJvY2VzcyhpbnB1dHMpO1xuICAgIHJldHVybiBldmFsdWF0b3IuY29udGFpbmVyO1xuICB9XG5cbiAgcmV0dXJuIHtcbiAgICBwcm9jZXNzLFxuICAgIHdlYlJQcm9taXNlLFxuICAgIHJlbmRlcmVkT2pzLFxuICB9O1xufVxuIn1dfQ==
+</script>
+<div id="exercise-loading-indicator" class="exercise-loading-indicator d-none d-flex align-items-center gap-2">
+<div id="exercise-loading-status" class="d-flex gap-2">
+
+</div>
+<div class="spinner-grow spinner-grow-sm">
+
+</div>
+</div>
+<script type="vfs-file">
+WyIuLi9fY29tbW9ucy9kYXRhL0owNV9leHRyYWl0cy9lY2FtNV90YWlsbGVfbWVuYWdlcy5jc3YiLCIuLi9fY29tbW9ucy9kYXRhL0owNV9leHRyYWl0cy9lY2FtNV9wYXV2cmV0ZV9yZWdpb24uY3N2IiwiLi4vX2NvbW1vbnMvZGF0YS9KMDVfZXh0cmFpdHMvZWNhbTVfcGF1dnJldGVfcmVnaW9uX21pbGlldS5jc3YiLCIuLi9fY29tbW9ucy9kYXRhL0owNV9leHRyYWl0cy9lZHNfZ3JhcHBlc19lYXUuY3N2IiwiLi4vX2NvbW1vbnMvZGF0YS9KMDVfZXh0cmFpdHMvY21yX3JlZ2lvbnNfSjA1Lmdlb2pzb24iLCIuLi9fY29tbW9ucy9kYXRhL0owNV9leHRyYWl0cy9kaXN0cmljdHNfc2FuaXRhaXJlc19KMDUuZ2VvanNvbiJd
+</script>
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W119
+</script>
+<div id="exercise-loading-indicator" class="exercise-loading-indicator d-none d-flex align-items-center gap-2">
+<div id="exercise-loading-status" class="d-flex gap-2">
+
+</div>
+<div class="spinner-grow spinner-grow-sm">
+
+</div>
+</div>
+<script type="vfs-file">
+W10=
+</script>
+</section>
+
+</main> <!-- /main -->
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W119
+</script>
+<script type="module">
+if (window.location.protocol === "file:") { alert("The OJS runtime does not work with file:// URLs. Please use a web server to view this document."); }
+window._ojs.paths.runtimeToDoc = "../../J05_enquetes_carte";
+window._ojs.paths.runtimeToRoot = "../..";
+window._ojs.paths.docToRoot = "..";
+window._ojs.selfContained = false;
+window._ojs.runtime.interpretFromScriptTags();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "J05 · Des enquêtes à la carte — runtime navigateur"</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> "Pondérer, agréger, cartographier — et savoir de quoi la couleur est faite · Atelier IFORD × GDSG 2026"</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># engine: knitr est OBLIGATOIRE. Sans lui, Quarto ne detecte aucun bloc R</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># et se rabat sur Jupyter ("No module named 'yaml'"), le rendu echoue.</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="an">engine:</span><span class="co"> knitr</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="an">webr:</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="co">  packages:</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co">    - sf</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co">    - dplyr</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="co">    - tidyr</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="co">    - ggplot2</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="co">  # Chemins RELATIFS AU .qmd, donc prefixes ../</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="co">  # Dans les blocs {webr} ci-dessous on lit les MEMES fichiers SANS le ../</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="co">  # Tous produits par _commons/data/J05_extraits/00_extraire_J05.R</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="co">  resources:</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="co">    - ../_commons/data/J05_extraits/ecam5_taille_menages.csv</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="co">    - ../_commons/data/J05_extraits/ecam5_pauvrete_region.csv</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="co">    - ../_commons/data/J05_extraits/ecam5_pauvrete_region_milieu.csv</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="co">    - ../_commons/data/J05_extraits/eds_grappes_eau.csv</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="co">    - ../_commons/data/J05_extraits/cmr_regions_J05.geojson</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="co">    - ../_commons/data/J05_extraits/districts_sanitaires_J05.geojson</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="fu">## Comment utiliser cette page</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>Les cellules **Run code** (blocs bleus <span class="in">`{webr}`</span>) s'exécutent **directement dans votre</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>navigateur** : cliquez, modifiez, relancez. Rien n'est installé sur votre poste, rien n'est</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>envoyé sur un serveur.</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>Les blocs gris ordinaires sont en **lecture seule**. Ils montrent le code qui ne peut pas</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>tourner dans un navigateur — lecture de fichiers Stata/SPSS (<span class="in">`haven`</span>), estimation avec plan</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>de sondage (<span class="in">`survey`</span>), cartographie <span class="in">`tmap`</span> — et qui s'exécute **sous RStudio desktop** avec</span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a><span class="in">`demo_formateur_J05.qmd`</span> (ce même dossier).</span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>**Le partage des rôles de la journée.** Toute la pondération a été faite **en amont**, par le</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>script <span class="in">`_commons/data/J05_extraits/00_extraire_J05.R`</span>. Cette page ne repondère rien : elle</span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>**cartographie** des taux déjà pondérés, et fait travailler leur **lecture** — comparer des</span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>mailles, nommer les pièges, dire ce qui ne se lit pas.</span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>::: {.callout-important}</span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a><span class="fu">## Avertissement sur les chiffres régionaux d'ECAM5 — à lire avant toute carte</span></span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a><span class="in">`ecam5.dta`</span> est un **extrait de formation**, pas le fichier de production de l'INS. Le</span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>contrôle a été fait : le taux de pauvreté **national** calculé sur cet extrait colle à la</span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>publication de l'INS (38,6 % contre 37,7 %), mais **à l'intérieur des régions il ne colle</span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>pas** — l'Est ressort à 7,5 % là où l'INS publie 41,5 %.</span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>Conséquence, et c'est une règle de la journée, pas une précaution de style :</span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>les taux régionaux affichés sur cette page servent **uniquement** à apprendre la chaîne</span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>  technique (pondérer → agréger → joindre → cartographier) ;</span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**il est interdit de les citer**, de les reprendre dans un rapport, ou de les commenter</span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>  comme s'ils décrivaient le Cameroun.</span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a>On ne masque pas l'écart : on en fait l'objet d'un exercice. Une carte hérite de toutes les</span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a>décisions prises en amont sans jamais les afficher — c'est pourquoi elles s'écrivent</span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>**sous** la carte.</span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a><span class="fu">## 1. Ce que le navigateur sait faire, et ce qu'il ne sait pas</span></span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>WebR embarque une distribution R compilée pour le navigateur. <span class="in">`sf`</span>, <span class="in">`dplyr`</span>, <span class="in">`ggplot2`</span>,</span>
+<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a><span class="in">`tidyr`</span> y tournent. **`haven` et `survey` n'y sont pas**, et ne peuvent donc pas lire</span>
+<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a><span class="in">`ecam5.dta`</span> ni construire un plan de sondage.</span>
+<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a>Le code ci-dessous est celui qui a été **réellement exécuté en amont** pour produire les</span>
+<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a>fichiers que cette page consomme. Il est ici pour être lu et copié vers RStudio, pas pour</span>
+<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a>être exécuté.</span>
+<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a><span class="in">```r</span></span>
+<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Lecture seule : s'execute sous RStudio desktop, pas dans le navigateur.</span></span>
+<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(haven)    <span class="co"># lecture .dta (Stata) et .SAV (SPSS)</span></span>
+<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(survey)   <span class="co"># estimation avec plan de sondage</span></span>
+<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-79"><a href="#cb3-79" aria-hidden="true" tabindex="-1"></a>ecam5 <span class="ot">&lt;-</span> <span class="fu">read_dta</span>(<span class="st">"datasets/ecam5.dta"</span>)</span>
+<span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a><span class="co"># coefextr est le COEFFICIENT D'EXTRAPOLATION : le nombre de personnes du</span></span>
+<span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a><span class="co"># pays que represente chaque ligne du fichier. Sans lui, on ne decrit pas le</span></span>
+<span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a><span class="co"># Cameroun, on decrit l'echantillon.</span></span>
+<span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a>plan <span class="ot">&lt;-</span> <span class="fu">svydesign</span>(<span class="at">ids =</span> <span class="sc">~</span><span class="dv">1</span>, <span class="at">weights =</span> <span class="sc">~</span>coefextr, <span class="at">data =</span> ecam5)</span>
+<span id="cb3-85"><a href="#cb3-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a><span class="co"># Taux de pauvrete national, avec son intervalle de confiance.</span></span>
+<span id="cb3-87"><a href="#cb3-87" aria-hidden="true" tabindex="-1"></a><span class="fu">svymean</span>(<span class="sc">~</span>nivie, plan, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb3-88"><a href="#cb3-88" aria-hidden="true" tabindex="-1"></a><span class="fu">confint</span>(<span class="fu">svymean</span>(<span class="sc">~</span>nivie, plan, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb3-89"><a href="#cb3-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-90"><a href="#cb3-90" aria-hidden="true" tabindex="-1"></a><span class="co"># Le meme taux, region par region.</span></span>
+<span id="cb3-91"><a href="#cb3-91" aria-hidden="true" tabindex="-1"></a><span class="fu">svyby</span>(<span class="sc">~</span>nivie, <span class="sc">~</span>s0q1, plan, svymean, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb3-92"><a href="#cb3-92" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-93"><a href="#cb3-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-94"><a href="#cb3-94" aria-hidden="true" tabindex="-1"></a>Le script complet est dans <span class="in">`_commons/data/J05_extraits/00_extraire_J05.R`</span> ; le déroulé</span>
+<span id="cb3-95"><a href="#cb3-95" aria-hidden="true" tabindex="-1"></a>pédagogique, avec les vérifications de clé et les diagnostics de valeurs manquantes, est</span>
+<span id="cb3-96"><a href="#cb3-96" aria-hidden="true" tabindex="-1"></a>dans <span class="in">`demo_formateur_J05.qmd`</span>.</span>
+<span id="cb3-97"><a href="#cb3-97" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-98"><a href="#cb3-98" aria-hidden="true" tabindex="-1"></a><span class="fu">## 2. Biais de taille — trois chiffres exacts pour une même question</span></span>
+<span id="cb3-99"><a href="#cb3-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-100"><a href="#cb3-100" aria-hidden="true" tabindex="-1"></a>Avant toute carte, une leçon de lecture. « Quelle est la taille moyenne d'un ménage ? »</span>
+<span id="cb3-101"><a href="#cb3-101" aria-hidden="true" tabindex="-1"></a>admet **trois réponses justes**, selon ce dont on prend la moyenne.</span>
+<span id="cb3-102"><a href="#cb3-102" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-105"><a href="#cb3-105" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb3-106"><a href="#cb3-106" aria-hidden="true" tabindex="-1"></a><span class="in">#| autorun: true</span></span>
+<span id="cb3-107"><a href="#cb3-107" aria-hidden="true" tabindex="-1"></a><span class="in">library(dplyr)</span></span>
+<span id="cb3-108"><a href="#cb3-108" aria-hidden="true" tabindex="-1"></a><span class="in">library(ggplot2)</span></span>
+<span id="cb3-109"><a href="#cb3-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-110"><a href="#cb3-110" aria-hidden="true" tabindex="-1"></a><span class="in"># Fichier produit en amont ; on le lit SANS le prefixe ../</span></span>
+<span id="cb3-111"><a href="#cb3-111" aria-hidden="true" tabindex="-1"></a><span class="in">taille &lt;- read.csv("_commons/data/J05_extraits/ecam5_taille_menages.csv")</span></span>
+<span id="cb3-112"><a href="#cb3-112" aria-hidden="true" tabindex="-1"></a><span class="in">taille</span></span>
+<span id="cb3-113"><a href="#cb3-113" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-114"><a href="#cb3-114" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-117"><a href="#cb3-117" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb3-118"><a href="#cb3-118" aria-hidden="true" tabindex="-1"></a><span class="in">ggplot(taille, aes(x = reorder(base, taille_moyenne), y = taille_moyenne)) +</span></span>
+<span id="cb3-119"><a href="#cb3-119" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_col(fill = "#0F4C81", width = 0.6) +</span></span>
+<span id="cb3-120"><a href="#cb3-120" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_text(aes(label = round(taille_moyenne, 2)), hjust = -0.15, size = 3.5) +</span></span>
+<span id="cb3-121"><a href="#cb3-121" aria-hidden="true" tabindex="-1"></a><span class="in">  coord_flip() +</span></span>
+<span id="cb3-122"><a href="#cb3-122" aria-hidden="true" tabindex="-1"></a><span class="in">  expand_limits(y = max(taille$taille_moyenne) * 1.15) +</span></span>
+<span id="cb3-123"><a href="#cb3-123" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(title = "Trois lectures de la même donnée ECAM5",</span></span>
+<span id="cb3-124"><a href="#cb3-124" aria-hidden="true" tabindex="-1"></a><span class="in">       subtitle = "Taille moyenne d'un ménage selon la base de calcul",</span></span>
+<span id="cb3-125"><a href="#cb3-125" aria-hidden="true" tabindex="-1"></a><span class="in">       x = NULL, y = "personnes par ménage",</span></span>
+<span id="cb3-126"><a href="#cb3-126" aria-hidden="true" tabindex="-1"></a><span class="in">       caption = "Source : ECAM5 2021-2022 (extrait de formation) · IFORD × GDSG 2026") +</span></span>
+<span id="cb3-127"><a href="#cb3-127" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal()</span></span>
+<span id="cb3-128"><a href="#cb3-128" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-129"><a href="#cb3-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-130"><a href="#cb3-130" aria-hidden="true" tabindex="-1"></a>::: {.iford-callout}</span>
+<span id="cb3-131"><a href="#cb3-131" aria-hidden="true" tabindex="-1"></a>**Ce que la figure code.** Chaque barre est une moyenne de la **même** variable <span class="in">`tailm`</span></span>
+<span id="cb3-132"><a href="#cb3-132" aria-hidden="true" tabindex="-1"></a>(nombre de personnes du ménage), calculée sur une **base d'observation différente** :</span>
+<span id="cb3-133"><a href="#cb3-133" aria-hidden="true" tabindex="-1"></a>toutes les lignes du fichier (des *individus*), les seules lignes de chef de ménage (des</span>
+<span id="cb3-134"><a href="#cb3-134" aria-hidden="true" tabindex="-1"></a>*ménages*), et ces dernières sans les poids de sondage.</span>
+<span id="cb3-135"><a href="#cb3-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-136"><a href="#cb3-136" aria-hidden="true" tabindex="-1"></a>**Ce qui se lit.** Les trois barres ne sont pas égales. Parcourir un fichier d'individus</span>
+<span id="cb3-137"><a href="#cb3-137" aria-hidden="true" tabindex="-1"></a>revient à compter chaque ménage **autant de fois qu'il compte de membres** : les grands</span>
+<span id="cb3-138"><a href="#cb3-138" aria-hidden="true" tabindex="-1"></a>ménages y pèsent mécaniquement plus. C'est le **biais de taille**. La barre « individus »</span>
+<span id="cb3-139"><a href="#cb3-139" aria-hidden="true" tabindex="-1"></a>est donc structurellement au-dessus de la barre « ménages ».</span>
+<span id="cb3-140"><a href="#cb3-140" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-141"><a href="#cb3-141" aria-hidden="true" tabindex="-1"></a>**Ce qui ne se lit pas.** Aucune des trois n'est « la bonne ». Elles répondent à trois</span>
+<span id="cb3-142"><a href="#cb3-142" aria-hidden="true" tabindex="-1"></a>questions distinctes : *dans quel ménage vit une personne prise au hasard ?*, *combien de</span>
+<span id="cb3-143"><a href="#cb3-143" aria-hidden="true" tabindex="-1"></a>personnes compte un ménage pris au hasard ?*, *combien en compte un ménage de l'échantillon</span>
+<span id="cb3-144"><a href="#cb3-144" aria-hidden="true" tabindex="-1"></a>brut ?* La seule faute serait de ne pas dire laquelle on publie. Le même mécanisme frappe</span>
+<span id="cb3-145"><a href="#cb3-145" aria-hidden="true" tabindex="-1"></a>les taux de pauvreté par individu et par ménage — comparez-les dans le tableau de la</span>
+<span id="cb3-146"><a href="#cb3-146" aria-hidden="true" tabindex="-1"></a>section 3.</span>
+<span id="cb3-147"><a href="#cb3-147" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb3-148"><a href="#cb3-148" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-149"><a href="#cb3-149" aria-hidden="true" tabindex="-1"></a><span class="fu">## 3. Le tableau régional pondéré — et son écart à la référence publiée</span></span>
+<span id="cb3-150"><a href="#cb3-150" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-153"><a href="#cb3-153" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb3-154"><a href="#cb3-154" aria-hidden="true" tabindex="-1"></a><span class="in">#| autorun: true</span></span>
+<span id="cb3-155"><a href="#cb3-155" aria-hidden="true" tabindex="-1"></a><span class="in">pauvrete &lt;- read.csv("_commons/data/J05_extraits/ecam5_pauvrete_region.csv")</span></span>
+<span id="cb3-156"><a href="#cb3-156" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-157"><a href="#cb3-157" aria-hidden="true" tabindex="-1"></a><span class="in">pauvrete |&gt;</span></span>
+<span id="cb3-158"><a href="#cb3-158" aria-hidden="true" tabindex="-1"></a><span class="in">  select(region_adm, n_individus, n_menages,</span></span>
+<span id="cb3-159"><a href="#cb3-159" aria-hidden="true" tabindex="-1"></a><span class="in">         tx_pauvrete_pond, tx_pauvrete_brut, tx_pauvrete_menage,</span></span>
+<span id="cb3-160"><a href="#cb3-160" aria-hidden="true" tabindex="-1"></a><span class="in">         tx_ins_publie, ecart_ins) |&gt;</span></span>
+<span id="cb3-161"><a href="#cb3-161" aria-hidden="true" tabindex="-1"></a><span class="in">  mutate(across(where(is.numeric), \(x) round(x, 1))) |&gt;</span></span>
+<span id="cb3-162"><a href="#cb3-162" aria-hidden="true" tabindex="-1"></a><span class="in">  arrange(desc(tx_pauvrete_pond))</span></span>
+<span id="cb3-163"><a href="#cb3-163" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-164"><a href="#cb3-164" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-165"><a href="#cb3-165" aria-hidden="true" tabindex="-1"></a>::: {.callout-warning}</span>
+<span id="cb3-166"><a href="#cb3-166" aria-hidden="true" tabindex="-1"></a>**Le geste qui manque presque toujours : confronter à une référence.**</span>
+<span id="cb3-167"><a href="#cb3-167" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-168"><a href="#cb3-168" aria-hidden="true" tabindex="-1"></a><span class="in">`tx_ins_publie`</span> est le taux publié par l'INS ; <span class="in">`ecart_ins`</span> la différence avec ce que</span>
+<span id="cb3-169"><a href="#cb3-169" aria-hidden="true" tabindex="-1"></a>l'extrait produit. Là où la colonne <span class="in">`ecart_ins`</span> est grande, **le chiffre de l'extrait est</span>
+<span id="cb3-170"><a href="#cb3-170" aria-hidden="true" tabindex="-1"></a>faux** — pas « surprenant », faux. Sans ce contrôle, la carte aurait donné à un chiffre faux</span>
+<span id="cb3-171"><a href="#cb3-171" aria-hidden="true" tabindex="-1"></a>exactement la même autorité visuelle qu'à un chiffre juste.</span>
+<span id="cb3-172"><a href="#cb3-172" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-173"><a href="#cb3-173" aria-hidden="true" tabindex="-1"></a><span class="in">`tx_pauvrete_brut`</span> est le même calcul **sans les poids**. L'écart entre les deux colonnes</span>
+<span id="cb3-174"><a href="#cb3-174" aria-hidden="true" tabindex="-1"></a>mesure exactement ce que la pondération apporte : sans elle, on décrit l'échantillon, pas</span>
+<span id="cb3-175"><a href="#cb3-175" aria-hidden="true" tabindex="-1"></a>le pays.</span>
+<span id="cb3-176"><a href="#cb3-176" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb3-177"><a href="#cb3-177" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-178"><a href="#cb3-178" aria-hidden="true" tabindex="-1"></a><span class="fu">## 4. La première carte — le tableau devient territoire</span></span>
+<span id="cb3-179"><a href="#cb3-179" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-182"><a href="#cb3-182" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb3-183"><a href="#cb3-183" aria-hidden="true" tabindex="-1"></a><span class="in">#| autorun: true</span></span>
+<span id="cb3-184"><a href="#cb3-184" aria-hidden="true" tabindex="-1"></a><span class="in">library(sf)</span></span>
+<span id="cb3-185"><a href="#cb3-185" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-186"><a href="#cb3-186" aria-hidden="true" tabindex="-1"></a><span class="in"># read_sf lit un fichier SIG et renvoie un data.frame + une colonne geometry.</span></span>
+<span id="cb3-187"><a href="#cb3-187" aria-hidden="true" tabindex="-1"></a><span class="in">regions &lt;- read_sf("_commons/data/J05_extraits/cmr_regions_J05.geojson")</span></span>
+<span id="cb3-188"><a href="#cb3-188" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-189"><a href="#cb3-189" aria-hidden="true" tabindex="-1"></a><span class="in">c(entites = nrow(regions), epsg = st_crs(regions)$epsg)</span></span>
+<span id="cb3-190"><a href="#cb3-190" aria-hidden="true" tabindex="-1"></a><span class="in">names(regions)</span></span>
+<span id="cb3-191"><a href="#cb3-191" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-192"><a href="#cb3-192" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-195"><a href="#cb3-195" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb3-196"><a href="#cb3-196" aria-hidden="true" tabindex="-1"></a><span class="in">ggplot(regions) +</span></span>
+<span id="cb3-197"><a href="#cb3-197" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(aes(fill = tx_pauvrete_pond), color = "white", linewidth = 0.3) +</span></span>
+<span id="cb3-198"><a href="#cb3-198" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf_text(aes(label = NAME_1), size = 2.3, colour = "grey15") +</span></span>
+<span id="cb3-199"><a href="#cb3-199" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_fill_viridis_c(option = "B", direction = -1,</span></span>
+<span id="cb3-200"><a href="#cb3-200" aria-hidden="true" tabindex="-1"></a><span class="in">                       name = "Taux de\npauvreté (%)",</span></span>
+<span id="cb3-201"><a href="#cb3-201" aria-hidden="true" tabindex="-1"></a><span class="in">                       na.value = "grey85") +</span></span>
+<span id="cb3-202"><a href="#cb3-202" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(title = "Pauvreté monétaire par région — ECAM5",</span></span>
+<span id="cb3-203"><a href="#cb3-203" aria-hidden="true" tabindex="-1"></a><span class="in">       subtitle = "CHIFFRES NON CITABLES : extrait de formation, non représentatif dans les régions",</span></span>
+<span id="cb3-204"><a href="#cb3-204" aria-hidden="true" tabindex="-1"></a><span class="in">       caption = "Source : ECAM5 2021-2022 (extrait) · GADM 4.1 · IFORD × GDSG 2026") +</span></span>
+<span id="cb3-205"><a href="#cb3-205" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal() +</span></span>
+<span id="cb3-206"><a href="#cb3-206" aria-hidden="true" tabindex="-1"></a><span class="in">  theme(axis.text = element_blank(), axis.ticks = element_blank(),</span></span>
+<span id="cb3-207"><a href="#cb3-207" aria-hidden="true" tabindex="-1"></a><span class="in">        panel.grid = element_blank())</span></span>
+<span id="cb3-208"><a href="#cb3-208" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-209"><a href="#cb3-209" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-210"><a href="#cb3-210" aria-hidden="true" tabindex="-1"></a>::: {.iford-callout}</span>
+<span id="cb3-211"><a href="#cb3-211" aria-hidden="true" tabindex="-1"></a>**Ce que la figure code.** La couleur de chaque polygone encode <span class="in">`tx_pauvrete_pond`</span> : la part</span>
+<span id="cb3-212"><a href="#cb3-212" aria-hidden="true" tabindex="-1"></a>de la population régionale dont le niveau de vie est sous le seuil de pauvreté monétaire,</span>
+<span id="cb3-213"><a href="#cb3-213" aria-hidden="true" tabindex="-1"></a>**pondérée** par `coefextr`. C'est une **choroplèthe** : une valeur par unité</span>
+<span id="cb3-214"><a href="#cb3-214" aria-hidden="true" tabindex="-1"></a>administrative, traduite en intensité de couleur. La palette est **séquentielle** (du clair</span>
+<span id="cb3-215"><a href="#cb3-215" aria-hidden="true" tabindex="-1"></a>au foncé, un seul sens de lecture), ce qui est le bon choix pour une grandeur qui va</span>
+<span id="cb3-216"><a href="#cb3-216" aria-hidden="true" tabindex="-1"></a>simplement de « bas » à « élevé » ; les polygones sans valeur resteraient **gris**, jamais</span>
+<span id="cb3-217"><a href="#cb3-217" aria-hidden="true" tabindex="-1"></a>« à zéro ».</span>
+<span id="cb3-218"><a href="#cb3-218" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-219"><a href="#cb3-219" aria-hidden="true" tabindex="-1"></a>**Ce qui se lit — techniquement.** Les régions du Grand Nord et du Nord-Ouest se détachent</span>
+<span id="cb3-220"><a href="#cb3-220" aria-hidden="true" tabindex="-1"></a>comme un **bloc contigu**. C'est cela que la carte apporte et que le tableau ne contient</span>
+<span id="cb3-221"><a href="#cb3-221" aria-hidden="true" tabindex="-1"></a>pas : un tableau trié donne un classement, la carte montre que **les unités semblables se</span>
+<span id="cb3-222"><a href="#cb3-222" aria-hidden="true" tabindex="-1"></a>touchent**. Un bloc contigu ne s'explique pas par les caractéristiques propres de chaque</span>
+<span id="cb3-223"><a href="#cb3-223" aria-hidden="true" tabindex="-1"></a>région prise isolément, mais par ce qu'elles partagent *parce qu'elles sont voisines* —</span>
+<span id="cb3-224"><a href="#cb3-224" aria-hidden="true" tabindex="-1"></a>climat, enclavement, réseau routier, histoire du peuplement. On passe d'une liste d'unités</span>
+<span id="cb3-225"><a href="#cb3-225" aria-hidden="true" tabindex="-1"></a>indépendantes à un **système de voisinages**, et la ressemblance entre voisins devient</span>
+<span id="cb3-226"><a href="#cb3-226" aria-hidden="true" tabindex="-1"></a>elle-même l'objet à expliquer. C'est exactement le programme du **J07**.</span>
+<span id="cb3-227"><a href="#cb3-227" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-228"><a href="#cb3-228" aria-hidden="true" tabindex="-1"></a>**Ce qui ne se lit pas.** Trois choses.</span>
+<span id="cb3-229"><a href="#cb3-229" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**Les niveaux eux-mêmes ne sont pas exploitables** ici — voir l'avertissement en tête de</span>
+<span id="cb3-230"><a href="#cb3-230" aria-hidden="true" tabindex="-1"></a>   page. Ce que cette carte enseigne, c'est la *chaîne*, pas le *résultat*.</span>
+<span id="cb3-231"><a href="#cb3-231" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**L'erreur écologique.** Colorier une région ne dit rien d'un habitant de cette région.</span>
+<span id="cb3-232"><a href="#cb3-232" aria-hidden="true" tabindex="-1"></a>   Une région à 60 % de pauvreté contient des ménages aisés ; une région à 20 % contient des</span>
+<span id="cb3-233"><a href="#cb3-233" aria-hidden="true" tabindex="-1"></a>   ménages très pauvres. Attribuer à un individu ce qui n'est vrai que de l'agrégat est la</span>
+<span id="cb3-234"><a href="#cb3-234" aria-hidden="true" tabindex="-1"></a>   faute permanente de la choroplèthe.</span>
+<span id="cb3-235"><a href="#cb3-235" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**L'hétérogénéité interne**, écrasée par la moyenne — la section 5 la fait ressortir.</span>
+<span id="cb3-236"><a href="#cb3-236" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb3-237"><a href="#cb3-237" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-238"><a href="#cb3-238" aria-hidden="true" tabindex="-1"></a><span class="fu">## 5. Ce que la moyenne régionale cache : urbain contre rural</span></span>
+<span id="cb3-239"><a href="#cb3-239" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-242"><a href="#cb3-242" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb3-243"><a href="#cb3-243" aria-hidden="true" tabindex="-1"></a><span class="in">milieu &lt;- read.csv("_commons/data/J05_extraits/ecam5_pauvrete_region_milieu.csv")</span></span>
+<span id="cb3-244"><a href="#cb3-244" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-245"><a href="#cb3-245" aria-hidden="true" tabindex="-1"></a><span class="in">ggplot(milieu, aes(x = reorder(region_adm, tx_pauvrete_pond),</span></span>
+<span id="cb3-246"><a href="#cb3-246" aria-hidden="true" tabindex="-1"></a><span class="in">                   y = tx_pauvrete_pond, fill = milieu_lb)) +</span></span>
+<span id="cb3-247"><a href="#cb3-247" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_col(position = position_dodge(width = 0.75), width = 0.7) +</span></span>
+<span id="cb3-248"><a href="#cb3-248" aria-hidden="true" tabindex="-1"></a><span class="in">  coord_flip() +</span></span>
+<span id="cb3-249"><a href="#cb3-249" aria-hidden="true" tabindex="-1"></a><span class="in">  # Palette QUALITATIVE : deux modalites sans ordre naturel, deux teintes</span></span>
+<span id="cb3-250"><a href="#cb3-250" aria-hidden="true" tabindex="-1"></a><span class="in">  # nettement distinctes, pas deux nuances d'un meme ton.</span></span>
+<span id="cb3-251"><a href="#cb3-251" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_fill_manual(values = c("Urbain" = "#0F4C81", "Rural" = "#C1662F"),</span></span>
+<span id="cb3-252"><a href="#cb3-252" aria-hidden="true" tabindex="-1"></a><span class="in">                    name = "Milieu") +</span></span>
+<span id="cb3-253"><a href="#cb3-253" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(title = "La même région, deux mondes",</span></span>
+<span id="cb3-254"><a href="#cb3-254" aria-hidden="true" tabindex="-1"></a><span class="in">       subtitle = "Taux de pauvreté pondéré par région et milieu de résidence (chiffres non citables)",</span></span>
+<span id="cb3-255"><a href="#cb3-255" aria-hidden="true" tabindex="-1"></a><span class="in">       x = NULL, y = "taux de pauvreté (%)",</span></span>
+<span id="cb3-256"><a href="#cb3-256" aria-hidden="true" tabindex="-1"></a><span class="in">       caption = "Source : ECAM5 2021-2022 (extrait) · IFORD × GDSG 2026") +</span></span>
+<span id="cb3-257"><a href="#cb3-257" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal()</span></span>
+<span id="cb3-258"><a href="#cb3-258" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-259"><a href="#cb3-259" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-260"><a href="#cb3-260" aria-hidden="true" tabindex="-1"></a>::: {.iford-callout}</span>
+<span id="cb3-261"><a href="#cb3-261" aria-hidden="true" tabindex="-1"></a>**Ce que la figure code.** Le même indicateur que la carte, décomposé selon <span class="in">`milieu`</span></span>
+<span id="cb3-262"><a href="#cb3-262" aria-hidden="true" tabindex="-1"></a>(1 = urbain, 2 = rural). Deux barres par région, palette **qualitative** : les deux</span>
+<span id="cb3-263"><a href="#cb3-263" aria-hidden="true" tabindex="-1"></a>modalités n'ont pas d'ordre, donc pas de dégradé.</span>
+<span id="cb3-264"><a href="#cb3-264" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-265"><a href="#cb3-265" aria-hidden="true" tabindex="-1"></a>**Ce qui se lit.** L'écart entre les deux barres d'une même région est la mesure de</span>
+<span id="cb3-266"><a href="#cb3-266" aria-hidden="true" tabindex="-1"></a>l'hétérogénéité que la carte de la section 4 a écrasée en une seule couleur. Là où il est</span>
+<span id="cb3-267"><a href="#cb3-267" aria-hidden="true" tabindex="-1"></a>large, la valeur régionale unique est une **fiction utile** : elle n'est vraie ni pour la</span>
+<span id="cb3-268"><a href="#cb3-268" aria-hidden="true" tabindex="-1"></a>ville ni pour la campagne.</span>
+<span id="cb3-269"><a href="#cb3-269" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-270"><a href="#cb3-270" aria-hidden="true" tabindex="-1"></a>**Ce qui ne se lit pas.** Le milieu n'est pas la seule ligne de fracture interne — le</span>
+<span id="cb3-271"><a href="#cb3-271" aria-hidden="true" tabindex="-1"></a>département, l'arrondissement, le quartier en portent d'autres. Et cette figure reste un</span>
+<span id="cb3-272"><a href="#cb3-272" aria-hidden="true" tabindex="-1"></a>graphique : elle dit *combien* les milieux diffèrent, jamais *où* dans la région. Il faut</span>
+<span id="cb3-273"><a href="#cb3-273" aria-hidden="true" tabindex="-1"></a>une maille plus fine pour cela : c'est l'objet de la section suivante.</span>
+<span id="cb3-274"><a href="#cb3-274" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb3-275"><a href="#cb3-275" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-276"><a href="#cb3-276" aria-hidden="true" tabindex="-1"></a><span class="fu">## 6. Des coordonnées d'enquête aux points — l'autre pont vers la carte</span></span>
+<span id="cb3-277"><a href="#cb3-277" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-280"><a href="#cb3-280" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb3-281"><a href="#cb3-281" aria-hidden="true" tabindex="-1"></a><span class="in">#| autorun: true</span></span>
+<span id="cb3-282"><a href="#cb3-282" aria-hidden="true" tabindex="-1"></a><span class="in">grappes &lt;- read.csv("_commons/data/J05_extraits/eds_grappes_eau.csv")</span></span>
+<span id="cb3-283"><a href="#cb3-283" aria-hidden="true" tabindex="-1"></a><span class="in">cat("Grappes EDS :", nrow(grappes), "\n")</span></span>
+<span id="cb3-284"><a href="#cb3-284" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-285"><a href="#cb3-285" aria-hidden="true" tabindex="-1"></a><span class="in"># ORDRE c(longitude, latitude). L'inversion ne leve AUCUNE erreur : elle</span></span>
+<span id="cb3-286"><a href="#cb3-286" aria-hidden="true" tabindex="-1"></a><span class="in"># place simplement les points ailleurs. Le seul garde-fou est de tracer la</span></span>
+<span id="cb3-287"><a href="#cb3-287" aria-hidden="true" tabindex="-1"></a><span class="in"># couche immediatement apres l'avoir creee -- ce qu'on fait ci-dessous.</span></span>
+<span id="cb3-288"><a href="#cb3-288" aria-hidden="true" tabindex="-1"></a><span class="in">pts &lt;- st_as_sf(grappes[!is.na(grappes$lon), ],</span></span>
+<span id="cb3-289"><a href="#cb3-289" aria-hidden="true" tabindex="-1"></a><span class="in">                coords = c("lon", "lat"), crs = 4326, remove = FALSE)</span></span>
+<span id="cb3-290"><a href="#cb3-290" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-291"><a href="#cb3-291" aria-hidden="true" tabindex="-1"></a><span class="in">st_bbox(pts)</span></span>
+<span id="cb3-292"><a href="#cb3-292" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-293"><a href="#cb3-293" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-296"><a href="#cb3-296" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb3-297"><a href="#cb3-297" aria-hidden="true" tabindex="-1"></a><span class="in">ggplot() +</span></span>
+<span id="cb3-298"><a href="#cb3-298" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(data = regions, fill = "grey95", color = "white", linewidth = 0.3) +</span></span>
+<span id="cb3-299"><a href="#cb3-299" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(data = pts, aes(size = n_menages, color = tx_eau_amelioree),</span></span>
+<span id="cb3-300"><a href="#cb3-300" aria-hidden="true" tabindex="-1"></a><span class="in">          alpha = 0.75) +</span></span>
+<span id="cb3-301"><a href="#cb3-301" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_color_viridis_c(option = "D", name = "Source d'eau\naméliorée (%)") +</span></span>
+<span id="cb3-302"><a href="#cb3-302" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_size_continuous(range = c(0.6, 3), name = "Ménages\nenquêtés") +</span></span>
+<span id="cb3-303"><a href="#cb3-303" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(title = "430 grappes EDS-MICS 2018 sur les 10 régions",</span></span>
+<span id="cb3-304"><a href="#cb3-304" aria-hidden="true" tabindex="-1"></a><span class="in">       subtitle = "Couleur = accès à une source améliorée (déf. JMP) ; taille = nombre de ménages enquêtés",</span></span>
+<span id="cb3-305"><a href="#cb3-305" aria-hidden="true" tabindex="-1"></a><span class="in">       caption = "Source : EDS-MICS 2018 (DHS) · GADM 4.1 · IFORD × GDSG 2026") +</span></span>
+<span id="cb3-306"><a href="#cb3-306" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal() +</span></span>
+<span id="cb3-307"><a href="#cb3-307" aria-hidden="true" tabindex="-1"></a><span class="in">  theme(axis.text = element_blank(), axis.ticks = element_blank(),</span></span>
+<span id="cb3-308"><a href="#cb3-308" aria-hidden="true" tabindex="-1"></a><span class="in">        panel.grid = element_blank())</span></span>
+<span id="cb3-309"><a href="#cb3-309" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-310"><a href="#cb3-310" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-311"><a href="#cb3-311" aria-hidden="true" tabindex="-1"></a>::: {.iford-callout}</span>
+<span id="cb3-312"><a href="#cb3-312" aria-hidden="true" tabindex="-1"></a>**Ce que la figure code.** Chaque point est une **grappe** d'enquête (l'unité primaire de</span>
+<span id="cb3-313"><a href="#cb3-313" aria-hidden="true" tabindex="-1"></a>sondage), pas un ménage ni un village. La couleur encode la part pondérée des ménages de la</span>
+<span id="cb3-314"><a href="#cb3-314" aria-hidden="true" tabindex="-1"></a>grappe utilisant une **source améliorée au sens du JMP** (OMS/UNICEF) : réseau,</span>
+<span id="cb3-315"><a href="#cb3-315" aria-hidden="true" tabindex="-1"></a>borne-fontaine, forage, puits ou source protégée, eau de pluie, eau en bouteille. **Ce n'est</span>
+<span id="cb3-316"><a href="#cb3-316" aria-hidden="true" tabindex="-1"></a>pas « eau potable »** — la définition porte sur le *type d'ouvrage*, pas sur la qualité</span>
+<span id="cb3-317"><a href="#cb3-317" aria-hidden="true" tabindex="-1"></a>mesurée de l'eau ni sur la continuité du service. La taille encode l'effectif enquêté :</span>
+<span id="cb3-318"><a href="#cb3-318" aria-hidden="true" tabindex="-1"></a>elle dit la **précision locale**, pas l'importance du lieu.</span>
+<span id="cb3-319"><a href="#cb3-319" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-320"><a href="#cb3-320" aria-hidden="true" tabindex="-1"></a>**Ce qui se lit.** Les points ne couvrent pas le territoire uniformément. C'est un</span>
+<span id="cb3-321"><a href="#cb3-321" aria-hidden="true" tabindex="-1"></a>enseignement à part entière : **les trous d'échantillonnage se voient sur une carte, jamais</span>
+<span id="cb3-322"><a href="#cb3-322" aria-hidden="true" tabindex="-1"></a>dans un tableau**. Un tableau régional de 10 lignes ne laisse pas soupçonner que des pans</span>
+<span id="cb3-323"><a href="#cb3-323" aria-hidden="true" tabindex="-1"></a>entiers du pays ne portent aucune observation.</span>
+<span id="cb3-324"><a href="#cb3-324" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-325"><a href="#cb3-325" aria-hidden="true" tabindex="-1"></a>**Ce qui ne se lit pas.** Les positions ne sont **pas** exactement celles de l'enquête : le</span>
+<span id="cb3-326"><a href="#cb3-326" aria-hidden="true" tabindex="-1"></a>DHS déplace aléatoirement chaque grappe — 2 km en urbain, 5 km en rural, 10 km pour 1 % des</span>
+<span id="cb3-327"><a href="#cb3-327" aria-hidden="true" tabindex="-1"></a>grappes rurales — afin de protéger la confidentialité des ménages. Conséquence directe : un</span>
+<span id="cb3-328"><a href="#cb3-328" aria-hidden="true" tabindex="-1"></a>point peut tomber dans le mauvais district, voire hors du pays. À l'échelle régionale c'est</span>
+<span id="cb3-329"><a href="#cb3-329" aria-hidden="true" tabindex="-1"></a>sans effet ; à l'échelle d'une unité de quelques kilomètres, l'affectation devient</span>
+<span id="cb3-330"><a href="#cb3-330" aria-hidden="true" tabindex="-1"></a>incertaine. On ne supprime jamais ces grappes — elles portent de vrais ménages enquêtés —</span>
+<span id="cb3-331"><a href="#cb3-331" aria-hidden="true" tabindex="-1"></a>on les **recale** sur l'unité la plus proche et **on trace le recalage** (colonne dédiée</span>
+<span id="cb3-332"><a href="#cb3-332" aria-hidden="true" tabindex="-1"></a>dans le script d'extraction).</span>
+<span id="cb3-333"><a href="#cb3-333" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb3-334"><a href="#cb3-334" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-335"><a href="#cb3-335" aria-hidden="true" tabindex="-1"></a><span class="fu">## 7. Changer de maille : le MAUP, en deux cartes du même phénomène</span></span>
+<span id="cb3-336"><a href="#cb3-336" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-339"><a href="#cb3-339" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb3-340"><a href="#cb3-340" aria-hidden="true" tabindex="-1"></a><span class="in">#| autorun: true</span></span>
+<span id="cb3-341"><a href="#cb3-341" aria-hidden="true" tabindex="-1"></a><span class="in">districts &lt;- read_sf("_commons/data/J05_extraits/districts_sanitaires_J05.geojson")</span></span>
+<span id="cb3-342"><a href="#cb3-342" aria-hidden="true" tabindex="-1"></a><span class="in">cat("Districts sanitaires :", nrow(districts),</span></span>
+<span id="cb3-343"><a href="#cb3-343" aria-hidden="true" tabindex="-1"></a><span class="in">    "| renseignés :", sum(!is.na(districts$tx_eau_amelioree)),</span></span>
+<span id="cb3-344"><a href="#cb3-344" aria-hidden="true" tabindex="-1"></a><span class="in">    "| fiables (&gt;= 3 grappes) :", sum(districts$fiable), "\n")</span></span>
+<span id="cb3-345"><a href="#cb3-345" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-346"><a href="#cb3-346" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-349"><a href="#cb3-349" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb3-350"><a href="#cb3-350" aria-hidden="true" tabindex="-1"></a><span class="in">ggplot(districts) +</span></span>
+<span id="cb3-351"><a href="#cb3-351" aria-hidden="true" tabindex="-1"></a><span class="in">  # Les districts sans grappe restent GRIS : ils ne sont pas "a zero",</span></span>
+<span id="cb3-352"><a href="#cb3-352" aria-hidden="true" tabindex="-1"></a><span class="in">  # ils sont NON MESURES. na.value le dit explicitement.</span></span>
+<span id="cb3-353"><a href="#cb3-353" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(aes(fill = tx_eau_amelioree), color = "white", linewidth = 0.15) +</span></span>
+<span id="cb3-354"><a href="#cb3-354" aria-hidden="true" tabindex="-1"></a><span class="in">  # Les districts reposant sur moins de 3 grappes sont soulignes : le seuil</span></span>
+<span id="cb3-355"><a href="#cb3-355" aria-hidden="true" tabindex="-1"></a><span class="in">  # est DECLARE dans le code, pas subi.</span></span>
+<span id="cb3-356"><a href="#cb3-356" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(data = subset(districts, !fiable &amp; !is.na(tx_eau_amelioree)),</span></span>
+<span id="cb3-357"><a href="#cb3-357" aria-hidden="true" tabindex="-1"></a><span class="in">          fill = NA, color = "grey20", linewidth = 0.4, linetype = "dotted") +</span></span>
+<span id="cb3-358"><a href="#cb3-358" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_fill_viridis_c(option = "D", name = "Source d'eau\naméliorée (%)",</span></span>
+<span id="cb3-359"><a href="#cb3-359" aria-hidden="true" tabindex="-1"></a><span class="in">                       na.value = "grey88") +</span></span>
+<span id="cb3-360"><a href="#cb3-360" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(title = "Accès à une source améliorée — 200 districts sanitaires",</span></span>
+<span id="cb3-361"><a href="#cb3-361" aria-hidden="true" tabindex="-1"></a><span class="in">       subtitle = "Gris = aucune grappe enquêtée · pointillé = moins de 3 grappes",</span></span>
+<span id="cb3-362"><a href="#cb3-362" aria-hidden="true" tabindex="-1"></a><span class="in">       caption = "Source : EDS-MICS 2018 · DHIS2 MINSANTE · IFORD × GDSG 2026") +</span></span>
+<span id="cb3-363"><a href="#cb3-363" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal() +</span></span>
+<span id="cb3-364"><a href="#cb3-364" aria-hidden="true" tabindex="-1"></a><span class="in">  theme(axis.text = element_blank(), axis.ticks = element_blank(),</span></span>
+<span id="cb3-365"><a href="#cb3-365" aria-hidden="true" tabindex="-1"></a><span class="in">        panel.grid = element_blank())</span></span>
+<span id="cb3-366"><a href="#cb3-366" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-367"><a href="#cb3-367" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-370"><a href="#cb3-370" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb3-371"><a href="#cb3-371" aria-hidden="true" tabindex="-1"></a><span class="in"># Le MEME indicateur, la MEME donnee source, agrege a la maille REGIONALE.</span></span>
+<span id="cb3-372"><a href="#cb3-372" aria-hidden="true" tabindex="-1"></a><span class="in">ggplot(regions) +</span></span>
+<span id="cb3-373"><a href="#cb3-373" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(aes(fill = tx_eau_amelioree), color = "white", linewidth = 0.3) +</span></span>
+<span id="cb3-374"><a href="#cb3-374" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf_text(aes(label = NAME_1), size = 2.3, colour = "grey15") +</span></span>
+<span id="cb3-375"><a href="#cb3-375" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_fill_viridis_c(option = "D", name = "Source d'eau\naméliorée (%)",</span></span>
+<span id="cb3-376"><a href="#cb3-376" aria-hidden="true" tabindex="-1"></a><span class="in">                       na.value = "grey88") +</span></span>
+<span id="cb3-377"><a href="#cb3-377" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(title = "Le même indicateur, agrégé aux 10 régions",</span></span>
+<span id="cb3-378"><a href="#cb3-378" aria-hidden="true" tabindex="-1"></a><span class="in">       subtitle = "Même donnée, même pondération — autre maille, autre carte",</span></span>
+<span id="cb3-379"><a href="#cb3-379" aria-hidden="true" tabindex="-1"></a><span class="in">       caption = "Source : EDS-MICS 2018 · GADM 4.1 · IFORD × GDSG 2026") +</span></span>
+<span id="cb3-380"><a href="#cb3-380" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal() +</span></span>
+<span id="cb3-381"><a href="#cb3-381" aria-hidden="true" tabindex="-1"></a><span class="in">  theme(axis.text = element_blank(), axis.ticks = element_blank(),</span></span>
+<span id="cb3-382"><a href="#cb3-382" aria-hidden="true" tabindex="-1"></a><span class="in">        panel.grid = element_blank())</span></span>
+<span id="cb3-383"><a href="#cb3-383" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-384"><a href="#cb3-384" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-385"><a href="#cb3-385" aria-hidden="true" tabindex="-1"></a>::: {.callout-important}</span>
+<span id="cb3-386"><a href="#cb3-386" aria-hidden="true" tabindex="-1"></a><span class="fu">## Le MAUP — *Modifiable Areal Unit Problem*</span></span>
+<span id="cb3-387"><a href="#cb3-387" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-388"><a href="#cb3-388" aria-hidden="true" tabindex="-1"></a>**Ce que les deux figures codent.** Rigoureusement la même grandeur, calculée sur les mêmes</span>
+<span id="cb3-389"><a href="#cb3-389" aria-hidden="true" tabindex="-1"></a>430 grappes, avec la même pondération. **Seule la maille d'agrégation change** : 200</span>
+<span id="cb3-390"><a href="#cb3-390" aria-hidden="true" tabindex="-1"></a>districts sanitaires d'un côté, 10 régions administratives de l'autre.</span>
+<span id="cb3-391"><a href="#cb3-391" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-392"><a href="#cb3-392" aria-hidden="true" tabindex="-1"></a>**Ce qui se lit.** Les deux cartes ne racontent pas la même chose. L'amplitude des valeurs</span>
+<span id="cb3-393"><a href="#cb3-393" aria-hidden="true" tabindex="-1"></a>se réduit en montant d'échelle — l'agrégation moyenne, donc lisse. Des contrastes locaux</span>
+<span id="cb3-394"><a href="#cb3-394" aria-hidden="true" tabindex="-1"></a>visibles au district disparaissent dans la région ; inversement, la carte régionale offre</span>
+<span id="cb3-395"><a href="#cb3-395" aria-hidden="true" tabindex="-1"></a>une lecture d'ensemble que les 200 polygones brouillent.</span>
+<span id="cb3-396"><a href="#cb3-396" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-397"><a href="#cb3-397" aria-hidden="true" tabindex="-1"></a>**Ce qu'il faut en retenir.** **Aucune maille n'est neutre**, et il n'existe pas de maille</span>
+<span id="cb3-398"><a href="#cb3-398" aria-hidden="true" tabindex="-1"></a>« vraie ». Le MAUP a deux composantes : l'effet d'**échelle** (le résultat change avec la</span>
+<span id="cb3-399"><a href="#cb3-399" aria-hidden="true" tabindex="-1"></a>finesse du découpage) et l'effet de **zonage** (à finesse égale, un autre tracé donne un</span>
+<span id="cb3-400"><a href="#cb3-400" aria-hidden="true" tabindex="-1"></a>autre résultat). La règle pratique : **choisir la maille de la décision qu'on éclaire**. Une</span>
+<span id="cb3-401"><a href="#cb3-401" aria-hidden="true" tabindex="-1"></a>politique d'adduction d'eau se pilote par district sanitaire, pas par région — donc on</span>
+<span id="cb3-402"><a href="#cb3-402" aria-hidden="true" tabindex="-1"></a>cartographie par district, en assumant les trous. Un arbitrage budgétaire entre régions se</span>
+<span id="cb3-403"><a href="#cb3-403" aria-hidden="true" tabindex="-1"></a>lit à la région.</span>
+<span id="cb3-404"><a href="#cb3-404" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-405"><a href="#cb3-405" aria-hidden="true" tabindex="-1"></a>**Ce qui ne se lit toujours pas.** Sur la carte des districts, les zones grises. 430</span>
+<span id="cb3-406"><a href="#cb3-406" aria-hidden="true" tabindex="-1"></a>grappes pour 200 districts, ce sont, en pratique, **de nombreux districts sans aucune</span>
+<span id="cb3-407"><a href="#cb3-407" aria-hidden="true" tabindex="-1"></a>observation**. Un polygone gris n'est pas « à zéro » : il est **non mesuré**. Et les</span>
+<span id="cb3-408"><a href="#cb3-408" aria-hidden="true" tabindex="-1"></a>districts en pointillé reposent sur moins de trois grappes : leur couleur est une estimation</span>
+<span id="cb3-409"><a href="#cb3-409" aria-hidden="true" tabindex="-1"></a>très instable, qu'un seul ménage supplémentaire ferait bouger.</span>
+<span id="cb3-410"><a href="#cb3-410" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb3-411"><a href="#cb3-411" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-412"><a href="#cb3-412" aria-hidden="true" tabindex="-1"></a><span class="fu">## 8. Superposer deux échelles — l'antidote à l'erreur écologique</span></span>
+<span id="cb3-413"><a href="#cb3-413" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-416"><a href="#cb3-416" aria-hidden="true" tabindex="-1"></a><span class="in">```{webr}</span></span>
+<span id="cb3-417"><a href="#cb3-417" aria-hidden="true" tabindex="-1"></a><span class="in">ggplot() +</span></span>
+<span id="cb3-418"><a href="#cb3-418" aria-hidden="true" tabindex="-1"></a><span class="in">  # Fond : la pauvrete regionale, le CONTEXTE.</span></span>
+<span id="cb3-419"><a href="#cb3-419" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(data = regions, aes(fill = tx_pauvrete_pond),</span></span>
+<span id="cb3-420"><a href="#cb3-420" aria-hidden="true" tabindex="-1"></a><span class="in">          color = "white", linewidth = 0.3, alpha = 0.85) +</span></span>
+<span id="cb3-421"><a href="#cb3-421" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_fill_viridis_c(option = "B", direction = -1,</span></span>
+<span id="cb3-422"><a href="#cb3-422" aria-hidden="true" tabindex="-1"></a><span class="in">                       name = "Pauvreté\nrégionale (%)", na.value = "grey85") +</span></span>
+<span id="cb3-423"><a href="#cb3-423" aria-hidden="true" tabindex="-1"></a><span class="in">  # Points : la mesure LOCALE, sur une autre enquete et une autre annee.</span></span>
+<span id="cb3-424"><a href="#cb3-424" aria-hidden="true" tabindex="-1"></a><span class="in">  geom_sf(data = pts, aes(size = n_menages), shape = 21,</span></span>
+<span id="cb3-425"><a href="#cb3-425" aria-hidden="true" tabindex="-1"></a><span class="in">          fill = "white", color = "grey20", stroke = 0.3, alpha = 0.8) +</span></span>
+<span id="cb3-426"><a href="#cb3-426" aria-hidden="true" tabindex="-1"></a><span class="in">  scale_size_continuous(range = c(0.4, 2.6), name = "Ménages\nenquêtés") +</span></span>
+<span id="cb3-427"><a href="#cb3-427" aria-hidden="true" tabindex="-1"></a><span class="in">  labs(title = "Deux échelles sur une même page",</span></span>
+<span id="cb3-428"><a href="#cb3-428" aria-hidden="true" tabindex="-1"></a><span class="in">       subtitle = "Fond : pauvreté régionale (ECAM5, non citable) · Points : grappes EDS 2018",</span></span>
+<span id="cb3-429"><a href="#cb3-429" aria-hidden="true" tabindex="-1"></a><span class="in">       caption = "Sources : ECAM5 2021-2022 (extrait) · EDS-MICS 2018 · IFORD × GDSG 2026") +</span></span>
+<span id="cb3-430"><a href="#cb3-430" aria-hidden="true" tabindex="-1"></a><span class="in">  theme_minimal() +</span></span>
+<span id="cb3-431"><a href="#cb3-431" aria-hidden="true" tabindex="-1"></a><span class="in">  theme(axis.text = element_blank(), axis.ticks = element_blank(),</span></span>
+<span id="cb3-432"><a href="#cb3-432" aria-hidden="true" tabindex="-1"></a><span class="in">        panel.grid = element_blank())</span></span>
+<span id="cb3-433"><a href="#cb3-433" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-434"><a href="#cb3-434" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-435"><a href="#cb3-435" aria-hidden="true" tabindex="-1"></a>::: {.iford-callout}</span>
+<span id="cb3-436"><a href="#cb3-436" aria-hidden="true" tabindex="-1"></a>**Ce que la figure code.** Deux couches d'information à deux échelles : un fond agrégé</span>
+<span id="cb3-437"><a href="#cb3-437" aria-hidden="true" tabindex="-1"></a>(région) et des points d'observation (grappe). Le fond donne le contexte, les points</span>
+<span id="cb3-438"><a href="#cb3-438" aria-hidden="true" tabindex="-1"></a>montrent **où la mesure a effectivement eu lieu**.</span>
+<span id="cb3-439"><a href="#cb3-439" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-440"><a href="#cb3-440" aria-hidden="true" tabindex="-1"></a>**En quoi le spatial apporte ici ce qu'aucun tableau ne contient.** La superposition rend</span>
+<span id="cb3-441"><a href="#cb3-441" aria-hidden="true" tabindex="-1"></a>visible l'**hétérogénéité interne** de chaque polygone du fond, et c'est la meilleure</span>
+<span id="cb3-442"><a href="#cb3-442" aria-hidden="true" tabindex="-1"></a>protection contre l'**erreur écologique** : on voit d'un coup d'œil qu'une région d'une seule</span>
+<span id="cb3-443"><a href="#cb3-443" aria-hidden="true" tabindex="-1"></a>couleur abrite des grappes très dissemblables, et que certaines parties de la région ne</span>
+<span id="cb3-444"><a href="#cb3-444" aria-hidden="true" tabindex="-1"></a>sont pas observées du tout. Un tableau à deux colonnes « région / taux » ne peut rien dire</span>
+<span id="cb3-445"><a href="#cb3-445" aria-hidden="true" tabindex="-1"></a>de cela.</span>
+<span id="cb3-446"><a href="#cb3-446" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-447"><a href="#cb3-447" aria-hidden="true" tabindex="-1"></a>**Ce qui ne se lit pas — et c'est essentiel.** Les deux couches **ne se comparent pas</span>
+<span id="cb3-448"><a href="#cb3-448" aria-hidden="true" tabindex="-1"></a>directement**. ECAM5 (INS, 2021-2022) et l'EDS-MICS (DHS, 2018) n'ont ni le même échantillon,</span>
+<span id="cb3-449"><a href="#cb3-449" aria-hidden="true" tabindex="-1"></a>ni le même questionnaire, ni la même année ; les indicateurs eux-mêmes diffèrent (pauvreté</span>
+<span id="cb3-450"><a href="#cb3-450" aria-hidden="true" tabindex="-1"></a>monétaire d'un côté, accès à l'eau de l'autre). Cette figure met deux géographies en regard</span>
+<span id="cb3-451"><a href="#cb3-451" aria-hidden="true" tabindex="-1"></a>— elle **n'établit aucune relation** entre les deux grandeurs, et encore moins une causalité.</span>
+<span id="cb3-452"><a href="#cb3-452" aria-hidden="true" tabindex="-1"></a>Le seul niveau où l'on peut honnêtement les rapprocher est la région, et sous réserve de les</span>
+<span id="cb3-453"><a href="#cb3-453" aria-hidden="true" tabindex="-1"></a>ramener au même découpage.</span>
+<span id="cb3-454"><a href="#cb3-454" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb3-455"><a href="#cb3-455" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-456"><a href="#cb3-456" aria-hidden="true" tabindex="-1"></a><span class="fu">## 9. Ce qui reste sous RStudio</span></span>
+<span id="cb3-457"><a href="#cb3-457" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-458"><a href="#cb3-458" aria-hidden="true" tabindex="-1"></a>Trois choses ne peuvent pas se faire dans un navigateur. Elles se trouvent dans</span>
+<span id="cb3-459"><a href="#cb3-459" aria-hidden="true" tabindex="-1"></a><span class="in">`demo_formateur_J05.qmd`</span>, exécutable avec R installé.</span>
+<span id="cb3-460"><a href="#cb3-460" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-461"><a href="#cb3-461" aria-hidden="true" tabindex="-1"></a><span class="in">```r</span></span>
+<span id="cb3-462"><a href="#cb3-462" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Lecture seule : RStudio desktop uniquement.</span></span>
+<span id="cb3-463"><a href="#cb3-463" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-464"><a href="#cb3-464" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. La chaine complete a partir des binaires : 72 Mo de SPSS, plus de</span></span>
+<span id="cb3-465"><a href="#cb3-465" aria-hidden="true" tabindex="-1"></a><span class="co">#    4 000 colonnes -- on ne demande QUE les variables utiles.</span></span>
+<span id="cb3-466"><a href="#cb3-466" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(haven); <span class="fu">library</span>(sf); <span class="fu">library</span>(dplyr)</span>
+<span id="cb3-467"><a href="#cb3-467" aria-hidden="true" tabindex="-1"></a>noms_sav <span class="ot">&lt;-</span> <span class="fu">names</span>(<span class="fu">read_sav</span>(<span class="st">"datasets/CMHR71FL.SAV"</span>, <span class="at">n_max =</span> <span class="dv">0</span>))</span>
+<span id="cb3-468"><a href="#cb3-468" aria-hidden="true" tabindex="-1"></a>vars     <span class="ot">&lt;-</span> noms_sav[<span class="fu">match</span>(<span class="fu">toupper</span>(<span class="fu">c</span>(<span class="st">"hv001"</span>,<span class="st">"hv005"</span>,<span class="st">"hv201"</span>)), <span class="fu">toupper</span>(noms_sav))]</span>
+<span id="cb3-469"><a href="#cb3-469" aria-hidden="true" tabindex="-1"></a>hr <span class="ot">&lt;-</span> <span class="fu">read_sav</span>(<span class="st">"datasets/CMHR71FL.SAV"</span>, <span class="at">col_select =</span> <span class="fu">all_of</span>(<span class="fu">na.omit</span>(vars)))</span>
+<span id="cb3-470"><a href="#cb3-470" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-471"><a href="#cb3-471" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. La jointure spatiale et le recalage des points orphelins.</span></span>
+<span id="cb3-472"><a href="#cb3-472" aria-hidden="true" tabindex="-1"></a><span class="co">#    st_join(x, y) renvoie TOUJOURS la geometrie de x, enrichie des</span></span>
+<span id="cb3-473"><a href="#cb3-473" aria-hidden="true" tabindex="-1"></a><span class="co">#    attributs de y : on part de ce qu'on veut garder.</span></span>
+<span id="cb3-474"><a href="#cb3-474" aria-hidden="true" tabindex="-1"></a>pts_ds <span class="ot">&lt;-</span> <span class="fu">st_join</span>(pts, ds_sante, <span class="at">join =</span> st_within)</span>
+<span id="cb3-475"><a href="#cb3-475" aria-hidden="true" tabindex="-1"></a>orphelins <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="fu">is.na</span>(pts_ds<span class="sc">$</span>ds_nom))</span>
+<span id="cb3-476"><a href="#cb3-476" aria-hidden="true" tabindex="-1"></a>j <span class="ot">&lt;-</span> <span class="fu">st_nearest_feature</span>(pts_ds[orphelins, ], ds_sante)   <span class="co"># on recale, on ne supprime pas</span></span>
+<span id="cb3-477"><a href="#cb3-477" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-478"><a href="#cb3-478" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. La cartographie tmap, avec ses ornements de publication.</span></span>
+<span id="cb3-479"><a href="#cb3-479" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tmap)</span>
+<span id="cb3-480"><a href="#cb3-480" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(ds_indicateurs) <span class="sc">+</span></span>
+<span id="cb3-481"><a href="#cb3-481" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="at">fill =</span> <span class="st">"tx_eau"</span>,</span>
+<span id="cb3-482"><a href="#cb3-482" aria-hidden="true" tabindex="-1"></a>              <span class="at">fill.scale =</span> <span class="fu">tm_scale_intervals</span>(<span class="at">style =</span> <span class="st">"quantile"</span>, <span class="at">n =</span> <span class="dv">5</span>),</span>
+<span id="cb3-483"><a href="#cb3-483" aria-hidden="true" tabindex="-1"></a>              <span class="at">fill.legend =</span> <span class="fu">tm_legend</span>(<span class="at">title =</span> <span class="st">"Eau améliorée (%)"</span>)) <span class="sc">+</span></span>
+<span id="cb3-484"><a href="#cb3-484" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_compass</span>() <span class="sc">+</span> <span class="fu">tm_scalebar</span>() <span class="sc">+</span></span>
+<span id="cb3-485"><a href="#cb3-485" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">title =</span> <span class="st">"Accès à l'eau améliorée par district sanitaire"</span>)</span>
+<span id="cb3-486"><a href="#cb3-486" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-487"><a href="#cb3-487" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-488"><a href="#cb3-488" aria-hidden="true" tabindex="-1"></a><span class="fu">## Checklist de fin de J05</span></span>
+<span id="cb3-489"><a href="#cb3-489" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-490"><a href="#cb3-490" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> Je sais dire **de quoi** je prends la moyenne (individus ou ménages) et pourquoi les</span>
+<span id="cb3-491"><a href="#cb3-491" aria-hidden="true" tabindex="-1"></a>      deux chiffres diffèrent — biais de taille.</span>
+<span id="cb3-492"><a href="#cb3-492" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> Je pondère à **chaque étage** d'agrégation : du ménage à la grappe, de la grappe au</span>
+<span id="cb3-493"><a href="#cb3-493" aria-hidden="true" tabindex="-1"></a>      district. La moyenne d'une moyenne n'est pas la moyenne.</span>
+<span id="cb3-494"><a href="#cb3-494" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> Je **confronte à une référence publiée** avant de cartographier, et je refuse de citer</span>
+<span id="cb3-495"><a href="#cb3-495" aria-hidden="true" tabindex="-1"></a>      ce qui ne passe pas le contrôle.</span>
+<span id="cb3-496"><a href="#cb3-496" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> Je laisse **gris** ce qui n'est pas mesuré, et je **signale** ce qui repose sur trop peu</span>
+<span id="cb3-497"><a href="#cb3-497" aria-hidden="true" tabindex="-1"></a>      d'observations, avec un seuil déclaré dans le code.</span>
+<span id="cb3-498"><a href="#cb3-498" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> Je sais nommer les trois pièges de la journée : **MAUP**, **erreur écologique**,</span>
+<span id="cb3-499"><a href="#cb3-499" aria-hidden="true" tabindex="-1"></a>      **biais de taille**.</span>
+<span id="cb3-500"><a href="#cb3-500" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-501"><a href="#cb3-501" aria-hidden="true" tabindex="-1"></a>**Demain (J06)** : l'art de la carte — discrétisation, palettes, habillage. La même donnée,</span>
+<span id="cb3-502"><a href="#cb3-502" aria-hidden="true" tabindex="-1"></a>quatre découpages en classes, quatre messages différents.</span>
+<span id="cb3-503"><a href="#cb3-503" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-504"><a href="#cb3-504" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">← Retour à l'accueil</span><span class="co">](../INDEX.md)</span></span>
+</code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

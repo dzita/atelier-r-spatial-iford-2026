@@ -1,0 +1,11 @@
+fichier,pays,unite_observation,produit_par,consomme_par
+J10_acled_adm1.geojson,Cameroun,region ADM1,pedagogie/_commons/data/J10_extraits/00_extraire_J10.R,pedagogie/J10_politiques_publiques/runtime.qmd
+J10_acled_annuel_region.csv,Cameroun,region x annee,pedagogie/_commons/data/J10_extraits/00_extraire_J10.R,pedagogie/J10_politiques_publiques/runtime.qmd
+J10_acled_types_annuel.csv,Cameroun,annee x type,pedagogie/_commons/data/J10_extraits/00_extraire_J10.R,pedagogie/J10_politiques_publiques/runtime.qmd
+J10_acled_points.geojson,Cameroun,evenement,pedagogie/_commons/data/J10_extraits/00_extraire_J10.R,pedagogie/J10_politiques_publiques/runtime.qmd
+J10_era5_national_mensuel.csv,Cameroun,mois,pedagogie/_commons/data/J10_extraits/00_extraire_J10.R,pedagogie/J10_politiques_publiques/runtime.qmd
+J10_era5_regional_mensuel.csv,Cameroun,region x mois,pedagogie/_commons/data/J10_extraits/00_extraire_J10.R,pedagogie/J10_politiques_publiques/runtime.qmd
+J10_era5_adm1.geojson,Cameroun,region ADM1,pedagogie/_commons/data/J10_extraits/00_extraire_J10.R,pedagogie/J10_politiques_publiques/runtime.qmd
+J10_benin_communes_sae.geojson,Benin,commune,pedagogie/_commons/data/J10_extraits/00_extraire_J10.R,pedagogie/J10_politiques_publiques/runtime.qmd
+J10_benin_sae_communes.csv,Benin,commune,pedagogie/_commons/data/J10_extraits/00_extraire_J10.R,pedagogie/J10_politiques_publiques/runtime.qmd
+J10_benin_grille_prediction.csv,Benin,cellule de 3 km,pedagogie/_commons/data/J10_extraits/00_extraire_J10.R,pedagogie/J10_politiques_publiques/runtime.qmd
