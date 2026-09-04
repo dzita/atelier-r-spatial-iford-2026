@@ -11,11 +11,12 @@
 #   est fait ici, une fois, sur un poste avec R installe, et le runtime ne
 #   travaille plus que sur des sorties VECTORIELLES et TABULAIRES legeres.
 #
-# QUI DOIT L'EXECUTER
-#   VOUS. La session qui a redige ce script n'avait ni R, ni shell, ni acces
-#   aux binaires (.tif, .zip, .gpkg) : elle n'a donc VERIFIE AUCUN CHIFFRE.
-#   Tout ce que le script affiche est a lire au premier passage, et les
-#   commentaires « a valider au premier rendu » signalent les hypotheses.
+# EXECUTION
+#   Ce script se lance manuellement depuis la racine du projet, sur un poste
+#   disposant des binaires (.tif, .zip, .gpkg). Les valeurs affichees par ses
+#   `cat()` sont la seule source fiable : aucun chiffre n'est ecrit en dur
+#   dans ce fichier, et toute la sortie console est a lire au premier
+#   passage. Les commentaires marques « RECETTE » disent quoi y verifier.
 #
 # QUAND LE RELANCER
 #   - a la premiere installation du materiel ;

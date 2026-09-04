@@ -1,13 +1,13 @@
-# À faire sur le poste — J08
+# Points de contrôle au rendu — J08
 
-> Rédigé le 31/08/2026 par la session de réécriture du J08.
-> **Le shell Linux du conteneur ne démarrait pas** : aucune exécution de R,
-> aucun rendu Quarto, aucune ouverture de fichier binaire n'a été possible.
-> Tout ce qui suit demande la machine de l'utilisateur.
+> Procédure de recette de la journée J08. Elle liste, dans l'ordre, ce qui a
+> déjà été contrôlé statiquement, ce qui demande une exécution réelle sur le
+> poste de salle, et les hypothèses faites sur les données qui doivent être
+> confirmées au premier rendu.
 
 ---
 
-## 1. Contrôles déjà passés (par expression régulière, sans exécution)
+## 1. Contrôles statiques déjà passés
 
 | Contrôle | Résultat |
 |---|---|
@@ -30,19 +30,18 @@ Longueurs des fichiers écrits :
 `scripts/script_etudiant_J08.R` 1 241 l. · `install_packages_day.R` 130 l. ·
 `README.md` 195 l. · `datasets/LISEZMOI.md` 194 l.
 
-> Le `.qmd` dépasse la fourchette de 1 500 à 2 200 lignes qui avait été
-> indiquée : 2 986 lignes. L'excédent vient des encadrés d'interprétation en
-> quatre temps (§4.1), qui sont longs par construction, et des sections de fin
-> de journée (glossaire, fonctions clés, huit exercices, prolongements). Rien
-> n'a été ajouté hors cahier des charges ; si la longueur pose problème, la
-> coupe la moins coûteuse serait de renvoyer le glossaire vers un fichier
-> `GLOSSAIRE_J08.md` séparé.
+> Le `.qmd` dépasse la fourchette de référence de 1 500 à 2 200 lignes : il en
+> compte 2 986. L'excédent vient des encadrés d'interprétation en quatre temps
+> (§4.1), longs par construction, et des sections de fin de journée (glossaire,
+> fonctions clés, huit exercices, prolongements). Tout y relève du cahier des
+> charges ; si la longueur pose problème, la coupe la moins coûteuse consiste à
+> renvoyer le glossaire vers un fichier `GLOSSAIRE_J08.md` séparé.
 
 ---
 
-## 2. Ce qui reste à vérifier **par exécution**
+## 2. Ce qui se vérifie **par exécution**
 
-Rien de ce qui suit n'a pu être testé. Ordre recommandé.
+Ces contrôles demandent R et Quarto sur le poste de salle. Ordre recommandé.
 
 1. **Contrôle de syntaxe des trois scripts**, avant toute autre chose :
 
@@ -86,11 +85,12 @@ Rien de ce qui suit n'a pu être testé. Ordre recommandé.
 
 ---
 
-## 3. Hypothèses faites faute de pouvoir ouvrir les données
+## 3. Hypothèses sur les données, à confirmer au premier rendu
 
-Aucun fichier binaire ni CSV n'a pu être lu. Chaque hypothèse ci-dessous est
-**protégée dans le code** (par `any_of()`, `intersect()`, un test `if`, ou un
-`cat()` de contrôle), mais elle doit être confirmée au premier rendu.
+Le code ne fait aucune supposition silencieuse sur la structure des fichiers :
+chaque hypothèse ci-dessous est **protégée** (par `any_of()`, `intersect()`, un
+test `if`, ou un `cat()` de contrôle). La protection évite l'erreur brutale,
+elle ne remplace pas la confirmation : lire les compteurs au premier rendu.
 
 ### 3.1 `cmr_admpop_adm1_2025.csv`
 
@@ -106,7 +106,7 @@ Aucun fichier binaire ni CSV n'a pu être lu. Chaque hypothèse ci-dessous est
 **Quelle colonne apparie GADM ?** Le script source d'origine joignait sur
 `ADM1_FR`, mais utilisait `ADM1_EN` (« Centre », « Adamawa ») pour filtrer les
 régions du module « structure par âge » — les deux usages sont contradictoires.
-Faute de pouvoir trancher, **le code ne choisit pas** : il compte les
+Plutôt que d'arbitrer a priori, **le code ne choisit pas** : il compte les
 appariements des deux candidates contre `NAME_1` et retient celle qui gagne, en
 imprimant le décompte. C'est plus robuste que l'original, mais **il faut lire ce
 décompte au premier rendu** : si les deux valent 0, ni l'une ni l'autre
@@ -152,8 +152,8 @@ n'apparie et une table de correspondance manuelle devient nécessaire.
   et retenir celui qui colle le mieux — puis mettre à jour le glossaire, le
   `.qmd` et les trois scripts.
 - **L'emprise bbox du module 9** (11,48–11,58 E / 3,82–3,93 N) est reprise du
-  script source. Elle n'a pas pu être vérifiée sur fond satellite : contrôler
-  qu'elle tombe bien sur un secteur bâti de Yaoundé, et l'ajuster sinon.
+  script source. À contrôler sur fond satellite : vérifier qu'elle tombe bien
+  sur un secteur bâti de Yaoundé, et l'ajuster sinon.
 
 ---
 
@@ -180,8 +180,7 @@ del "script_etudiant_J8_corrige.R"
 
 `slides.qmd` (374 lignes) est le support de présentation de l'ancienne version.
 Il n'a **pas** été réécrit : la décision retenue est que les présentations
-restent les trois `.pptx` FR / EN / bilingue. Deux options, au choix de
-l'utilisateur :
+restent les trois `.pptx` FR / EN / bilingue. Deux options possibles :
 
 ```bat
 rem  option A -- le supprimer, les .pptx font foi
@@ -223,7 +222,7 @@ temporaire PowerPoint).
 
 ---
 
-## 5. Point à transmettre à l'agent qui écrit le script de copie
+## 5. Point d'attention pour le script de copie des données
 
 Les sept tuiles GHS-POP sont chargées par
 `list.files("datasets", pattern = "^GHS_POP_E2025.*\\.zip$", full.names = TRUE)`

@@ -1,14 +1,10 @@
-# À FAIRE — J09 (télédétection, bâti, inondations)
+# Points de contrôle au rendu — J09 (télédétection, bâti, inondations)
 
-> Rédigé le 31/08/2026, à la réécriture de la journée.
+> Procédure de recette de la journée J09, à dérouler sur le poste de salle avant
+> la séance : préparation des données, contrôles par exécution, hypothèses à
+> confirmer.
 >
-> **Contexte de rédaction, à connaître pour interpréter cette liste.** Ce matériel
-> a été écrit **sans accès à un shell et sans possibilité d'exécuter R** : aucun
-> `.zip`, `.tif`, `.gpkg`, `.shp`, `.pptx` ni `.pdf` n'a pu être ouvert, aucune
-> taille de fichier n'a pu être relevée, et **le `.qmd` n'a jamais été rendu**.
-> Tout ce qui suit relève donc de la vérification côté poste, avant la séance.
->
-> Le matériel a été écrit défensivement : les colonnes sont testées avant usage,
+> Le matériel est écrit défensivement : les colonnes sont testées avant usage,
 > les lectures protégées par `file.exists()`, `error: true` est actif dans le YAML.
 > Un fichier absent ou une colonne manquante produira un message explicite plutôt
 > qu'un plantage. Cela ne dispense pas des vérifications ci-dessous.
@@ -72,11 +68,11 @@ usage en R), ni les couches `observedEventA`, `imageFootprintA`, `source`, ni le
 
 ---
 
-## 2. Contenus non vérifiables sans exécution
+## 2. Hypothèses sur les données, à confirmer par exécution
 
 ### 2.1 Contenu réel des archives GHS-BUILT
 
-**Non vérifié** : aucun `.zip` n'a été ouvert.
+**À contrôler en ouvrant une archive.**
 
 Le code suppose que chaque archive contient **un seul `.tif`**, trouvé par
 `list.files(tmp_dir, pattern = "\\.tif$", recursive = TRUE)[1]`. Si une archive en
@@ -119,7 +115,7 @@ ligne de code, et la journée gagnera la couverture du nord-ouest de l'emprise.
 
 ### 2.3 Champs de `open_buildings_yagoua.gpkg`
 
-**Non vérifié** : aucun `.gpkg` n'a été ouvert.
+**À contrôler à l'ouverture de la couche.**
 
 Le matériel suppose les colonnes `latitude`, `longitude`, `area_in_meters`,
 `confidence`, et une géométrie **polygonale** (empreintes). Chacune est testée avant
@@ -140,7 +136,7 @@ Contrôle rapide : `sf::st_layers("datasets/open_buildings_yagoua.gpkg")` puis
 
 ### 2.4 Emprise, CRS et résolution de `cmr_pop_2024_CN_100m_R2025A_v1.tif`
 
-**Non vérifié.**
+**À contrôler au premier rendu.**
 
 Hypothèses du matériel : couverture nationale complète, EPSG:4326, résolution
 d'environ 0,00083° (≈ 100 m à l'équateur). Le `.qmd` vérifie explicitement que la
@@ -157,7 +153,7 @@ la comparaison du module 7 est à revoir.
 
 ### 2.5 Couches de `gadm41_CMR.gpkg`
 
-**Non vérifié.**
+**À contrôler au premier rendu.**
 
 Le code lit `ADM_ADM_0`, `ADM_ADM_1` et `ADM_ADM_2`. Ces noms viennent du matériel
 source du J08, qui les utilise aussi. Le `.qmd` affiche `sf::st_layers()` avant toute
@@ -172,7 +168,7 @@ de **475 442 km²** en Mollweide.
 
 ### 2.6 Les couches EMSR772 elles-mêmes
 
-**Non vérifié.** Le matériel suppose une colonne `value` (classe de profondeur) dans
+**À contrôler au premier rendu.** Le matériel suppose une colonne `value` (classe de profondeur) dans
 `floodDepthA` et une colonne `locality` dans `areaOfInterestA`. Les deux sont testées
 avant usage (`intersect()` sur les noms, `%in% names()`), mais si `value` porte un
 autre nom (`obj_type`, `depth_class`…), toute la ventilation du module 6.3 et la
@@ -185,9 +181,9 @@ colonnes.
 
 ## 3. Budget de poids — arbitrage à faire
 
-**Aucune taille n'a pu être mesurée** (les outils disponibles ne les retournent pas).
-Toutes les tailles du `LISEZMOI.md` sont notées « n.d. ». C'est la première chose à
-relever côté poste.
+Toutes les tailles du `LISEZMOI.md` sont notées « n.d. » tant qu'elles n'ont pas été
+relevées sur le magasin central. C'est la première mesure à faire côté poste : sans
+elle, l'arbitrage ci-dessous ne peut pas être tranché.
 
 ### Le problème
 
@@ -302,18 +298,19 @@ Les blocs de référence `eval: false` des modules 1 et 2 utilisent délibérém
 `file.path("datasets", "...")` plutôt qu'un littéral, pour que l'outil de
 distribution ne cherche pas à copier des fichiers d'illustration inexistants.
 
-### 4.4 Ce qui n'a **pas** pu être contrôlé
+### 4.4 Ce qui demande une exécution réelle
 
-- **La syntaxe R des chunks** : ni `parse()` ni `Rscript` n'ont pu être exécutés.
-- **Le rendu du `.qmd`** : jamais lancé. Le nombre de callouts et de tableaux du HTML
-  n'a donc pas été comparé à ce qui a été écrit.
-- **L'affichage** : table des matières, images, entrées parasites — rien n'a été
-  regardé dans un navigateur.
+- **La syntaxe R des chunks** : passer `parse()` sur les trois scripts.
+- **Le rendu du `.qmd`** : comparer le nombre de callouts et de tableaux du HTML à
+  ce qui est écrit dans la source.
+- **L'affichage** : table des matières, images, entrées parasites — à regarder dans
+  un navigateur.
 - **L'exécution des trois scripts `.R`**.
 - **L'API tmap 4** : les appels `tm_raster(col.scale = tm_scale_intervals(...))` et
-  `tm_scale_categorical()` suivent la documentation de tmap 4 mais n'ont pas été
-  exécutés. C'est le point le plus fragile du matériel après les données elles-mêmes.
-  Repli si l'API a changé : remplacer la carte du module 7 par un `ggplot` +
+  `tm_scale_categorical()` suivent la documentation de tmap 4. C'est le point le plus
+  fragile du matériel après les données elles-mêmes, parce qu'un changement d'API s'y
+  traduit par une erreur au rendu et non par un avertissement. Repli si l'API a
+  changé : remplacer la carte du module 7 par un `ggplot` +
   `tidyterra::geom_spatraster()`, ou par `terra::plot()`.
 
 ---
@@ -368,8 +365,8 @@ del script_etudiant_J9.R
 del script_etudiant_J9_corrige.R
 ```
 
-`slides.qmd` : **à examiner avant de supprimer.** Il n'a pas été lu lors de cette
-réécriture. S'il contient de la matière non reprise dans les `.pptx`, le conserver ;
+`slides.qmd` : **à examiner avant de supprimer.** Il date de l'ancienne version de la
+journée. S'il contient de la matière non reprise dans les `.pptx`, le conserver ;
 sinon le retirer, les trois présentations le remplaçant.
 
 ```

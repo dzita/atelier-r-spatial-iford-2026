@@ -14,10 +14,10 @@
 
 # ---- Quarto ----------------------------------------------------------
 /_site/
-# CORRECTIF 01/09/2026 : la regle ci-dessus est ancree a la racine et ne
-# couvrait PAS pedagogie/_site/, qui contient encore le rendu de l'ancienne
-# arborescence (J01_intro_R_pensee_spatiale, J02_sf_CRS_vecteurs...).
-# Il serait parti dans Git et publie tel quel.
+# La regle ci-dessus est ancree a la racine et ne couvre PAS pedagogie/_site/,
+# qui peut contenir le rendu d'une arborescence anterieure
+# (J01_intro_R_pensee_spatiale, J02_sf_CRS_vecteurs...). Sans la ligne
+# suivante, ce rendu partirait dans Git et serait publie tel quel.
 pedagogie/_site/
 **/_site/
 /.quarto/
@@ -30,11 +30,11 @@ pedagogie/_site/
 pedagogie/**/*.html
 
 # =====================================================================
-# NOTES DE TRAVAIL DE LA CAMPAGNE DU 31/08 - 01/09/2026
+# NOTES DE TRAVAIL
 # ---------------------------------------------------------------------
-# Diagnostics produits pendant la reecriture : inventaires, cartographies,
-# controles, reconciliations. Ils ont servi a decider ; les decisions
-# sont desormais dans le code, dans les LISEZMOI et dans les procedures.
+# Diagnostics de preparation : inventaires, cartographies, controles,
+# reconciliations. Ils ont servi a arbitrer ; les arbitrages sont
+# consignes dans le code, dans les LISEZMOI et dans les procedures.
 # Les garder dans Git encombrerait la racine sans rien apporter a qui
 # clone le depot.
 #
@@ -45,29 +45,26 @@ pedagogie/**/*.html
 #   outils/A_RESTAURER.md        ce qu'il faut remettre et ou le trouver
 #   outils/menage_poste.md       les commandes del / ren a passer
 #   outils/menage_repo.md        le toilettage du depot
-#   pedagogie/J*/_A_FAIRE_J0X.md ce qu'il reste a verifier au rendu
+#   pedagogie/J*/_A_FAIRE_J0X.md la procedure de recette du premier rendu
 #
 # =====================================================================
-# DOCUMENTS DE METHODE -- IGNORES A LA DEMANDE DE L'UTILISATEUR
-# le 01/09/2026, apres qu'il a ete averti de ce que cela implique.
+# DOCUMENTS DE METHODE -- HORS DE GIT, EN CONNAISSANCE DE CAUSE
 # ---------------------------------------------------------------------
 # REGLES_MATERIEL_ATELIER.md est le referentiel de qualite : consignes,
 # protocole d'une journee, regles de correction du code, regles
 # pedagogiques, verification, livraison, fiches de donnees.
 # REPRISE_J06_J11.md est l'etat d'avancement, journee par journee.
-#
-# Le premier dit en tete : « Une session qui reprend le travail sur une
-# journee suivante n'a besoin que de ce fichier et de REPRISE_J06_J11.md. »
+# A eux deux, ils suffisent pour reprendre le travail sur une journee.
 #
 # HORS DE GIT, ILS N'EXISTENT QUE SUR CE POSTE. Un clone du depot ne les
 # aura pas : ni les regles, ni les fiches de donnees deja etablies, ni la
-# trace des decisions prises et de leurs raisons. Un collaborateur, ou
-# vous-meme sur une autre machine, repartirait sans methode.
+# trace des arbitrages et de leurs raisons. Un collaborateur, ou la meme
+# personne sur une autre machine, repartirait sans methode.
 # Ce sont par ailleurs les deux seuls fichiers ou sont consignes les
 # arbitrages -- NDVI non calculable, FIES substitue, Est d'ECAM5 non
 # citable, Benin assume au J10.
 #
-# SAUVEGARDEZ-LES AILLEURS. C'est desormais le seul filet.
+# ILS DOIVENT DONC ETRE SAUVEGARDES AILLEURS : c'est le seul filet.
 # Pour les remettre dans Git, retirer les deux lignes qui suivent.
 # =====================================================================
 /REGLES_MATERIEL_ATELIER.md
@@ -75,10 +72,9 @@ pedagogie/**/*.html
 
 /REVUE_J01_J05.md
 
-# Les deux procedures de cette campagne. Ignorees a la demande de
-# l'utilisateur le 01/09/2026, alors qu'elles n'ont pas encore ete
-# executees : elles restent sur le disque et gardent toute leur utilite
-# jusqu'au premier rendu et au premier deploiement.
+# Les deux procedures de mise en place. Hors de Git, mais elles restent
+# sur le disque et gardent toute leur utilite jusqu'au premier rendu et
+# au premier deploiement.
 # Leur contenu a vocation a etre fusionne dans REPRISE_J06_J11.md.
 /PROCEDURE_MISE_EN_PLACE.md
 /DEPLOIEMENT_SITE_WEBR.md
@@ -92,13 +88,11 @@ pedagogie/**/*.html
 /TACHES_RESTANTES.md
 pedagogie/_SITE_ETAT.md
 
-# Journal d'actualisation de juillet 2026 (campagne precedente, 22/07).
-# Ignore le 01/09/2026 a la demande de l'utilisateur.
+# Journal d'actualisation de juillet 2026.
 # Il documente une refonte du calendrier -- ajout d'un J0, cloture au
 # samedi 08/08 -- qui NE CORRESPOND PLUS a la structure actuelle : onze
 # journees J01 a J11, du 27/07 au 07/08. Le conserver dans Git aurait
-# entretenu la confusion sur la numerotation, precisement le point que
-# cette campagne a passe son temps a demeler.
+# entretenu la confusion sur la numerotation.
 pedagogie/MAJ_JUILLET_2026.md
 
 # ---- renv ------------------------------------------------------------
@@ -108,39 +102,37 @@ renv/staging/
 renv/python/
 renv/sandbox/
 
-# ---- Gros datasets — RÈGLES LEVÉES LE 01/09/2026 ---------------------
-# Ces exclusions ont été retirées : les données sont désormais
-# versionnées (décision utilisateur), via Git LFS. Le routage est dans
-# .gitattributes. Ne les remettez pas sans retirer aussi le routage LFS,
-# sinon les fichiers seraient suivis par LFS ET ignorés par Git — une
-# incohérence qui se manifeste par des pointeurs vides au clone.
+# ---- Gros datasets — PAS D'EXCLUSION PAR EXTENSION -------------------
+# Les données sont versionnées : aucune exclusion générique n'est posée
+# ici. Rétablir de telles règles suppose de vérifier d'abord le routage
+# de .gitattributes, sinon un fichier serait suivi par LFS ET ignoré par
+# Git — une incohérence qui se manifeste par des pointeurs vides au
+# clone.
 #
-# Anciennement exclus ici : *.tif *.tiff *.img *.nc *.hdf *.zip *.gz
-# *.tar *.7z *.shp *.shx *.dbf *.prj *.cpg *.sbx *.sbn *.qix
+# Motifs qui seraient concernés : *.tif *.tiff *.img *.nc *.hdf *.zip
+# *.gz *.tar *.7z *.shp *.shx *.dbf *.prj *.cpg *.sbx *.sbn *.qix
 
 # =====================================================================
-# RÈGLE STRUCTURANTE — révision du 01/09/2026
+# RÈGLE STRUCTURANTE — LES DONNÉES SONT VERSIONNÉES
 # ---------------------------------------------------------------------
-# Les sections « Données J7 / J8 / J9 » d'origine visaient l'ancienne
-# arborescence (jour_07_population/, jour_08_teledetection/,
-# jour_09_acled_era9/). CES DOSSIERS N'EXISTENT PLUS : la structure est
-# désormais pedagogie/J01_… à J11_…, chacun avec son datasets/.
+# La structure de référence est pedagogie/J01_… à J11_…, chacun avec son
+# datasets/. Toute règle visant une arborescence en jour_07_population/,
+# jour_08_teledetection/ ou jour_09_acled_era9/ serait sans effet : ces
+# dossiers n'existent pas.
 #
-# DÉCISION DE L'UTILISATEUR, 01/09/2026 : les données sont versionnées.
-# Le dépôt sert à la fois de sauvegarde et de base au test régulier des
-# runtimes. On versionne donc all_data/ ET les datasets/ des onze
-# journées, malgré la duplication (DS.geojson y figure sept fois,
-# gadm41_CMR.gpkg trois fois).
+# Les données sont versionnées : le dépôt sert à la fois de sauvegarde
+# et de base au test régulier des runtimes. On versionne donc all_data/,
+# et les datasets/ des journées sont reconstruits (voir plus bas).
 #
-# Cela n'est tenable qu'avec Git LFS : voir .gitattributes, qui route
-# .tif, .zip, .gpkg, .nc, .SAV, .dta et les corps de shapefile vers LFS.
-# GitHub refuse tout fichier de plus de 100 Mo hors LFS.
+# GitHub refuse tout fichier de plus de 100 Mo poussé en Git nu. Au-delà
+# de ce seuil, il faut soit réduire le fichier, soit passer par Git LFS
+# (motifs conservés en commentaire dans .gitattributes).
 # =====================================================================
 
 # =====================================================================
 # AU-DELA DE 100 Mo : REFUS SERVEUR DE GITHUB
 # ---------------------------------------------------------------------
-# Constate au premier push, le 01/09/2026 :
+# Constate au push :
 #   open_buildings_yagoua.gpkg  144,19 Mo  -> REJETE (limite dure 100 Mo)
 # Quatre autres depassent le seuil d'AVERTISSEMENT de 50 Mo, mais passent :
 #   CMIR71FL.SAV                 78,73 Mo
@@ -159,11 +151,11 @@ renv/sandbox/
 **/open_buildings_yagoua.gpkg
 
 # ---- Ce qui reste exclu, et seulement cela ---------------------------
-# RÉVISION 01/09/2026 — les datasets/ des journées ne sont plus
-# versionnés. Ils sont intégralement RECONSTRUCTIBLES depuis all_data/
+# Les datasets/ des journées ne sont pas versionnés : ils sont
+# intégralement RECONSTRUCTIBLES depuis all_data/
 # par outils/distribuer_donnees.R, qui balaie les onze dossiers-jours et
 # lit les littéraux "datasets/<fichier>" de leurs .qmd.
-# Les versionner revenait à stocker sept fois DS.geojson, cinq fois le
+# Les versionner reviendrait à stocker sept fois DS.geojson, cinq fois le
 # cortège CMGE71FL et trois fois gadm41_CMR.gpkg.
 # Le LISEZMOI, lui, est du contenu rédigé : il reste.
 pedagogie/J*/datasets/**
@@ -184,13 +176,14 @@ pedagogie/J*/outputs/**
 !**/.env.example
 
 # =====================================================================
-# MICRODONNÉES D'ENQUÊTE — EXCLUES DU DÉPÔT
-# Décision de l'utilisateur, 01/09/2026 : « ignore les data sensibles ».
+# MICRODONNÉES D'ENQUÊTE — CE QUI EST SENSIBLE, ET POURQUOI
 # ---------------------------------------------------------------------
-# Ces fichiers restent sur le poste et dans OneDrive. Ils ne partent pas
-# sur Git, quelle que soit la visibilité du dépôt.
+# Les motifs ci-dessous sont ceux à remettre en tête de section pour
+# tenir les microdonnées hors de Git. Ils ne sont PAS actifs à ce jour
+# (voir la note en fin de section) : l'avertissement de licence est donc
+# le seul garde-fou.
 #
-# CE QUI EST EXCLU, ET POURQUOI :
+# CE QUI EST SENSIBLE, ET POURQUOI :
 #
 #   .SAV / .sav  — recodes DHS Program (CMHR71FL menages, CMIR71FL
 #                  femmes, CMBR71FL naissances, CMFW71FL enqueteurs).
@@ -213,49 +206,45 @@ pedagogie/J*/outputs/**
 #
 #   CM_2018_DHS/ — pack DHS brut, ou qu'il se trouve.
 #
-# CE QUI RESTE VERSIONNE : tout le reste des donnees, y compris les
+# CE QUI N'EST PAS EN CAUSE : tout le reste des donnees, y compris les
 # rasters, les tuiles GHS, les .gpkg, DS.geojson, les CSV WorldPop et
 # les donnees beninoises du J10 — aucune n'est une microdonnee.
 #
-# CONSEQUENCE A CONNAITRE. Apres un `git clone`, les journees J01, J03,
-# J05, J06, J07 et J11 auront un datasets/ INCOMPLET : leurs scripts
-# d'extraction WebR echoueront sur les fichiers ci-dessus. C'est le prix
-# de l'exclusion, et il est assume. La marche a suivre pour les
-# restaurer est dans outils/A_RESTAURER.md.
+# CE QUE COUTE L'EXCLUSION, SI ELLE EST REMISE. Apres un `git clone`, les
+# journees J01, J03, J05, J06, J07 et J11 ont alors un datasets/
+# INCOMPLET : leurs scripts d'extraction WebR echouent sur les fichiers
+# ci-dessus. La marche a suivre pour les restaurer est dans
+# outils/A_RESTAURER.md.
 #
-# LES EXTRAITS RESTENT, EUX. pedagogie/_commons/data/dhs_cmr/*.csv sont
-# des agregats non identifiants produits par 00_extraire_dhs_pour_webr.R
-# Ils sont necessaires au site et autorises plus bas. Si vous jugez
-# qu'eux aussi doivent sortir, retirez les negations correspondantes --
-# mais les runtimes J01 et J02 cesseront alors de fonctionner en ligne.
-# =====================================================================
+# LES EXTRAITS, EUX, RESTENT DANS TOUS LES CAS.
+# pedagogie/_commons/data/dhs_cmr/*.csv sont des agregats non
+# identifiants produits par 00_extraire_dhs_pour_webr.R. Ils sont
+# necessaires au site et autorises plus bas. Les faire sortir a leur tour
+# suppose de retirer les negations correspondantes -- mais les runtimes
+# J01 et J02 cessent alors de fonctionner en ligne.
 # ---------------------------------------------------------------------
-# EXCLUSIONS LEVEES LE 01/09/2026 (seconde revision).
-# L'utilisateur verse la TOTALITE des donnees au depot, microdonnees
-# comprises : « stock tous les fichiers normalement, y compris ceux de
-# plus de 100 Mo ». Rien n'est donc ignore ici.
+# ETAT ACTUEL : AUCUNE DE CES EXCLUSIONS N'EST ACTIVE.
+# La totalite des donnees est versionnee, microdonnees comprises. Un
+# fichier de plus de 100 Mo doit alors etre route vers Git LFS par
+# .gitattributes : c'est une necessite technique et non un choix de
+# style, GitHub REJETTE tout fichier de cette taille pousse en Git nu
+# (erreur GH001), sans option de contournement.
 #
-# Les fichiers concernes sont routes vers Git LFS par .gitattributes.
-# C'est une necessite technique et non un choix de style : GitHub REJETTE
-# tout fichier de plus de 100 Mo pousse en Git nu (erreur GH001), sans
-# option de contournement. LFS est la maniere normale de stocker un gros
-# fichier sur GitHub.
-#
-# L'avertissement de licence demeure, et il est desormais le seul
-# garde-fou : CMHR71FL.SAV, CMIR71FL.SAV, CMBR71FL.SAV, CMFW71FL.SAV
-# sont des microdonnees DHS Program dont la licence interdit la
-# redistribution ; ecam5.dta et eesi3.dta relevent de la diffusion
-# encadree de l'INS Cameroun ; CMGE71FL.* porte les positions GPS des
-# 430 grappes d'enquete. Verifier la visibilite du depot ET celle de la
-# branche gh-pages avant publication (Settings > General, Settings >
-# Pages). Details dans DEPLOIEMENT_SITE_WEBR.md.
+# L'AVERTISSEMENT DE LICENCE EST DONC LE SEUL GARDE-FOU.
+# CMHR71FL.SAV, CMIR71FL.SAV, CMBR71FL.SAV et CMFW71FL.SAV sont des
+# microdonnees DHS Program dont la licence INTERDIT la redistribution ;
+# ecam5.dta et eesi3.dta relevent de la diffusion encadree de l'INS
+# Cameroun ; CMGE71FL.* porte les positions GPS des 430 grappes
+# d'enquete. Verifier la visibilite du depot ET celle de la branche
+# gh-pages avant toute publication (Settings > General, Settings >
+# Pages).
 #
 # Pour re-exclure, remettre ces motifs -- mais AVANT le premier commit
 # des donnees : une fois dans l'historique, ils n'en sortent plus sans
 # `git filter-repo` ou `git lfs migrate`.
 #     *.SAV  *.sav  *.dta  *.DTA
 #     **/CMGE71FL.*   **/CMGC72FL.csv   **/CM_2018_DHS/
-# ---------------------------------------------------------------------
+# =====================================================================
 
 # CSV extraits pédagogiques : agrégés, non identifiants, sans ambiguïté
 # (produits par 00_extraire_dhs_pour_webr.R, ~quelques Mo seulement)

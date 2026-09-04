@@ -4,8 +4,8 @@
 
 **Référents : J.S. Alogo, M. Teda, R. Dzita · Support : R. Elandi**
 
-> Journée entièrement réécrite le 31/08/2026 à partir du nouveau matériel
-> `Tools_day_8\` (grilles WorldPop 2015/2025/2030 et tuiles GHS-POP 2025), en
+> Journée bâtie sur le matériel `Tools_day_8\`
+> (grilles WorldPop 2015/2025/2030 et tuiles GHS-POP 2025), en
 > conservant de l'ancienne version le module conceptuel *bottom-up* /
 > *top-down* et la désagrégation dasymétrique.
 > Numérotation harmonisée : tous les fichiers et toutes les sorties sont en

@@ -68,14 +68,14 @@ for (d in c("outputs"))
 
 # ---- 0. CHARGEMENT DES PACKAGES --------------------------
 #
-# CORRECTIF 01/09/2026 (regle 6.6) : cette section contenait une boucle
-# install.packages() sur 21 paquets, EXECUTEE A CHAQUE RENDU. Deux defauts :
+# Regle 6.6 : aucune installation pendant le rendu. Une boucle
+# install.packages() executee a chaque rendu a deux defauts :
 #   - elle reinstalle en cours de rendu, ce qui peut durer des dizaines de
 #     minutes et echouer sans reseau, en pleine seance ;
-#   - elle installait 6 paquets que cette journee ne charge JAMAIS
-#     (tmaptools, tidyr, leaflet, mapview, spatialreg, gstat), qui
-#     appartiennent au J05, J06 et J11.
-# L'installation se fait desormais UNE FOIS, hors rendu, par
+#   - elle finit par installer des paquets que la journee ne charge JAMAIS
+#     (tmaptools, tidyr, leaflet, mapview, spatialreg, gstat appartiennent
+#     au J05, J06 et J11).
+# L'installation se fait donc UNE FOIS, hors rendu, par
 #   source("install_packages_day.R")
 # aligne sur les 15 library() ci-dessous et rien de plus.
 
@@ -273,7 +273,9 @@ if (ok_s09q13a) {
 }
 
 # --- Regle de recodage, DERIVEE DES LIBELLES ci-dessus ---
-# HYPOTHESE A VALIDER AU PREMIER RENDU : les modalites dont le libelle porte
+# POINT DE CONTROLE : verifier les modalites reelles de s09q13a imprimees par le
+# bloc precedent avant d'interpreter ce recodage. Hypothese retenue -- les
+# modalites dont le libelle porte
 # une marque de negation ou d insatisfaction designent les menages NON
 # satisfaits ; les libelles de non-reponse passent a NA (non-reponse, pas
 # "satisfait"). Si les libelles reels different, corriger ces deux motifs.
@@ -1313,7 +1315,7 @@ tmap_save(carte_synthese, "outputs/carte_synthese_jour6.png", dpi=300)
 #
 # tm_shape(ds_indicateurs) +
 #   # ndmi_moy apparait en infobulle et vaudra NA hors de l'emprise Sentinel-2 :
-#   # c'est voulu, l'utilisateur doit voir ou la mesure n'existe pas.
+#   # c'est voulu, le lecteur de la carte doit voir ou la mesure n'existe pas.
 #   tm_fill(fill = 'gi_class',
 #           fill.scale = tm_scale_categorical(values = palette_gi),
 #           fill_alpha = 0.7,
@@ -1327,7 +1329,7 @@ tmap_save(carte_synthese, "outputs/carte_synthese_jour6.png", dpi=300)
 #
 # tmap_mode('plot')   # revenir au mode statique
 #
-# MIGRATION TMAP 4 - A VERIFIER : popup.vars et tm_basemap(server = ) sont repris de la v3 ; leur nom exact en v4 n'a pas pu etre controle, ce bloc n'etant jamais execute au rendu.
+# MIGRATION TMAP 4 - A VERIFIER : popup.vars et tm_basemap(server = ) sont repris de la v3 ; ce bloc n'etant jamais execute au rendu, leur nom exact en v4 se controle en salle, a la premiere execution interactive.
 
 # ---- 9.3 Export complet des résultats ----------------------
 

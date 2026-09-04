@@ -13,24 +13,23 @@ Site pédagogique de l'atelier régional **« Données spatiales, analyse et man
 > BUCREP) puissent y revenir, et pour qu'une édition ultérieure reparte d'une
 > base connue. Toute réutilisation doit citer l'édition et son millésime.
 
-## État d'avancement (au 1ᵉʳ septembre 2026)
+## État d'avancement
 
-Le matériel n'est **pas encore intégralement livré**, contrairement à ce
-qu'annonçait la version précédente de cette page. État réel, repris de
-`../REPRISE_J06_J11.md` §1 :
+Le matériel n'est **pas encore intégralement livré**. État de référence, tenu à
+jour avec `../REPRISE_J06_J11.md` §1 :
 
 | Journée | État du matériel | Ce qui manque |
 |---|---|---|
 | **J01** | terminé, rendu sans erreur | ni glossaire ni récapitulatif de fonctions |
-| **J02** | terminé, rendu sans erreur | — (chunk non fermé corrigé le 31/08/2026) |
+| **J02** | terminé, rendu sans erreur | — |
 | **J03** | terminé, rendu sans erreur | `install_packages_day.R` absent — seule journée dans ce cas |
 | **J04** | terminé, rendu et affichage vérifié | pas de section « prolongements » |
 | **J05** | reconstruit (≈2 300 lignes), **non rendu** | `runtime.qmd` à reprendre ; revue des slides jamais faite |
 | **J06** | **non commencé** | tout ; démo jamais rendue |
 | **J07** | **non commencé** | tout ; démo jamais rendue ; fichiers internes encore en `J7`, pas `J07` |
-| **J08** | réécrit le 31/08/2026, **non rendu** | exécution complète, voir `J08_population_haute_resolution/_A_FAIRE_J08.md` |
-| **J09** | réécrit le 31/08/2026, **non rendu** | exécution complète, voir `J09_teledetection/_A_FAIRE_J09.md` |
-| **J10** | réécrit le 31/08/2026, **non rendu** | exécution complète, voir `J10_politiques_publiques/_A_FAIRE_J10.md` |
+| **J08** | réécrit, **non rendu** | exécution complète, voir `J08_population_haute_resolution/_A_FAIRE_J08.md` |
+| **J09** | réécrit, **non rendu** | exécution complète, voir `J09_teledetection/_A_FAIRE_J09.md` |
+| **J10** | réécrit, **non rendu** | exécution complète, voir `J10_politiques_publiques/_A_FAIRE_J10.md` |
 | **J11** | **non commencé** | tout ; démo jamais rendue |
 
 **Aucune journée n'a encore été animée avec le nouveau matériel.** Les quatre

@@ -1,7 +1,7 @@
 # ============================================================================
 # Configuration Quarto du site runtime WebR — Atelier IFORD × GDSG 2026
 #
-# Correction du 01/09/2026 — squelette du site.
+# Squelette du site.
 #   Le menu « Modules » et la liste `render:` decrivaient un atelier de
 #   10 jours avec l'ancienne nomenclature de dossiers
 #   (J01_intro_R_pensee_spatiale, J02_sf_CRS_vecteurs, ...). Ces dossiers

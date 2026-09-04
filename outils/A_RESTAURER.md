@@ -1,25 +1,22 @@
 # À restaurer — sources lourdes absentes du poste
 
-> Établi le 31/08/2026. Liste **exacte** des fichiers que le code de J01 → J07
-> (et le module 10 du nouveau J10) réclame par un littéral `"datasets/<nom>"`,
-> et qui sont **introuvables partout sur ce poste** — ni dans
-> `pedagogie/all_data/` (le magasin central réel), ni dans un `datasets/` de
-> journée, ni sous un nom approchant.
+> Liste **exacte** des fichiers que le code de J01 → J07 (et le module 10 du
+> J10) réclame par un littéral `"datasets/<nom>"`, et qui sont **introuvables**
+> — ni dans `pedagogie/all_data/` (le magasin central), ni dans un `datasets/`
+> de journée, ni sous un nom approchant.
 >
-> Sources : `MANIFESTE_DONNEES_J01_J07.md` (croisement références ↔ magasin),
-> `REGLES_MATERIEL_ATELIER.md` §7 (fiches de données), `CARTOGRAPHIE_J08_J10.md`
-> §7 (module 10 du nouveau J10). Les noms ci-dessous sont recopiés **tels
-> qu'écrits dans les `.qmd`** : c'est le nom que `outils/distribuer_donnees.R`
-> ira chercher par correspondance exacte de `basename()`. Une copie sous un nom
-> approchant ne sera **pas** trouvée.
+> Sources : le croisement références ↔ magasin, les fiches de données du
+> référentiel (§7) et la cartographie du module 10 du J10. Les noms ci-dessous
+> sont recopiés **tels qu'écrits dans les `.qmd`** : c'est le nom que
+> `outils/distribuer_donnees.R` ira chercher par correspondance exacte de
+> `basename()`. Une copie sous un nom approchant ne sera **pas** trouvée.
 >
-> Les poids sont indicatifs (repris des fiches déjà établies) : l'outil de
-> lecture ne renvoie pas la taille des binaires, aucun n'a été vérifié ici.
+> Les poids sont indicatifs, repris des fiches de données : aucun n'a été
+> mesuré sur les binaires eux-mêmes.
 >
-> **Décision prise** : ces données ne seront pas contournées. L'utilisateur les
-> restaure lui-même dans `pedagogie/all_data/`, puis lance
-> `source("outils/distribuer_donnees.R")` (dont le chemin de magasin a été
-> corrigé le 31/08/2026 — il pointait auparavant vers un dossier fantôme).
+> **Parti pris** : ces données ne sont pas contournées. Elles se restaurent
+> dans `pedagogie/all_data/`, puis `source("outils/distribuer_donnees.R")` les
+> répartit vers les onze journées.
 
 ---
 
@@ -155,16 +152,15 @@ jamais d'indice dessus.
 | `2026-06-26-00_00_2026-06-26-23_59_Sentinel-2_L2A_B03_(Raw).tiff` | J07 (et anciens J09/J10) |
 | `2026-06-26-00_00_2026-06-26-23_59_Sentinel-2_L2A_B04_(Raw).tiff` | J07 (et anciens J09/J10) |
 
-**Statut différent des trois précédentes** : celles-ci n'ont, à notre
-connaissance, **jamais été téléchargées** — elles ne sont pas « perdues », elles
-n'ont jamais existé sur ce poste (§7 des règles).
+**Statut différent des trois précédentes** : ces deux bandes n'ont **jamais été
+acquises** — elles ne sont pas « perdues », elles n'ont jamais existé sur ce
+poste (§7 des règles).
 
 **Conséquence directe** : sans B04 (rouge), **le NDVI n'est pas calculable**.
 Toute section qui l'annonce doit soit être réécrite sur B08/B11 (NDBI, MNDWI),
-soit passer en `eval: false` avec la raison écrite. Si l'utilisateur les
-retélécharge, il doit prendre **la même emprise, la même date et le même
-niveau L2A** que les trois autres, faute de quoi les bandes ne s'empileront
-pas.
+soit passer en `eval: false` avec la raison écrite. Un nouveau téléchargement
+doit porter sur **la même emprise, la même date et le même niveau L2A** que les
+trois autres, faute de quoi les bandes ne s'empileront pas.
 
 ---
 
@@ -180,7 +176,7 @@ Le FIES (*Food Insecurity Experience Scale*, FAO) est une échelle d'insécurit�
 alimentaire fondée sur huit questions. Aucun extrait camerounais n'a été livré
 avec le matériel.
 
-**Substitut déjà décidé — deux voies, toutes deux sur des fichiers présents :**
+**Substitut retenu — deux voies, toutes deux sur des fichiers présents :**
 
 1. **Covariables de `CMGC72FL.csv`** (430 grappes × 130 variables
    contextuelles, présent dans `all_data/`). Les prédicteurs de vulnérabilité
@@ -193,10 +189,12 @@ avec le matériel.
 2. **`s09q13a` d'ECAM5** (`ecam5.dta`, présent) : la question de privation
    alimentaire du questionnaire ménage. Avantage : c'est une déclaration de
    ménage, donc plus proche conceptuellement du FIES qu'une covariable
-   satellitaire. Contrainte : pondérer par `coefextr`, et respecter
-   l'avertissement déjà acté — **l'extrait ECAM5 n'est pas représentatif à
-   l'intérieur des régions**, donc aucun chiffre régional produit ne doit être
-   cité comme statistique officielle.
+   satellitaire. Limite à ne pas taire : **ce n'est pas la même mesure** — une
+   question unique de privation alimentaire ne reconstitue pas une échelle à
+   huit items. Contraintes : pondérer par `coefextr`, et respecter
+   l'avertissement — **l'extrait ECAM5 n'est pas représentatif à l'intérieur
+   des régions**, donc aucun chiffre régional produit ne doit être cité comme
+   statistique officielle.
 
 Dans les deux cas, la substitution est une **décision de méthode** : elle doit
 être écrite dans le texte de la journée, pas seulement dans le code (§3.3).
@@ -226,7 +224,7 @@ qualité de collecte (effet enquêteur), pas à l'analyse démographique.
 **Aucune journée J01 → J11 ne le réclame** : il n'apparaît dans aucun littéral
 `"datasets/…"` du dépôt.
 
-**Vérification à faire par l'utilisateur** (une minute dans R) :
+**Vérification à passer avant toute décision** (une minute dans R) :
 
 ```r
 noms <- names(haven::read_sav("pedagogie/all_data/CMFW71FL.SAV", n_max = 0))

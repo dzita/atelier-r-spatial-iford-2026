@@ -1,18 +1,14 @@
-# J10 — Ce qui reste à faire côté poste
+# Points de contrôle au rendu — J10
 
-> Rédigé le 31/08/2026, en même temps que la réécriture du matériel J10.
->
-> **Contexte de rédaction, à connaître pour lire ce document.** Le matériel a
-> été écrit **sans shell** (le conteneur Linux ne démarrait pas) et **sans R**.
-> Aucun `.gpkg`, `.nc`, `.zip` ni `.pptx` n'a pu être ouvert ; le `.qmd` n'a pas
-> été rendu ; aucun script n'a été exécuté ni même passé au contrôle de syntaxe
-> (`parse()`). Les vérifications ci-dessous sont donc **des vérifications
-> réelles, pas des formalités** : elles portent sur les points où le code repose
-> sur une hypothèse plutôt que sur une lecture.
+> Procédure de recette de la journée J10. Elle distingue ce qui a déjà été
+> contrôlé statiquement de ce qui demande R et Quarto sur le poste de salle.
+> Les vérifications ci-dessous ne sont **pas des formalités** : elles portent sur
+> les points où le code repose sur une hypothèse de structure de fichier plutôt
+> que sur une lecture confirmée.
 
 ---
 
-## 1. Contrôles automatiques déjà passés (par expression régulière)
+## 1. Contrôles statiques déjà passés
 
 | Contrôle | Résultat |
 |---|---|
@@ -28,7 +24,7 @@
 | `ACLED Data.csv` / `ACLED_Data.csv` / `ACLED_Cameroun_2017_2024.csv` | **aucune occurrence résiduelle**. Le seul nom employé est `acled_cameroon_export.csv` |
 | Marqueurs `>>> A COMPLETER` dans la trame étudiante | **60**, correspondant à 60 blocs « TRAVAIL n » numérotés |
 
-**Contrôles qui n'ont PAS pu être faits et qui restent à votre charge :**
+**Contrôles qui demandent une exécution réelle :**
 
 - `Rscript -e 'parse("scripts/script_formateur_J10.R")'` — et de même pour les
   deux autres scripts et pour `install_packages_day.R`. Les erreurs
@@ -42,14 +38,14 @@
 
 ---
 
-## 2. Hypothèses non vérifiables — à confirmer au premier rendu
+## 2. Hypothèses de structure — à confirmer au premier rendu
 
-Ce sont les endroits où le code peut échouer parce qu'il suppose quelque chose
-qui n'a pas pu être lu.
+Ce sont les endroits où le code peut échouer parce qu'il suppose une structure de
+fichier plutôt que de la constater.
 
 ### 2.1 Couches et champs des quatre `.gpkg`
 
-Aucun GeoPackage n'a été ouvert. Le code suppose :
+Le code suppose :
 
 | Fichier | Couche supposée | Champs supposés |
 |---|---|---|
@@ -58,7 +54,7 @@ Aucun GeoPackage n'a été ouvert. Le code suppose :
 | `benin_grille_3km.gpkg` | `grille_3km` | `id` |
 
 Ces noms viennent du script source (`…CORRIGE.R`, lignes 256-265, 813-822) et de
-la cartographie J08-J10, pas d'une lecture directe.
+la cartographie J08-J10 : ce sont des noms repris, pas des noms constatés.
 
 **Parade déjà en place :** le `.qmd` appelle `st_layers()` **avant** chaque
 `st_read()` et imprime `names()` de chaque couche. Si un nom diffère, la sortie
@@ -67,8 +63,7 @@ nom de champ correspondant. Ce sont les seules lignes à toucher.
 
 ### 2.2 Nombre de couches et pas de temps du NetCDF
 
-`era5_t2m_mensuel_cameroun.nc` n'a pas été ouvert. Le code **ne suppose rien** :
-il imprime `nlyr()`, `res()`, `ext()`, `time()` et la plage de dates, et compare
+Sur ce fichier, le code **ne suppose rien** : il imprime `nlyr()`, `res()`, `ext()`, `time()` et la plage de dates, et compare
 le nombre de couches au nombre de mois distincts.
 
 **Deux points à surveiller au rendu :**
@@ -85,11 +80,11 @@ le nombre de couches au nombre de mois distincts.
 
 ### 2.3 Valeurs réelles de `admin1` dans ACLED, et de `NAME_1` dans GADM
 
-Seules les **trois premières lignes** du CSV ACLED ont été lues. On y observe
-`Sud` et `Extreme-Nord` : français, sans accents. C'est ce qui fonde tout le
-module 2. **La liste complète des `admin1` n'a pas été vue.**
+L'en-tête du CSV ACLED donne `Sud` et `Extreme-Nord` : français, sans accents.
+C'est ce qui fonde tout le module 2. **La liste complète des `admin1` reste à
+inventorier sur le fichier livré.**
 
-La table de correspondance `corresp_regions` (module 2.4) a donc été écrite à
+La table de correspondance `corresp_regions` (module 2.4) est écrite à
 partir des dix régions administratives connues du Cameroun, en supposant que
 GADM 4.1 les écrit en anglais (`East`, `Far North`, `North-West`, `South`,
 `South-West`, `West`, `North`, plus `Adamaoua`, `Centre`, `Littoral`).
@@ -103,13 +98,13 @@ GADM 4.1 les écrit en anglais (`East`, `Far North`, `North-West`, `South`,
 - ACLED peut aussi coder des `admin1` que GADM ne connaît pas (découpage
   postérieur, orthographe alternative). Le compteur des orphelins l'affiche.
 
-### 2.4 `scripts_formateurs.zip` — non ouvert
+### 2.4 `scripts_formateurs.zip` — archive à inventorier
 
 Le script source renvoie, à ses lignes 111, 114, 385 et 745, à trois fichiers :
 `jour_09_formateur_acled_api.R`, `jour_09_formateur_ecmwf_api.R` et
 `jour_09_formateur_gee_api.R`. **Aucun des trois n'est sur le disque** : ils sont
-vraisemblablement dans `Tools_day_10_\scripts_formateurs.zip`, qui n'a pas été
-ouvert.
+vraisemblablement dans `Tools_day_10_\scripts_formateurs.zip`, qui reste à
+inventorier.
 
 **Traitement retenu :** les renvois ont été **retirés** du matériel J10. Le
 contenu utile (requête `acledR`, requête `ecmwfr`) a été conservé sous forme de
@@ -127,7 +122,7 @@ renvois. Sinon, l'état actuel est le bon.
 
 - **`sae::mseFH()` sur un `data.frame`.** Le code convertit `sae_data` en
   `data.frame` (`as.data.frame()`) : `sae` n'accepte pas toujours un tibble.
-  Vérifié dans le script source, non testé ici.
+  Repris du script source ; à confirmer à la première exécution.
 - **`fh$est$fit$convergence` / `$iterations` / `$refvar`.** Ces trois champs sont
   supposés présents dans l'objet renvoyé par `mseFH()`. Le script source
   n'utilisait que `estcoef` et `goodness`. Si l'un des trois est absent, la ligne
@@ -143,27 +138,27 @@ renvois. Sinon, l'état actuel est le bon.
 
 ---
 
-## 3. Le module 10 est bloqué par deux fichiers absents
+## 3. Le module 10 dépend de deux fichiers à contrôler
 
 Le module 10 (accessibilité aux services : tampons 5/10/15 km, distances aux
 districts sanitaires) est **conservé de l'ancien matériel** — c'est le seul
-module qui relie la journée aux politiques publiques concrètes — mais tous ses
-chunks sont en **`eval: false`**, avec la raison écrite dans le document.
+module qui relie la journée aux politiques publiques concrètes. Il repose sur
+deux couches dont la présence dans `datasets/` conditionne son exécution :
 
-**Les deux fichiers manquants :**
+| Fichier | Emplacement attendu |
+|---|---|
+| `DS.geojson` | `datasets/DS.geojson` |
+| `gadm41_CMR_2.shp` + `.shx` + `.dbf` + `.prj` + `.cpg` | `datasets/` |
 
-| Fichier | Où il devrait être | État |
-|---|---|---|
-| `DS.geojson` | `datasets/DS.geojson` | **absent du poste** |
-| `gadm41_CMR_2.shp` + `.shx` + `.dbf` + `.prj` + `.cpg` | `datasets/` | **absent du poste** |
+**Point de contrôle.** Vérifier la présence des deux couches avant la séance.
+Si l'une manque, les cinq chunks `chunk-acces-*` de `demo_formateur_J10.qmd`
+doivent repasser en `eval: false` et les blocs correspondants des scripts `.R`
+redevenir des blocs de référence commentés, conformément à la règle §6.1 — et
+la raison technique doit rester écrite dans le document. C'est aussi le module
+le moins éprouvé de la journée : lire ses compteurs avec attention (nombre de
+géométries réparées, effectifs après jointure, districts sans appariement).
 
-**Pour réactiver le module**, une fois les fichiers déposés dans `datasets/` :
-passer les cinq chunks `chunk-acces-*` de `eval: false` à `eval: true` dans
-`demo_formateur_J10.qmd`, puis décommenter les blocs correspondants dans les
-scripts `.R` (ils y sont conservés sous forme de bloc de référence commenté,
-conformément à la règle §6.1).
-
-**Deux corrections déjà intégrées au code réécrit, à ne pas perdre :**
+**Deux corrections intégrées au code, à ne pas perdre :**
 
 1. L'ancien code lisait les coordonnées des formations sanitaires dans
    `CMGC72FL.csv`. **Ce fichier ne contient aucune coordonnée** : ce sont les 130
@@ -187,8 +182,8 @@ l'exercice 8.
 
 ## 4. Ménage sur le poste — commandes Windows
 
-Je ne peux ni supprimer ni renommer de fichier : voici les commandes à passer,
-depuis une invite de commandes placée dans le dossier de la journée.
+Commandes à passer depuis une invite de commandes placée dans le dossier de la
+journée. **Faire un commit Git de sauvegarde avant toute suppression.**
 
 ```bat
 cd "C:\Users\PROLOG\OneDrive\MES BUSINESS\atelier-r-spatial-iford-2026\pedagogie\J10_politiques_publiques"
@@ -206,7 +201,7 @@ del "script_etudiant_J10.R"
 del "script_etudiant_J10_corrige.R"
 ```
 
-*(Si vous préférez les archiver plutôt que les supprimer :)*
+*(Pour les archiver plutôt que les supprimer :)*
 
 ```bat
 mkdir archive_ancien
@@ -316,8 +311,8 @@ PowerPoint.
 1. **`slides.qmd`** (386 lignes) est resté à la racine. Il décrit l'ancien plan
    de journée (pauvreté multidimensionnelle ECAM5, déplacements forcés HCR) et
    ne correspond plus au contenu réécrit. À trancher : le réécrire sur les dix
-   modules actuels, ou le supprimer au profit des trois `.pptx`. Non touché ici,
-   la consigne portait sur les six livrables listés.
+   modules actuels, ou le supprimer au profit des trois `.pptx`. Il est laissé
+   en l'état tant que l'arbitrage n'est pas rendu.
 2. **Renommage des `.pptx`.** Ils s'appellent encore `jour_09_…` alors que la
    journée est J10. La cartographie recommande un renommage systématique en
    deux chiffres. Non fait : renommer un `.pptx` casse les liens éventuels dans

@@ -2431,7 +2431,7 @@ d'un marché, une bande le long d'une route. Et pourtant, en trois lignes, la gr
 donne un effectif.
 
 La version interactive utilise `mapedit::editMap()`, qui ouvre une carte dans le
-navigateur et attend que l'utilisateur trace un polygone. Elle est donc
+navigateur et attend qu'une main trace un polygone à la souris. Elle est donc
 **impossible à exécuter au rendu** : Quarto rendrait le document sans jamais
 recevoir le polygone, et le widget leaflet alourdirait le HTML. Elle est livrée en
 bloc de référence, à lancer en salle depuis la console RStudio.

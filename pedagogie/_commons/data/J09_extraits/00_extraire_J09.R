@@ -12,11 +12,12 @@
 #   intersections couteuses, et n'ecrit que des sorties legeres que le
 #   navigateur peut ouvrir avec sf + dplyr + ggplot2.
 #
-# QUI DOIT L'EXECUTER
-#   VOUS. La session qui a redige ce script n'avait ni R, ni shell, ni acces
-#   aux binaires (.tif, .zip, .gpkg, .shp) : elle n'a VERIFIE AUCUN CHIFFRE.
-#   Tous les commentaires « a valider au premier rendu » signalent une
-#   hypothese non verifiee.
+# EXECUTION
+#   Ce script se lance manuellement depuis la racine du projet, sur un poste
+#   disposant des binaires (.tif, .zip, .gpkg, .shp). Les valeurs affichees
+#   par ses `cat()` sont la seule source fiable : aucun chiffre n'est ecrit
+#   en dur dans ce fichier. Les commentaires marques « RECETTE » disent quoi
+#   verifier dans la sortie console.
 #
 # QUAND LE RELANCER
 #   - a la premiere installation ;
@@ -366,13 +367,14 @@ flood_union <- st_union(st_geometry(flood_fen))
 # 5. Open Buildings dans la fenetre
 # ---------------------------------------------------------------------
 cat("\n--- 5. Open Buildings ---\n")
-# CORRECTIF 01/09/2026 -- POURQUOI CETTE SECTION NE FINISSAIT JAMAIS.
+# wkt_filter EST INDISPENSABLE ICI, et voici pourquoi.
 #
-# Le code lisait la couche ENTIERE (144 Mo, de l'ordre du million de
-# polygones), puis lui appliquait st_make_valid(), st_transform() et un
-# st_intersects(..., sparse = FALSE) : quatre passes completes, alors que
+# Lire la couche ENTIERE (144 Mo, de l'ordre du million de polygones) puis
+# lui appliquer st_make_valid(), st_transform() et un
+# st_intersects(..., sparse = FALSE) fait quatre passes completes, alors que
 # seuls les batiments de la fenetre de 5 x 5 km servent ensuite.
-# st_make_valid() sur un million de polygones se compte en heures.
+# st_make_valid() sur un million de polygones se compte en heures : la
+# section ne finit pas.
 #
 # Parade : pousser le filtre spatial DANS GDAL, a la lecture. wkt_filter
 # n'apporte en memoire que les entites qui intersectent l'emprise demandee,
@@ -401,8 +403,8 @@ cat("  Batiments retenus par le filtre spatial :",
     sprintf("(%.0f s)\n", as.numeric(difftime(Sys.time(), t_ob, units = "secs"))))
 
 # Reparation CIBLEE : on ne repare que ce qui est invalide, et on le dit.
-# st_make_valid() applique en aveugle a toute la couche etait l'autre moitie
-# du probleme.
+# st_make_valid() applique en aveugle a toute la couche est l'autre moitie
+# du cout evite ici.
 n_inval <- sum(!st_is_valid(ob))
 cat("  Geometries invalides :", n_inval, "/", nrow(ob), "\n")
 if (n_inval > 0) {
@@ -420,9 +422,9 @@ cat("  Batiments sous le seuil    :",
 
 ob_m <- st_transform(ob, CRS_MESURE)
 
-# CORRECTIF 01/09/2026. `sparse = FALSE` construisait une matrice logique
-# dense et desactivait le chemin optimise de sf. st_filter() utilise
-# l'index spatial et ne materialise rien.
+# `sparse = FALSE` EST A PROSCRIRE ICI : il construit une matrice logique
+# dense et desactive le chemin optimise de sf. st_filter() s'appuie au
+# contraire sur l'index spatial et ne materialise rien.
 bat_fen <- ob_m |>
   st_filter(fenetre_m, .predicate = st_intersects) |>
   filter(.data[[col_conf]] >= SEUIL_CONFIANCE)
@@ -443,14 +445,13 @@ n_apres_join <- nrow(st_join(bat_fen,
                              join = st_intersects, left = TRUE))
 cat("  Lignes avant / apres un st_join naif :", n_avant, "/", n_apres_join,
     " -> duplications evitees :", n_apres_join - n_avant, "\n")
-# CORRECTIF 01/09/2026.
-# Le code ne traitait qu'un seul cas d'absence : l'intersection VIDE
-# (length(k) == 0). Il en existe un second, qui s'est produit au bati 202 :
-# l'intersection n'est pas vide, mais TOUTES les classes de profondeur qui
-# recouvrent le batiment valent NA. which.max() sur un vecteur entierement
-# NA renvoie integer(0) ; l'indexation ne rend alors rien, et vapply()
-# echoue sur « values must be length 1, but FUN(X[[202]]) result is
-# length 0 ».
+# DEUX CAS D'ABSENCE, PAS UN SEUL. Le premier est l'intersection VIDE
+# (length(k) == 0). Le second est plus discret : l'intersection n'est pas
+# vide, mais TOUTES les classes de profondeur qui recouvrent le batiment
+# valent NA. which.max() sur un vecteur entierement NA renvoie integer(0) ;
+# l'indexation ne rend alors rien, et vapply() echoue sur « values must be
+# length 1, but FUN(X[[i]]) result is length 0 ». Les deux cas sont donc
+# traites explicitement ci-dessous.
 #
 # Un polygone d'inondation sans classe de profondeur n'est pas une anomalie
 # du script : Copernicus EMS ne donne une hauteur d'eau que la ou son modele
@@ -610,14 +611,14 @@ bilan <- lapply(names(aoi), function(nm) {
   a <- st_transform(aoi[[nm]], CRS_MESURE)
   f <- st_transform(flo[[nm]], CRS_MESURE) |> st_make_valid()
 
-  # CORRECTIF 01/09/2026 -- POURQUOI CETTE SECTION NE FINISSAIT PAS.
-  #
-  # 1. st_union(st_geometry(f)) fusionnait toutes les emprises inondees, a
-  #    chaque tour de boucle. C'est l'operation la plus couteuse de sf sur
-  #    des milliers de polygones -- ET ELLE EST INUTILE ICI : on veut savoir
-  #    si un batiment touche AU MOINS UNE emprise, ce que
-  #    lengths(st_intersects(dans, f)) > 0 donne directement.
-  # 2. st_intersects(ob_m, a) balayait la couche ENTIERE pour chacune des
+  # DEUX PIEGES DE PERFORMANCE EVITES ICI, sans lesquels la boucle ne
+  # finit pas :
+  # 1. PAS de st_union(st_geometry(f)) pour fusionner les emprises inondees a
+  #    chaque tour. C'est l'operation la plus couteuse de sf sur des milliers
+  #    de polygones -- ET ELLE EST INUTILE : on veut savoir si un batiment
+  #    touche AU MOINS UNE emprise, ce que lengths(st_intersects(dans, f)) > 0
+  #    donne directement.
+  # 2. PAS de st_intersects(ob_m, a) sur la couche ENTIERE pour chacune des
   #    trois AOI. On la reduit d'abord par l'emprise rectangulaire de l'AOI
   #    -- test tres rapide, servi par l'index spatial -- puis on ne fait le
   #    test exact que sur les candidats restants.

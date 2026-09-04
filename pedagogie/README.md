@@ -7,11 +7,11 @@ Ce dossier contient **tout le matériel pédagogique** des onze journées de
 l'atelier : documents formateur Quarto, scripts dérivés, slides, runtime WebR
 pour le navigateur, données et inventaires.
 
-> **Corrigé le 01/09/2026.** Ce fichier décrivait un atelier de dix jours et une
-> arborescence (`J03_cartographie_tmap_ggplot`, `J08_population_top_down`, …)
-> qui n'existe plus, ainsi qu'une convention de fichiers (`demo.qmd`, `demo.R`,
-> `exercice.qmd`, `corrige.qmd`) abandonnée depuis. Les noms ci-dessous ont été
-> relevés sur le disque.
+> **Les noms ci-dessous sont ceux du disque.** L'ancienne arborescence de dix
+> jours (`J03_cartographie_tmap_ggplot`, `J08_population_top_down`, …) et
+> l'ancienne convention de fichiers (`demo.qmd`, `demo.R`, `exercice.qmd`,
+> `corrige.qmd`) n'ont plus cours : si une page les cite encore, c'est un
+> reliquat du matériel v1.
 
 ## Comment c'est organisé
 
@@ -89,8 +89,8 @@ Les noms `demo.qmd`, `demo.R`, `exercice.qmd` et `corrige.qmd` appartiennent au
 
 Le tableau de référence est dans `INDEX.md`, repris de `../REPRISE_J06_J11.md`
 §1. En résumé : **J01 à J04** terminées et rendues sans erreur ; **J05**
-reconstruite mais non rendue ; **J08, J09, J10** réécrites le 31/08/2026 mais
-non exécutées ; **J06, J07, J11** non commencées. Aucune journée n'a encore été
+reconstruite mais non rendue ; **J08, J09, J10** réécrites mais non exécutées ;
+**J06, J07, J11** non commencées. Aucune journée n'a encore été
 animée avec ce matériel.
 
 ## Workflow type d'animation d'une journée

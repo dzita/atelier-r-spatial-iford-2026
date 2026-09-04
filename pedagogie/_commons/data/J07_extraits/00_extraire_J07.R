@@ -25,10 +25,12 @@
 #   - a chaque fois qu'on change la MATRICE DE POIDS : le resultat en depend,
 #     et c'est precisement ce que le runtime fait constater.
 #
-# A EXECUTER PAR L'UTILISATEUR LUI-MEME.
-#   La session qui a ecrit ce fichier ne disposait NI de R, NI de shell :
-#   rien n'a ete execute. Les points « A VALIDER AU PREMIER RENDU » sont des
-#   hypotheses sur le contenu des binaires.
+# EXECUTION
+#   Ce script se lance manuellement depuis la racine du projet. Les valeurs
+#   affichees par ses `cat()` sont la seule source fiable : aucun chiffre
+#   n'est ecrit en dur dans ce fichier.
+#   Les points marques « RECETTE » portent sur le contenu des binaires
+#   (.SAV, .shp) et se controlent a la lecture de la sortie console.
 #
 # ENTREES (dans pedagogie/J07_statistiques_spatiales/datasets/ ; les deux
 # fichiers EDS de menages vivent dans le dossier du J05 ou du J06 selon la
@@ -144,8 +146,9 @@ if (anyNA(vars)) {
 hr <- read_sav(f_sav, col_select = all_of(as.character(vars)))
 names(hr) <- tolower(names(hr))
 
-# A VALIDER AU PREMIER RENDU : verifier que les codes hv201 imprimes sont
-# bien couverts par la liste JMP ci-dessous.
+# RECETTE : les codes hv201 imprimes ci-dessous doivent tous etre couverts
+# par la liste JMP qui suit. Un code present dans le fichier et absent de la
+# liste serait compte comme source NON amelioree, en silence.
 codes_eau_amelioree <- c(11, 12, 13, 14, 21, 31, 41, 51, 61, 62, 71, 72)
 cat("[J07-extrait] Codes hv201 presents :\n")
 print(sort(unique(as.numeric(hr$hv201))))
@@ -397,20 +400,20 @@ pays <- st_union(st_transform(ds_val, 32633))
 pts_utm <- st_transform(pts_ds, 32633)
 xy <- st_coordinates(pts_utm)
 
-# CORRECTIF 01/09/2026. La ligne etait : as.owin(st_as_sfc(pays)).
-# st_union() renvoie deja un sfc, pas un sf : st_as_sfc() n'avait donc rien
-# a convertir et echouait sur
+# NE PAS APPELER st_as_sfc() SUR `pays` : st_union() renvoie DEJA un sfc,
+# pas un sf. La conversion n'aurait rien a convertir et echouerait sur
 #   « pas de methode pour 'st_as_sfc' applicable pour un objet de classe
 #     c('sfc_MULTIPOLYGON', 'sfc') ».
 # Selon la version de spatstat.geom, as.owin() accepte un sfc, un sf, ou
 # ni l'un ni l'autre. On essaie dans cet ordre et on echoue en nommant la
 # cause, plutot que de laisser un message obscur arreter tout le script.
-# CORRECTIF 01/09/2026 -- LA FENETRE, ET POURQUOI ELLE FAISAIT TOUT ECHOUER.
 #
-# Symptome : envelope(pp, Kest, nsim = 39) tournait TOUTE UNE NUIT sans
-# aboutir. Ce n'etait pas de la lenteur, c'etait intraitable.
+# LA FENETRE PASSE EN MASQUE, ET VOICI POURQUOI.
 #
-# Cause : `pays` est l'union des 200 districts sanitaires NON SIMPLIFIES --
+# Sur une fenetre POLYGONALE detaillee, envelope(pp, Kest, nsim = 39) ne
+# termine pas -- ce n'est pas de la lenteur, c'est intraitable.
+#
+# Raison : `pays` est l'union des 200 districts sanitaires NON SIMPLIFIES --
 # un polygone de plusieurs dizaines de milliers de sommets. Sur une fenetre
 # polygonale, spatstat paie ce detail deux fois :
 #   - runifpoint() tire les points par rejet, avec un test point-dans-polygone
@@ -457,19 +460,19 @@ cat(sprintf("[J07-extrait] Fenetre : contour simplifie a %d m, ",
 cat(sprintf("convertie en masque %dx%d\n", MASQUE_DIMYX, MASQUE_DIMYX))
 cat(sprintf("  aire de la fenetre : %.0f km2 (reference nationale ~475 442)\n",
             area(fen) / 1e6))
-# CORRECTIF 01/09/2026 -- ALIGNEMENT DES POINTS ET DE LEURS ATTRIBUTS.
+# ALIGNEMENT DES POINTS ET DE LEURS ATTRIBUTS.
 #
 # ppp() ecarte silencieusement les points hors fenetre. Les grappes EDS ont
 # des coordonnees VOLONTAIREMENT DEPLACEES par le DHS (2 km en urbain, 5 km
 # en rural, 10 km pour 1 % des grappes rurales) : certaines tombent donc
 # hors du contour du pays. C'est attendu, ce n'est pas une erreur de donnee.
 #
-# Ce qui, en revanche, etait un bug : la section KDE plus bas reprenait les
-# libelles urbain/rural par pts_utm$milieu[seq_len(npoints(pp))], donc les
-# N PREMIERS, en supposant que le point ecarte soit le dernier. Il ne l'est
-# pas. A partir du rang du point rejete, chaque grappe recevait le libelle
-# de la suivante -- et les cartes de densite « urbain » et « rural »
-# melangeaient les deux, sans qu'aucune erreur ne soit levee.
+# LE PIEGE, et la raison de ce filtrage explicite : reprendre les libelles
+# urbain/rural par pts_utm$milieu[seq_len(npoints(pp))] revient a prendre
+# les N PREMIERS, en supposant que le point ecarte soit le dernier. Il ne
+# l'est pas. A partir du rang du point rejete, chaque grappe recevrait le
+# libelle de la suivante -- et les cartes de densite « urbain » et « rural »
+# melangeraient les deux, sans qu'aucune erreur ne soit levee.
 #
 # On filtre donc AVANT de construire pp, avec la fenetre elle-meme comme
 # critere : xy et pts_utm restent alignes par construction.
@@ -503,8 +506,8 @@ cat(sprintf("[J07-extrait] ppp : %d points, 0 rejete (alignement garanti)\n",
 # homogene (CSR : Complete Spatial Randomness).
 qt <- quadrat.test(pp, nx = 8, ny = 8)
 qc <- quadratcount(pp, nx = 8, ny = 8)
-# CORRECTIF 01/09/2026. Le code posait trois noms sur le retour de
-# as.data.frame(qc), et echouait sur
+# NE PAS poser trois noms en aveugle sur le retour de as.data.frame(qc) :
+# cela echoue sur
 #   « 'names' attribute [3] must be the same length as the vector [2] ».
 # as.data.frame() sur un quadratcount ne renvoie pas le meme nombre de
 # colonnes selon la version de spatstat.geom : tantot 3 (ligne, colonne,
@@ -544,8 +547,8 @@ cat(sprintf("[J07-extrait] Test du quadrat 8x8 : X2 = %.1f, ddl = %d, p = %.4g\n
 # ATTENTION AU TEMPS DE CALCUL : quelques minutes sur 400+ points.
 NSIM <- 39
 
-# CORRECTIF 01/09/2026. Deux reglages, en plus du passage de la fenetre en
-# masque (section 6) :
+# DEUX REGLAGES INDISPENSABLES, en plus du passage de la fenetre en masque
+# (section 6) :
 #
 #   correction = "border" -- la correction de bord isotrope de Ripley est la
 #   plus couteuse ; la correction par bordure ("border", ou reduced sample)
@@ -602,11 +605,12 @@ bandwidths <- c(petit = h_scott / 2, scott = h_scott, grand = h_scott * 2)
 cat(sprintf("[J07-extrait] bandwidths (m) : petit %.0f, scott %.0f, grand %.0f\n",
             bandwidths[1], bandwidths[2], bandwidths[3]))
 
-# CORRECTIF 01/09/2026. Le code prenait pts_utm$milieu[seq_len(npoints(pp))],
-# c'est-a-dire les N PREMIERS libelles, en supposant que le point ecarte par
-# ppp() soit le dernier. Le filtrage par inside.owin() a la section 6 rend
-# desormais pts_utm et pp de meme longueur ET dans le meme ordre : on lit
-# donc la colonne directement, sans decoupage.
+# On lit la colonne milieu DIRECTEMENT, sans decoupage. Prendre
+# pts_utm$milieu[seq_len(npoints(pp))] reviendrait a retenir les N PREMIERS
+# libelles, en supposant que le point ecarte par ppp() soit le dernier : il
+# ne l'est pas. Le filtrage par inside.owin() de la section 6 garantit que
+# pts_utm et pp ont meme longueur ET meme ordre ; le stopifnot ci-dessous
+# refuse de continuer si ce n'etait pas le cas.
 stopifnot(nrow(pts_utm) == npoints(pp))
 
 sous_pop <- list(

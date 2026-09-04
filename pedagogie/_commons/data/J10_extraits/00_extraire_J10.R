@@ -11,9 +11,11 @@
 #   Ce script fait ici, une fois, TOUS ces calculs, et n'ecrit que des
 #   resultats deja estimes : le runtime cartographie, trace et interprete.
 #
-# QUI DOIT L'EXECUTER
-#   VOUS. La session qui a redige ce script n'avait ni R, ni shell, ni acces
-#   aux binaires (.nc, .gpkg) : elle n'a VERIFIE AUCUN CHIFFRE.
+# EXECUTION
+#   Ce script se lance manuellement depuis la racine du projet, sur un poste
+#   disposant des binaires (.nc, .gpkg). Les valeurs affichees par ses
+#   `cat()` sont la seule source fiable : aucun chiffre n'est ecrit en dur
+#   dans ce fichier.
 #
 # UN AVERTISSEMENT A NE PAS PERDRE EN ROUTE
 #   Cette journee CHANGE DE PAYS en cours de route. Les modules ACLED et
@@ -83,7 +85,7 @@ suppressPackageStartupMessages({
 })
 cat("select() fourni par :", environmentName(environment(select)), "\n")
 
-# CORRECTIF 01/09/2026 -- L'ORDRE DE CHARGEMENT NE SUFFIT PAS.
+# CHARGER sae AVANT dplyr NE SUFFIT PAS.
 #
 # Le bloc ci-dessus charge sae avant dplyr, ce qui est correct DANS UNE
 # SESSION NEUVE. Mais si un autre script a deja ete execute dans la meme
@@ -92,9 +94,8 @@ cat("select() fourni par :", environmentName(environment(select)), "\n")
 # operation NULLE : elle ne le remonte pas dans la search path. MASS ou
 # raster, attaches plus tard, gagnent alors sur select().
 #
-# Symptome observe : « Erreur dans select(cmr1, NAME_1) : argument
-# inutilise (NAME_1) » -- la signature de MASS::select(), qui n'a pas
-# d'argument nomme.
+# Le symptome est « Erreur dans select(cmr1, NAME_1) : argument inutilise
+# (NAME_1) » -- la signature de MASS::select(), qui n'a pas d'argument nomme.
 #
 # On force donc la liaison dans l'environnement global. C'est defendable
 # ICI parce que ce fichier est un script de production, execute d'un bloc.
@@ -276,8 +277,9 @@ cat("Dates portees par le fichier :",
     if (all(is.na(dates_era))) "AUCUNE — a reconstruire" else
       paste(range(as.Date(dates_era)), collapse = " -> "), "\n")
 if (all(is.na(dates_era))) {
-  # Repli : on reconstruit une sequence mensuelle. A VALIDER AU PREMIER
-  # RENDU — si le fichier ne commence pas en janvier, ce repli est faux.
+  # Repli : on reconstruit une sequence mensuelle. RECETTE — si le fichier
+  # ne commence pas en janvier 2015, ce repli est faux et decale toute la
+  # serie ; corriger la date de depart ci-dessous.
   dates_era <- seq(as.Date("2015-01-01"), by = "month", length.out = nlyr(era))
   cat("ATTENTION : dates reconstruites par defaut a partir de 2015-01.\n")
 }
@@ -448,18 +450,16 @@ form <- as.formula(paste("insecure_direct ~", paste(cov_retenues,
 # FAY-HERRIOT. Ce qui distingue ce modele d'une simple regression : vardir,
 # la variance d'echantillonnage CONNUE de chaque commune.
 #
-# CORRECTIF 01/09/2026. L'appel etait :
-#   mseFH(form, vardir = sae_in$var_direct, data = as.data.frame(sae_in))
-# et echouait sur « colonnes non definies selectionnees ».
-#
-# POURQUOI. Quand l'argument `data` est fourni, sae::mseFH() ne lit PAS un
-# vecteur : il fait
+# `vardir` DOIT RECEVOIR LE NOM NU DE LA COLONNE, JAMAIS UN VECTEUR.
+# Quand l'argument `data` est fourni, sae::mseFH() ne lit pas un vecteur :
+# il fait
 #     namevar <- deparse(substitute(vardir))
 #     vardir  <- data[, namevar]
-# c'est-a-dire qu'il DEPARSE l'expression et s'en sert comme nom de colonne.
-# `sae_in$var_direct` devenait donc la chaine "sae_in$var_direct", cherchee
-# comme colonne du data.frame -- ou elle n'existe evidemment pas.
-# Il faut passer le nom NU de la colonne, comme dans une formule.
+# c'est-a-dire qu'il DEPARSE l'expression et s'en sert comme nom de colonne
+# dans `data`. Ecrire vardir = sae_in$var_direct produit donc la chaine
+# "sae_in$var_direct", cherchee comme colonne du data.frame -- ou elle
+# n'existe evidemment pas : « colonnes non definies selectionnees ».
+# On passe le nom nu, comme dans une formule.
 sae_df <- as.data.frame(sae_in)
 stopifnot("var_direct" %in% names(sae_df))
 fh <- mseFH(form, vardir = var_direct, data = sae_df)

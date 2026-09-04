@@ -1,19 +1,18 @@
 # =====================================================================
 # .gitattributes — Atelier IFORD × GDSG 2026
-# Révision du 01/09/2026.
 # ---------------------------------------------------------------------
-# GIT LFS N'EST PAS UTILISÉ. Le routage LFS mis en place plus tôt dans
-# la journée a été retiré : vérification faite, aucun fichier du dépôt
-# ne dépasse 100 Mo, seuil au-delà duquel GitHub refuse un push en Git
-# nu (erreur GH001). Git ordinaire suffit donc, et évite la dépendance
-# à un quota LFS (1 Go en compte gratuit).
+# GIT LFS N'EST PAS UTILISÉ : aucun fichier du dépôt ne dépasse 100 Mo,
+# seuil au-delà duquel GitHub refuse un push en Git nu (erreur GH001).
+# Git ordinaire suffit donc, et évite la dépendance à un quota LFS
+# (1 Go en compte gratuit).
 #
 # CE QU'IL FAUT SAVOIR MALGRÉ TOUT. En Git nu, chaque version d'un
 # binaire reste dans l'historique pour toujours : un raster remplacé
 # n'écrase pas l'ancien, il s'y ajoute. Le dépôt ne peut donc que
-# grossir si les données sont régénérées plusieurs fois. Si vous relancez
-# souvent outils/distribuer_donnees.R ou le .bat d'installation, surveillez
-# la taille du dépôt (Settings > General, ou `git count-objects -vH`).
+# grossir si les données sont régénérées plusieurs fois. Des passages
+# fréquents de outils/distribuer_donnees.R ou du .bat d'installation
+# appellent une surveillance de la taille du dépôt
+# (Settings > General, ou `git count-objects -vH`).
 #
 # Si un fichier venait à dépasser 100 Mo, deux options : le réduire, ou
 # rétablir LFS. Les motifs sont conservés ci-dessous en commentaire.

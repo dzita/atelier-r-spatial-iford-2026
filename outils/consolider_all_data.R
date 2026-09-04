@@ -1,14 +1,12 @@
 ## =============================================================================
 ## CONSOLIDATION — remonter toutes les donnees vers pedagogie/all_data
 ## -----------------------------------------------------------------------------
-## Ecrit le 01/09/2026.
-##
 ## POURQUOI CE SCRIPT
-## Les datasets/ des journees ont ete remplis directement, avant que
+## Des datasets/ de journees ont pu etre remplis directement, avant que
 ## l'architecture ne soit fixee : le .bat d'installation y deposait les donnees
-## J08-J10, et plusieurs fichiers y ont ete copies a la main. Resultat, une
-## partie des donnees n'existe QUE dans un dossier-jour et pas dans le magasin
-## central. Ce script les y remonte.
+## J08-J10, et des fichiers y ont ete copies a la main. Une partie des donnees
+## n'existe alors QUE dans un dossier-jour et pas dans le magasin central. Ce
+## script les y remonte.
 ##
 ## L'ARCHITECTURE CIBLE, apres passage :
 ##   1. all_data/ contient UN exemplaire de chaque fichier. C'est lui qui est
@@ -19,12 +17,12 @@
 ##      chaque clone. Un seul exemplaire de DS.geojson dans Git au lieu de sept.
 ##
 ## CE SCRIPT NE SUPPRIME RIEN. Il copie vers le haut, c'est tout. Le menage des
-## datasets/ est fait par Git (ils sont ignores) et, si vous le souhaitez, a la
-## main ensuite.
+## datasets/ est fait par Git (ils sont ignores), et manuellement ensuite si
+## besoin.
 ##
 ## PRUDENCE SUR LES COLLISIONS. Si un fichier existe deja dans all_data avec une
-## TAILLE DIFFERENTE, il n'est PAS ecrase : le conflit est signale et vous
-## tranchez. Ecraser en silence deux fichiers homonymes de contenus differents
+## TAILLE DIFFERENTE, il n'est PAS ecrase : le conflit est signale et tranche a
+## la main. Ecraser en silence deux fichiers homonymes de contenus differents
 ## est exactement le genre d'erreur que le referentiel interdit (regle 1.2).
 ##
 ## Usage : ouvrir atelier-r-spatial-iford-2026.Rproj, puis

@@ -4,9 +4,9 @@ Ce dossier reçoit **les fichiers de données de cette journée uniquement**, à
 plat, sans sous-dossier. Les scripts et le `.qmd` les lisent en chemin relatif
 `datasets/<fichier>`.
 
-> **Tailles : n.d.** Elles n'ont pas pu être mesurées lors de la rédaction de ce
-> fichier et doivent être relevées sur le poste. Les postes les plus lourds sont
-> les trois rasters WorldPop et les sept tuiles GHS-POP.
+> **Tailles : n.d.** Elles restent à relever sur le poste, contre le budget de
+> 100 Mo par journée. Les postes les plus lourds sont les trois rasters WorldPop
+> et les sept tuiles GHS-POP.
 
 ## Comment le remplir
 

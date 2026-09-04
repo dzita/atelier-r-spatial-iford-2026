@@ -27,10 +27,12 @@
 #   - si les CSV WorldPop ou GADM sont remplaces ;
 #   - si la regle de recodage de s09q13a change (section 2).
 #
-# A EXECUTER PAR L'UTILISATEUR LUI-MEME.
-#   La session qui a ecrit ce fichier ne disposait NI de R, NI de shell :
-#   rien n'a ete execute. Les points « A VALIDER AU PREMIER RENDU » sont
-#   des hypotheses sur le contenu des binaires.
+# EXECUTION
+#   Ce script se lance manuellement depuis la racine du projet. Les valeurs
+#   affichees par ses `cat()` sont la seule source fiable : aucun chiffre
+#   n'est ecrit en dur dans ce fichier.
+#   Les points marques « RECETTE » portent sur le contenu des binaires et se
+#   controlent a la lecture de la sortie console.
 #
 # ENTREES (dans pedagogie/J06_art_cartographie/datasets/)
 #   gadm41_CMR_1.shp    10 regions   (NAME_1, GID_1)
@@ -164,11 +166,14 @@ ecam <- ecam5 |>
   ),
   cle = normaliser(region_adm))
 
-# HYPOTHESE, A VALIDER AU PREMIER RENDU : les modalites de s09q13a dont le
-# libelle porte une marque de negation ou d'insatisfaction designent les
-# menages NON satisfaits ; les libelles de non-reponse passent a NA
-# (non-reponse, pas « satisfait »). Si les libelles reels different, corriger
-# les deux motifs ci-dessous -- c'est le seul endroit a changer.
+# REGLE DE RECODAGE, ET RECETTE. Les modalites de s09q13a dont le libelle
+# porte une marque de negation ou d'insatisfaction designent les menages NON
+# satisfaits ; les libelles de non-reponse passent a NA (non-reponse, ce
+# n'est pas « satisfait »). Rappel : s09q13a est le substitut de
+# FIES_Cameroun.csv, jamais fourni -- ce n'est PAS la meme mesure, et la
+# substitution doit etre annoncee dans le texte de la journee.
+# RECETTE : confronter les libelles imprimes plus bas aux deux motifs. S'ils
+# different, corriger ces deux lignes -- c'est le seul endroit a changer.
 MOTIF_INSATISFAIT <- "(?i)non|pas|jamais|insatisf|insuffis|rarement"
 MOTIF_NONREPONSE  <- "(?i)^\\s*(nsp|ne sait|refus|sans|manquant|na)\\b"
 
@@ -266,8 +271,9 @@ names(hr) <- tolower(names(hr))
 # Definition JMP (OMS/UNICEF) d'une source AMELIOREE. « Source amelioree »
 # n'est PAS « eau potable » : la definition porte sur le type d'ouvrage, pas
 # sur la qualite de l'eau ni sur la continuite du service.
-# A VALIDER AU PREMIER RENDU : verifier que les codes imprimes ci-dessous
-# sont bien couverts.
+# RECETTE : les codes hv201 imprimes ci-dessous doivent tous etre couverts
+# par la liste. Un code non couvert serait compte comme NON ameliore, en
+# silence.
 codes_eau_amelioree <- c(11, 12, 13, 14, 21, 31, 41, 51, 61, 62, 71, 72)
 cat("[J06-extrait] Codes hv201 presents :\n")
 print(sort(unique(as.numeric(hr$hv201))))

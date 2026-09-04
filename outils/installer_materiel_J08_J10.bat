@@ -8,10 +8,8 @@ REM  Mise en place du materiel des journees J08, J09 et J10 de l'atelier
 REM  R spatial IFORD 2026, a partir du dossier source
 REM  materiel-atelier-r-spatial-iford-2026-j08-j10\.
 REM
-REM  Ecrit le 31/08/2026.
-REM
-REM  Revise le 01/09/2026 : les donnees vont dans all_data, plus dans les
-REM  datasets\ des journees. Voir le bloc de variables plus bas.
+REM  Les donnees vont dans all_data, et non dans les datasets\ des journees :
+REM  voir le bloc de variables plus bas pour la raison.
 REM
 REM  CE QU'IL FAIT
 REM    1. cree pedagogie\all_data\, plus outputs\ scripts\ archive_en\ dans
@@ -55,9 +53,9 @@ set "J08=%RACINE%\pedagogie\J08_population_haute_resolution"
 set "J09=%RACINE%\pedagogie\J09_teledetection"
 set "J10=%RACINE%\pedagogie\J10_politiques_publiques"
 
-REM REVISION 01/09/2026 -- LES DONNEES VONT DESORMAIS DANS all_data.
-REM Avant, ce script deposait les donnees directement dans le datasets\ de
-REM chaque journee. Nouvelle architecture, decidee par l'utilisateur :
+REM LES DONNEES VONT DANS all_data, PAS DANS LES datasets\ DES JOURNEES.
+REM Deposer les donnees directement dans le datasets\ de chaque journee
+REM multiplie les exemplaires. L'architecture retenue est en trois temps :
 REM   1. ce script depose TOUTES les donnees dans pedagogie\all_data ;
 REM   2. outils\distribuer_donnees.R les repartit ensuite dans les
 REM      datasets\ des onze journees, en lisant les litteraux
@@ -330,7 +328,7 @@ REM     garde que ce qu'elle lit^) et gonflerait le dossier-jour pour rien.
 REM
 REM  - DATA_ECOLE.zip
 REM      Contenu inconnu, reference par AUCUN script des trois journees.
-REM      A ouvrir cote utilisateur avant toute decision.
+REM      A ouvrir et a inventorier avant toute decision.
 REM
 REM  - gadm41_CMR_shp.zip et le dossier gadm41_CMR_shp\ deja decompresse
 REM      Les memes limites GADM que gadm41_CMR.gpkg, mais en 4 shapefiles
@@ -414,13 +412,13 @@ if !ECHEC! GTR 0 (
   echo.
 )
 
-echo   POINT RESTANT, A FAIRE A LA MAIN :
-echo     DS.geojson est absent du poste. Le module 10 du J10
+echo   DEPENDANCE EXTERNE A CONNAITRE :
+echo     DS.geojson ne fait pas partie de ce lot. Le module 10 du J10
 echo     ^(accessibilite^) reste en eval: false tant qu'il manque.
 echo     Le reste du J10 rend normalement.
 echo.
-echo   Voir aussi outils\A_RESTAURER.md ^(sources lourdes J01-J07 absentes^)
-echo   et outils\menage_poste.md ^(commandes del / ren a passer vous-meme^).
+echo   Voir aussi outils\A_RESTAURER.md ^(sources lourdes J01-J07 a remettre^)
+echo   et outils\menage_poste.md ^(commandes del / ren a passer a la main^).
 echo =====================================================================
 echo.
 pause

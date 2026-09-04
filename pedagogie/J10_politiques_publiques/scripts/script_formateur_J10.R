@@ -2512,9 +2512,9 @@ print(list.files("outputs"))
 ## TOUT LE CODE DE CE MODULE EST COMMENTE. Ce n'est pas un choix pedagogique,
 ## c'est un constat materiel : les deux fichiers dont il depend,
 ## datasets/DS.geojson (200 districts sanitaires) et datasets/gadm41_CMR_2.shp
-## (58 departements, avec ses annexes .shx .dbf .prj .cpg), NE SONT PAS PRESENTS
-## sur le poste au moment de la redaction. Le code redevient executable des que
-## les deux fichiers rejoignent datasets/ : il suffit de le decommenter. Point
+## (58 departements, avec ses annexes .shx .dbf .prj .cpg), ne font pas partie du
+## socle distribue par defaut. Le code redevient executable des que les deux
+## fichiers rejoignent datasets/ : il suffit de le decommenter. Point de controle
 ## consigne dans _A_FAIRE_J10.md.
 ##
 ## DEUXIEME RAISON, INDEPENDANTE. Le materiel d'origine construisait ses

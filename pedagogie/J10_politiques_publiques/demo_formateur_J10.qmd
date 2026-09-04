@@ -201,10 +201,10 @@ if (any(!inventaire$present)) {
       paste(inventaire$fichier[!inventaire$present], collapse = ", "), "\n")
 }
 
-# Le Module 10 (accessibilite) repose sur deux fichiers supplementaires,
-# retrouves le 01/09/2026. Le module est repasse en execution : ces deux lignes
-# doivent afficher TRUE, sinon le module 10 sortira en erreur.
-cat("\nModule 10 (accessibilite, reactive le 01/09/2026) :\n")
+# Le module 10 (accessibilite) repose sur deux fichiers supplementaires, en plus
+# de l'inventaire ci-dessus. Ces deux lignes doivent afficher TRUE : sinon le
+# module 10 sortira en erreur, et ses chunks doivent repasser en eval: false.
+cat("\nModule 10 (accessibilite) -- dependances supplementaires :\n")
 cat("  datasets/DS.geojson       present ?", file.exists("datasets/DS.geojson"), "\n")
 cat("  datasets/gadm41_CMR_2.shp present ?", file.exists("datasets/gadm41_CMR_2.shp"), "\n")
 ```
@@ -2802,18 +2802,19 @@ print(list.files("outputs"))
 # Module 10 — Accessibilité aux services : la journée revient au terrain
 
 ::: {.callout-warning}
-## Module réactivé le 01/09/2026 — à lire avec attention
+## Deux points de vigilance avant d'exécuter ce module
 
-Ce module était en `eval: false` faute de `DS.geojson`, retrouvé depuis et remis
-dans `datasets/`. Les cinq chunks sont repassés en exécution.
+Ce module dépend de `DS.geojson` et de la couche des 58 départements
+`gadm41_CMR_2`. Le contrôle d'inventaire en tête de document dit si les deux sont
+présents ; sans eux, les cinq chunks doivent repasser en `eval: false`.
 
-**Conséquence à assumer : c'est la partie la moins éprouvée du document.** Elle
-vient de l'ancien matériel, elle n'a jamais tourné, et deux bugs y ont déjà été
-corrigés à la lecture (voir ci-dessous). Ses compteurs `cat()` méritent donc une
-lecture plus attentive que ceux des modules 1 à 9 — en particulier le nombre de
-géométries réparées et les effectifs après jointure.
+**C'est la partie la moins éprouvée du document.** Elle vient de l'ancien
+matériel et deux bugs y ont été corrigés à la relecture (voir ci-dessous). Ses
+compteurs `cat()` méritent donc une lecture plus attentive que ceux des modules 1
+à 9 — en particulier le nombre de géométries réparées et les effectifs après
+jointure.
 
-**Deuxième raison, indépendante de la première.** Le matériel d'origine construisait
+**Second point, indépendant du premier.** Le matériel d'origine construisait
 ses isochrones autour des coordonnées lues dans `CMGC72FL.csv`. Or ce fichier ne
 contient **aucune coordonnée** : c'est le fichier des 130 covariables contextuelles
 par grappe DHS. Les positions se trouvent dans `CMGE71FL.shp`. Le code d'origine était
@@ -2834,7 +2835,7 @@ géographie en **question d'allocation**. Combien de personnes vivent à plus de
 attendre de chaque ouverture possible ?
 
 C'est le seul module de la journée dont le résultat s'écrit directement en termes de
-décision — et c'est pour cela qu'il est conservé alors même que ses données manquent.
+décision — et c'est pour cela qu'il est conservé, malgré la fragilité de ses données.
 
 **Le vocabulaire, d'abord.** Un « isochrone » est une courbe reliant les points
 atteignables en un **même temps** de trajet. Ce que nous calculons ci-dessous n'en est
@@ -2847,13 +2848,13 @@ de routage (`osrm`, OpenRouteService) — c'est le prolongement naturel de ce mo
 hors du périmètre d'une journée.
 :::
 
-## 10.2 — Chargement des couches (non exécuté)
+## 10.2 — Chargement des couches
 
 ```{r}
 #| label: chunk-acces-lecture
-# Reactive le 01/09/2026 : DS.geojson a ete retrouve et remis dans datasets/.
-# Ce module est le MOINS teste du document -- il vient de l'ancien materiel et
-# n'a jamais tourne. Lire ses compteurs avec une attention particuliere.
+# Ce module depend de DS.geojson, present dans datasets/. C'est la partie la
+# moins eprouvee du document, heritee de l'ancien materiel : lire ses compteurs
+# avec une attention particuliere.
 #
 # sf_use_s2(FALSE) : DS.geojson compte 135 geometries invalides sur 200. Le
 # moteur spherique s2 refuse ce que le moteur planaire GEOS accepte. On repasse

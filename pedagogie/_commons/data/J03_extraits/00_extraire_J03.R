@@ -17,17 +17,16 @@
 #       majorite ne sert a rien au J03.
 #   On produit donc ici des couches GeoJSON simplifiees et des CSV reduits.
 #
-# CE SCRIPT DOIT ETRE EXECUTE PAR VOUS, A LA MAIN.
-#   La session qui l'a ecrit n'avait pas R : rien n'a ete execute, aucun
-#   chiffre ci-dessous n'est un resultat observe. Les `cat()` du script
-#   impriment les vrais poids et les vrais effectifs au moment ou vous le
-#   lancez -- c'est la seule source fiable.
+# EXECUTION
+#   Ce script se lance manuellement depuis la racine du projet. Les `cat()`
+#   impriment les poids et les effectifs reels au moment du lancement : ils
+#   sont la seule source fiable, aucun chiffre n'est ecrit en dur ici.
 #
 # QUAND LE RELANCER.
 #   - la premiere fois, avant le premier `quarto render` du site runtime ;
 #   - a chaque fois que DS.geojson, CMGE71FL.shp, les CSV WorldPop ou
 #     CMGC72FL.csv sont remplaces par une nouvelle livraison ;
-#   - si vous changez la tolerance de simplification (voir plus bas).
+#   - a chaque changement de la tolerance de simplification (voir plus bas).
 #
 # PRODUCTION (dans pedagogie/_commons/data/J03_extraits/) :
 #   - ds_sante_cmr.geojson                   200 districts sanitaires
@@ -318,8 +317,8 @@ cov_extrait <- cov |>
   mutate(DHSCLUST = as.integer(DHSCLUST))
 
 # On N'IMPUTE PAS et on ne recode PAS les sentinelles ici : le recodage
-# est un exercice du runtime. On se contente de les compter, pour que
-# l'utilisateur sache ce qu'il vient de produire.
+# est un exercice du runtime. On se contente de les compter, pour que le
+# contenu de l'extrait produit soit connu avant d'etre servi au navigateur.
 cat("  sentinelles (valeurs < 0) par colonne :\n")
 for (v in setdiff(names(cov_extrait), "DHSCLUST")) {
   n_neg <- sum(cov_extrait[[v]] < 0, na.rm = TRUE)

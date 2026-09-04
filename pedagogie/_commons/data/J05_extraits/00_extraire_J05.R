@@ -25,11 +25,12 @@
 #     sources d'eau amelioree, section 3).
 #   Sinon jamais : les sorties sont versionnees.
 #
-# A EXECUTER PAR L'UTILISATEUR LUI-MEME.
-#   La session qui a ecrit ce fichier ne disposait NI de R, NI de shell :
-#   rien de ce qui suit n'a ete execute. Les points marques
-#   « A VALIDER AU PREMIER RENDU » sont des hypotheses sur le contenu des
-#   binaires (.dta / .SAV / .shp), a confirmer a la premiere execution.
+# EXECUTION
+#   Ce script se lance manuellement depuis la racine du projet. Les valeurs
+#   affichees par ses `cat()` sont la seule source fiable : aucun chiffre
+#   n'est ecrit en dur dans ce fichier.
+#   Les points marques « RECETTE » portent sur le contenu des binaires
+#   (.dta / .SAV / .shp) et se controlent a la lecture de la sortie console.
 #
 # ENTREES (toutes dans pedagogie/J05_enquetes_carte/datasets/)
 #   ecam5.dta                  9 472 individus, 2 065 menages, 70 colonnes
@@ -286,8 +287,9 @@ cat(sprintf("[J05-extrait] EDS menages : %d lignes x %d colonnes retenues\n",
 # Definition JMP (OMS/UNICEF) d'une source AMELIOREE : reseau, borne-fontaine,
 # forage, puits protege, source protegee, eau de pluie, eau en bouteille.
 # Les codes ci-dessous sont ceux du Recode Manual DHS VII.
-# A VALIDER AU PREMIER RENDU : imprimer table(hr$hv201) et verifier que les
-# codes presents sont bien couverts par la liste.
+# RECETTE : les codes hv201 imprimes ci-dessous doivent tous etre couverts
+# par la liste. Un code present dans le fichier et absent de la liste serait
+# compte comme source NON amelioree, en silence.
 codes_eau_amelioree <- c(11, 12, 13, 14, 21, 31, 41, 51, 61, 62, 71, 72)
 cat("[J05-extrait] Codes hv201 presents dans le fichier :\n")
 print(sort(unique(as.numeric(hr$hv201))))

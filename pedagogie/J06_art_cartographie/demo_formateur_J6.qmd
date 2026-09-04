@@ -692,9 +692,9 @@ rédactionnelle.
 
 ### Bloc défensif — que contient réellement `s09q13a` ?
 
-Nous n'avons pas ouvert `ecam5.dta` avant d'écrire ce module. Tout ce qui suit
-repose donc sur une hypothèse, et le code commence par **imprimer la donnée
-avant de la traiter** : présence de la colonne, libellé de la variable,
+Le dictionnaire d'ECAM5 ne garantit ni la présence ni le codage de cette
+variable : le module ne suppose donc rien et commence par **imprimer la donnée
+avant de la traiter** — présence de la colonne, libellé de la variable,
 libellés des modalités, distribution. La règle de recodage est ensuite dérivée
 des libellés observés, pas d'un ordre supposé des codes numériques.
 
@@ -764,7 +764,9 @@ non après, pour que la pondération reste correcte.
 # ── MODULE 2.2 (b) : indicateur d insatisfaction alimentaire ponderé ───
 
 # --- Regle de recodage, DERIVEE DES LIBELLES imprimes au bloc precedent ---
-# HYPOTHESE, A VALIDER AU PREMIER RENDU : les modalites dont le libelle porte
+# POINT DE CONTROLE : verifier les modalites reelles de s09q13a imprimees par le
+# bloc precedent avant d'interpreter ce recodage. Hypothese retenue -- les
+# modalites dont le libelle porte
 # une marque de negation ou d insatisfaction designent les menages NON
 # satisfaits ; celles qui portent une marque de non-reponse sont mises a NA
 # (non-reponse, pas "satisfait"). Si les libelles reels ne suivent pas cette

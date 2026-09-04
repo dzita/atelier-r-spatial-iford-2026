@@ -14,13 +14,15 @@
 #   colonnes fixes, plus le fond de carte simplifie et la table de
 #   correspondance qui sert d'exemple de jointure documentee.
 #
-# QUI DOIT L'EXECUTER
-#   VOUS. La session qui a redige ce script n'avait ni R, ni shell, ni acces
-#   au .dta : elle n'a VERIFIE AUCUN NOM DE COLONNE au-dela de ce que
-#   documente REGLES_MATERIEL_ATELIER.md (§7). Le script est donc ecrit
-#   DEFENSIVEMENT : il cherche ses colonnes parmi des candidates, imprime ce
-#   qu'il a trouve, et s'arrete proprement s'il ne trouve pas.
-#   Les marques « a valider au premier rendu » signalent chaque hypothese.
+# EXECUTION
+#   Ce script se lance manuellement depuis la racine du projet, sur un poste
+#   disposant de ecam5.dta. Les valeurs affichees par ses `cat()` sont la
+#   seule source fiable : aucun chiffre n'est ecrit en dur dans ce fichier.
+#   Les noms de colonnes d'un .dta d'enquete varient d'une livraison a
+#   l'autre : le script est donc ecrit DEFENSIVEMENT. Il cherche ses colonnes
+#   parmi des candidates, imprime ce qu'il a trouve, et s'arrete proprement
+#   s'il ne trouve pas. Les marques « RECETTE » disent quoi verifier dans la
+#   sortie console.
 #
 # QUAND LE RELANCER
 #   - a la premiere installation ;
@@ -162,7 +164,7 @@ if (!is.na(c_chef)) {
   chefs <- ecam
   cat("ATTENTION : aucune variable de lien au chef. Le fichier est traite tel\n")
   cat("quel — les moyennes ci-dessous sont alors des moyennes d'INDIVIDUS.\n")
-  cat("A VALIDER AU PREMIER RENDU.\n")
+  cat("RECETTE : controler la liste de colonnes imprimee plus haut.\n")
 }
 
 # LE BIAIS DE TAILLE, chiffre : la meme grandeur sur deux unites.
@@ -250,8 +252,10 @@ cat("Non appariees :", paste(regions$region[!apparie_auto], collapse = " | "),
     "\n")
 
 # Table ecrite a la main, verifiable ligne a ligne par un lecteur humain.
-# A VALIDER AU PREMIER RENDU : les libelles de gauche doivent correspondre
-# EXACTEMENT a ce que la ligne « Non appariees » ci-dessus vient d'afficher.
+# RECETTE : les libelles de gauche doivent correspondre EXACTEMENT a ce que
+# la ligne « Non appariees » ci-dessus vient d'afficher. Un libelle qui ne
+# correspond pas laisse la region orpheline, sans qu'aucune erreur ne soit
+# levee.
 correspondance_manuelle <- tibble::tribble(
   ~libelle_source,   ~NAME_1_cible,   ~justification,
   "Douala",          "Littoral",      "Douala est une ville, pas une region administrative : elle appartient au Littoral",

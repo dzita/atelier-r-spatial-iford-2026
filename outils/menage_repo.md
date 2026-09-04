@@ -1,29 +1,28 @@
 # Toilettage du dépôt — commandes à passer
 
-> Établi le 01/09/2026, à la fin de la campagne de réécriture.
-> Je ne peux ni supprimer ni renommer sur votre poste : je fournis les
-> commandes, vous les passez. Ouvrez une invite de commandes **à la racine
-> du projet** :
+> Ces commandes sont à passer manuellement : elles suppriment des fichiers,
+> l'opération n'est pas réversible. Ouvrir une invite de commandes **à la
+> racine du projet** :
 >
 > ```
 > cd /d "C:\Users\PROLOG\OneDrive\MES BUSINESS\atelier-r-spatial-iford-2026"
 > ```
 >
 > Rien ici n'est urgent. Tout ce qui suit est **déjà hors de Git** grâce au
-> `.gitignore` : ces commandes ne servent qu'à désencombrer le disque.
-> Passez-les dans l'ordre, ou pas du tout.
+> `.gitignore` : ces commandes ne servent qu'à désencombrer le disque. Elles
+> se passent dans l'ordre, ou pas du tout.
 
 ---
 
-## 1. Notes de travail de la campagne — les plus encombrantes
+## 1. Notes de travail — les plus encombrantes
 
 Huit fichiers à la racine, plus un dans `pedagogie/`. Ce sont les diagnostics
-qui ont servi à décider pendant la réécriture. **Les décisions sont désormais
-dans le code, dans les `LISEZMOI` et dans les procédures** : ces documents ne
-servent plus qu'à retracer le raisonnement.
+qui ont servi à arbitrer. **Les décisions sont consignées dans le code, dans
+les `LISEZMOI` et dans les procédures** : ces documents ne servent plus qu'à
+retracer le raisonnement.
 
-Si vous voulez en garder une trace, copiez-les ailleurs avant de supprimer —
-ils contiennent le détail chiffré de ce qui a été trouvé.
+Ils contiennent le détail chiffré de ce qui a été trouvé : les copier ailleurs
+avant de supprimer, pour qui souhaite en garder une trace.
 
 ```bat
 del "REVUE_J01_J05.md"
@@ -37,8 +36,8 @@ del "SUBSTITUTION_FIES.md"
 del "pedagogie\_SITE_ETAT.md"
 ```
 
-**Ce qui reste, et pourquoi.** Ne supprimez pas ces cinq-là, ils sont
-opérationnels :
+**Ce qui reste, et pourquoi.** Ces cinq-là sont opérationnels et se
+conservent :
 
 | Fichier | À quoi il sert |
 |---|---|
@@ -46,7 +45,7 @@ opérationnels :
 | `DEPLOIEMENT_SITE_WEBR.md` | la marche à suivre pour publier |
 | `outils\A_RESTAURER.md` | ce qu'il faut remettre et où le trouver |
 | `outils\menage_poste.md` | les `del` / `ren` du matériel ancien |
-| `pedagogie\J*\_A_FAIRE_J0X.md` | ce qui reste à vérifier au premier rendu |
+| `pedagogie\J*\_A_FAIRE_J0X.md` | la procédure de recette du premier rendu |
 
 ---
 
@@ -57,7 +56,7 @@ arborescence** — `J01_intro_R_pensee_spatiale`, `J02_sf_CRS_vecteurs`,
 `J10_workflows_reproductibles`… Ces dossiers n'existent plus.
 
 À supprimer avant tout `quarto render`, sinon d'anciennes pages orphelines
-seront publiées à côté des nouvelles :
+sont publiées à côté des nouvelles :
 
 ```bat
 rmdir /s /q "pedagogie\_site"
@@ -79,17 +78,17 @@ Les commandes détaillées, avec la raison technique de chaque ligne, sont dans
   cas le plus piégeux ;
 - `pedagogie\J10_politiques_publiques\.Rhistory`.
 
-**Passez d'abord le contrôle** que ce fichier indique : les nouveaux fichiers
-doivent exister avant de supprimer les anciens.
+**Passer d'abord le contrôle** que ce fichier indique : les nouveaux fichiers
+doivent exister avant que les anciens soient supprimés.
 
 ---
 
 ## 4. Les `LISEZMOI.md` surnuméraires
 
 J01, J02, J04 et J05 portent un `LISEZMOI.md` **à la racine du dossier-jour**,
-en plus du `datasets\LISEZMOI.md` prévu par le référentiel. Ils datent du
-25/07/2026, n'ont jamais été resynchronisés, et celui du J05 ne mentionne même
-pas `CMHR71FL.SAV` — le fichier central de la journée.
+en plus du `datasets\LISEZMOI.md` prévu par le référentiel. Ils n'ont jamais
+été resynchronisés avec le contenu des journées, et celui du J05 ne mentionne
+même pas `CMHR71FL.SAV` — le fichier central de la journée.
 
 Ils induisent en erreur plus qu'ils n'informent :
 
@@ -126,4 +125,4 @@ sur les fichiers non suivis. Dans ce cas :
 git rm --cached "NOM_DU_FICHIER.md"
 ```
 
-puis commitez. Le fichier reste sur le disque, mais sort de Git.
+puis commit. Le fichier reste sur le disque, mais sort de Git.

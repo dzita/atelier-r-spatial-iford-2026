@@ -14,40 +14,39 @@
 ## Usage : ouvrir atelier-r-spatial-iford-2026.Rproj puis
 ##         source("outils/distribuer_donnees.R")
 ## -----------------------------------------------------------------------------
-## CORRECTIONS APPORTÉES LE 31/08/2026
+## QUATRE PARTIS PRIS, ET LEURS RAISONS
 ##
-## 1. CHEMIN DU MAGASIN CENTRAL (correctif bloquant).
-##    Le script pointait vers "pedagogie/datasets/cameroun", DOSSIER QUI
-##    N'EXISTE PAS sur ce dépôt (cf. MANIFESTE_DONNEES_J01_J07.md §0). Le
-##    magasin réel est "pedagogie/all_data". Tant que ce chemin était faux, le
-##    script s'arrêtait sur son propre stop() et AUCUNE copie n'était possible,
-##    y compris pour les fichiers réellement présents.
+## 1. LE MAGASIN CENTRAL EST "pedagogie/all_data".
+##    Il n'existe pas de "pedagogie/datasets/cameroun" sur ce dépôt. Un chemin
+##    de magasin faux arrête le script sur son propre stop() et rend TOUTE
+##    copie impossible, y compris pour les fichiers réellement présents : la
+##    valeur ci-dessous ne se modifie donc qu'après vérification sur disque.
 ##
 ## 2. DÉTECTION NON RÉCURSIVE, EXPLICITÉE (règle §6.2).
-##    list.files() est déjà non récursif par défaut, mais le comportement
-##    n'était écrit nulle part : `recursive = FALSE` est désormais passé
-##    explicitement et commenté. C'est le .qmd (et les .R de la racine du
-##    dossier-jour) qui pilote la copie — jamais les scripts rangés dans
-##    scripts/, qui sont des dérivés et dupliqueraient les références.
+##    list.files() est déjà non récursif par défaut, mais un comportement
+##    implicite ne se relit pas : `recursive = FALSE` est passé explicitement
+##    et commenté. C'est le .qmd de la racine du dossier-jour qui pilote la
+##    copie — jamais les scripts rangés dans scripts/, qui en sont des dérivés
+##    et dupliqueraient les références.
 ##
-## 3. ÉCHEC SILENCIEUX DE COPIE (règle §1.2).
-##    file.copy() renvoyait un TRUE/FALSE que le script ignorait : le compteur
-##    s'incrémentait même quand la copie échouait (disque plein, fichier
-##    verrouillé, droits). Le retour est maintenant testé, et les échecs sont
+## 3. AUCUN ÉCHEC SILENCIEUX DE COPIE (règle §1.2).
+##    file.copy() renvoie un TRUE/FALSE qu'il serait facile d'ignorer ; le
+##    compteur s'incrémenterait alors même quand la copie échoue (disque plein,
+##    fichier verrouillé, droits). Le retour est testé, et les échecs sont
 ##    comptés et nommés séparément des fichiers absents du magasin.
 ##
 ## 4. COMPTE-RENDU FINAL EN cat() (règle §5.2).
 ##    Les message() partent sur stderr et se perdent dans un Render Quarto ou
 ##    un Rscript redirigé. Le bilan de fin — nombre de fichiers copiés, nombre
 ##    de fichiers introuvables dans le magasin AVEC LEUR NOM, nombre d'échecs
-##    de copie — est désormais écrit en cat() sur stdout.
+##    de copie — est écrit en cat() sur stdout.
 ## =============================================================================
 
 ## --- Se placer a la racine du projet ----------------------------------------
 ## Ce script raisonne en chemins relatifs a la racine. Selon d'ou on le lance
 ## (racine, pedagogie/, un dossier-jour apres un Render...), le repertoire de
-## travail n'y est pas. On remonte donc jusqu'a trouver le .Rproj, au lieu
-## d'exiger de l'utilisateur qu'il s'y place lui-meme.
+## travail n'y est pas. On remonte donc jusqu'a trouver le .Rproj, plutot que
+## d'exiger un setwd() prealable dont l'oubli ferait echouer le script.
 .marqueur <- "atelier-r-spatial-iford-2026.Rproj"
 if (!file.exists(.marqueur)) {
   .depart <- getwd()
@@ -68,7 +67,7 @@ if (!file.exists(.marqueur)) {
 }
 
 ## --- Magasin central --------------------------------------------------------
-## CORRIGE le 31/08/2026 : etait "pedagogie/datasets/cameroun" (inexistant).
+## Seul emplacement de reference des donnees sources (cf. entete, point 1).
 central <- "pedagogie/all_data"
 if (!dir.exists(central))
   stop("Magasin central introuvable : ", central,
@@ -82,7 +81,7 @@ idx_base   <- basename(idx)
 jours <- list.dirs("pedagogie", recursive = FALSE)
 jours <- sort(jours[grepl("/J[0-9]{2}_", jours)])
 
-## CONTROLE DE COUVERTURE, ajoute le 01/09/2026.
+## CONTROLE DE COUVERTURE.
 ## L'atelier compte ONZE journees. Si le compte differe, c'est qu'un dossier
 ## a ete renomme hors convention (JX au lieu de J0X) et qu'il sera ignore en
 ## silence par la boucle ci-dessous.
@@ -100,16 +99,16 @@ for (jd in jours) {
   ## Références "datasets/<fichier>" dans les .R et .qmd du jour.
   ## recursive = FALSE (regle §6.2) : SEULE la racine du dossier-jour est lue.
   ## Les scripts de scripts/ sont des derives du .qmd et ne pilotent rien.
-  ## CORRECTIF 01/09/2026 -- SEULS LES .qmd PILOTENT LA COPIE.
-  ## La version precedente lisait aussi les .R de la racine. Or les trois
-  ## scripts d'une journee sont DERIVES du .qmd (regle 1.5) et n'ont pas
-  ## toujours ete regeneres apres une correction. Ils portent donc des
-  ## references mortes que le .qmd, lui, ne porte plus :
+  ## SEULS LES .qmd PILOTENT LA COPIE.
+  ## Lire aussi les .R de la racine serait une erreur : les trois scripts
+  ## d'une journee sont DERIVES du .qmd (regle 1.5) et ne sont pas toujours
+  ## regeneres apres une correction. Ils portent donc des references mortes
+  ## que le .qmd, lui, ne porte plus :
   ##   - FIES_Cameroun.csv         (J06, J07, J11) -- substitue par s09q13a
   ##   - Sentinel-2 B03 / B04      (J07)           -- bandes jamais acquises
   ##   - ghs_built_2025_cmr_100m   (J08)           -- appartient au J09
-  ## Les lire faisait reclamer au magasin des fichiers volontairement
-  ## absents, et noyait les vrais manquants sous de fausses alertes.
+  ## Les lire ferait reclamer au magasin des fichiers volontairement absents,
+  ## et noierait les vrais manquants sous de fausses alertes.
   ## Le referentiel est explicite (6.2) : c'est le .qmd qui pilote.
   fichiers_src <- list.files(jd, pattern = "\\.qmd$", full.names = TRUE,
                              recursive = FALSE)
@@ -133,12 +132,12 @@ for (jd in jours) {
   orphelins <- setdiff(unique(basename(orphelins)), unique(basename(refs)))
   refs <- unique(basename(refs[grepl("\\.", refs)]))
 
-  ## CORRECTIF 01/09/2026 (regle 1.2) : la version precedente faisait `next`
-  ## en silence. Une journee dont le .qmd ne porte aucun litteral
-  ## "datasets/<fichier>" etait donc passee sans un mot -- indiscernable
-  ## d'une journee correctement traitee. C'est le cas, legitime, d'une
-  ## journee purement methodologique ; c'est aussi le symptome d'un .qmd
-  ## dont les chemins ont ete casses. Les deux doivent se voir.
+  ## PAS DE `next` SILENCIEUX (regle 1.2). Une journee dont le .qmd ne porte
+  ## aucun litteral "datasets/<fichier>" serait sinon passee sans un mot --
+  ## indiscernable d'une journee correctement traitee. C'est le cas,
+  ## legitime, d'une journee purement methodologique ; c'est aussi le
+  ## symptome d'un .qmd dont les chemins ont ete casses. Les deux doivent
+  ## se voir.
   if (!length(refs)) {
     message(sprintf("%-32s  aucun litteral \"datasets/...\" trouve", basename(jd)))
     recap[[basename(jd)]] <- list(copies = 0L, manquants = character(0),

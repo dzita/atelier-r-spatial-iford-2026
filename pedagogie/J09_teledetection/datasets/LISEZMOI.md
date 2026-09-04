@@ -8,9 +8,8 @@ Pas de sous-dossier `GHS-BUILT/`, pas de `EMSR772_products/`, pas de dossier
 distribution repère les littéraux à la **racine** du dossier du jour, sans
 récursion : un fichier rangé dans un sous-dossier n'est jamais trouvé.
 
-> **Tailles : n.d.** Aucune taille n'a pu être relevée lors de la rédaction de ce
-> document. Elles doivent être mesurées côté poste, en particulier pour arbitrer
-> contre le budget de 100 Mo par journée. Voir `_A_FAIRE_J09.md`.
+> **Tailles : n.d.** Elles restent à mesurer côté poste, en particulier pour
+> arbitrer contre le budget de 100 Mo par journée. Voir `_A_FAIRE_J09.md`.
 
 ## Comment le remplir
 

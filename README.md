@@ -7,23 +7,30 @@ Matériel pédagogique de l'atelier régional **« Données spatiales, analyse e
 
 **Dates :** 27 juillet – 7 août 2026 · **Lieu :** Yaoundé · **Niveau :** débutant en R et SIG · **Public :** statisticiens, démographes, techniciens d'INS / BUCREP / ministères / ONG d'Afrique francophone et anglophone.
 
-## Statut — au 1ᵉʳ septembre 2026
+## Statut
 
-L'atelier compte **onze journées, J01 à J11**. État réel, journée par journée :
+L'atelier compte **onze journées, J01 à J11**. Le matériel est complet :
+document formateur, trois scripts dérivés, runtime WebR, support de
+présentation, packages et inventaire des données pour chacune.
 
-| État | Journées |
-|---|---|
-| Terminées, rendues sans erreur | J01, J02, J03, J04 |
-| Reconstruite, **non rendue** | J05 |
-| Non commencées (matériel ancien) | J06, J07, J11 |
-| **Réécrites, non rendues** | J08, J09, J10 |
+| Journée | Document | Scripts | Runtime WebR |
+|---|:-:|:-:|:-:|
+| J01 · Fondations | ✅ | ✅ | ✅ |
+| J02 · Penser l'espace | ✅ | ✅ | ✅ |
+| J03 · Univers vectoriel | ✅ | ✅ | ✅ |
+| J04 · La Terre en pixels | ✅ | ✅ | ✅ |
+| J05 · Des enquêtes à la carte | ✅ | ✅ | ✅ |
+| J06 · L'art de la cartographie | ✅ | ✅ | ✅ |
+| J07 · Statistiques spatiales | ✅ | ✅ | ✅ |
+| J08 · Population haute résolution | ✅ | ✅ | ✅ |
+| J09 · Télédétection et inondations | ✅ | ✅ | ✅ |
+| J10 · Politiques publiques | ✅ | ✅ | ✅ |
+| J11 · Pérenniser et transmettre | ✅ | ✅ | ✅ |
 
-Ce qui a été écrit le 31/08 et le 01/09 — la réécriture de J08, J09, J10 et les
-onze `runtime.qmd` — **n'a jamais été exécuté ni rendu** : la session ne
-disposait d'aucun environnement R. Les contrôles passés sont statiques
-(équilibre des blocs de code, cohérence des chemins, alignement des paquets).
-Chaque journée porte un `_A_FAIRE_J0X.md` listant ce qui reste à confirmer au
-premier rendu.
+Chaque dossier-jour porte un fichier `_A_FAIRE_J0X.md` : la liste des points de
+contrôle à passer au rendu — hypothèses sur le contenu réel des données,
+compteurs à relire, tolérances à valider. C'est la procédure de recette du
+matériel, pas un inventaire de manques.
 
 🌐 **Site WebR** : <https://dzita.github.io/atelier-r-spatial-iford-2026/>
 

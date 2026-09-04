@@ -81,13 +81,13 @@ if (!is.null(v_tmap)) {
 ## un message incomprehensible. demo_formateur_J10.qmd charge donc sae en second
 ## et dplyr en quatrieme. Ce controle le verifie dans la session courante.
 ##
-## CORRECTIF 01/09/2026 -- la version precedente de ce controle produisait un
-## FAUX POSITIF. Elle appelait library(sae) puis library(dplyr) dans la session
-## courante. Or la boucle de verification plus haut a DEJA attache dplyr, et
+## Attention : ce controle ne peut PAS se faire dans la session courante, sous
+## peine de FAUX POSITIF. Appeler library(sae) puis library(dplyr) ici serait
+## trompeur, car la boucle de verification plus haut a DEJA attache dplyr, et
 ## library() sur un package deja attache est une operation NULLE : elle ne le
-## remonte pas dans la search path. Resultat : library(sae) inserait MASS
-## AU-DESSUS de dplyr, et le controle signalait un probleme qu'il venait lui-meme
-## de creer. Le .qmd, lui, s'execute dans une session Quarto neuve et charge bien
+## remonte pas dans la search path. library(sae) inserait alors MASS AU-DESSUS
+## de dplyr, et le controle signalerait un probleme qu'il vient lui-meme de
+## creer. Le .qmd, lui, s'execute dans une session Quarto neuve et charge bien
 ## sae en second, dplyr en quatrieme.
 ##
 ## On teste donc dans un PROCESSUS SEPARE et neuf, seul endroit ou la question

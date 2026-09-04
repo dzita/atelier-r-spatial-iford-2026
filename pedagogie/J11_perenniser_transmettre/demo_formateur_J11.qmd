@@ -589,7 +589,9 @@ if (ok_s09q13a) {
 }
 
 # --- Regle de recodage, DERIVEE DES LIBELLES ci-dessus ---
-# HYPOTHESE A VALIDER AU PREMIER RENDU : les modalites dont le libelle porte
+# POINT DE CONTROLE : verifier les modalites reelles de s09q13a imprimees par le
+# bloc precedent avant d'interpreter ce recodage. Hypothese retenue -- les
+# modalites dont le libelle porte
 # une marque de negation ou d insatisfaction designent les menages NON
 # satisfaits ; les libelles de non-reponse passent a NA (non-reponse, pas
 # "satisfait"). Si les libelles reels different, corriger ces deux motifs —
